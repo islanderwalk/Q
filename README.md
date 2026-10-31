@@ -7,7 +7,20 @@
   一張整合架構圖，加上 Q1–Q6 各一頁（題目、答案、資料流、實測佐證）
 </p>
 
-<br>
+## 六題答案
+
+**[一份看完：六題合併答案 →](shared/docs/submission.md)**
+
+| 題目 | 字數 | 上限 |
+|---|---:|---:|
+| [Q1 顧客反饋整理](shared/docs/submission.md#q1) | 397 | 400 |
+| [Q2 估算與選型：100 萬則 FB 貼文搜尋](shared/docs/submission.md#q2) | 585 | 600 |
+| [Q3 PTT 全文搜尋系統](shared/docs/submission.md#q3) | 785 | 800 |
+| [Q4 Threads 爬蟲系統](shared/docs/submission.md#q4) | 600 | 600 |
+| [Q5 新指標上線的全鏈路時間估算](shared/docs/submission.md#q5) | 598 | 600 |
+| [Q6 文字雲斷詞 Pipeline 重建](shared/docs/submission.md#q6) | 599 | 600 |
+
+<sub>字數用 Python `len` 計算，空白與換行都算；Q2、Q3 的算式與 Q3 的架構圖依題目不計入字數。</sub>
 
 ---
 
