@@ -1,0 +1,152 @@
+{
+ "ptt": {
+  "posts": 48,
+  "post_ids_unique": 48,
+  "by_source": {
+   "Kaohsiung": 20,
+   "Lifeismoney": 21,
+   "Gossiping": 7
+  },
+  "by_sub_type": {
+   "article": 48
+  },
+  "by_collect_method": {
+   "html": 23,
+   "rss": 25
+  },
+  "published_at_min": "2026-01-02T23:00:24+08:00",
+  "published_at_max": "2026-10-31T01:30:10+08:00",
+  "published_at_null": 0,
+  "fetched_at_min": "2026-10-31T01:33:52+08:00",
+  "fetched_at_max": "2026-10-31T01:35:03+08:00",
+  "chars_total": 22744,
+  "posts_with_url": 38,
+  "posts_with_short_url": 3,
+  "short_url_domains": {
+   "reurl.cc": 3,
+   "bit.ly": 1
+  },
+  "url_hosts_top10": {
+   "i.imgur.com": 133,
+   "i.mopix.cc": 24,
+   "www.ptt.cc": 22,
+   "i.meee.com.tw": 7,
+   "i.verb.tw": 6,
+   "www.outhearter.org": 5,
+   "myppt.cc": 4,
+   "reurl.cc": 3,
+   "bit.ly": 1,
+   "tw.shp.ee": 1
+  },
+  "posts_with_phone_like": 2,
+  "phone_like_post_ids": [
+   "Kaohsiung/M.1793291047.A.07A",
+   "Lifeismoney/M.1793168867.A.ECB"
+  ],
+  "schema_problems": {}
+ },
+ "threads": {
+  "posts": 61,
+  "post_ids_unique": 61,
+  "by_source": {
+   "@cnanews_tw": 14,
+   "@pts.news": 39,
+   "@ftvnews": 8
+  },
+  "by_sub_type": {
+   "post": 19,
+   "comment_thread": 42
+  },
+  "by_collect_method": {
+   "inline_json": 61
+  },
+  "published_at_min": "2026-10-30T13:37:50+08:00",
+  "published_at_max": "2026-10-31T00:56:20+08:00",
+  "published_at_null": 0,
+  "fetched_at_min": "2026-10-31T01:36:06+08:00",
+  "fetched_at_max": "2026-10-31T01:36:59+08:00",
+  "chars_total": 2585,
+  "posts_with_url": 10,
+  "posts_with_short_url": 0,
+  "short_url_domains": {},
+  "url_hosts_top10": {
+   "www.youtube.com": 3,
+   "news.pts.org.tw": 3,
+   "www.ftvnews.com.tw": 2,
+   "www.cna.com.tw": 1,
+   "www.facebook.com": 1
+  },
+  "posts_with_phone_like": 0,
+  "phone_like_post_ids": [],
+  "schema_problems": {}
+ },
+ "youtube": {
+  "posts": 45,
+  "post_ids_unique": 45,
+  "by_source": {
+   "TVBS NEWS": 15,
+   "公視新聞網": 15,
+   "東森新聞 CH51": 15
+  },
+  "by_sub_type": {
+   "video": 45
+  },
+  "by_collect_method": {
+   "rss": 45
+  },
+  "published_at_min": "2026-10-30T20:19:09+08:00",
+  "published_at_max": "2026-10-30T23:49:34+08:00",
+  "published_at_null": 0,
+  "fetched_at_min": "2026-10-31T01:37:40+08:00",
+  "fetched_at_max": "2026-10-31T01:37:45+08:00",
+  "chars_total": 23851,
+  "posts_with_url": 43,
+  "posts_with_short_url": 28,
+  "short_url_domains": {
+   "pse.is": 116
+  },
+  "url_hosts_top10": {
+   "tvbs.pse.is": 90,
+   "tvbs.to": 30,
+   "news.pts.org.tw": 30,
+   "pse.is": 26,
+   "www.facebook.com": 17,
+   "www.youtube.com": 15,
+   "www.instagram.com": 15,
+   "t.me": 15,
+   "linktr.ee": 1
+  },
+  "posts_with_phone_like": 0,
+  "phone_like_post_ids": [],
+  "schema_problems": {}
+ },
+ "media": {
+  "posts": 61,
+  "post_ids_unique": 61,
+  "by_source": {
+   "cna/politics": 16,
+   "cna/social": 16,
+   "cna/local": 13,
+   "pts/newsfeed": 16
+  },
+  "by_sub_type": {
+   "news": 61
+  },
+  "by_collect_method": {
+   "rss": 61
+  },
+  "published_at_min": "2026-10-30T13:13:33+08:00",
+  "published_at_max": "2026-10-30T22:46:27+08:00",
+  "published_at_null": 0,
+  "fetched_at_min": "2026-10-31T01:38:16+08:00",
+  "fetched_at_max": "2026-10-31T01:38:21+08:00",
+  "chars_total": 8204,
+  "posts_with_url": 0,
+  "posts_with_short_url": 0,
+  "short_url_domains": {},
+  "url_hosts_top10": {},
+  "posts_with_phone_like": 0,
+  "phone_like_post_ids": [],
+  "schema_problems": {}
+ }
+}

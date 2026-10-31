@@ -1,0 +1,62 @@
+# 總架構「一張圖（整合）」分頁的純文字版，由 shared/architecture/build/export_text.py 從 qsearch-architecture.html 匯出
+1 排程
+2 派工
+3 抓取
+4 落地
+5 解析
+6 拿去用
+讀 token
+Threads
+PTT · FB 直連
+原始檔
+事件
+重發事件
+Cloud Scheduler
+crawl-tick 定時敲鐘
+Cloud Run
+crawler-api 排程大腦
+Cloud SQL
+crawler-db 狀態去重
+Cloud Tasks ×3
+每個來源一條佇列
+token 池
+Firestore · 跨帳號共用
+Cloud Run
+crawler-worker
+PTT · Threads · FB
+Cloud Run Job
+無頭瀏覽器 · 每 5 分
+住宅輪替代理
+每次請求換 IP
+目標平台
+PTT · Threads · Meta
+Cloud Storage
+原始檔 · 30 天轉冷
+Pub/Sub
+fetched 事件＋source
+Cloud Run Jobs
+回補：重放原始檔
+Cloud Run
+parser · 3 個 adapter
+pg_bigm 搜尋庫
+Cloud SQL · Q2 FB 貼文
+BigQuery
+Q3 PTT 7 天 · 查詢 API
+Elasticsearch
+貼文索引 · 約 5 億筆
+Data Layer API
+新增兩個欄位
+Analytics API
+Backend 回傳新指標
+前端
+顯示觀看數、轉發數
+Export Service
+匯出加兩欄
+沿用 PoC
+這次新增
+題目透露的 QSearch 元件
+外部服務
+控制／狀態
+＋
+－
+⤢

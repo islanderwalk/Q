@@ -1,0 +1,2105 @@
+[
+ {
+  "partition_id": "ptt/2026-10",
+  "channel": "ptt",
+  "month": "2026-10",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 6685,
+  "checkpoint_line": 6685,
+  "written": 6685,
+  "noop": 0,
+  "errors": 0,
+  "worker": "efb93aa38da6#0",
+  "heartbeat_at": "2026-10-30T22:47:36.010125+00:00",
+  "started_at": "2026-10-30T22:47:32.896693+00:00",
+  "finished_at": "2026-10-30T22:47:36.010125+00:00",
+  "docs_per_sec": 2982.3,
+  "gates": {
+   "G1": {
+    "raw": 6685,
+    "pass": true,
+    "es_at_target": 6685
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 81.0,
+    "canary_p95_ms_before": 96.0
+   },
+   "G4": {
+    "note": "2026-10 前 60 詞 A/B：v1 有停用詞 13、標點 12、單字 23，v2 全 0；G2 必不可拆詞 36 個 0 篇切開",
+    "pass": true,
+    "approved_at": "2026-10-30T22:47:47Z",
+    "approved_by": "PM（模擬）",
+    "pm_spot_check_required": true
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-09",
+  "channel": "ptt",
+  "month": "2026-09",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9269,
+  "checkpoint_line": 9269,
+  "written": 9269,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:48:43.270278+00:00",
+  "started_at": "2026-10-30T22:48:33.993542+00:00",
+  "finished_at": "2026-10-30T22:48:43.270278+00:00",
+  "docs_per_sec": 1132.1,
+  "gates": {
+   "G1": {
+    "raw": 9269,
+    "pass": true,
+    "es_at_target": 9269
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 104.0,
+    "canary_p95_ms_before": 165.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-08",
+  "channel": "ptt",
+  "month": "2026-08",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9229,
+  "checkpoint_line": 9229,
+  "written": 9229,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:48:45.347209+00:00",
+  "started_at": "2026-10-30T22:48:35.102771+00:00",
+  "finished_at": "2026-10-30T22:48:45.347209+00:00",
+  "docs_per_sec": 997.9,
+  "gates": {
+   "G1": {
+    "raw": 9229,
+    "pass": true,
+    "es_at_target": 9229
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 107.0,
+    "canary_p95_ms_before": 132.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-07",
+  "channel": "ptt",
+  "month": "2026-07",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9311,
+  "checkpoint_line": 9311,
+  "written": 9311,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:48:45.967351+00:00",
+  "started_at": "2026-10-30T22:48:35.468335+00:00",
+  "finished_at": "2026-10-30T22:48:45.967351+00:00",
+  "docs_per_sec": 997.7,
+  "gates": {
+   "G1": {
+    "raw": 9311,
+    "pass": true,
+    "es_at_target": 9311
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 102.0,
+    "canary_p95_ms_before": 113.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-06",
+  "channel": "ptt",
+  "month": "2026-06",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9200,
+  "checkpoint_line": 9200,
+  "written": 9200,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:48:53.537133+00:00",
+  "started_at": "2026-10-30T22:48:43.273128+00:00",
+  "finished_at": "2026-10-30T22:48:53.537133+00:00",
+  "docs_per_sec": 997.6,
+  "gates": {
+   "G1": {
+    "raw": 9200,
+    "pass": true,
+    "es_at_target": 9200
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 76.0,
+    "canary_p95_ms_before": 161.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-05",
+  "channel": "ptt",
+  "month": "2026-05",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9393,
+  "checkpoint_line": 9393,
+  "written": 9393,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:48:55.615535+00:00",
+  "started_at": "2026-10-30T22:48:45.350966+00:00",
+  "finished_at": "2026-10-30T22:48:55.615535+00:00",
+  "docs_per_sec": 1015.4,
+  "gates": {
+   "G1": {
+    "raw": 9393,
+    "pass": true,
+    "es_at_target": 9393
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 68.0,
+    "canary_p95_ms_before": 145.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-04",
+  "channel": "ptt",
+  "month": "2026-04",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9338,
+  "checkpoint_line": 9338,
+  "written": 9338,
+  "noop": 0,
+  "errors": 0,
+  "worker": "5beb2b93e84b#0",
+  "heartbeat_at": "2026-10-30T22:53:29.247266+00:00",
+  "started_at": "2026-10-30T22:48:45.9703+00:00",
+  "finished_at": "2026-10-30T22:53:29.247266+00:00",
+  "docs_per_sec": 1149.3,
+  "gates": {
+   "G1": {
+    "raw": 9338,
+    "pass": true,
+    "es_at_target": 9338
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     87.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 87.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2026-03",
+  "channel": "ptt",
+  "month": "2026-03",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9355,
+  "checkpoint_line": 9355,
+  "written": 9355,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:49:03.700134+00:00",
+  "started_at": "2026-10-30T22:48:53.539218+00:00",
+  "finished_at": "2026-10-30T22:49:03.700134+00:00",
+  "docs_per_sec": 998,
+  "gates": {
+   "G1": {
+    "raw": 9355,
+    "pass": true,
+    "es_at_target": 9355
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 72.0,
+    "canary_p95_ms_before": 104.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2026-02",
+  "channel": "ptt",
+  "month": "2026-02",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9294,
+  "checkpoint_line": 9294,
+  "written": 9294,
+  "noop": 0,
+  "errors": 0,
+  "worker": "ea414d4e7dae#1",
+  "heartbeat_at": "2026-10-30T22:53:46.050599+00:00",
+  "started_at": "2026-10-30T22:48:55.618668+00:00",
+  "finished_at": "2026-10-30T22:53:46.050599+00:00",
+  "docs_per_sec": 1033.2,
+  "gates": {
+   "G1": {
+    "raw": 9294,
+    "pass": true,
+    "es_at_target": 9294
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     142.0,
+     107.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 107.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2026-01",
+  "channel": "ptt",
+  "month": "2026-01",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9392,
+  "checkpoint_line": 9392,
+  "written": 9392,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:49:06.810365+00:00",
+  "started_at": "2026-10-30T22:48:56.481057+00:00",
+  "finished_at": "2026-10-30T22:49:06.810365+00:00",
+  "docs_per_sec": 997.6,
+  "gates": {
+   "G1": {
+    "raw": 9392,
+    "pass": true,
+    "es_at_target": 9392
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 115.0,
+    "canary_p95_ms_before": 93.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-12",
+  "channel": "ptt",
+  "month": "2025-12",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9471,
+  "checkpoint_line": 9471,
+  "written": 9471,
+  "noop": 0,
+  "errors": 0,
+  "worker": "2c92212570ea#2",
+  "heartbeat_at": "2026-10-30T22:53:32.311691+00:00",
+  "started_at": "2026-10-30T22:49:03.704161+00:00",
+  "finished_at": "2026-10-30T22:53:32.311691+00:00",
+  "docs_per_sec": 950,
+  "gates": {
+   "G1": {
+    "raw": 9471,
+    "pass": true,
+    "es_at_target": 9471
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     110.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 110.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2025-11",
+  "channel": "ptt",
+  "month": "2025-11",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9294,
+  "checkpoint_line": 9294,
+  "written": 9294,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:49:16.53513+00:00",
+  "started_at": "2026-10-30T22:49:05.981384+00:00",
+  "finished_at": "2026-10-30T22:49:16.53513+00:00",
+  "docs_per_sec": 995.3,
+  "gates": {
+   "G1": {
+    "raw": 9294,
+    "pass": true,
+    "es_at_target": 9294
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 123.0,
+    "canary_p95_ms_before": 142.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-10",
+  "channel": "ptt",
+  "month": "2025-10",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9468,
+  "checkpoint_line": 9468,
+  "written": 9468,
+  "noop": 0,
+  "errors": 0,
+  "worker": "5beb2b93e84b#0",
+  "heartbeat_at": "2026-10-30T22:53:47.127047+00:00",
+  "started_at": "2026-10-30T22:49:06.813341+00:00",
+  "finished_at": "2026-10-30T22:53:47.127047+00:00",
+  "docs_per_sec": 542.3,
+  "gates": {
+   "G1": {
+    "raw": 9468,
+    "pass": true,
+    "es_at_target": 9468
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     69.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 69.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2025-09",
+  "channel": "ptt",
+  "month": "2025-09",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9178,
+  "checkpoint_line": 9178,
+  "written": 9178,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:49:24.520804+00:00",
+  "started_at": "2026-10-30T22:49:14.2063+00:00",
+  "finished_at": "2026-10-30T22:49:24.520804+00:00",
+  "docs_per_sec": 998,
+  "gates": {
+   "G1": {
+    "raw": 9178,
+    "pass": true,
+    "es_at_target": 9178
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 133.0,
+    "canary_p95_ms_before": 90.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-08",
+  "channel": "ptt",
+  "month": "2025-08",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9261,
+  "checkpoint_line": 9261,
+  "written": 9261,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:49:26.605782+00:00",
+  "started_at": "2026-10-30T22:49:16.53762+00:00",
+  "finished_at": "2026-10-30T22:49:26.605782+00:00",
+  "docs_per_sec": 1016.1,
+  "gates": {
+   "G1": {
+    "raw": 9261,
+    "pass": true,
+    "es_at_target": 9261
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 109.0,
+    "canary_p95_ms_before": 148.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-07",
+  "channel": "ptt",
+  "month": "2025-07",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9373,
+  "checkpoint_line": 9373,
+  "written": 9373,
+  "noop": 0,
+  "errors": 0,
+  "worker": "2c92212570ea#2",
+  "heartbeat_at": "2026-10-30T22:53:51.612302+00:00",
+  "started_at": "2026-10-30T22:49:17.372959+00:00",
+  "finished_at": "2026-10-30T22:53:51.612302+00:00",
+  "docs_per_sec": 499.5,
+  "gates": {
+   "G1": {
+    "raw": 9373,
+    "pass": true,
+    "es_at_target": 9373
+   },
+   "G2": {
+    "pass": false,
+    "waiver": {
+     "note": "gqa-110114「夜市痛電新北耶誕城」→ 電新。新北 詞頻試到 3000 仍切錯（HMM 把單字串黏起來），單篇豁免並列入下版觀察",
+     "waived_at": "2026-10-30T22:55:05Z",
+     "waived_by": "字典負責人（模擬）"
+    },
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {
+     "新北": 1
+    },
+    "must_keep_examples": [
+     {
+      "word": "新北",
+      "post_id": "gqa-110114"
+     }
+    ]
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     107.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 107.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2025-06",
+  "channel": "ptt",
+  "month": "2025-06",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9180,
+  "checkpoint_line": 9180,
+  "written": 9180,
+  "noop": 0,
+  "errors": 0,
+  "worker": "ea414d4e7dae#1",
+  "heartbeat_at": "2026-10-30T22:54:04.831885+00:00",
+  "started_at": "2026-10-30T22:49:24.546062+00:00",
+  "finished_at": "2026-10-30T22:54:04.831885+00:00",
+  "docs_per_sec": 499.4,
+  "gates": {
+   "G1": {
+    "raw": 9180,
+    "pass": true,
+    "es_at_target": 9180
+   },
+   "G2": {
+    "pass": false,
+    "waiver": {
+     "note": "gqa-312252「2018換新北放半天」→ 換新／北放。新北 詞頻試到 3000 仍切錯（jieba 主字典「換新」＋HMM），單篇、非地名語境主體，豁免並列入下版觀察",
+     "waived_at": "2026-10-30T22:55:03Z",
+     "waived_by": "字典負責人（模擬）"
+    },
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {
+     "新北": 1
+    },
+    "must_keep_examples": [
+     {
+      "word": "新北",
+      "post_id": "gqa-312252"
+     }
+    ]
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     51.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 51.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2025-05",
+  "channel": "ptt",
+  "month": "2025-05",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9207,
+  "checkpoint_line": 9207,
+  "written": 9207,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:49:36.775524+00:00",
+  "started_at": "2026-10-30T22:49:26.608811+00:00",
+  "finished_at": "2026-10-30T22:49:36.775524+00:00",
+  "docs_per_sec": 997.5,
+  "gates": {
+   "G1": {
+    "raw": 9207,
+    "pass": true,
+    "es_at_target": 9207
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 87.0,
+    "canary_p95_ms_before": 95.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-04",
+  "channel": "ptt",
+  "month": "2025-04",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9223,
+  "checkpoint_line": 9223,
+  "written": 9223,
+  "noop": 0,
+  "errors": 0,
+  "worker": "5beb2b93e84b#0",
+  "heartbeat_at": "2026-10-30T22:54:06.149794+00:00",
+  "started_at": "2026-10-30T22:49:27.681898+00:00",
+  "finished_at": "2026-10-30T22:54:06.149794+00:00",
+  "docs_per_sec": 499.4,
+  "gates": {
+   "G1": {
+    "raw": 9223,
+    "pass": true,
+    "es_at_target": 9223
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     96.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 96.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2025-03",
+  "channel": "ptt",
+  "month": "2025-03",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9211,
+  "checkpoint_line": 9211,
+  "written": 9211,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:49:44.649255+00:00",
+  "started_at": "2026-10-30T22:49:34.538664+00:00",
+  "finished_at": "2026-10-30T22:49:44.649255+00:00",
+  "docs_per_sec": 997.9,
+  "gates": {
+   "G1": {
+    "raw": 9211,
+    "pass": true,
+    "es_at_target": 9211
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 104.0,
+    "canary_p95_ms_before": 74.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-02",
+  "channel": "ptt",
+  "month": "2025-02",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9198,
+  "checkpoint_line": 9198,
+  "written": 9198,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:49:46.789469+00:00",
+  "started_at": "2026-10-30T22:49:36.778343+00:00",
+  "finished_at": "2026-10-30T22:49:46.789469+00:00",
+  "docs_per_sec": 996.7,
+  "gates": {
+   "G1": {
+    "raw": 9198,
+    "pass": true,
+    "es_at_target": 9198
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 72.0,
+    "canary_p95_ms_before": 83.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2025-01",
+  "channel": "ptt",
+  "month": "2025-01",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9365,
+  "checkpoint_line": 9365,
+  "written": 9365,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:49:47.959092+00:00",
+  "started_at": "2026-10-30T22:49:37.806041+00:00",
+  "finished_at": "2026-10-30T22:49:47.959092+00:00",
+  "docs_per_sec": 997.9,
+  "gates": {
+   "G1": {
+    "raw": 9365,
+    "pass": true,
+    "es_at_target": 9365
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 99.0,
+    "canary_p95_ms_before": 76.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-12",
+  "channel": "ptt",
+  "month": "2024-12",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9415,
+  "checkpoint_line": 9415,
+  "written": 9415,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:49:55.021406+00:00",
+  "started_at": "2026-10-30T22:49:44.651602+00:00",
+  "finished_at": "2026-10-30T22:49:55.021406+00:00",
+  "docs_per_sec": 996.5,
+  "gates": {
+   "G1": {
+    "raw": 9415,
+    "pass": true,
+    "es_at_target": 9415
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 80.0,
+    "canary_p95_ms_before": 110.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-11",
+  "channel": "ptt",
+  "month": "2024-11",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9171,
+  "checkpoint_line": 9171,
+  "written": 9171,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:49:56.728382+00:00",
+  "started_at": "2026-10-30T22:49:46.792046+00:00",
+  "finished_at": "2026-10-30T22:49:56.728382+00:00",
+  "docs_per_sec": 996.4,
+  "gates": {
+   "G1": {
+    "raw": 9171,
+    "pass": true,
+    "es_at_target": 9171
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 73.0,
+    "canary_p95_ms_before": 69.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-10",
+  "channel": "ptt",
+  "month": "2024-10",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9334,
+  "checkpoint_line": 9334,
+  "written": 9334,
+  "noop": 0,
+  "errors": 0,
+  "worker": "2c92212570ea#2",
+  "heartbeat_at": "2026-10-30T22:54:10.740158+00:00",
+  "started_at": "2026-10-30T22:49:47.962808+00:00",
+  "finished_at": "2026-10-30T22:54:10.740158+00:00",
+  "docs_per_sec": 499.5,
+  "gates": {
+   "G1": {
+    "raw": 9334,
+    "pass": true,
+    "es_at_target": 9334
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     71.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 71.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2024-09",
+  "channel": "ptt",
+  "month": "2024-09",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9356,
+  "checkpoint_line": 9356,
+  "written": 9356,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:50:05.052074+00:00",
+  "started_at": "2026-10-30T22:49:55.024579+00:00",
+  "finished_at": "2026-10-30T22:50:05.052074+00:00",
+  "docs_per_sec": 998,
+  "gates": {
+   "G1": {
+    "raw": 9356,
+    "pass": true,
+    "es_at_target": 9356
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 46.0,
+    "canary_p95_ms_before": 93.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-08",
+  "channel": "ptt",
+  "month": "2024-08",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9148,
+  "checkpoint_line": 9148,
+  "written": 9148,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:50:06.641303+00:00",
+  "started_at": "2026-10-30T22:49:56.731259+00:00",
+  "finished_at": "2026-10-30T22:50:06.641303+00:00",
+  "docs_per_sec": 998,
+  "gates": {
+   "G1": {
+    "raw": 9148,
+    "pass": true,
+    "es_at_target": 9148
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 71.0,
+    "canary_p95_ms_before": 101.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-07",
+  "channel": "ptt",
+  "month": "2024-07",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9366,
+  "checkpoint_line": 9366,
+  "written": 9366,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:08.358903+00:00",
+  "started_at": "2026-10-30T22:49:58.193918+00:00",
+  "finished_at": "2026-10-30T22:50:08.358903+00:00",
+  "docs_per_sec": 997.8,
+  "gates": {
+   "G1": {
+    "raw": 9366,
+    "pass": true,
+    "es_at_target": 9366
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 112.0,
+    "canary_p95_ms_before": 74.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-06",
+  "channel": "ptt",
+  "month": "2024-06",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9354,
+  "checkpoint_line": 9354,
+  "written": 9354,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:50:15.263589+00:00",
+  "started_at": "2026-10-30T22:50:05.058041+00:00",
+  "finished_at": "2026-10-30T22:50:15.263589+00:00",
+  "docs_per_sec": 997.7,
+  "gates": {
+   "G1": {
+    "raw": 9354,
+    "pass": true,
+    "es_at_target": 9354
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 98.0,
+    "canary_p95_ms_before": 109.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-05",
+  "channel": "ptt",
+  "month": "2024-05",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9251,
+  "checkpoint_line": 9251,
+  "written": 9251,
+  "noop": 0,
+  "errors": 0,
+  "worker": "ea414d4e7dae#1",
+  "heartbeat_at": "2026-10-30T22:54:23.722763+00:00",
+  "started_at": "2026-10-30T22:50:06.643684+00:00",
+  "finished_at": "2026-10-30T22:54:23.722763+00:00",
+  "docs_per_sec": 499.4,
+  "gates": {
+   "G1": {
+    "raw": 9251,
+    "pass": true,
+    "es_at_target": 9251
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     69.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 69.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2024-04",
+  "channel": "ptt",
+  "month": "2024-04",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9288,
+  "checkpoint_line": 9288,
+  "written": 9288,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:17.066418+00:00",
+  "started_at": "2026-10-30T22:50:08.361283+00:00",
+  "finished_at": "2026-10-30T22:50:17.066418+00:00",
+  "docs_per_sec": 1223.7,
+  "gates": {
+   "G1": {
+    "raw": 9288,
+    "pass": true,
+    "es_at_target": 9288
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 122.0,
+    "canary_p95_ms_before": 106.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-03",
+  "channel": "ptt",
+  "month": "2024-03",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9318,
+  "checkpoint_line": 9318,
+  "written": 9318,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:50:20.197534+00:00",
+  "started_at": "2026-10-30T22:50:15.267057+00:00",
+  "finished_at": "2026-10-30T22:50:20.197534+00:00",
+  "docs_per_sec": 2611.9,
+  "gates": {
+   "G1": {
+    "raw": 9318,
+    "pass": true,
+    "es_at_target": 9318
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 103.0,
+    "canary_p95_ms_before": 100.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-02",
+  "channel": "ptt",
+  "month": "2024-02",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9187,
+  "checkpoint_line": 9187,
+  "written": 9187,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:50:21.636048+00:00",
+  "started_at": "2026-10-30T22:50:16.606231+00:00",
+  "finished_at": "2026-10-30T22:50:21.636048+00:00",
+  "docs_per_sec": 2644.5,
+  "gates": {
+   "G1": {
+    "raw": 9187,
+    "pass": true,
+    "es_at_target": 9187
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 154.0,
+    "canary_p95_ms_before": 113.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2024-01",
+  "channel": "ptt",
+  "month": "2024-01",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9177,
+  "checkpoint_line": 9177,
+  "written": 9177,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:22.072136+00:00",
+  "started_at": "2026-10-30T22:50:17.068826+00:00",
+  "finished_at": "2026-10-30T22:50:22.072136+00:00",
+  "docs_per_sec": 2415.7,
+  "gates": {
+   "G1": {
+    "raw": 9177,
+    "pass": true,
+    "es_at_target": 9177
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 114.0,
+    "canary_p95_ms_before": 144.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-12",
+  "channel": "ptt",
+  "month": "2023-12",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9175,
+  "checkpoint_line": 9175,
+  "written": 9175,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:50:25.334447+00:00",
+  "started_at": "2026-10-30T22:50:20.200274+00:00",
+  "finished_at": "2026-10-30T22:50:25.334447+00:00",
+  "docs_per_sec": 2513.3,
+  "gates": {
+   "G1": {
+    "raw": 9175,
+    "pass": true,
+    "es_at_target": 9175
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 140.0,
+    "canary_p95_ms_before": 177.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-11",
+  "channel": "ptt",
+  "month": "2023-11",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9243,
+  "checkpoint_line": 9243,
+  "written": 9243,
+  "noop": 0,
+  "errors": 0,
+  "worker": "5beb2b93e84b#0",
+  "heartbeat_at": "2026-10-30T22:54:40.507519+00:00",
+  "started_at": "2026-10-30T22:50:21.638694+00:00",
+  "finished_at": "2026-10-30T22:54:40.507519+00:00",
+  "docs_per_sec": 499.4,
+  "gates": {
+   "G1": {
+    "raw": 9243,
+    "pass": true,
+    "es_at_target": 9243
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     127.0,
+     96.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 96.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2023-10",
+  "channel": "ptt",
+  "month": "2023-10",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9224,
+  "checkpoint_line": 9224,
+  "written": 9224,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:27.318844+00:00",
+  "started_at": "2026-10-30T22:50:22.074427+00:00",
+  "finished_at": "2026-10-30T22:50:27.318844+00:00",
+  "docs_per_sec": 2446.9,
+  "gates": {
+   "G1": {
+    "raw": 9224,
+    "pass": true,
+    "es_at_target": 9224
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 154.0,
+    "canary_p95_ms_before": 173.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-09",
+  "channel": "ptt",
+  "month": "2023-09",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9205,
+  "checkpoint_line": 9205,
+  "written": 9205,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:50:30.908393+00:00",
+  "started_at": "2026-10-30T22:50:25.33651+00:00",
+  "finished_at": "2026-10-30T22:50:30.908393+00:00",
+  "docs_per_sec": 2343.2,
+  "gates": {
+   "G1": {
+    "raw": 9205,
+    "pass": true,
+    "es_at_target": 9205
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 168.0,
+    "canary_p95_ms_before": 141.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-08",
+  "channel": "ptt",
+  "month": "2023-08",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9251,
+  "checkpoint_line": 9251,
+  "written": 9251,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:33.636801+00:00",
+  "started_at": "2026-10-30T22:50:27.321004+00:00",
+  "finished_at": "2026-10-30T22:50:33.636801+00:00",
+  "docs_per_sec": 1981.2,
+  "gates": {
+   "G1": {
+    "raw": 9251,
+    "pass": true,
+    "es_at_target": 9251
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 130.0,
+    "canary_p95_ms_before": 228.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-07",
+  "channel": "ptt",
+  "month": "2023-07",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9466,
+  "checkpoint_line": 9466,
+  "written": 9466,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:50:33.638357+00:00",
+  "started_at": "2026-10-30T22:50:27.331112+00:00",
+  "finished_at": "2026-10-30T22:50:33.638357+00:00",
+  "docs_per_sec": 2093.3,
+  "gates": {
+   "G1": {
+    "raw": 9466,
+    "pass": true,
+    "es_at_target": 9466
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 158.0,
+    "canary_p95_ms_before": 241.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-06",
+  "channel": "ptt",
+  "month": "2023-06",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9210,
+  "checkpoint_line": 9210,
+  "written": 9210,
+  "noop": 0,
+  "errors": 0,
+  "worker": "2c92212570ea#2",
+  "heartbeat_at": "2026-10-30T22:54:33.013156+00:00",
+  "started_at": "2026-10-30T22:50:30.910538+00:00",
+  "finished_at": "2026-10-30T22:54:33.013156+00:00",
+  "docs_per_sec": 421.3,
+  "gates": {
+   "G1": {
+    "raw": 9210,
+    "pass": true,
+    "es_at_target": 9210
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     77.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 77.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ },
+ {
+  "partition_id": "ptt/2023-05",
+  "channel": "ptt",
+  "month": "2023-05",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9372,
+  "checkpoint_line": 9372,
+  "written": 9372,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:38.749749+00:00",
+  "started_at": "2026-10-30T22:50:33.640919+00:00",
+  "finished_at": "2026-10-30T22:50:38.749749+00:00",
+  "docs_per_sec": 2540.9,
+  "gates": {
+   "G1": {
+    "raw": 9372,
+    "pass": true,
+    "es_at_target": 9372
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 232.0,
+    "canary_p95_ms_before": 169.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-04",
+  "channel": "ptt",
+  "month": "2023-04",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9368,
+  "checkpoint_line": 9368,
+  "written": 9368,
+  "noop": 0,
+  "errors": 0,
+  "worker": "a957f0c40943#1",
+  "heartbeat_at": "2026-10-30T22:50:38.795034+00:00",
+  "started_at": "2026-10-30T22:50:33.641272+00:00",
+  "finished_at": "2026-10-30T22:50:38.795034+00:00",
+  "docs_per_sec": 2459.2,
+  "gates": {
+   "G1": {
+    "raw": 9368,
+    "pass": true,
+    "es_at_target": 9368
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 187.0,
+    "canary_p95_ms_before": 175.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-03",
+  "channel": "ptt",
+  "month": "2023-03",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9487,
+  "checkpoint_line": 9487,
+  "written": 9487,
+  "noop": 0,
+  "errors": 0,
+  "worker": "b10be35316b7#0",
+  "heartbeat_at": "2026-10-30T22:50:41.405225+00:00",
+  "started_at": "2026-10-30T22:50:36.489962+00:00",
+  "finished_at": "2026-10-30T22:50:41.405225+00:00",
+  "docs_per_sec": 2748.5,
+  "gates": {
+   "G1": {
+    "raw": 9487,
+    "pass": true,
+    "es_at_target": 9487
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 208.0,
+    "canary_p95_ms_before": 187.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-02",
+  "channel": "ptt",
+  "month": "2023-02",
+  "target_seg_ver": 22026103003,
+  "dict_version": "qsearch-q6-2026.10.30.3",
+  "status": "passed",
+  "raw_count": 9264,
+  "checkpoint_line": 9264,
+  "written": 9264,
+  "noop": 0,
+  "errors": 0,
+  "worker": "f27c51d97519#2",
+  "heartbeat_at": "2026-10-30T22:50:43.958454+00:00",
+  "started_at": "2026-10-30T22:50:38.753882+00:00",
+  "finished_at": "2026-10-30T22:50:43.958454+00:00",
+  "docs_per_sec": 2327.7,
+  "gates": {
+   "G1": {
+    "raw": 9264,
+    "pass": true,
+    "es_at_target": 9264
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "write_rejected": 0,
+    "canary_p95_ms_after": 98.0,
+    "canary_p95_ms_before": 104.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 1
+ },
+ {
+  "partition_id": "ptt/2023-01",
+  "channel": "ptt",
+  "month": "2023-01",
+  "target_seg_ver": 22026103004,
+  "dict_version": "qsearch-q6-2026.10.30.4",
+  "status": "passed",
+  "raw_count": 9362,
+  "checkpoint_line": 9362,
+  "written": 9362,
+  "noop": 0,
+  "errors": 0,
+  "worker": "ea414d4e7dae#1",
+  "heartbeat_at": "2026-10-30T22:54:46.616242+00:00",
+  "started_at": "2026-10-30T22:50:38.797694+00:00",
+  "finished_at": "2026-10-30T22:54:46.616242+00:00",
+  "docs_per_sec": 416,
+  "gates": {
+   "G1": {
+    "raw": 9362,
+    "pass": true,
+    "es_at_target": 9362
+   },
+   "G2": {
+    "pass": true,
+    "phone_like": 0,
+    "pure_number": 0,
+    "url_fragment": 0,
+    "hard_stopwords": 0,
+    "must_keep_split": {}
+   },
+   "G3": {
+    "pass": true,
+    "limit_ms": 124.0,
+    "write_rejected": 0,
+    "canary_tries_ms": [
+     75.0
+    ],
+    "canary_baseline_ms": 74.0,
+    "canary_p95_ms_after": 75.0
+   },
+   "G4": {
+    "pass": true,
+    "pm_spot_check_required": false
+   }
+  },
+  "attempts": 2
+ }
+]

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script>
+<style>
+  .rules ol { display: grid; gap: 8px; }
+  .rules li { font-size: 14px; line-height: 1.6; }
+  .rules li b { font-size: 14.5px; }
+</style></head>
+<body><script>
+const rules = `<div class="card rules"><h3>四條規則</h3><ol>
+  <li><b>整份重新載入字典</b>，不在常駐 process 裡 add_word／del_word。<span class="chip run">VM 實測</span> 熱改後 total 與整份載入差 129（覆寫的舊頻率沒扣回）</li>
+  <li><b>total 固定</b>成字典版本的常數。<span class="chip run">VM 實測</span> 加 1 個詞：不固定時 52 篇不含該詞也變，固定後 0 篇</li>
+  <li><b>每篇記 seg_ver</b>，寫入版本只能前進（條件更新），慢的回補 job 蓋不掉串流的新版</li>
+  <li><b>每天影子比對</b>：抽 1 萬篇串流結果，用批次路徑以同版本重算，差異必須 = 0</li>
+</ol></div>`;
+
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (c) 一致性',
+  title: '(c) 斷詞 = f(原文, seg_ver)：批次與串流載入同一份東西',
+  sub: '同一份原文、同一個版本，不論走批次或串流，斷詞結果必須逐字相同。這是不變量，可以每天自動檢查，而不是「差異越少越好」。',
+  height: 640,
+  nodes: [
+    { id: 'art', x: 330, y: 0, w: 340, cls: 'accent', tag: 'GCS', title: '字典 artifact vN', sub: '<code>dict_version</code> · <code>total</code> 固定 · <code>sha256</code>' },
+    { id: 'img', x: 850, y: 0, w: 340, cls: 'accent', tag: 'Artifact Registry', title: 'segmenter 映像', sub: '同一個 digest；清洗、過濾規則都在程式碼裡' },
+    { id: 'batch', x: 150, y: 210, w: 400, tag: '回朔（批次）', title: 'Cloud Run Jobs', sub: '讀 BigQuery 原文；跑分區或 doc_id 清單' },
+    { id: 'stream', x: 970, y: 210, w: 400, tag: '串流', title: 'Cloud Run 服務', sub: 'Pub/Sub 新貼文；換版時滾動重啟' },
+    { id: 'es', x: 560, y: 400, w: 400, cls: 'store', tag: 'Elasticsearch', title: '每篇存 terms_v2＋seg_ver', sub: '條件寫入：新版本 ≥ 既有版本才寫' },
+    { id: 'shadow', x: 1030, y: 400, w: 490, cls: 'gate', tag: '每天', title: '影子比對：差異必須 = 0', sub: '抽 1 萬篇串流結果 → 批次路徑同版本重算 → 逐詞比對；> 0 就告警' }
+  ],
+  edges: [
+    { from: 'art', to: 'batch', sides: ['bottom', 'top'], fromT: 0.3, toT: 0.4, my: 140, color: 'accent', dashed: true },
+    { from: 'art', to: 'stream', sides: ['bottom', 'top'], fromT: 0.7, toT: 0.2, my: 140, color: 'accent', dashed: true, label: '同一個字典版本', labelAt: [760, 140] },
+    { from: 'img', to: 'batch', sides: ['bottom', 'top'], fromT: 0.3, toT: 0.6, my: 172, color: 'accent', dashed: true, label: '同一個映像', labelAt: [760, 172] },
+    { from: 'img', to: 'stream', sides: ['bottom', 'top'], fromT: 0.75, toT: 0.75, my: 172, color: 'accent', dashed: true },
+    { from: 'batch', to: 'es', sides: ['bottom', 'top'], toT: 0.25, my: 360 },
+    { from: 'stream', to: 'es', sides: ['bottom', 'top'], toT: 0.75, my: 360 },
+    { from: 'es', to: 'shadow', align: 'y', color: 'warn', dashed: true }
+  ],
+  blocks: [ { x: 0, y: 400, w: 530, html: rules } ],
+  footL: '實測：jieba 0.42.1、PTT 八卦板語料前 20 萬篇；腳本 q6/code/jieba_experiments/wordcloud_q6_verify.py',
+  footR: 'q6/architecture/c-consistency/diagram-same-artifact.png'
+});
+</script></body></html>

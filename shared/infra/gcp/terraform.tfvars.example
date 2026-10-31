@@ -1,0 +1,15 @@
+# 複製為 terraform.tfvars 後再填入（terraform.tfvars 已列入 .gitignore，不會進版控）。
+project_id     = "REPLACE_WITH_PROJECT_ID"
+project_number = "REPLACE_WITH_PROJECT_NUMBER"
+region         = "asia-east1"
+
+# 部署映像前保持預設 hello 映像即可讓 plan 成立。
+# image_api       = "asia-east1-docker.pkg.dev/REPLACE_WITH_PROJECT_ID/crawler/api:v1"
+# image_worker    = "asia-east1-docker.pkg.dev/REPLACE_WITH_PROJECT_ID/crawler/worker:v1"
+# image_parser    = "asia-east1-docker.pkg.dev/REPLACE_WITH_PROJECT_ID/crawler/parser:v1"
+# image_scheduler = "asia-east1-docker.pkg.dev/REPLACE_WITH_PROJECT_ID/crawler/scheduler:v1"
+# image_backfill  = "asia-east1-docker.pkg.dev/REPLACE_WITH_PROJECT_ID/crawler/backfill:v1"
+
+# github_owner = "your-github-org"   # 留空則不建立 Cloud Build trigger
+# enable_legacy_gce = false
+# deletion_protection = true

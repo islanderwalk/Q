@@ -1,0 +1,302 @@
+[
+  {
+    "key": "pubsub-topic-crawler-tasks",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_topic"
+    ],
+    "hcl": "resource \"google_pubsub_topic\" \"crawler_tasks\" {\n  name                       = \"crawler-tasks\"\n  message_retention_duration = \"86400s\"\n}",
+    "say": "crawler-tasks 是抓取任務主題，生產者只管發布，消費者可以隨時增減。",
+    "gotcha": "topic 與 subscription 的 message_retention_duration 上限都是 31 天，不是 7 天。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic"
+  },
+  {
+    "key": "pubsub-sub-crawl-push",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_subscription"
+    ],
+    "hcl": "resource \"google_pubsub_subscription\" \"crawl_sub\" {\n  name                 = \"crawl-sub\"\n  topic                = google_pubsub_topic.crawler_tasks.id\n  ack_deadline_seconds = 60\n  push_config {\n    push_endpoint = \"${google_cloud_run_v2_service.crawler_worker.uri}/push\"\n    oidc_token { service_account_email = google_service_account.push.email }\n  }\n  retry_policy { minimum_backoff = \"10s\" }\n  dead_letter_policy {\n    dead_letter_topic     = google_pubsub_topic.crawler_tasks_dlq.id\n    max_delivery_attempts = 10\n  }\n}",
+    "say": "crawl-sub 用 push 把任務推給 crawler-worker，附 OIDC token，失敗會重試並進 DLQ。",
+    "gotcha": "DLQ 主題要先建好並授權 Pub/Sub 服務代理 publisher/subscriber；次數範圍 5–100。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
+  },
+  {
+    "key": "pubsub-sub-audit",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_subscription"
+    ],
+    "hcl": "resource \"google_pubsub_subscription\" \"audit_sub\" {\n  name                       = \"audit-sub\"\n  topic                      = google_pubsub_topic.crawler_tasks.id\n  ack_deadline_seconds       = 30\n  message_retention_duration = \"604800s\"\n}",
+    "say": "audit-sub 是 pull 訂閱，稽核程式自己慢慢拉取，不影響抓取主流程。",
+    "gotcha": "pull 訂閱消費端掛掉訊息會堆積，要監控未確認訊息的年齡。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
+  },
+  {
+    "key": "pubsub-schema-qsearch-v1",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_schema"
+    ],
+    "hcl": "resource \"google_pubsub_schema\" \"qsearch_event_v1\" {\n  name       = \"qsearch-crawl-event-v1\"\n  type       = \"AVRO\"\n  definition = file(\"${path.module}/schemas/qsearch-crawl-event-v1.avsc\")\n}",
+    "say": "AVRO schema 定義事件欄位，topic 綁定後不符合格式的訊息會被擋下。",
+    "gotcha": "schema 不能原地改已發布版本，要新增 revision 並考慮相容性。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema"
+  },
+  {
+    "key": "pubsub-topic-qsearch-fetched",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_topic"
+    ],
+    "hcl": "resource \"google_pubsub_topic\" \"qsearch_fetched\" {\n  name = \"qsearch-crawl-fetched\"\n  schema_settings {\n    schema   = google_pubsub_schema.qsearch_event_v1.id\n    encoding = \"JSON\"\n  }\n}",
+    "say": "topic 綁定 schema 並指定 JSON 編碼，下游 parser 拿到的訊息格式一定正確。",
+    "gotcha": "ENCODING_UNSPECIFIED 是預設值，要明確寫 JSON 或 BINARY。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic"
+  },
+  {
+    "key": "pubsub-sub-qsearch-parser",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_subscription"
+    ],
+    "hcl": "resource \"google_pubsub_subscription\" \"qsearch_parser_sub\" {\n  name                       = \"qsearch-parser-sub\"\n  topic                      = google_pubsub_topic.qsearch_fetched.id\n  ack_deadline_seconds       = 60\n  retain_acked_messages      = true\n  message_retention_duration = \"604800s\"\n\n  push_config {\n    push_endpoint = \"${google_cloud_run_v2_service.parser.uri}/push\"\n    oidc_token {\n      service_account_email = google_service_account.push.email\n    }\n  }\n}",
+    "say": "parser 用 Push 訂閱：Pub/Sub 帶 OIDC token 打 Cloud Run；保留已確認訊息 7 天，解析出錯時用 Seek 回放重跑，不必重新爬。",
+    "gotcha": "Seek 回放已確認訊息需要 retain_acked_messages = true；保留期預設 7 天、上限 31 天，會增加儲存成本。Push SA 要有 run.invoker，Pub/Sub 服務代理要能替它簽 token。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
+  },
+  {
+    "key": "pubsub-sub-bigquery",
+    "product": "Pub/Sub",
+    "resources": [
+      "google_pubsub_subscription"
+    ],
+    "hcl": "resource \"google_pubsub_subscription\" \"qsearch_to_bq\" {\n  name  = \"qsearch-fetched-to-bq\"\n  topic = google_pubsub_topic.qsearch_fetched.id\n  bigquery_config {\n    table            = \"${var.project_id}.${google_bigquery_dataset.sentiment.dataset_id}.${google_bigquery_table.ingest_events.table_id}\"\n    use_topic_schema = true\n    write_metadata   = true\n  }\n}",
+    "say": "Pub/Sub BigQuery 訂閱直接寫進 BQ，不用自己寫 consumer，可當成替代方案來講。",
+    "gotcha": "忘記給 Pub/Sub 服務代理寫入該 BigQuery 表的權限，寫入會失敗。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
+  },
+  {
+    "key": "iam-push-invoker-token-creator",
+    "product": "IAM",
+    "resources": [
+      "google_cloud_run_v2_service_iam_member",
+      "google_service_account_iam_member"
+    ],
+    "hcl": "resource \"google_cloud_run_v2_service_iam_member\" \"worker_invoker\" {\n  name     = google_cloud_run_v2_service.crawler_worker.name\n  location = \"asia-east1\"\n  role     = \"roles/run.invoker\"\n  member   = \"serviceAccount:${google_service_account.push.email}\"\n}\nresource \"google_service_account_iam_member\" \"pubsub_token_creator\" {\n  service_account_id = google_service_account.push.name\n  role               = \"roles/iam.serviceAccountTokenCreator\"\n  member             = \"serviceAccount:service-${var.project_number}@gcp-sa-pubsub.iam.gserviceaccount.com\"\n}",
+    "say": "push 用 OIDC：push SA 要有 run.invoker，Pub/Sub 服務代理還要能代簽 token。",
+    "gotcha": "Pub/Sub 服務代理的 token creator 權限不是可選的，少了 push 到 Cloud Run 會失敗。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service_iam"
+  },
+  {
+    "key": "scheduler-job-crawl-tick",
+    "product": "Cloud Scheduler",
+    "resources": [
+      "google_cloud_scheduler_job"
+    ],
+    "hcl": "resource \"google_cloud_scheduler_job\" \"crawl_tick\" {\n  name      = \"crawl-tick\"\n  region    = \"asia-east1\"\n  schedule  = \"*/15 * * * *\"\n  time_zone = \"Asia/Taipei\"\n  http_target {\n    http_method = \"POST\"\n    uri         = \"${google_cloud_run_v2_service.scheduler.uri}/tick\"\n    oidc_token {\n      service_account_email = google_service_account.scheduler.email\n      audience              = google_cloud_run_v2_service.scheduler.uri\n    }\n  }\n}",
+    "say": "crawl-tick 用 Cloud Scheduler 依 cron 每 15 分鐘打一次 scheduler 服務，免自己跑排程機。",
+    "gotcha": "OIDC audience 要對應 Cloud Run 服務 URL，且 SA 需要 roles/run.invoker，否則 403。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_scheduler_job"
+  },
+  {
+    "key": "cloud-tasks-queue-crawl",
+    "product": "Cloud Tasks",
+    "resources": [
+      "google_cloud_tasks_queue"
+    ],
+    "hcl": "resource \"google_cloud_tasks_queue\" \"crawl\" {\n  for_each = toset([\"crawl-fb\", \"crawl-yt\", \"crawl-news\"])\n  name     = each.key\n  location = \"asia-east1\"\n  rate_limits {\n    max_dispatches_per_second = 5\n    max_concurrent_dispatches = 10\n  }\n  retry_config {\n    max_attempts = 5\n    min_backoff  = \"10s\"\n    max_backoff  = \"300s\"\n  }\n}",
+    "say": "三條佇列各管一個平台，rate_limits 控速、retry_config 控重試，避免被目標網站封鎖。",
+    "gotcha": "佇列名稱改了會重建；max_attempts 設 -1 代表無限重試，要小心。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_tasks_queue"
+  },
+  {
+    "key": "cloud-run-v2-scheduler",
+    "product": "Cloud Run",
+    "resources": [
+      "google_cloud_run_v2_service"
+    ],
+    "hcl": "resource \"google_cloud_run_v2_service\" \"scheduler\" {\n  name                = \"scheduler\"\n  location            = \"asia-east1\"\n  deletion_protection = false\n  template {\n    service_account = google_service_account.scheduler_app.email\n    scaling { max_instance_count = 1 }\n    containers {\n      image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/scheduler:latest\"\n    }\n  }\n}",
+    "say": "排程大腦是普通 Cloud Run 服務；Cloud Scheduler 只負責準時敲它一下。",
+    "gotcha": "max 1 個實例減少重複派工，但派工仍要冪等；不要開 allUsers 呼叫權限。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service"
+  },
+  {
+    "key": "cloud-run-v2-crawler-api",
+    "product": "Cloud Run",
+    "resources": [
+      "google_cloud_run_v2_service"
+    ],
+    "hcl": "resource \"google_cloud_run_v2_service\" \"crawler_api\" {\n  name                = \"crawler-api\"\n  location            = \"asia-east1\"\n  ingress             = \"INGRESS_TRAFFIC_ALL\"\n  deletion_protection = false\n  template {\n    service_account = google_service_account.api.email\n    containers {\n      image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/api:latest\"\n    }\n  }\n}",
+    "say": "crawler-api 是 Cloud Run 入口，流量來了自動擴容，沒有 VM 要管。",
+    "gotcha": "deletion_protection 預設 true，要先設 false 並 apply，否則 destroy 會失敗。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service"
+  },
+  {
+    "key": "cloud-run-v2-crawler-worker",
+    "product": "Cloud Run",
+    "resources": [
+      "google_cloud_run_v2_service"
+    ],
+    "hcl": "resource \"google_cloud_run_v2_service\" \"crawler_worker\" {\n  name     = \"crawler-worker\"\n  location = \"asia-east1\"\n  template {\n    service_account = google_service_account.push.email\n    scaling { max_instance_count = 50 }\n    vpc_access {\n      egress = \"ALL_TRAFFIC\"\n      network_interfaces { subnetwork = google_compute_subnetwork.crawler.id }\n    }\n    containers { image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/worker:latest\" }\n  }\n}",
+    "say": "crawler-worker 用 Direct VPC egress 出站進 VPC，搭配 NAT 就能用固定 IP 爬目標站。",
+    "gotcha": "egress 要設 ALL_TRAFFIC 所有外連才走 VPC；PRIVATE_RANGES_ONLY 只走內網。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service"
+  },
+  {
+    "key": "cloud-run-v2-parser",
+    "product": "Cloud Run",
+    "resources": [
+      "google_cloud_run_v2_service"
+    ],
+    "hcl": "resource \"google_cloud_run_v2_service\" \"parser\" {\n  name                = \"parser\"\n  location            = \"asia-east1\"\n  deletion_protection = false\n  template {\n    service_account = google_service_account.parser.email\n    scaling { max_instance_count = 20 }\n    containers { image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/parser:latest\" }\n  }\n}",
+    "say": "parser 是 Cloud Run 服務，從 qsearch-parser-sub 取訊息解析，負載高時自動擴容。",
+    "gotcha": "pull 型消費者放 Cloud Run 會因無請求被 CPU 節流，改用 push 或讓 CPU 常開。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service"
+  },
+  {
+    "key": "cloud-run-v2-job-qsearch-backfill",
+    "product": "Cloud Run",
+    "resources": [
+      "google_cloud_run_v2_job"
+    ],
+    "hcl": "resource \"google_cloud_run_v2_job\" \"qsearch_backfill\" {\n  name                = \"qsearch-backfill\"\n  location            = \"asia-east1\"\n  deletion_protection = false\n  template {\n    template {\n      timeout     = \"3600s\"\n      max_retries = 2\n      containers { image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/backfill:latest\" }\n    }\n  }\n}",
+    "say": "qsearch-backfill 是 Cloud Run Job，跑完就結束，適合一次性或排程回補，不用常駐。",
+    "gotcha": "Job 沒有 HTTP 入口，template 是雙層 template.template，少一層會報錯。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job"
+  },
+  {
+    "key": "gcs-bucket-raw-scraped",
+    "product": "Cloud Storage",
+    "resources": [
+      "google_storage_bucket"
+    ],
+    "hcl": "resource \"google_storage_bucket\" \"raw_scraped\" {\n  name                        = \"raw-scraped-data-bucket-823e12\"\n  location                    = \"ASIA-EAST1\"\n  uniform_bucket_level_access = true\n  public_access_prevention    = \"enforced\"\n  lifecycle_rule {\n    condition { age = 30 }\n    action { type = \"Delete\" }\n  }\n}",
+    "say": "原始爬蟲資料落地 GCS，開統一權限並用 lifecycle 自動清理，不用寫排程刪檔。",
+    "gotcha": "bucket 名稱全球唯一；開了 uniform_bucket_level_access 就不能再用物件層級 ACL。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket"
+  },
+  {
+    "key": "bq-dataset-sentiment-analytics",
+    "product": "BigQuery",
+    "resources": [
+      "google_bigquery_dataset"
+    ],
+    "hcl": "resource \"google_bigquery_dataset\" \"sentiment\" {\n  dataset_id                 = \"sentiment_analytics\"\n  location                   = \"asia-east1\"\n  description                = \"Crawler sentiment analytics\"\n  delete_contents_on_destroy = false\n}",
+    "say": "sentiment_analytics 是分析用資料集，給 BigQuery 查詢和 Pub/Sub 串流寫入使用。",
+    "gotcha": "dataset 的 location 建立後不能改，要換區只能刪掉重建。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset"
+  },
+  {
+    "key": "bq-table-ingest-partitioned",
+    "product": "BigQuery",
+    "resources": [
+      "google_bigquery_table"
+    ],
+    "hcl": "resource \"google_bigquery_table\" \"ingest_events\" {\n  dataset_id               = google_bigquery_dataset.sentiment.dataset_id\n  table_id                 = \"ingest_events\"\n  deletion_protection      = false\n  require_partition_filter = true\n  time_partitioning {\n    type          = \"DAY\"\n    expiration_ms = 7776000000\n  }\n}",
+    "say": "表按 ingest 日期分區，沒指定 field 就用寫入時間，查詢加分區條件可省掃描費。",
+    "gotcha": "require_partition_filter 寫在表頂層；time_partitioning 內那個已棄用。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_table"
+  },
+  {
+    "key": "sql-instance-crawler-db",
+    "product": "Cloud SQL",
+    "resources": [
+      "google_sql_database_instance",
+      "google_sql_database"
+    ],
+    "hcl": "resource \"google_sql_database_instance\" \"crawler_db\" {\n  name                = \"crawler-db\"\n  database_version    = \"POSTGRES_15\"\n  deletion_protection = false\n  settings {\n    tier    = \"db-custom-2-7680\"\n    edition = \"ENTERPRISE\"\n    ip_configuration { private_network = google_compute_network.crawler.id }\n  }\n}\nresource \"google_sql_database\" \"crawler\" {\n  name     = \"crawler\"\n  instance = google_sql_database_instance.crawler_db.name\n}",
+    "say": "crawler-db 是 Cloud SQL PostgreSQL 15，走私有 IP，應用程式在 VPC 內連線。",
+    "gotcha": "tier 與 edition 要配對：db-custom 需要 ENTERPRISE；PG16 起預設 ENTERPRISE_PLUS 會報錯。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/sql_database_instance"
+  },
+  {
+    "key": "gke-autopilot-cluster",
+    "product": "GKE",
+    "resources": [
+      "google_container_cluster"
+    ],
+    "hcl": "resource \"google_container_cluster\" \"crawler_autopilot\" {\n  name                = \"crawler-autopilot\"\n  location            = \"asia-east1\"\n  enable_autopilot    = true\n  deletion_protection = false\n  network             = google_compute_network.crawler.id\n  subnetwork          = google_compute_subnetwork.crawler.id\n}",
+    "say": "Autopilot 由 Google 管節點與擴縮，我們只管 Pod 和資源 request，不用顧機器。",
+    "gotcha": "Autopilot 節點由 Google 管，不能像 Standard 那樣自己加 node pool，部分功能也不支援。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster"
+  },
+  {
+    "key": "gke-node-pool-browser-pool",
+    "product": "GKE",
+    "resources": [
+      "google_container_node_pool"
+    ],
+    "hcl": "resource \"google_container_node_pool\" \"browser_pool\" {\n  name     = \"browser-pool\"\n  cluster  = google_container_cluster.crawler_standard.name\n  location = \"asia-east1\"\n  autoscaling {\n    min_node_count = 0\n    max_node_count = 10\n  }\n  node_config {\n    machine_type = \"e2-standard-4\"\n  }\n}",
+    "say": "browser-pool 是 Standard 叢集的獨立節點池，給 headless browser 用，可縮到 0 省錢。",
+    "gotcha": "autoscaling 的 min/max 是每個 zone 的數量，整體總量要用 total_min/max_node_count。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_node_pool"
+  },
+  {
+    "key": "k8s-hpa-v2-browser",
+    "product": "GKE / Kubernetes",
+    "resources": [
+      "kubernetes_horizontal_pod_autoscaler_v2"
+    ],
+    "hcl": "resource \"kubernetes_horizontal_pod_autoscaler_v2\" \"browser\" {\n  metadata {\n    name      = \"browser-hpa\"\n    namespace = \"crawler\"\n  }\n  spec {\n    min_replicas = 1\n    max_replicas = 20\n    scale_target_ref {\n      kind = \"Deployment\"\n      name = \"browser\"\n    }\n    metric {\n      type = \"Resource\"\n      resource {\n        name = \"cpu\"\n        target {\n          type                = \"Utilization\"\n          average_utilization = 70\n        }\n      }\n    }\n  }\n}",
+    "say": "browser 的 HPA 是 Kubernetes 物件，要用 kubernetes provider 管，不是 google provider。",
+    "gotcha": "HPA 算 CPU 使用率要求 Pod 設 CPU request，沒設 request 就無法正確擴縮。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/horizontal_pod_autoscaler_v2"
+  },
+  {
+    "key": "gce-instance-template-crawler",
+    "product": "Compute Engine",
+    "resources": [
+      "google_compute_instance_template"
+    ],
+    "hcl": "resource \"google_compute_instance_template\" \"crawler_legacy\" {\n  machine_type = \"e2-medium\"\n  disk { source_image = \"debian-cloud/debian-12\" }\n  network_interface {\n    subnetwork = google_compute_subnetwork.crawler.id\n  }\n  service_account {\n    email  = google_service_account.legacy.email\n    scopes = [\"cloud-platform\"]\n  }\n  lifecycle {\n    create_before_destroy = true\n  }\n}",
+    "say": "legacy 爬蟲用 instance template 當藍圖，template 不可原地修改，要更新就建新版本。",
+    "gotcha": "template 不能原地改，要設 create_before_destroy，且 name 要省略或用 name_prefix。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance_template"
+  },
+  {
+    "key": "gce-regional-mig-crawler",
+    "product": "Compute Engine",
+    "resources": [
+      "google_compute_region_instance_group_manager"
+    ],
+    "hcl": "resource \"google_compute_region_instance_group_manager\" \"crawler_legacy\" {\n  name               = \"crawler-legacy-mig\"\n  base_instance_name = \"crawler-legacy\"\n  region             = \"asia-east1\"\n  version {\n    instance_template = google_compute_instance_template.crawler_legacy.self_link\n  }\n  target_size = 2\n  auto_healing_policies {\n    health_check      = google_compute_health_check.legacy.id\n    initial_delay_sec = 300\n  }\n}",
+    "say": "legacy 爬蟲跑在區域 MIG 裡，掛健康檢查，壞掉的 VM 會被自動重建。",
+    "gotcha": "target_size 和 autoscaler 會互相打架，用 autoscaler 時就不要固定 target_size。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_instance_group_manager"
+  },
+  {
+    "key": "compute-static-ip-nat",
+    "product": "Cloud NAT",
+    "resources": [
+      "google_compute_address",
+      "google_compute_router_nat"
+    ],
+    "hcl": "resource \"google_compute_address\" \"egress\" {\n  name   = \"crawler-egress-ip\"\n  region = \"asia-east1\"\n}\nresource \"google_compute_router_nat\" \"crawler\" {\n  name                               = \"crawler-nat\"\n  router                             = google_compute_router.crawler.name\n  region                             = \"asia-east1\"\n  nat_ip_allocate_option             = \"MANUAL_ONLY\"\n  nat_ips                            = [google_compute_address.egress.self_link]\n  source_subnetwork_ip_ranges_to_nat = \"ALL_SUBNETWORKS_ALL_IP_RANGES\"\n}",
+    "say": "Cloud NAT 讓私網的 crawler 用固定 IP 出去，目標網站可以把這個 IP 加入白名單。",
+    "gotcha": "AUTO_ONLY 的出口 IP 會變；要固定 IP 必須 MANUAL_ONLY 並綁預留的 address。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router_nat"
+  },
+  {
+    "key": "compute-router",
+    "product": "Cloud NAT",
+    "resources": [
+      "google_compute_router"
+    ],
+    "hcl": "resource \"google_compute_router\" \"crawler\" {\n  name    = \"crawler-router\"\n  network = google_compute_network.crawler.id\n  region  = \"asia-east1\"\n  bgp {\n    asn = 64514\n  }\n}",
+    "say": "Router 是 Cloud NAT 的承載點，NAT 掛在 router 底下，流量經 router 進入 NAT。",
+    "gotcha": "NAT 只處理 VPC 內子網的出站流量；Cloud Run 要走 Direct VPC egress 才會經過它。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router"
+  },
+  {
+    "key": "cloudbuild-trigger-crawler-api",
+    "product": "Cloud Build",
+    "resources": [
+      "google_cloudbuild_trigger"
+    ],
+    "hcl": "resource \"google_cloudbuild_trigger\" \"crawler_api\" {\n  name     = \"crawler-api-main\"\n  location = \"asia-east1\"\n  github {\n    owner = \"your-github-org\"\n    name  = \"crawler\"\n    push {\n      branch = \"^main$\"\n    }\n  }\n  filename = \"cloudbuild.yaml\"\n}",
+    "say": "push 到 main 就由 Cloud Build 觸發建置，依 cloudbuild.yaml 部署到 Cloud Run。",
+    "gotcha": "filename 與 build 二選一；github 的 push 與 pull_request 也只能擇一。",
+    "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloudbuild_trigger"
+  }
+]

@@ -1,0 +1,13 @@
+{
+ "arch_00_overall.html": "architecture/overview/diagram-overall.png",
+ "arch_a1_partition_grid.html": "architecture/a-backfill/diagram-partition-grid.png",
+ "arch_a2_batch_flow_gates.html": "architecture/a-backfill/diagram-batch-flow-gates.png",
+ "arch_a3_timeline_45d.html": "architecture/a-backfill/diagram-timeline-45d.png",
+ "arch_b1_dictionary_lifecycle.html": "architecture/b-dictionary/diagram-dictionary-lifecycle.png",
+ "arch_b2_shared_core_overlays.html": "architecture/b-dictionary/diagram-shared-core-overlays.png",
+ "arch_c1_same_artifact.html": "architecture/c-consistency/diagram-same-artifact.png",
+ "arch_c2_change_tiers.html": "architecture/c-consistency/diagram-change-tiers.png",
+ "arch_c3_release_sequence.html": "architecture/c-consistency/diagram-release-sequence.png",
+ "arch_r1_realenv.html": "architecture/realenv/diagram-realenv-stack.png",
+ "arch_r2_sandbox.html": "architecture/realenv/diagram-sandbox-scenarios.png"
+}

@@ -1,0 +1,38 @@
+$ python q5/code/schedule/schedule.py --mode contract
+mode=contract
+role_hours DE=42 BE=24 FE=10 ALL=4
+project_hours=46 critical_chain=1→2→3→8→9 chain_hours=46
+total_float_h 1:0 2:0 3:0 4:16 5:16 6:18 7:16 8:0 9:0
+zero_float 1,2,3,8,9
+working_days raw=5.75 x1.3=7.475 ceil+1=9
+calendar_days_by_start 一=11 二=11 三=13 四=13 五=13
+                      D1   D2   D3   D4   D5   D6
+DE  1 mapping         ■■■·|····|····|····|····|···  0-6h
+DE  2 crawler         ···■|■■■■|■···|····|····|···  6-18h
+DE  3 backfill        ····|····|·■■■|■■■■|■···|···  18-34h
+BE  4 data-layer      ■■■■|····|····|····|····|···  0-8h
+BE  5 analytics       ····|■■■■|■···|····|····|···  8-18h
+BE  6 export          ····|····|·■■■|····|····|···  18-24h
+FE  7 frontend        ····|■■■■|■···|····|····|···  8-18h
+DE  8 integrate       ····|····|····|····|·■■■|■··  34-42h
+ALL 9 accept          ····|····|····|····|····|·■■  42-46h
+exit=0
+$ python q5/code/schedule/schedule.py --mode strict
+mode=strict
+role_hours DE=42 BE=24 FE=10 ALL=4
+project_hours=46 critical_chain=1→2→3→8→9 chain_hours=46
+total_float_h 1:0 2:0 3:0 4:0 5:0 6:12 7:0 8:0 9:0
+zero_float 1,2,3,4,5,7,8,9
+working_days raw=5.75 x1.3=7.475 ceil+1=9
+calendar_days_by_start 一=11 二=11 三=13 四=13 五=13
+                      D1   D2   D3   D4   D5   D6
+DE  1 mapping         ■■■·|····|····|····|····|···  0-6h
+DE  2 crawler         ···■|■■■■|■···|····|····|···  6-18h
+DE  3 backfill        ····|····|·■■■|■■■■|■···|···  18-34h
+BE  4 data-layer      ···■|■■■·|····|····|····|···  6-14h
+BE  5 analytics       ····|···■|■■■■|····|····|···  14-24h
+BE  6 export          ····|····|····|■■■·|····|···  24-30h
+FE  7 frontend        ····|····|····|■■■■|■···|···  24-34h
+DE  8 integrate       ····|····|····|····|·■■■|■··  34-42h
+ALL 9 accept          ····|····|····|····|····|·■■  42-46h
+exit=0

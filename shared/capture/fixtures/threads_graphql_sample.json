@@ -1,0 +1,21 @@
+{
+ "source": "Threads 個人頁載入時網頁自己送出的 GraphQL 回應片段（@nasa），只留前 2 串的 code、帳號、taken_at、內文",
+ "captured_at": "2026-10-30T01:55:59+08:00",
+ "friendly_name": "BarcelonaProfileThreadsTabRefetchableDirectQuery",
+ "doc_id": "28880431481598345",
+ "edges": 11,
+ "items": [
+  {
+   "code": "DeaX_rOGaz-",
+   "username": "nasa",
+   "taken_at": 1791846387,
+   "text": "Space news, hot off the trail: NASA’s Perseverance Mars rover has driven farther than any vehicle ever has on the surface of another world! \n\nOn Oct. 11, the rover’s odometer reached 28.10 miles (45.22 kilometers), eclipsing the record of 28.06 miles (45.16 kilometers) set by NASA’s Opportunity rover, which explored Mars from 2004 to 2018."
+  },
+  {
+   "code": "DeUWxGgjHSK",
+   "username": "nasa",
+   "taken_at": 1791644416,
+   "text": "Whatever your weekend holds, we hope it has at least one moment this beautiful!"
+  }
+ ]
+}

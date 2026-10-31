@@ -1,0 +1,50 @@
+{
+  "before": {
+    "overlay_and_top15": [
+      "qsearch-q6-2026.10.30.5",
+      [
+        "78th",
+        "accords",
+        "and",
+        "artemis",
+        "become",
+        "doing",
+        "exploration",
+        "has",
+        "in",
+        "nation",
+        "of",
+        "safe",
+        "sign",
+        "so",
+        "space"
+      ]
+    ],
+    "es_index_total": 1805267
+  },
+  "api_picked_up_seconds": 21.2,
+  "after": {
+    "overlay_and_top15": [
+      "qsearch-q6-2026.10.30.6",
+      [
+        "78th",
+        "accords",
+        "artemis",
+        "become",
+        "doing",
+        "exploration",
+        "nation",
+        "safe",
+        "sign",
+        "space",
+        "support",
+        "sustainable",
+        "vietnam",
+        "welcome",
+        "一天"
+      ]
+    ],
+    "es_index_total": 1805267
+  },
+  "es_writes_caused": 0
+}

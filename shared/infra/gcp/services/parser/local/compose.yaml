@@ -1,0 +1,48 @@
+# 本機驗證用（不是部署設定）：Pub/Sub 模擬器 + parser 容器 + 收 header 的 echo 服務。
+# 用法見同目錄 VERIFY.md。只綁 127.0.0.1:18280-18285，不碰真的 GCP。
+#   docker compose -p qsearch-gcplocal -f compose.yaml up -d --no-build
+#   docker compose -p qsearch-gcplocal -f compose.yaml down -v
+name: qsearch-gcplocal
+
+services:
+  pubsub:
+    # 官方 Cloud SDK 模擬器映像（含 Java 與 pubsub emulator）。
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command:
+      - gcloud
+      - beta
+      - emulators
+      - pubsub
+      - start
+      - --host-port=0.0.0.0:8085
+      - --project=qsearch-local
+    ports:
+      - "127.0.0.1:18285:8085"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8085/"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  parser:
+    # 映像由 ../Dockerfile 建置（main.py／Dockerfile／requirements.txt 原封不動）。
+    # 能直接連 Docker Hub 的環境可改用 `docker compose build parser`。
+    image: qsearch-gcplocal-parser:local
+    build:
+      context: ..
+    environment:
+      PORT: "8080"
+    ports:
+      - "127.0.0.1:18280:8080"
+
+  header-echo:
+    # 第二條 push 訂閱的目的地：記錄模擬器實際送出的 HTTP header 與 envelope，
+    # 用來確認模擬器有沒有帶 OIDC 的 Authorization header。一律回 204。
+    image: qsearch-gcplocal-parser:local
+    command: ["python", "/echo/header_echo.py"]
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./header_echo.py:/echo/header_echo.py:ro
+    ports:
+      - "127.0.0.1:18281:8080"

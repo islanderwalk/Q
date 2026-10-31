@@ -1,0 +1,19 @@
+{
+ "note": "開發時手動送出的請求（不在 fetch_log.jsonl 內；時間為約略，到分鐘），算進每站 30 次上限。都未登入、正常桌面 UA；Threads 只在記憶體解析，不存 HTML。",
+ "requests": [
+  {"t": "2026-10-31T01:31+08:00", "tool": "curl", "url": "https://www.ptt.cc/bbs/Kaohsiung/index.html", "status": 200, "purpose": "連線測試"},
+  {"t": "2026-10-31T01:31+08:00", "tool": "curl", "url": "https://www.threads.com/@nasa", "status": 200, "purpose": "連線測試"},
+  {"t": "2026-10-31T01:31+08:00", "tool": "curl", "url": "https://www.youtube.com/@TVBSNEWS01", "status": 200, "purpose": "連線測試"},
+  {"t": "2026-10-31T01:31+08:00", "tool": "curl", "url": "https://news.ltn.com.tw/rss/all.xml", "status": 200, "purpose": "連線測試（curl 拿到 200；之後 python requests 兩次 403）"},
+  {"t": "2026-10-31T01:31+08:00", "tool": "curl", "url": "https://feeds.feedburner.com/rsscna/politics", "status": 200, "purpose": "連線測試"},
+  {"t": "2026-10-31T01:31+08:00", "tool": "curl", "url": "https://news.pts.org.tw/xml/newsfeed.xml", "status": 200, "purpose": "連線測試"},
+  {"t": "2026-10-31T01:32+08:00", "tool": "python requests", "url": "https://www.threads.com/@cnanews_tw", "status": 200, "purpose": "確認帳號存在、內嵌貼文數"},
+  {"t": "2026-10-31T01:32+08:00", "tool": "python requests", "url": "https://www.threads.com/@pts.news", "status": 200, "purpose": "確認帳號存在、內嵌貼文數"},
+  {"t": "2026-10-31T01:32+08:00", "tool": "python requests", "url": "https://www.threads.com/@news.ftv", "status": 200, "purpose": "確認帳號存在（舊帳號，最後貼文 2026-06；改用本尊 @ftvnews）"},
+  {"t": "2026-10-31T01:32+08:00", "tool": "python requests", "url": "https://www.threads.com/@pts.news/post/DfH2RHPGS38", "status": 200, "purpose": "看貼文頁內嵌 JSON 有沒有回覆"},
+  {"t": "2026-10-31T01:33+08:00", "tool": "python requests", "url": "https://www.threads.com/@cnanews_tw/post/DfHUs6Ugfgl", "status": 200, "purpose": "分辨回覆與相關貼文欄位"},
+  {"t": "2026-10-31T01:33+08:00", "tool": "python requests", "url": "https://www.threads.com/@pts.news/post/DfH2RHPGS38", "status": 200, "purpose": "確認 is_reply／reply_to_author 欄位"},
+  {"t": "2026-10-31T01:32+08:00", "tool": "curl", "url": "https://www.ptt.cc/atom/Kaohsiung.xml", "status": 200, "purpose": "確認 Atom 內容是否完整（只有前幾行）"},
+  {"t": "2026-10-31T01:38+08:00", "tool": "python requests", "url": "https://news.ltn.com.tw/rss/all.xml", "status": 403, "purpose": "改 Accept 為 RSS 再試一次，仍 403；不再嘗試"}
+ ]
+}

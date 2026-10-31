@@ -1,0 +1,952 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>QSearch Q6 文字雲斷詞</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: masthead + sticky tab rail; one reading column (max 1000px) whose panes swap by #hash.
+   Tokens render as type slugs (活字), the page's one recurring motif. */
+:root {
+  --bg: #f2f5f6;
+  --surface: #ffffff;
+  --sunk: #e8eef0;
+  --ink: #16222b;
+  --muted: #55646f;
+  --line: #d6dee2;
+  --accent: #0c6b63;
+  --accent-bg: #e1f1ee;
+  --warn: #9a5806;
+  --warn-bg: #fcf1df;
+  --t-url: #9a5806;   --t-url-bg: #fbeedb;
+  --t-phone: #6a3cc0; --t-phone-bg: #efe8fb;
+  --t-stop: #56656f;  --t-stop-bg: #e9eef1;
+  --t-split: #b0223d; --t-split-bg: #fbe7eb;
+  --t-punct: #7d8a93; --t-punct-bg: #f3f6f7;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1316; --surface: #141c20; --sunk: #10171a; --ink: #e2e9ec; --muted: #94a3ac; --line: #26323a;
+    --accent: #3cc2b2; --accent-bg: #0f2b28; --warn: #f0b04a; --warn-bg: #2b2009;
+    --t-url: #f0b04a; --t-url-bg: #2c210c;
+    --t-phone: #b99cf5; --t-phone-bg: #231a38;
+    --t-stop: #9fb0ba; --t-stop-bg: #1b2429;
+    --t-split: #f3869b; --t-split-bg: #351820;
+    --t-punct: #7f8e97; --t-punct-bg: #161f23;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1316; --surface: #141c20; --sunk: #10171a; --ink: #e2e9ec; --muted: #94a3ac; --line: #26323a;
+  --accent: #3cc2b2; --accent-bg: #0f2b28; --warn: #f0b04a; --warn-bg: #2b2009;
+  --t-url: #f0b04a; --t-url-bg: #2c210c;
+  --t-phone: #b99cf5; --t-phone-bg: #231a38;
+  --t-stop: #9fb0ba; --t-stop-bg: #1b2429;
+  --t-split: #f3869b; --t-split-bg: #351820;
+  --t-punct: #7f8e97; --t-punct-bg: #161f23;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.7;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--surface);
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+code, kbd, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.35; margin: 0; }
+p { margin: 0; }
+
+.wrap {
+  max-width: 1000px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* masthead */
+.mast { background: var(--surface); border-bottom: 1px solid var(--line); }
+.mast .wrap { padding-block: 28px 18px; display: grid; gap: 10px; }
+.eyebrow { font-size: 12.5px; letter-spacing: 0.08em; color: var(--muted); }
+.mast h1 { font-size: clamp(26px, 4.4vw, 38px); font-weight: 700; }
+.lede { max-width: 68ch; color: var(--muted); font-size: 15.5px; }
+.mast-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.mast-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+
+/* tab rail */
+.rail {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  flex: none; border: 0; background: none; color: var(--muted); cursor: pointer;
+  font: inherit; font-size: 14px; padding: 12px 12px 10px; border-bottom: 2px solid transparent; white-space: nowrap;
+}
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+main .wrap { padding-block: 28px 64px; }
+.pane { display: grid; gap: 28px; }
+.pane > header { display: grid; gap: 8px; }
+.pane h2 { font-size: clamp(21px, 3vw, 26px); font-weight: 700; }
+.pane h3 { font-size: 17.5px; font-weight: 600; }
+.sub { color: var(--muted); max-width: 70ch; }
+.block { display: grid; gap: 12px; }
+.prose { display: grid; gap: 10px; max-width: 72ch; }
+.prose ul, .prose ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.thesis {
+  background: var(--accent-bg); border-radius: 10px; padding: 16px 18px; color: var(--ink);
+  font-size: 16px; line-height: 1.75; max-width: 80ch;
+}
+.thesis b { color: var(--accent); }
+
+/* figures row */
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.fig .num { font-family: var(--font-mono); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fig .num small { font-size: 14px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+.fig .cap { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* evidence tags */
+.ev { display: inline-block; font-size: 11px; line-height: 1; padding: 4px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; vertical-align: 2px; font-family: var(--font-body); }
+.ev-doc { color: var(--accent); }
+.ev-run { color: var(--t-phone); }
+.ev-paper { color: var(--t-url); }
+.ev-inf { color: var(--muted); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 12.5px; color: var(--muted); font-weight: 600; letter-spacing: 0.03em; background: var(--sunk); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .hl { color: var(--t-split); font-weight: 600; }
+td .ok { color: var(--accent); font-weight: 600; }
+tr.pick td { background: var(--accent-bg); }
+.tbl.wide table { min-width: 760px; }
+.tbl.mid table { min-width: 560px; }
+
+/* token slugs */
+.toks { display: flex; flex-wrap: wrap; gap: 5px; }
+.tok {
+  display: inline-flex; align-items: center; font-size: 14px; line-height: 1.2; padding: 4px 7px;
+  border-radius: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--sunk);
+}
+.tok[data-k="url"]   { color: var(--t-url);   background: var(--t-url-bg);   border-color: transparent; }
+.tok[data-k="phone"] { color: var(--t-phone); background: var(--t-phone-bg); border-color: transparent; }
+.tok[data-k="stop"]  { color: var(--t-stop);  background: var(--t-stop-bg);  border-color: transparent; }
+.tok[data-k="split"] { color: var(--t-split); background: var(--t-split-bg); border-color: transparent; font-weight: 600; }
+.tok[data-k="punct"] { color: var(--t-punct); background: var(--t-punct-bg); border-color: transparent; }
+.tok[data-k="kept"]  { color: var(--accent); background: var(--accent-bg); border-color: transparent; font-weight: 600; }
+.tok[data-k="soft_stop"] { color: var(--t-stop); background: var(--surface); border-style: dashed; }
+.tok[data-k="hashtag"] { color: var(--accent); background: var(--surface); border-color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.legend .tok { font-size: 12px; padding: 2px 6px; }
+
+.lab-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.lab-pick button {
+  font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); border-radius: 999px; padding: 6px 12px;
+}
+.lab-pick button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); font-weight: 600; }
+.lab-grid { display: grid; gap: 14px; }
+.lab-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 14px; align-items: start; }
+.lab-row > .lbl { font-size: 13px; color: var(--muted); padding-top: 4px; }
+.lab-row > .lbl b { display: block; color: var(--ink); font-size: 14px; }
+.raw { font-size: 15px; background: var(--sunk); border-radius: 6px; padding: 8px 10px; overflow-wrap: anywhere; }
+.dropped { font-size: 13px; color: var(--muted); }
+
+/* code */
+.code { position: relative; min-width: 0; }
+.code pre {
+  margin: 0; padding: 40px 14px 14px; overflow-x: auto; background: var(--sunk); border: 1px solid var(--line);
+  border-radius: 8px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; tab-size: 2;
+}
+.code .cap { position: absolute; top: 10px; left: 14px; font-size: 12px; color: var(--muted); }
+.copy {
+  position: absolute; top: 7px; right: 7px; font: inherit; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 6px; padding: 3px 10px;
+}
+.copy:hover { color: var(--ink); }
+
+/* steps */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; }
+.steps li::before {
+  counter-increment: s; content: counter(s);
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 600; font-size: 13px;
+  color: var(--accent); background: var(--accent-bg);
+}
+.steps b { display: block; }
+.steps p { color: var(--muted); font-size: 14px; }
+
+/* gates */
+.gates { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.gate { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px; display: grid; gap: 6px; align-content: start; }
+.gate .gid { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 600; }
+.gate b { font-size: 15px; }
+.gate p { font-size: 13.5px; color: var(--muted); }
+
+/* flow */
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.node { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px; display: grid; gap: 2px; position: relative; }
+.node b { font-size: 14px; }
+.node span { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.node.hot { border-color: var(--accent); background: var(--accent-bg); }
+.lane-title { font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* gantt */
+.gantt { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px; }
+.g-grid { min-width: 640px; display: grid; grid-template-columns: 150px repeat(45, minmax(0, 1fr)); row-gap: 8px; align-items: center; font-size: 13px; }
+.g-lbl { padding-right: 10px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-lbl small { color: var(--muted); font-family: var(--font-mono); margin-left: 4px; }
+.g-bar { height: 18px; border-radius: 4px; background: var(--accent); opacity: 0.85; }
+.g-bar.crit { background: var(--t-split); }
+.g-bar.buf { background: repeating-linear-gradient(45deg, var(--line), var(--line) 4px, transparent 4px, transparent 8px); opacity: 1; border: 1px solid var(--line); }
+.g-bar.mach { height: 8px; background: var(--t-phone); opacity: 0.7; }
+.g-axis { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+.g-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.g-legend i { display: inline-block; width: 18px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+
+/* answer */
+.ans { display: grid; gap: 14px; }
+.ans-part { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.ans-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.ans-head b { font-family: var(--font-display); font-size: 17px; }
+.ans-head span { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.ans-body { font-size: 15.5px; line-height: 1.85; }
+.counter { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 13.5px; color: var(--muted); }
+.counter .big { font-family: var(--font-mono); font-size: 22px; color: var(--ink); font-weight: 600; }
+.counter .ok { color: var(--accent); font-weight: 600; }
+.btn {
+  font: inherit; font-size: 13.5px; cursor: pointer; border-radius: 8px; padding: 7px 14px;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface); font-weight: 600;
+}
+.btn.ghost { background: var(--surface); color: var(--accent); }
+.toast { font-size: 13px; color: var(--accent); min-height: 1.4em; }
+
+/* drill cards */
+.cards { display: grid; gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.card h3 { font-size: 16.5px; }
+.say, .trap { font-size: 14.5px; line-height: 1.75; }
+.say::before, .trap::before { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 2px; }
+
+.trap { color: var(--muted); border-left: 3px solid var(--warn); padding-left: 12px; }
+
+.oneliner { background: var(--warn-bg); border-radius: 10px; padding: 14px 16px; font-size: 15px; line-height: 1.8; max-width: 82ch; }
+
+
+/* sources */
+.src { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.src li { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.src li div { min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
+.src li div small { display: block; color: var(--muted); font-size: 12.5px; }
+
+.note { font-size: 13px; color: var(--muted); max-width: 80ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+
+@media (max-width: 640px) {
+  body { font-size: 14.5px; }
+  .lab-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .src li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .panel { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <p class="eyebrow">QSearch 資料工程師筆試 v2026.07 · 第 6 題 · Planning 能力</p>
+    <h1>文字雲斷詞 Pipeline 重建</h1>
+    <p class="lede">題目列了五個症狀，根因只有三類：斷詞前沒清洗、沒有停用詞過濾、字典缺詞又和搜尋端不一致。這份研究把答案拆成回朔策略、字典維護、版本一致性三塊，關鍵假設都用 jieba 在 41.8 萬筆 PTT 語料上實測過。</p>
+    <div class="mast-meta">
+      <span><i class="dot"></i>研究日期 2026-10-29</span>
+      <span>題目上限 600 字 · 本頁另附 599 字答案稿</span>
+    </div>
+  </div>
+</header>
+
+<div class="rail">
+  <div class="wrap">
+    <nav class="tabs" role="tablist" aria-label="章節">
+      <button type="button" role="tab" id="t-overview" data-tab="overview">總覽</button>
+      <button type="button" role="tab" id="t-lab" data-tab="lab">實測</button>
+      <button type="button" role="tab" id="t-backfill" data-tab="backfill">(a) 回朔</button>
+      <button type="button" role="tab" id="t-dictionary" data-tab="dictionary">(b) 字典</button>
+      <button type="button" role="tab" id="t-consistency" data-tab="consistency">(c) 一致性</button>
+      <button type="button" role="tab" id="t-answer" data-tab="answer">600 字答案</button>
+      <button type="button" role="tab" id="t-sources" data-tab="sources">來源</button>
+    </nav>
+  </div>
+</div>
+
+<main>
+<div class="wrap">
+
+<!-- ============ 總覽 ============ -->
+<section class="pane" id="p-overview" role="tabpanel" aria-labelledby="t-overview">
+  <header>
+    <h2>總覽</h2>
+    <p class="sub">先看題目在考什麼，再看五個症狀各自對應到哪個修法和哪個自動檢查。</p>
+  </header>
+
+  <p class="thesis">策略一句話：先把「爛」變成<b>五個能自動檢查的指標</b>，再用<b>「渠道×月」小批次</b>回補、每批過閘門；字典<b>共用一份核心詞庫</b>，搜尋和文字雲各自加用途層；最後讓斷詞成為 <b>（原文, 字典版本）的純函數</b>，字典一改，只重跑含那些字串的文章。</p>
+
+  <div class="figs">
+    <div class="fig"><span class="num">28.6<small>萬字/秒/核</small></span><span class="cap">jieba 精確模式＋HMM、繁中大字典，單核實測 <span class="ev ev-run">實測</span></span></div>
+    <div class="fig"><span class="num">52 → 0<small>篇</small></span><span class="cap">加 1 個新詞後，20 萬篇裡「不含該詞卻改變」的貼文數；固定 total 後歸零 <span class="ev ev-run">實測</span></span></div>
+    <div class="fig"><span class="num">270<small>批</small></span><span class="cap">6 渠道 × 2023/01–2026/10 的月份，Threads 從 2023/07 起，平均每批 185 萬篇 <span class="ev ev-inf">推算</span></span></div>
+    <div class="fig"><span class="num">45<small>工作天</small></span><span class="cap">一位資料工程師，從 POC 到 6 渠道上線；改用不同字典約 65 天 <span class="ev ev-inf">估算</span></span></div>
+  </div>
+
+  <div class="block">
+    <h3>五個症狀 → 根因 → 修法 → 閘門</h3>
+    <div class="tbl wide">
+      <table>
+        <thead><tr><th>症狀</th><th>根因</th><th>修法</th><th>自動檢查（每批閘門）</th><th>實測例子（jieba 預設）</th></tr></thead>
+        <tbody>
+          <tr><td>短網址後綴出現</td><td>斷詞前沒移除網址，斷詞器把網址切碎</td><td>斷詞前用 regex 移除網址（含沒有 http 的短網址網域）；斷詞後丟掉英數混合的亂碼</td><td>top-200 中英數混合亂碼數 = 0</td><td><code>example/./com/3xYz9Ab</code></td></tr>
+          <tr><td>電話號碼變詞彙</td><td>沒清電話；數字直接當詞</td><td>regex 移除電話；純數字丟棄，保留白名單（228、101、雙11）</td><td>top-200 純數字 ⊆ 白名單</td><td><code>0912/-/345/-/678</code></td></tr>
+          <tr><td>助詞「的、了、在」</td><td>沒有停用詞與詞性過濾</td><td>停用詞分兩層：硬停用詞入庫前丟；軟停用詞查詢時 exclude，PM 可調</td><td>top-200 與停用詞表交集 = 0</td><td><code>我/在/Threads/上/看到</code></td></tr>
+          <tr><td>地名被拆散</td><td>字典缺詞，斷詞器退回單字，或 HMM 亂黏</td><td>匯入地名庫（行政區、商圈、夜市、捷運站），臺/台變體正規化</td><td>必不可拆清單 100% 通過</td><td><code>臺/北車/站</code>、<code>去瑞豐/夜市</code></td></tr>
+          <tr><td>搜尋高頻詞不在文字雲</td><td>文字雲字典 ≠ 搜尋字典；熱門搜尋詞被切開</td><td>共用核心詞庫；每週把搜尋熱詞灌進候選</td><td>前 1,000 名搜尋詞斷詞後保持完整 ≥ 99%</td><td><code>台積/電法/說/會</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">表中例子是 jieba 0.42.1 預設字典對自寫示意貼文的實際輸出。題目裡「高雄市」被拆成「高/雄/市」來自他們自己的舊字典；jieba 預設字典本身切得出「高雄市」，所以這裡用「臺北車站」「瑞豐夜市」示範同一類問題。</p>
+  </div>
+
+  <div class="two">
+    <div class="panel">
+      <h3>這題在考什麼</h3>
+      <ul class="prose" style="padding-left:1.2em;margin:0">
+        <li>估算要先列假設，並把<strong>機器時間</strong>和<strong>人力時間</strong>分開。</li>
+        <li>批次之間要有<strong>可以自動檢查</strong>的品質閘門，光比對筆數不夠。</li>
+        <li>字典要有維護流程，並說清楚和搜尋端共用與否的代價。</li>
+        <li>新舊結果並行、批次與串流一致，字典更新時影響範圍可控。</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>QSearch 背景（公開資料）</h3>
+      <ul class="prose" style="padding-left:1.2em;margin:0">
+        <li>2014 年在台灣成立，Google Cloud 客戶案例列出 BigQuery、Cloud Storage、Pub/Sub、GKE。<span class="ev ev-doc">官方案例</span></li>
+        <li>案例自述「8 小時分析 432 億筆紀錄」（Analyzes 43.2 billion records in 8 hours）。<span class="ev ev-doc">官方案例</span></li>
+        <li>所以回朔讀原文走 BigQuery／GCS、串流沿用 Pub/Sub，和他們現有的技術棧一致。<span class="ev ev-inf">推論</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 實測 ============ -->
+<section class="pane" id="p-lab" role="tabpanel" aria-labelledby="t-lab" hidden>
+  <header>
+    <h2>實測：jieba 在繁中社群文字上的表現</h2>
+    <p class="sub">環境：Python 3.13、jieba 0.42.1、Intel Xeon 2.1GHz 單核。語料是 PTT 八卦板問答 418,202 筆（2015–2017），每筆把問句加推文當作一篇，平均 29.2 字。</p>
+  </header>
+
+  <div class="panel">
+    <h3>斷詞實驗台</h3>
+    <p class="note">示意貼文是自己寫的，不是真實資料；下面的斷詞結果是 jieba 的實際輸出。v1 = 預設字典、不清洗。v2 = 清洗 + dict.txt.big + 19 個自訂詞 + 停用詞、數字、單字過濾 + 臺→台。</p>
+    <div class="lab-pick" id="labPick" role="group" aria-label="選擇示意貼文"></div>
+    <div class="lab-grid">
+      <div class="lab-row"><div class="lbl"><b>原文</b>示意貼文</div><div class="raw" id="labRaw"></div></div>
+      <div class="lab-row"><div class="lbl"><b>v1</b>預設、不清洗</div><div class="toks" id="labV1"></div></div>
+      <div class="lab-row"><div class="lbl"><b>v2</b>清洗＋字典＋過濾</div><div class="toks" id="labV2"></div></div>
+      <div class="lab-row"><div class="lbl"><b>v2 丟掉的</b>入庫前過濾</div><div class="dropped" id="labDrop"></div></div>
+    </div>
+    <div class="legend">
+      <span class="tok" data-k="url">網址碎片</span>
+      <span class="tok" data-k="phone">電話碎片</span>
+      <span class="tok" data-k="split">實體被切開</span>
+      <span class="tok" data-k="stop">停用詞</span>
+      <span class="tok" data-k="punct">標點</span>
+      <span class="tok" data-k="kept">保留</span>
+      <span class="tok" data-k="soft_stop">軟停用詞（查詢時排除）</span>
+      <span class="tok" data-k="hashtag">hashtag</span>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>吞吐量（單一行程、10 萬篇、290 萬字）</h3>
+    <div class="tbl mid"><table id="tpTable"><thead><tr><th>字典</th><th>HMM</th><th class="num">秒</th><th class="num">字／秒</th></tr></thead><tbody></tbody></table></div>
+    <p class="note">對照文獻：jieba README 寫精確模式 400 KB/s（i7-2600 3.4GHz）；ROCLING 2022 論文在同一台機器斷 4 萬句、每句 200 字，jieba 約 45 秒、CKIP 約 540 秒（圖 3 讀值）。換算全量：5 億篇 × 平均 300 字 ÷ 28.6 萬字/秒 ≈ 146 核心小時。</p>
+  </div>
+
+  <div class="block">
+    <h3>加一個新詞，會影響哪些文章？</h3>
+    <div class="prose">
+      <p>jieba 對每個候選切法打分：每個詞 <code>log(詞頻) − log(total)</code> 加總，取最大。<code>add_word</code> 會把新詞頻率加進 <code>total</code>（原始碼第 428–429 行），覆寫舊詞時也不會扣回舊頻率。所以不含新詞的句子，候選切法雖然不變，分數卻全部平移；原本平手的切法可能翻轉，平移大時還會偏向切出較少的詞。</p>
+    </div>
+    <div class="tbl mid"><table id="brTable"><thead><tr><th>情境（取樣 200,000 篇）</th><th>total</th><th class="num">含新詞且改變</th><th class="num">不含新詞卻改變</th></tr></thead><tbody></tbody></table></div>
+    <div class="tbl mid"><table id="tieTable"><thead><tr><th>不含新詞卻改變的例子</th><th>之前</th><th>之後</th></tr></thead><tbody></tbody></table></div>
+    <p class="note">預設累加時，小幅改變多半是平手翻轉（同一組詞換了順序，例如「咕咕／咕」），對詞頻統計沒有影響；給極端頻率時則是真的少切一刀（「他／國」→「他國」）。把 total 固定成字典版本裡的常數之後，三種情境都是 0：不含變更字串的句子在數學上不會變，影響範圍就能用「原文含這個字串」精確圈出。</p>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>常駐熱更新 vs 整份重載</h3>
+      <div class="panel" id="hotFresh"></div>
+    </div>
+    <div class="block">
+      <h3>開源大字典缺的台灣實體</h3>
+      <div class="panel">
+        <p class="note">dict.txt.big 有 58 萬詞，官方說它對繁體支援較好，但下面這些都不在裡面：</p>
+        <div class="toks" id="missing"></div>
+        <p class="note">結論：一定要有自己的台灣詞庫，光靠開源字典不夠。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>地名：三種設定的切法</h3>
+      <div class="tbl"><table id="placeTable"><thead><tr><th>句子</th><th>預設字典</th><th>大字典</th><th>大字典、關 HMM</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="block">
+      <h3>同一份字典，兩種粒度</h3>
+      <div class="tbl"><table id="granTable"><thead><tr><th>句子</th><th>精確模式（文字雲）</th><th>搜尋模式（召回）</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ (a) 回朔 ============ -->
+<section class="pane" id="p-backfill" role="tabpanel" aria-labelledby="t-backfill" hidden>
+  <header>
+    <h2>(a) 歷史資料回朔斷詞</h2>
+    <p class="sub">批次怎麼切、怎麼排、每批要過什麼閘門，以及一位工程師要幾個工作天。</p>
+  </header>
+
+  <div class="block">
+    <h3>批次單位：比較四種切法</h3>
+    <div class="tbl wide">
+      <table>
+        <thead><tr><th>單位</th><th>批數 × 大小</th><th>好處</th><th>問題</th></tr></thead>
+        <tbody>
+          <tr><td>年份</td><td>4 批，每批上億篇</td><td>排程簡單</td><td>失敗要重跑一整年；很久才看得到第一個結果；渠道規則混在一起</td></tr>
+          <tr><td>渠道</td><td>6 批，大小差很多</td><td>清洗規則一致</td><td>FB 這類大渠道一批跑好幾天，中途無法檢查</td></tr>
+          <tr class="pick"><td><strong>渠道 × 月</strong></td><td>約 270 批，平均 185 萬篇</td><td>渠道決定清洗規則和驗收標準；月份控制批量，限速下每批約 10 分鐘寫完；失敗只重跑一批；可對齊依月份切的 index</td><td>批數多，要有分區清單與檢查點表</td></tr>
+          <tr><td>doc_id 雜湊</td><td>任意</td><td>大小平均，適合平行</td><td>沒有業務意義，不能當驗收單位；只用在大分區內切 slice</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">排序：渠道內由新到舊，最常被查的近期資料先完成。v2 在切預設前都只是 A/B 選項，所以從新的開始不會影響客戶。Threads 2023 年 7 月才上線，只有約 40 個月分區。</p>
+  </div>
+
+  <div class="block">
+    <h3>一批怎麼跑</h3>
+    <p class="lane-title">回朔（批次）</p>
+    <div class="flow">
+      <div class="node"><b>分區清單</b><span>BigQuery 表：channel、month、狀態、slice 數、檢查點</span></div>
+      <div class="node"><b>讀原文</b><span>BigQuery Storage Read，不從 ES scroll，讀取壓力不落在線上叢集</span></div>
+      <div class="node hot"><b>清洗 → 斷詞 → 過濾</b><span>Cloud Run Jobs，一個 task 一個 slice；同一個 segmenter 映像</span></div>
+      <div class="node"><b>條件寫入 ES</b><span>bulk 更新 terms_v2 + seg_ver；版本只能前進；限速、離峰</span></div>
+      <div class="node"><b>閘門 G1–G4</b><span>全過才開下一批；任何一項失敗就停線</span></div>
+    </div>
+    <p class="lane-title">新進資料（串流）</p>
+    <div class="flow">
+      <div class="node"><b>Pub/Sub</b><span>爬蟲解析後的貼文事件</span></div>
+      <div class="node hot"><b>同一個 segmenter 映像</b><span>Cloud Run 服務；同一個字典版本</span></div>
+      <div class="node"><b>雙寫</b><span>A/B 期間同時寫 v1 與 v2 欄位</span></div>
+      <div class="node"><b>文字雲 API</b><span><code>seg=v1|v2</code>，PM 並排比對、看差異清單</span></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>每批之間的四道閘門</h3>
+    <div class="gates">
+      <div class="gate"><span class="gid">G1 完整性</span><b>筆數守恆</b><p>來源篇數 = 寫入 v2 篇數 + 有理由的跳過篇數；每篇恰有一個 seg_ver；DLQ 清空。</p></div>
+      <div class="gate"><span class="gid">G2 品質</span><b>洩漏為 0、必不可拆全過</b><p>top-200 的網址碎片、電話、停用詞 = 0；地名與搜尋熱詞清單 100% 保持完整；平均詞數、單字詞比例落在 POC 量出的區間 ±20%。</p></div>
+      <div class="gate"><span class="gid">G3 叢集</span><b>線上不受影響</b><p>寫入拒絕（429）= 0；線上搜尋 p95 惡化 &lt; 10%；磁碟低於 75%。超過就自動降速。</p></div>
+      <div class="gate"><span class="gid">G4 產品</span><b>PM 抽查</b><p>每個渠道的第一個月：熱門 30 個客戶查詢的 v1／v2 文字雲並排。之後的月份只要 G1–G3 正常就自動放行。</p></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>工作天估算</h3>
+    <div class="two">
+      <div class="panel">
+        <h3 style="font-size:15.5px">假設</h3>
+        <ol class="prose" style="padding-left:1.3em;margin:0">
+          <li>5 億篇，平均 300 字（FB 貼文約 250 字，論壇與新聞較長）→ 1.5 × 10<sup>11</sup> 字。</li>
+          <li>jieba 每核每秒 28.6 萬字 <span class="ev ev-run">實測</span></li>
+          <li>ES 部分更新會重寫整篇 <span class="ev ev-doc">官方文件</span>；為保護線上查詢，限速每秒 3,000 篇、只在離峰 8 小時跑 <span class="ev ev-inf">假設，POC 實測校正</span></li>
+          <li>原文可從 BigQuery 讀 <span class="ev ev-inf">推論</span></li>
+          <li>共用字典方案，字典整併約 10 天（題目提示）。</li>
+          <li>PM 每個渠道回饋 1–2 天；工程師全職、沒有 on-call。</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3 style="font-size:15.5px">機器時間（和人力平行，不加進工期）</h3>
+        <div class="code"><span class="cap">算式</span><button class="copy" type="button" data-copy="calc">複製</button><pre id="calc">斷詞：1.5e11 字 ÷ 2.86e5 字/秒 ≈ 5.2e5 核心秒 ≈ 146 核心小時
+      → 64 核心平行 ≈ 2.3 小時
+寫入：5e8 篇 ÷ 3,000 篇/秒 ≈ 1.67e5 秒 ≈ 46 小時
+      → 每晚 8 小時 ≈ 6 晚
+每批：1.85e6 篇 ÷ 3,000 ≈ 10 分鐘
+儲存：每篇 +0.5 KB（去重後約 50 詞）≈ +250 GB 主分片</pre></div>
+        <p class="note">儲存那一行是推估，POC 時拿一個分區實際量 index 大小差。</p>
+      </div>
+    </div>
+
+    <div class="gantt" role="img" aria-label="45 個工作天的排程圖">
+      <div class="g-grid" id="gantt"></div>
+      <div class="g-legend">
+        <span><i style="background:var(--accent)"></i>人力工作</span>
+        <span><i style="background:var(--t-split)"></i>關鍵路徑（字典與驗收）</span>
+        <span><i style="background:var(--t-phone);height:6px"></i>機器時間（背景跑）</span>
+        <span><i style="background:repeating-linear-gradient(45deg,var(--line),var(--line) 3px,transparent 3px,transparent 6px);border:1px solid var(--line)"></i>緩衝</span>
+      </div>
+    </div>
+    <div class="prose">
+      <p><strong>會讓估算翻倍的變數：</strong>改走不同字典（+20 天以上）；PM 驗收來回超過兩輪；ES 沒有寫入餘裕，要先擴容或改成寫新 index 再切 alias；原文不在 BigQuery，只能從 ES 讀；新詞審核量比預期大。</p>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>3 分鐘查詢目標怎麼守</h3>
+    <ul class="prose" style="padding-left:1.2em;margin:0">
+      <li>斷詞移到寫入時，查詢只剩 <code>terms</code> 聚合計數；軟停用詞用 <code>exclude</code>（可以給一組精確值）<span class="ev ev-doc">官方文件</span></li>
+      <li>月份回補完就不再寫入，force merge 成單一 segment；官方文件說這時 segment ordinals 已是全域的，沒有額外成本 <span class="ev ev-doc">官方文件</span></li>
+      <li>超大範圍：抽樣或每日預聚合。<code>random_sampler</code> 目前仍是 technical preview，只當選項 <span class="ev ev-doc">官方文件</span></li>
+      <li>結果按（查詢, 範圍, seg_ver）快取到 Memorystore。</li>
+      <li>切預設前：熱門 30 個關鍵字 × 1 年範圍壓測，p95 &lt; 3 分鐘才切。「初期可放寬」指回補沒完成時，只比對已覆蓋的月份，介面標示覆蓋率。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ (b) 字典 ============ -->
+<section class="pane" id="p-dictionary" role="tabpanel" aria-labelledby="t-dictionary" hidden>
+  <header>
+    <h2>(b) 字典維護與共用</h2>
+    <p class="sub">字典當程式碼管理；核心詞庫共用，用途層、斷詞粒度、生效時間各自控制。</p>
+  </header>
+
+  <div class="block">
+    <h3>維護流程</h3>
+    <ol class="steps">
+      <li><div><b>候選來源</b><p>搜尋 log 每週前 1,000 名（不在字典或會被切開者）、客戶監測關鍵字、地名庫（行政區、商圈、夜市、捷運站）、品牌與公司名、新詞發現、PM 與客戶回報。</p></div></li>
+      <li><div><b>新詞發現</b><p>每週對新資料算 n-gram 頻率 + 凝固度（PMI）+ 左右鄰字熵，找「常一起出現、邊界又很自由」的字串；再加上 CKIP 斷成一個詞、jieba 卻切開的差集。</p></div></li>
+      <li><div><b>人工審核</b><p>候選清單附出現次數、例句、預估影響篇數；分析師或 PM 每週核可，不自動上線。</p></div></li>
+      <li><div><b>PR 進 Git</b><p>每個詞記錄頻率、詞性、類別、來源、新增者、日期。改字典和改程式一樣走 code review。</p></div></li>
+      <li><div><b>CI</b><p>格式檢查（重複、衝突、含標點、單字詞）；回歸測試（必不可拆清單 100%、五個症狀偵測器 = 0、golden set 差異報告）；用 BigQuery 掃原文估影響篇數。</p></div></li>
+      <li><div><b>每週發版</b><p>產出 jieba 字典（含固定 total）、搜尋端字典與同義詞、停用詞、變體表，放 GCS 並附 checksum。串流重新載入新版；批次只重跑受影響文件；搜尋端依自己的節奏。</p></div></li>
+    </ol>
+  </div>
+
+  <div class="two">
+    <div class="code"><span class="cap">字典 repo 的樣子（示意）</span><button class="copy" type="button" data-copy="repo">複製</button><pre id="repo"># core/places.txt（jieba 格式：詞 頻率 詞性）
+高雄市 3000 ns
+瑞豐夜市 500 ns
+臺北車站 1000 ns
+# core/brands.txt
+台積電 3000 nt
+蝦皮購物 800 nt
+# overlay/wordcloud/soft_stopwords.txt（查詢時 exclude）
+今天
+真的
+大家
+# overlay/wordcloud/variants.tsv（顯示時合併）
+臺	台
+# overlay/search/synonyms.txt（search-time，可 reload）
+台積電, TSMC, 護國神山</pre></div>
+    <div class="code"><span class="cap">發版清單（示意）</span><button class="copy" type="button" data-copy="manifest">複製</button><pre id="manifest">dict_version: 202644        # 2026 年第 44 週
+total: 87043992             # 固定的正規化常數，只有全量重跑才改
+sha256: &lt;artifact checksum&gt;
+changed:
+  added:   [護國神山, 法說會]
+  removed: []
+affected_docs: &lt;BigQuery 掃描結果&gt;
+rerun: targeted             # targeted | full | none</pre></div>
+  </div>
+
+  <div class="block">
+    <h3>斷詞用字典 vs 搜尋用字典：共用還是分開？</h3>
+    <div class="tbl wide">
+      <table>
+        <thead><tr><th></th><th>共用核心詞庫（建議）</th><th>各自一份字典</th></tr></thead>
+        <tbody>
+          <tr><td>維護</td><td>一條流程、一套 CI</td><td>兩條流程，還要同步工作與每日差異報表</td></tr>
+          <tr><td>症狀 5（搜尋熱詞不在文字雲）</td><td>結構上就一致</td><td>靠同步維持；一不同步就復發</td></tr>
+          <tr><td>點文字雲的詞往下查</td><td>詞可以直接當查詢，計數對得上</td><td>要有「詞 → 查詢」轉換層，數字可能對不上</td></tr>
+          <tr><td>版本</td><td>一個 dict_version，兩端各自釘版</td><td>兩組版本標記，兩組回歸測試</td></tr>
+          <tr><td>工期（原團隊估）</td><td>約 10 天</td><td>再多 20 天以上</td></tr>
+          <tr><td>代價</td><td>一次改動影響兩端，要用版本釘選分開生效時間</td><td>長期一定會漂移</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p><strong>共用字典不等於共用粒度。</strong>搜尋要召回，用細粒度（jieba 搜尋模式、IK 的 <code>ik_max_word</code>）；文字雲要可讀，用精確模式。實測：同一份字典，「台北捷運週末加開班次」精確模式切成 <code>台北捷運/週末/加開班次</code>，搜尋模式切成 <code>台北/捷運/台北捷運/週末/加開/開班/班次/加開班次</code>。</p>
+      <p><strong>共用來源，不共用生效時間。</strong>文字雲每週發版，只重跑受影響文件；搜尋端的同義詞放在 search analyzer，可用 <code>_reload_search_analyzers</code> 重新載入（只支援 search analyzer 裡 updateable 的 synonym filter）<span class="ev ev-doc">官方文件</span>。index-time 斷詞的變更累積到排定的 reindex：IK 這類詞典熱更新只會影響之後寫入的文件，舊文件的倒排索引是寫入當下產生的 <span class="ev ev-inf">推論</span>。</p>
+      <p><strong>如果走不同字典，架構上會多出：</strong>兩份字典的同步與差異報表；下鑽用的「詞 → 查詢」轉換層；ES 端兩組 analyzer 與版本標記；兩套回歸測試與發版節奏。原團隊估的多 20 天，花在這些同步與對帳，寫字典本身反而不是大頭。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ (c) 一致性 ============ -->
+<section class="pane" id="p-consistency" role="tabpanel" aria-labelledby="t-consistency" hidden>
+  <header>
+    <h2>(c) 串流與回朔一致、字典更新可控</h2>
+    <p class="sub">原則：斷詞 = f(原文, seg_ver)。同一份原文、同一個版本，不論批次或串流，結果必須一模一樣。</p>
+  </header>
+
+  <div class="block">
+    <h3>讓結果只取決於版本</h3>
+    <ol class="steps">
+      <li><div><b>同一個映像、同一個字典版本</b><p>批次（Cloud Run Jobs）和串流（Cloud Run 服務）跑同一個 segmenter 映像，從 GCS 載入同一個字典版本並驗 checksum。</p></div></li>
+      <li><div><b>不在常駐 process 裡熱改字典</b><p>jieba 的 <code>add_word</code> 每次都改 total，覆寫舊詞不扣回舊頻率，<code>del_word</code> 還會改到整個 process 共用的強制切分集合。換版就整份重新載入，並把 total 固定成字典版本的常數。</p></div></li>
+      <li><div><b>每篇記 seg_ver，版本只能前進</b><p>寫入用條件更新：新版本大於等於既有版本才寫，避免慢的回補 job 用舊版蓋掉串流剛寫的新版。</p></div></li>
+      <li><div><b>每天影子比對</b><p>從串流抽 1 萬篇，用批次路徑以同版本重算，差異必須是 0。這是不變量，不是「越少越好」。</p></div></li>
+    </ol>
+    <div class="two">
+      <div class="code"><span class="cap">載入方式（Python）</span><button class="copy" type="button" data-copy="load">複製</button><pre id="load">tk = jieba.Tokenizer(dictionary=artifact.path)  # 每次整份載入
+tk.initialize()
+tk.total = artifact.total  # 固定正規化常數
+# 不要在常駐 worker 裡 add_word / del_word 熱更新</pre></div>
+      <div class="code"><span class="cap">條件寫入（ES painless）</span><button class="copy" type="button" data-copy="script">複製</button><pre id="script">POST posts-2024.05/_update/&lt;doc_id&gt;
+{
+  "script": {
+    "source": "if (ctx._source.seg_ver == null || ctx._source.seg_ver &lt;= params.v) { ctx._source.terms_v2 = params.t; ctx._source.seg_ver = params.v } else { ctx.op = 'noop' }",
+    "params": { "v": 202644, "t": ["高雄市", "瑞豐夜市"] }
+  }
+}</pre></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>字典改了，要不要全部重跑？依影響層級分三種</h3>
+    <div class="tbl wide">
+      <table>
+        <thead><tr><th>層級</th><th>例子</th><th>重跑範圍</th><th>怎麼找受影響文件</th><th>生效</th></tr></thead>
+        <tbody>
+          <tr><td>顯示層</td><td>軟停用詞、黑名單、臺／台合併、同義合併</td><td><span class="ok">不用重跑</span></td><td>不需要</td><td>查詢時套用，立即生效、可回復</td></tr>
+          <tr><td>斷詞層</td><td>新增詞、刪詞、調頻率；新增網址網域規則</td><td>只重跑受影響文件</td><td>原文含變更字串（BigQuery 一次掃整批詞；或 ES 片語查詢）；刪詞也可用 <code>terms_v2</code> 精確查</td><td>下一個每週發版</td></tr>
+          <tr><td>演算法層</td><td>換斷詞器或模型、改過濾邏輯、改 total</td><td><span class="hl">全量</span></td><td>全部</td><td>開 terms_v3，照 (a) 的批次流程跑，藍綠切換</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">「只重跑受影響文件」的前提是 total 固定：實測不固定時，加 1 個詞就有 52 篇不含該詞的貼文改變；固定後是 0（見「實測」頁）。流行語的影響範圍可能很大：實測 6 個 PTT 流行詞影響 5% 的貼文，發版前要先估篇數，超過門檻（例如 2%）就排夜間限速。</p>
+  </div>
+
+  <div class="block">
+    <h3>發版時序與收斂條件</h3>
+    <ol class="steps">
+      <li><div><b>T0 發版</b><p>CI 全過，新版字典放上 GCS；manifest 記下變更詞與預估影響篇數。</p></div></li>
+      <li><div><b>串流換版</b><p>串流 worker 滾動重啟、載入新版；之後的新文章都是新 seg_ver。</p></div></li>
+      <li><div><b>圈出受影響文件</b><p>BigQuery 掃原文，找出含任一變更字串、且 seg_ver 小於新版的 doc_id。</p></div></li>
+      <li><div><b>限速重跑</b><p>同一個批次 job 以 doc_id 清單執行，條件寫入。</p></div></li>
+      <li><div><b>收斂檢查</b><p>「含變更字串且 seg_ver &lt; 新版」的篇數 = 0 才算發版完成；抽樣不含變更字串的文件重算，差異 = 0。</p></div></li>
+    </ol>
+  </div>
+
+  <div class="block">
+    <h3>每日監控（每個渠道）</h3>
+    <div class="tbl wide">
+      <table>
+        <thead><tr><th>指標</th><th>告警條件</th><th>抓得到什麼</th></tr></thead>
+        <tbody>
+          <tr><td>影子比對差異</td><td>&gt; 0</td><td>批次與串流版本或設定漂移</td></tr>
+          <tr><td>洩漏率（網址碎片、電話、停用詞進 top-200）</td><td>&gt; 0</td><td>新的短網址網域、新的電話格式</td></tr>
+          <tr><td>平均詞數／篇、單字詞比例、字典外詞比例</td><td>和過去 7 天比偏離 ±20%</td><td>平台改版、內容格式變化、新流行語</td></tr>
+          <tr><td>seg_ver 分佈</td><td>發版 24 小時後仍未收斂</td><td>重跑 job 卡住</td></tr>
+          <tr><td>top-100 熱詞和上週的 Jaccard</td><td>突降</td><td>洗版、爬蟲異常</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 答案 ============ -->
+<section class="pane" id="p-answer" role="tabpanel" aria-labelledby="t-answer" hidden>
+  <header>
+    <h2>600 字答案</h2>
+    <p class="sub">與 q6/answer/answer_600.txt 相同（2026-10-31 版）。這裡的字數以非空白字元計，標點和英數都算。</p>
+  </header>
+  <div class="counter">
+    <span>總字數 <span class="big" id="ansTotal">–</span> / 600</span>
+    <span id="ansState"></span>
+    <button class="btn" type="button" id="copyAll">複製全文</button>
+    <span class="toast" id="ansToast" aria-live="polite"></span>
+  </div>
+  <div class="ans" id="ans"></div>
+</section>
+
+<!-- ============ 來源 ============ -->
+<section class="pane" id="p-sources" role="tabpanel" aria-labelledby="t-sources" hidden>
+  <header>
+    <h2>來源與證據等級</h2>
+    <p class="sub">官方文件與論文是查證過的事實；實測是本次在沙盒跑的結果；推論是由事實推得、沒有直接文件。</p>
+  </header>
+  <ul class="src" id="srcList"></ul>
+</section>
+
+</div>
+</main>
+
+<script id="data" type="application/json">{"demo":[{"post":"高雄市今天熱爆了，晚上去瑞豐夜市吃東西 👉 https://example.com/9ZxW5k 訂位專線 0912-345-678","v1":[["高雄市","ok"],["今天","stop"],["熱爆","ok"],["了","stop"],["，","punct"],["晚上","stop"],["去瑞豐","split"],["夜市","split"],["吃","ok"],["東西","stop"],["👉","punct"],["https","url"],[":","url"],["/","url"],["/","url"],["example","url"],[".","url"],["com","url"],["/","url"],["9ZxW5k","url"],["訂位","ok"],["專線","ok"],["0912","phone"],["-","phone"],["345","phone"],["-","phone"],["678","phone"]],"v2":{"cleaned":"高雄市今天熱爆了，晚上去瑞豐夜市吃東西 👉 訂位專線","kept":[["高雄市","kept"],["今天","soft_stop"],["熱爆","kept"],["晚上","soft_stop"],["瑞豐夜市","kept"],["東西","soft_stop"],["訂位","kept"],["專線","kept"]],"dropped":[["了","hard_stop"],["，","punct"],["去","single"],["吃","single"],["👉","punct"]]}},{"post":"#高雄美食 這家牛肉湯真的讚！老闆說週末要先預約 07-123-4567","v1":[["#","punct"],["高雄","split"],["美食","split"],["這家","stop"],["牛肉","split"],["湯","split"],["真的","stop"],["讚","ok"],["！","punct"],["老","split"],["闆","split"],["說","stop"],["週末","ok"],["要","stop"],["先","stop"],["預約","ok"],["07","phone"],["-","phone"],["123","phone"],["-","phone"],["4567","phone"]],"v2":{"cleaned":"這家牛肉湯真的讚！老闆說週末要先預約","kept":[["牛肉湯","kept"],["真的","soft_stop"],["讚","kept"],["老闆","kept"],["週末","kept"],["預約","kept"],["高雄美食","hashtag"]],"dropped":[["這家","hard_stop"],["！","punct"],["說","hard_stop"],["要","hard_stop"],["先","hard_stop"]]}},{"post":"台積電法說會今天登場，護國神山的毛利率又創新高了","v1":[["台積","split"],["電法","split"],["說","stop"],["會","split"],["今天","stop"],["登場","ok"],["，","punct"],["護國","split"],["神山","split"],["的","stop"],["毛利率","ok"],["又","stop"],["創","ok"],["新高","ok"],["了","stop"]],"v2":{"cleaned":"台積電法說會今天登場，護國神山的毛利率又創新高了","kept":[["台積電","kept"],["法說會","kept"],["今天","soft_stop"],["登場","kept"],["護國神山","kept"],["毛利率","kept"],["又創新高","kept"]],"dropped":[["，","punct"],["的","hard_stop"],["了","hard_stop"]]}},{"post":"蝦皮購物雙11優惠碼在這 example.com/3xYz9Ab 手刀搶購","v1":[["蝦皮","split"],["購物雙","split"],["11","split"],["優惠碼","ok"],["在","stop"],["這","stop"],["example","url"],[".","url"],["com","url"],["/","url"],["3xYz9Ab","url"],["手刀","ok"],["搶購","ok"]],"v2":{"cleaned":"蝦皮購物雙11優惠碼在這 手刀搶購","kept":[["蝦皮購物","kept"],["雙11","kept"],["優惠碼","kept"],["手刀","kept"],["搶購","kept"]],"dropped":[["在","hard_stop"],["這","hard_stop"]]}},{"post":"臺北市長今天在臺北車站宣布新政策，台北捷運週末加開班次","v1":[["臺","split"],["北市","split"],["長","split"],["今天","stop"],["在","stop"],["臺","split"],["北車","split"],["站","split"],["宣布","ok"],["新","ok"],["政策","ok"],["，","punct"],["台北","split"],["捷運","split"],["週末","ok"],["加開","ok"],["班次","ok"]],"v2":{"cleaned":"臺北市長今天在臺北車站宣布新政策，台北捷運週末加開班次","kept":[["台北市長","kept"],["今天","soft_stop"],["台北車站","kept"],["宣布","kept"],["政策","kept"],["台北捷運","kept"],["週末","kept"],["加開班次","kept"]],"dropped":[["在","hard_stop"],["新","single"],["，","punct"]]}},{"post":"我在Threads上看到大家都在討論這件事，真的是很誇張","v1":[["我","stop"],["在","stop"],["Threads","ok"],["上","stop"],["看到","stop"],["大家","stop"],["都","stop"],["在","stop"],["討論","ok"],["這件","stop"],["事","stop"],["，","punct"],["真的","stop"],["是","stop"],["很","stop"],["誇張","ok"]],"v2":{"cleaned":"我在Threads上看到大家都在討論這件事，真的是很誇張","kept":[["Threads","kept"],["看到","soft_stop"],["大家","soft_stop"],["討論","kept"],["真的","soft_stop"],["誇張","kept"]],"dropped":[["我","hard_stop"],["在","hard_stop"],["上","hard_stop"],["都","hard_stop"],["在","hard_stop"],["這件","hard_stop"],["事","hard_stop"],["，","punct"],["是","hard_stop"],["很","hard_stop"]]}}],"throughput":[{"dict":"預設 dict.txt","hmm":true,"sec":13.87,"cps":209288},{"dict":"預設 dict.txt","hmm":false,"sec":5.66,"cps":512651},{"dict":"dict.txt.big（繁中較佳）","hmm":true,"sec":10.16,"cps":285652},{"dict":"dict.txt.big（繁中較佳）","hmm":false,"sec":5.67,"cps":511619}],"radius":[{"scenario":"新增 1 個詞（肥宅）","pin":false,"with":2162,"without":52},{"scenario":"新增 1 個詞（肥宅）","pin":true,"with":2160,"without":0},{"scenario":"一次發版 6 個詞","pin":false,"with":2993,"without":34},{"scenario":"一次發版 6 個詞","pin":true,"with":2991,"without":0},{"scenario":"1 個詞給極端頻率 1e7","pin":false,"with":2201,"without":802},{"scenario":"1 個詞給極端頻率 1e7","pin":true,"with":2172,"without":0}],"ties":[{"text":"庭院深深深幾許？ 「哈哈 理…","before":"庭院/深深/深/幾許","after":"庭院/深/深深/幾許"},{"text":"啊啊啊啊我要發廢文了 同學你…","before":"啊啊啊/啊/我/要/發廢文","after":"啊/啊啊啊/我要/發廢文"},{"text":"（極端頻率情境中的一句）","before":"東部/他/國/事務","after":"東部/他國/事務"}],"hot_fresh":{"hot_total":87046578,"fresh_total":87046449,"posts_differ":0,"fresh_vs_fresh":0,"bump":{"word":"鄉民","old_freq":129,"new_freq":2580}},"in_dict":{"護國神山":false,"台積電":false,"法說會":false,"蝦皮購物":false,"瑞豐夜市":false,"臺北車站":false,"台北捷運":false},"place_tests":{"高雄市今天很熱":{"default_dict":"高雄市/今天/很熱","dict_big":"高雄市/今天/很熱","dict_big_no_hmm":"高雄市/今天/很/熱"},"我住在臺北市大安區":{"default_dict":"我/住/在/臺/北市/大安/區","dict_big":"我/住/在/臺北市/大安區","dict_big_no_hmm":"我/住/在/臺北市/大安區"},"台北市長出席記者會":{"default_dict":"台北市/長/出席/記者/會","dict_big":"台北/市長/出席/記者會","dict_big_no_hmm":"台北/市長/出席/記者會"},"去瑞豐夜市吃東西":{"default_dict":"去瑞豐/夜市/吃/東西","dict_big":"去瑞豐/夜市/吃/東西","dict_big_no_hmm":"去/瑞/豐/夜市/吃/東西"}},"granularity":{"台北捷運週末加開班次":{"precise":"台北捷運/週末/加開班次","search":"台北/捷運/台北捷運/週末/加開/開班/班次/加開班次"},"台積電法說會今天登場":{"precise":"台積電/法說會/今天/登場","search":"台積電/法說會/今天/登場"},"高雄市瑞豐夜市":{"precise":"高雄市/瑞豐夜市","search":"高雄市/夜市/瑞豐夜市"}},"answer":[{"head":"(a)","title":"回朔策略","body":"以「渠道×月」為一批，約 270 批、平均 185 萬篇：渠道定清洗規則、月份控批量，失敗只重跑一批；由新到舊。新結果寫 terms_v2，舊欄位不動，API 以 seg 參數供 PM 並排比對；文字雲以 ES terms 聚合數篇數。每批過閘門：筆數守恆；網址、電話、停用詞洩漏為 0；金標詞召回不低於上版；ES 無寫入拒絕、p95 不惡化；PM 抽查。估 45 工作天：基準 2、POC 5、字典整併 10、工程化 6、回朔與驗收 12、壓測切換 3、緩衝 7。jieba 約 150 核心小時；ES 限速每秒 3,000 篇、離峰約 6 晚。"},{"head":"(b)","title":"字典維護","body":"字典當程式碼管：熱詞、監測詞、地名庫與新詞發現進候選，審核後發 PR，CI 跑回歸並估影響篇數，週發版。共用核心詞庫，搜尋與文字雲各加用途層（同義詞／停用詞、變體合併）：搜尋細切、文字雲精確切。分開則多出同步、對帳與兩套回歸，點文字雲的詞未必搜到同一批文，即多出的 20 天。"},{"head":"(c)","title":"一致性與字典更新","body":"批次與串流用同一映像，每篇記 seg_ver（只能前進）與字典、停用詞、程式的雜湊指紋，原文另記 content_sha；每天抽樣重算須零差異。字典更新不全量重跑：停用詞查詢時處理；新詞用 ES 字元片語查出含該字串的文章重跑。jieba 固定 total，不含新詞的文章才不變（未固定時 20 萬篇有 52 篇變）。換演算法才開新欄位全量重跑。"}],"drill":[],"sources":[{"ev":"task","title":"QSearch 資料工程師筆試題目 v2026.07（Google Drive 副本）","url":null,"use":"第 6 題原文：6 渠道、2023/01 起、5 億筆、A/B 並行、3 分鐘、Streaming；提示：同字典約 10 天、不同字典多 20+ 天。"},{"ev":"run","title":"本次實測（沙盒）","url":null,"use":"Python 3.13、jieba 0.42.1、Intel Xeon 2.1GHz 單核。吞吐、加詞影響範圍、固定 total、熱更新 vs 整份重載、示意貼文斷詞。"},{"ev":"data","title":"PTT 八卦板問答語料（zake7749/Gossiping-Chinese-Corpus）","url":"https://github.com/zake7749/Gossiping-Chinese-Corpus","use":"實測語料：418,202 筆，2015–2017。"},{"ev":"doc","title":"jieba README","url":"https://github.com/fxsjy/jieba","use":"精確模式 400 KB/s（i7-2600）；dict.txt.big 對繁體支援較好；平行模式只支援 POSIX 和預設 tokenizer。"},{"ev":"code","title":"jieba 原始碼 jieba/__init__.py","url":"https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py","use":"add_word 第 428–429 行累加 total；calc 用 log(FREQ) − log(total)；del_word 會改整個 process 共用的強制切分集合。"},{"ev":"doc","title":"jieba extra_dict（dict.txt.big）","url":"https://github.com/fxsjy/jieba/tree/master/extra_dict","use":"584,429 行；實測不含台積電、法說會、蝦皮購物、臺北車站、台北捷運、瑞豐夜市、護國神山。"},{"ev":"doc","title":"CkipTagger README","url":"https://github.com/ckiplab/ckiptagger","use":"ASBC 4.0 測試集斷詞 F1：CkipTagger 97.33%、jieba-zh_TW 89.80%；recommend／coerce 字典；GPL-3.0。"},{"ev":"doc","title":"ckip-transformers README","url":"https://github.com/ckiplab/ckip-transformers","use":"bert-base 斷詞 F1 97.60%、albert-tiny 96.66%；可用 GPU 與 batch_size；GPL-3.0；README 沒提自訂字典。"},{"ev":"paper","title":"Yeh et al., ROCLING 2022：正體中文斷詞系統應用於大型語料庫之多方評估研究","url":"https://aclanthology.org/2022.rocling-1.24.pdf","use":"同機比較 Jieba／CKIP／MONPA；4 萬句 × 200 字：jieba 約 45 秒、CKIP 約 540 秒（圖 3 讀值）；SIGHAN AS 斷詞 F1：CKIP 97.68–98.22、JiebaD 73.87–76.52。"},{"ev":"doc","title":"Elasticsearch：Update API","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html","use":"「The document must still be reindexed」；update 需要 _source。"},{"ev":"doc","title":"Elasticsearch：_source field","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/mapping-source-field.html","use":"excludes 的缺點和關閉 _source 類似，特別是不能 reindex。"},{"ev":"doc","title":"Elasticsearch：Update by query","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update-by-query.html","use":"requests_per_second 限速、slices=auto、conflicts=proceed；可讓既有文件吃到新的 mapping 或 multi-field。"},{"ev":"doc","title":"Elasticsearch：Tune for indexing speed","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/tune-for-indexing-speed.html","use":"初次載入可暫設 replicas 0；bulk 從 100 篇往上試；遇 429 隨機指數退避；多 worker 送。"},{"ev":"doc","title":"Elasticsearch：Terms aggregation","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-bucket-terms-aggregation.html","use":"include／exclude 可用 regex 或精確值陣列；shard_size 預設 size × 1.5 + 10。"},{"ev":"doc","title":"Elasticsearch：eager_global_ordinals","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/eager-global-ordinals.html","use":"單一 segment 的 shard 沒有額外的 global ordinals 成本；只對不再寫入的 index 做 force merge。"},{"ev":"doc","title":"Elasticsearch：Random sampler aggregation","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-random-sampler-aggregation.html","use":"technical preview；probability 介於 0 到 0.5，或等於 1；計數按機率倒數放大。"},{"ev":"doc","title":"Elasticsearch：Diversified sampler aggregation","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-bucket-diversified-sampler-aggregation.html","use":"max_docs_per_value 預設 1；欄位必須單值；只在 shard 內去重。"},{"ev":"doc","title":"Elasticsearch：Significant text aggregation","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-bucket-significanttext-aggregation.html","use":"查詢時重新分析文字，建議搭配 sampler；大結果集很耗時間和記憶體。"},{"ev":"doc","title":"Elasticsearch：Reload search analyzers API","url":"https://www.elastic.co/guide/en/elasticsearch/reference/8.19/indices-reload-analyzers.html","use":"只支援 search analyzer 裡標了 updateable 的 synonym filter。"},{"ev":"doc","title":"Google Cloud 客戶案例：QSearch","url":"https://cloud.google.com/customers/qsearch","use":"2014 年在台灣成立；產品清單含 BigQuery、Cloud Storage、Pub/Sub、GKE；「Analyzes 43.2 billion records in 8 hours」。"},{"ev":"vendor","title":"INSIDE：QSearch 攜手 Cloud Ace 打造雲端原生數據平台（2022/07/22，廣編）","url":"https://www.inside.com.tw/article/28296-cloud-ace","use":"原始資料放 Cloud Storage，清理後再運算；Pub/Sub、Cloud Storage、BigQuery 是資料流程的工具。"}]}</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const $ = (s, r = document) => r.querySelector(s);
+  const el = (tag, attrs = {}, text) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const fmt = n => Number(n).toLocaleString('en-US');
+
+  /* ---------- tabs (hash routing) ---------- */
+  const TABS = ['overview', 'lab', 'backfill', 'dictionary', 'consistency', 'answer', 'sources'];
+  function show(name) {
+    if (!TABS.includes(name)) name = 'overview';
+    for (const t of TABS) {
+      const pane = document.getElementById('p-' + t);
+      const btn = document.getElementById('t-' + t);
+      const on = t === name;
+      pane.hidden = !on;
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;
+    }
+    const b = document.getElementById('t-' + name), rail = $('.tabs');
+    if (b && (b.offsetLeft < rail.scrollLeft || b.offsetLeft + b.offsetWidth > rail.scrollLeft + rail.clientWidth)) rail.scrollLeft = b.offsetLeft - 16;
+  }
+  document.querySelectorAll('.tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      const name = b.dataset.tab;
+      if (location.hash !== '#' + name) location.hash = name; else show(name);
+      window.scrollTo({ top: 0 });
+    });
+  });
+  $('.tabs').addEventListener('keydown', e => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const cur = TABS.indexOf((location.hash || '#overview').slice(1));
+    const next = TABS[(Math.max(cur, 0) + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+    location.hash = next;
+    document.getElementById('t-' + next).focus();
+  });
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+  show(location.hash.slice(1));
+
+  /* ---------- copy ---------- */
+  async function copyText(text, btn, toast) {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (btn) { const o = btn.textContent; btn.textContent = '已複製'; setTimeout(() => btn.textContent = o, 1400); }
+      if (toast) toast.textContent = '已複製到剪貼簿';
+    } catch (err) {
+      if (toast) toast.textContent = '無法存取剪貼簿，已選取文字，請手動複製';
+      return false;
+    }
+    return true;
+  }
+  function selectNode(node) {
+    const r = document.createRange(); r.selectNodeContents(node);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pre = document.getElementById(btn.dataset.copy);
+      const ok = await copyText(pre.textContent, btn);
+      if (!ok) { selectNode(pre); btn.textContent = '已選取'; setTimeout(() => btn.textContent = '複製', 1400); }
+    });
+  });
+
+  /* ---------- lab ---------- */
+  const pick = $('#labPick');
+  const short = ['高雄夜市', '高雄美食', '台積電', '蝦皮', '臺北車站', 'Threads'];
+  function renderTok(box, list) {
+    box.textContent = '';
+    for (const [w, k] of list) box.appendChild(el('span', { class: 'tok', 'data-k': k }, w));
+  }
+  const DROP = { punct: '標點', number: '數字', hard_stop: '硬停用詞', single: '單字' };
+  function showDemo(i) {
+    const d = D.demo[i];
+    pick.querySelectorAll('button').forEach((b, j) => b.setAttribute('aria-pressed', j === i ? 'true' : 'false'));
+    $('#labRaw').textContent = d.post;
+    renderTok($('#labV1'), d.v1);
+    renderTok($('#labV2'), d.v2.kept);
+    const groups = {};
+    for (const [w, r] of d.v2.dropped) (groups[r] ||= []).push(w);
+    $('#labDrop').textContent = Object.entries(groups).map(([r, ws]) => `${DROP[r] || r}：${ws.join('、')}`).join('；') || '無';
+  }
+  D.demo.forEach((d, i) => {
+    const b = el('button', { type: 'button', 'aria-pressed': 'false' }, short[i] || ('貼文 ' + (i + 1)));
+    b.addEventListener('click', () => showDemo(i));
+    pick.appendChild(b);
+  });
+  showDemo(0);
+
+  /* throughput */
+  const tpb = $('#tpTable tbody');
+  for (const r of D.throughput) {
+    const tr = el('tr');
+    tr.appendChild(el('td', {}, r.dict));
+    tr.appendChild(el('td', {}, r.hmm ? '開' : '關'));
+    tr.appendChild(el('td', { class: 'num' }, r.sec.toFixed(2)));
+    tr.appendChild(el('td', { class: 'num' }, fmt(r.cps)));
+    tpb.appendChild(tr);
+  }
+
+  /* blast radius */
+  const brb = $('#brTable tbody');
+  for (const c of D.radius) {
+    const tr = el('tr');
+    if (c.pin) tr.className = 'pick';
+    tr.appendChild(el('td', {}, c.scenario));
+    tr.appendChild(el('td', {}, c.pin ? '固定' : '照預設累加'));
+    tr.appendChild(el('td', { class: 'num' }, fmt(c.with)));
+    const td = el('td', { class: 'num' });
+    td.appendChild(el('span', { class: c.without === 0 ? 'ok' : 'hl' }, fmt(c.without)));
+    tr.appendChild(td);
+    brb.appendChild(tr);
+  }
+  const tieb = $('#tieTable tbody');
+  for (const e of D.ties) {
+    const tr = el('tr');
+    tr.appendChild(el('td', {}, e.text));
+    tr.appendChild(el('td', {}, e.before));
+    tr.appendChild(el('td', {}, e.after));
+    tieb.appendChild(tr);
+  }
+
+  /* hot vs fresh */
+  const hf = D.hot_fresh, hfBox = $('#hotFresh');
+  [
+    `常駐 worker 逐步 add_word（含把「${hf.bump.word}」頻率從 ${hf.bump.old_freq} 調到 ${hf.bump.new_freq}）後，total = ${fmt(hf.hot_total)}。`,
+    `批次 job 從合併後的字典檔整份載入，total = ${fmt(hf.fresh_total)}。差的 ${fmt(hf.hot_total - hf.fresh_total)} 正是沒被扣回的舊頻率。`,
+    `這次 20 萬篇剛好 ${fmt(hf.posts_differ)} 篇不同，但 total 不同就沒有一致性保證：上一個實驗 total 只差 1，就有 52 篇翻轉。`,
+    `兩個 process 載入同一個字典檔：${fmt(hf.fresh_vs_fresh)} 篇不同。結果是決定性的。`
+  ].forEach(t => hfBox.appendChild(el('p', { class: 'note', style: 'color:var(--ink);font-size:14px' }, t)));
+
+  /* missing in dict.txt.big */
+  const miss = $('#missing');
+  for (const [w, inDict] of Object.entries(D.in_dict)) if (!inDict) miss.appendChild(el('span', { class: 'tok', 'data-k': 'split' }, w));
+
+  /* place & granularity */
+  const pt = $('#placeTable tbody');
+  for (const [s, r] of Object.entries(D.place_tests)) {
+    const tr = el('tr');
+    [s, r.default_dict, r.dict_big, r.dict_big_no_hmm].forEach((v, i) => tr.appendChild(el('td', i ? { class: 'mono' } : {}, v)));
+    pt.appendChild(tr);
+  }
+  const gt = $('#granTable tbody');
+  for (const [s, r] of Object.entries(D.granularity)) {
+    const tr = el('tr');
+    [s, r.precise, r.search].forEach((v, i) => tr.appendChild(el('td', i ? { class: 'mono' } : {}, v)));
+    gt.appendChild(tr);
+  }
+
+  /* ---------- gantt ---------- */
+  const tasks = [
+    { name: '基準量測', d: 2, kind: '' },
+    { name: 'POC（1 渠道 × 1 月）', d: 5, kind: '' },
+    { name: '字典整併', d: 10, kind: 'crit' },
+    { name: '工程化（批次＋串流＋API）', d: 6, kind: '' },
+    { name: '6 渠道回朔與驗收', d: 12, kind: 'crit' },
+    { name: '壓測與切換', d: 3, kind: '' },
+    { name: '緩衝', d: 7, kind: 'buf' }
+  ];
+  const g = $('#gantt');
+  let start = 1;
+  const axis = el('div', { class: 'g-lbl g-axis' }, '工作天');
+  g.appendChild(axis);
+  for (let day = 1; day <= 45; day++) {
+    const c = el('div', { class: 'g-axis', style: `grid-column:${day + 1}` }, (day === 1 || day % 5 === 0) ? String(day) : '');
+    g.appendChild(c);
+  }
+  for (const t of tasks) {
+    const lbl = el('div', { class: 'g-lbl' }, t.name);
+    lbl.appendChild(el('small', {}, t.d + ' 天'));
+    lbl.style.gridColumn = '1';
+    g.appendChild(lbl);
+    const bar = el('div', { class: 'g-bar ' + t.kind, title: `${t.name}：第 ${start}–${start + t.d - 1} 天` });
+    bar.style.gridColumn = `${start + 1} / span ${t.d}`;
+    g.appendChild(bar);
+    start += t.d;
+  }
+  const mlbl = el('div', { class: 'g-lbl' }, '機器：ES 寫入');
+  mlbl.appendChild(el('small', {}, '約 6 晚'));
+  g.appendChild(mlbl);
+  const mbar = el('div', { class: 'g-bar mach', title: '第 24–35 天的夜間，約 46 小時寫入' });
+  mbar.style.gridColumn = `${24 + 1} / span 12`;
+  g.appendChild(mbar);
+
+  /* ---------- answer ---------- */
+  const count = s => s.replace(/\s/g, '').length;
+  const ans = $('#ans');
+  let total = 0;
+  const full = [];
+  for (const p of D.answer) {
+    const n = count(p.body);
+    total += count(p.head) + n;
+    full.push(p.head + '\n' + p.body);
+    const box = el('div', { class: 'ans-part' });
+    const head = el('div', { class: 'ans-head' });
+    head.appendChild(el('b', {}, p.head + ' ' + p.title));
+    head.appendChild(el('span', {}, n + ' 字'));
+    box.appendChild(head);
+    const body = el('p', { class: 'ans-body', id: 'ans-' + p.head.replace(/\W/g, '') }, p.body);
+    box.appendChild(body);
+    const btn = el('button', { class: 'btn ghost', type: 'button', style: 'justify-self:start' }, '複製這段');
+    btn.addEventListener('click', async () => {
+      const ok = await copyText(p.head + '\n' + p.body, btn);
+      if (!ok) selectNode(body);
+    });
+    box.appendChild(btn);
+    ans.appendChild(box);
+  }
+  $('#ansTotal').textContent = total;
+  const st = $('#ansState');
+  st.textContent = total <= 600 ? '符合上限（含 (a)(b)(c) 標記）' : '超過上限';
+  st.className = total <= 600 ? 'ok' : 'hl';
+  $('#copyAll').addEventListener('click', async () => {
+    const ok = await copyText(full.join('\n'), null, $('#ansToast'));
+    if (!ok) selectNode(ans);
+  });
+
+  /* ---------- drill cards ---------- */
+  const cards = $('#cards');
+  for (const c of (cards ? D.drill : [])) {
+    const box = el('article', { class: 'card' });
+    box.appendChild(el('h3', {}, c.q));
+    box.appendChild(el('p', { class: 'say' }, c.say));
+    box.appendChild(el('p', { class: 'trap' }, c.trap));
+    cards.appendChild(box);
+  }
+
+  /* ---------- sources ---------- */
+  const EV = { task: ['題目', 'ev-inf'], doc: ['官方文件', 'ev-doc'], paper: ['論文', 'ev-paper'], run: ['實測', 'ev-run'], code: ['原始碼', 'ev-doc'], vendor: ['廠商文', 'ev-inf'], data: ['資料集', 'ev-paper'] };
+  const sl = $('#srcList');
+  for (const s of D.sources) {
+    const li = el('li');
+    const [label, cls] = EV[s.ev];
+    li.appendChild(el('span', { class: 'ev ' + cls, style: 'justify-self:start' }, label));
+    const div = el('div');
+    if (s.url) {
+      const a = el('a', { href: s.url, target: '_blank', rel: 'noopener' }, s.title);
+      div.appendChild(a);
+    } else {
+      div.appendChild(el('span', {}, s.title));
+    }
+    div.appendChild(el('small', {}, s.use));
+    li.appendChild(div);
+    sl.appendChild(li);
+  }
+})();
+</script>
+</body></html>

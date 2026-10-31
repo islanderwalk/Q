@@ -1,0 +1,35 @@
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q1/code/run_q1.py --data <scratch>/run3/fx --out <scratch>/run3/out
+emails total=40,000 included=20,354 canned=13,952 agent=3,807 dup=1,061 empty=826
+canned rules A/B/C/D: 19,629 / 16,936 / 15,349 / 13,952
+email top3: 同步與資料遺失、閃退與當機、付款與扣款
+survey unweighted: top3=同步與資料遺失、速度與效能、閃退與當機 changed=False beyond_ci=False
+survey weighted: top3=同步與資料遺失、介面與操作、登入與帳號 changed=True beyond_ci=False
+survey new_only: top3=介面與操作、登入與帳號、付款與扣款 changed=True beyond_ci=True
+survey old_only: top3=同步與資料遺失、匯出與報表、速度與效能 changed=True beyond_ci=False
+sample rows=300 elapsed=17.4s out=<scratch>/run3/out
+real	0m17.470s
+exit=0
+
+# 輸出複製到 q1/data/synthetic_run_40000/。和前一次嘗試（<scratch>/final/out）比，8 個 CSV／md 逐位元組相同，
+# report.md 與 summary.json 只差執行時間（elapsed_sec）。
+
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q1/code/run_q1.py --data <scratch>/run3/fx --out <scratch>/run3/out_065 --base-old-share 0.65
+emails total=40,000 included=20,354 canned=13,952 agent=3,807 dup=1,061 empty=826
+canned rules A/B/C/D: 19,629 / 16,936 / 15,349 / 13,952
+email top3: 同步與資料遺失、閃退與當機、付款與扣款
+survey unweighted: top3=同步與資料遺失、速度與效能、閃退與當機 changed=False beyond_ci=False
+survey weighted: top3=同步與資料遺失、閃退與當機、速度與效能 changed=False beyond_ci=False
+survey new_only: top3=介面與操作、登入與帳號、付款與扣款 changed=True beyond_ci=True
+survey old_only: top3=同步與資料遺失、匯出與報表、速度與效能 changed=True beyond_ci=False
+sample rows=300 elapsed=16.5s out=<scratch>/run3/out_065
+real	0m16.596s
+exit=0
+
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q1/code/run_q1.py --data <scratch>/run3/fx --out <scratch>/run3/out_size30 --sample-size 30   # 預期失敗
+Traceback (most recent call last):
+  ...（中間 4 層呼叫略）
+  File "<repo>/q1/code/issue_tags.py", line 147, in stratified_sample
+    raise ValueError(f"抽樣數 {size} 小於固定層合計 {sum(fixed.values())}（{fixed}）")
+ValueError: 抽樣數 30 小於固定層合計 40（{'排除：罐頭回覆': 20, '排除：客服個別回覆': 20}）
+real	0m15.036s
+exit=1

@@ -1,0 +1,26 @@
+# 先前中斷的嘗試（未 commit）留在暫存區的輸出；它的產生器原始碼沒有保留，以下只能從它產生的檔案驗證。
+# 在 <scratch>（<tmp>/work/q1）執行。檔案不在 repo：
+$ sha256sum fx_small/emails_truth.jsonl out_small/report.md
+42df33f3f4f26f1f75fc5daeb6228933f95e5b2b993e7b15fef2b13240d8e847  fx_small/emails_truth.jsonl
+52030ffff46d230ff54f9cb89abb348e01ec61c0731ebbd76235d92cb65dc364  out_small/report.md
+
+# 顧客信的問題描述句：去掉否定前綴「…，但是」後有幾種說法
+$ <tmp>/venv/bin/python -I -B -c 'import json, sys
+from collections import Counter
+c, n = Counter(), 0
+for line in open(sys.argv[1], encoding="utf-8"):
+    t = json.loads(line)
+    if t["kind"] != "customer":
+        continue
+    n += 1
+    c.update(s.split("，但是", 1)[-1] for s in t.get("issue_lines", []))
+print(f"customers={n:,} issue_sentences={sum(c.values()):,} distinct_after_negation_prefix={len(c)} repeat_min={min(c.values())} repeat_max={max(c.values())}")' fx_small/emails_truth.jsonl
+customers=1,986 issue_sentences=2,358 distinct_after_negation_prefix=43 repeat_min=30 repeat_max=96
+exit=0
+
+# 它的報告：4,000 封只納入 294 封，1,986 封顧客信中 1,707 封被當成罐頭（只留前 4 欄）
+$ grep -n "customer → canned_template\|customer → included\|^| 客服信件" out_small/report.md | cut -d'|' -f1-5
+12:| 客服信件 | 4,000 | 294 | 3,706
+126:| customer → canned_template | 1,707 |
+128:| customer → included | 276 |
+exit=0

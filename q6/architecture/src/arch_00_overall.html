@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
+<body><script>
+renderDiagram({
+  eyebrow: 'QSearch 資料工程師筆試 · 第 6 題 · 文字雲斷詞 Pipeline 重建 · 總覽',
+  title: 'Q6 整體架構：同一個字典版本，兩條斷詞路徑，新舊並行',
+  sub: '斷詞是 parser 之後的獨立服務：回朔 Job 與串流服務跑同一個映像、載入同一個字典版本（字典每週發版）；ES 新增 terms_v2 與 seg_ver，舊欄位不動，API 用 seg 參數切換給 PM 並排比對。',
+  height: 700,
+  lanes: [
+    { x: 0, y: 0, w: 1030, h: 192, label: '① 字典治理：每週發一版　→ (b)' },
+    { x: 0, y: 207, w: 1030, h: 258, label: '② 回朔：歷史約 5 億篇　→ (a)' },
+    { x: 0, y: 480, w: 1030, h: 205, label: '③ 串流：新進資料　→ (c)' },
+    { x: 1050, y: 207, w: 470, h: 478, label: '④ 儲存與查詢', cls: 'right' }
+  ],
+  nodes: [
+    { id: 'cand', x: 20, y: 46, w: 220, tag: '候選來源', title: '新詞候選', sub: '搜尋熱詞、客戶監測詞、地名庫、品牌、新詞發現' },
+    { id: 'review', x: 275, y: 46, w: 220, tag: '人工', title: '審核 → PR', sub: '附次數、例句、影響篇數；字典當程式碼 review' },
+    { id: 'ci', x: 530, y: 46, w: 220, tag: 'CI', title: '回歸＋影響估算', sub: '必不可拆 100%、症狀偵測 = 0、BigQuery 估篇數' },
+    { id: 'artifact', x: 785, y: 40, w: 225, cls: 'accent', tag: 'GCS · 每週一版', title: '字典 artifact', sub: '<code>dict_version</code> · <code>total</code>（固定）· <code>sha256</code>' },
+
+    { id: 'parts', x: 20, y: 256, w: 220, tag: '排程', title: '分區清單', sub: '渠道 × 月 ≈ 270 批；由新到舊；大分區切 slice' },
+    { id: 'raw', x: 275, y: 256, w: 220, cls: 'store', tag: 'BigQuery / GCS', title: '原文', sub: 'Storage Read API 讀取，不從 ES scroll' },
+    { id: 'segb', x: 530, y: 250, w: 220, cls: 'accent', tag: 'Cloud Run Jobs（回補）', title: '斷詞 Job', sub: '與斷詞服務同一個映像；一個 task 一個 slice' },
+    { id: 'gate', x: 785, y: 352, w: 225, cls: 'gate', tag: '每一批', title: '閘門 G1–G4', sub: '筆數守恆、洩漏 = 0、無寫入拒絕、首月 PM 抽查' },
+
+    { id: 'crawl', x: 20, y: 527, w: 220, tag: '既有', title: '爬蟲 → GCS → Pub/Sub', sub: 'FB、IG、YouTube、論壇、媒體、Threads' },
+    { id: 'pubsub', x: 275, y: 527, w: 220, tag: '既有 · Cloud Run', title: 'parser', sub: '解析、清洗後發到 parsed 主題；失敗進 DLQ' },
+    { id: 'segs', x: 530, y: 520, w: 220, cls: 'accent', tag: 'Cloud Run 服務（新）', title: '斷詞服務', sub: '訂閱 parsed 主題；A/B 期間 v1、v2 各一個訂閱，各寫各的欄位' },
+
+    { id: 'es', x: 1070, y: 252, w: 430, cls: 'store', tag: 'Elasticsearch · 約 5 億篇', title: 'posts 索引', sub: '<code>content</code> · <code>terms_v1</code>（舊，不動）· <code>terms_v2</code>（新）· <code>seg_ver</code>' },
+    { id: 'api', x: 1070, y: 400, w: 430, tag: 'API', title: '文字雲 API', sub: '<code>seg=v1|v2</code>；terms 聚合＋exclude 軟停用詞；依（查詢, 範圍, seg_ver）快取；目標 3 分鐘內' },
+    { id: 'pm', x: 1070, y: 575, w: 205, title: 'PM A/B 並排', sub: '兩張文字雲＋差異清單' },
+    { id: 'cust', x: 1295, y: 575, w: 205, title: '客戶文字雲', sub: '驗收過才切預設；v1 留 2–4 週回退' }
+  ],
+  edges: [
+    { from: 'cand', to: 'review' },
+    { from: 'review', to: 'ci' },
+    { from: 'ci', to: 'artifact', align: 'y' },
+
+    { from: 'parts', to: 'raw', align: 'y' },
+    { from: 'raw', to: 'segb', align: 'y' },
+    { from: 'segb', to: 'es', align: 'y', label: '條件寫入（版本只能前進）', labelFrac: 0.66 },
+    { from: 'es', to: 'gate', sides: ['left', 'right'], fromT: 0.86, route: 'h', mx: 1035, dashed: true, color: 'warn', label: '寫完', labelAt: [1035, 360] },
+    { from: 'gate', to: 'parts', sides: ['left', 'bottom'], route: 'hv', dashed: true, color: 'warn', label: '全過才放行下一批；失敗只重跑這一批' },
+
+    { from: 'crawl', to: 'pubsub', align: 'y' },
+    { from: 'pubsub', to: 'segs', align: 'y' },
+    { from: 'segs', to: 'es', sides: ['right', 'left'], toT: 0.62, route: 'h', mx: 1058, label: '即時寫入' },
+
+    { from: 'es', to: 'api' },
+    { from: 'api', to: 'pm', fromT: 0.24 },
+    { from: 'api', to: 'cust', fromT: 0.76 },
+
+    { from: 'artifact', to: 'segb', sides: ['bottom', 'top'], fromT: 0.2, toT: 0.8, my: 220, dashed: true, color: 'accent', label: '載入 vN', labelAt: [726, 220] },
+    { from: 'artifact', to: 'segs', sides: ['left', 'top'], fromT: 0.86, toT: 0.73, route: 'points', points: [[768, null], [768, 500], [690, 500]], dashed: true, color: 'accent' },
+    { from: 'artifact', to: 'es', sides: ['right', 'top'], fromT: 0.4, toT: 0.5, route: 'hv', dashed: true, color: 'accent', label: '搜尋端：同義詞 reload／排定 reindex' }
+  ],
+  footL: '示意圖 · 技術棧依 QSearch 公開資料（Google Cloud 案例：BigQuery、Cloud Storage、Pub/Sub）＋本研究設計',
+  footR: 'q6/architecture/overview/diagram-overall.png'
+});
+</script></body></html>

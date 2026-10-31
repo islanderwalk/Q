@@ -1,0 +1,20 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; }
+body { background: #f9f9f7; font-family: "WenQuanYi Zen Hei", system-ui, sans-serif; color: #0b0b0b; padding: 24px; }
+.card { background: #fcfcfb; border: 1px solid rgba(11,11,11,.10); border-radius: 12px; padding: 28px 32px 22px; width: 960px; }
+.tag { display: inline-block; font-size: 13px; color: #52514e; border: 1px solid #e1e0d9; border-radius: 99px; padding: 2px 10px; margin-bottom: 10px; }
+h1 { font-size: 24px; font-weight: 600; line-height: 1.35; }
+.sub { font-size: 15px; color: #52514e; margin-top: 6px; line-height: 1.5; }
+.src { font-size: 12.5px; color: #898781; margin-top: 14px; line-height: 1.5; }
+svg text { font-family: "WenQuanYi Zen Hei", system-ui, sans-serif; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+.tile { border: 1px solid #e1e0d9; border-radius: 10px; padding: 16px 18px; }
+.tile .v { font-size: 32px; font-weight: 600; margin-top: 6px; }
+.tile .k { font-size: 14px; color: #52514e; }
+.tile .n { font-size: 13px; color: #898781; margin-top: 6px; line-height: 1.45; }
+table { border-collapse: collapse; width: 100%; margin-top: 18px; font-size: 16px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e1e0d9; }
+th { color: #52514e; font-weight: 500; font-size: 14px; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+th.num { text-align: right; }
+</style></head><body><div class="card"><div class="tag">第 3 題・第 4 小題｜不變量</div><h1>三個不變量都在實測資料上驗證過</h1><div class="sub">前兩個是硬性檢查（違反就是漏抓或解析錯）；第三個是軟性檢查（±2 容許誤差）</div><div class="tiles"><div class="tile"><div class="k">填滿的列表頁剛好 20 格</div><div class="v">334/334</div><div class="n">刪文也佔一格，所以「每頁 20 格」可以定位到第幾頁第幾格漏抓</div></div><div class="tile"><div class="k">列表順序與 ID 時間戳倒序</div><div class="v">0 筆</div><div class="n">6,260 筆相鄰比較；ID 內含發文時間，順序必須單調遞增</div></div><div class="tile"><div class="k">列表推文數 = 推 − 噓</div><div class="v">97.2%</div><div class="n">3,797 篇穩定文章；差距 ≤ 2 的有 99.6%，適合當容許誤差的輔助檢查</div></div></div><div class="src">資料：2026/10/26 實爬八卦板 7 天全部 334 個列表頁（q3/data/ptt_q3_out/index_entries.csv）<br>資料：2026/10/27 打開 7 天內全部 6,237 篇文章普查（q3/data/ptt_q3_census_out/articles.jsonl）</div></div></body></html>

@@ -1,0 +1,10 @@
+time="2026-10-30T22:35:48Z" level=warning msg="Found orphan containers (seed-2, seed-1, seed-0) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container qsearch-q6-seg-job-run-e8d31a375fff Creating 
+ Container qsearch-q6-seg-job-run-e8d31a375fff Created 
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.2/base.dict ...
+Dumping model to file cache /tmp/qseg-dict/jieba.u7e1ca9a67413db77bc67c617613865f3.cache
+Loading model cost 1.191 seconds.
+Prefix dict has been built successfully.
+{"severity": "INFO", "event": "partition_start", "time": "2026-10-30T22:35:51.017+00:00", "partition": "ptt/2026-10", "raw": 6685, "resume_from": 0, "dict_version": "qsearch-q6-2026.10.30.2", "task": 0, "seg_build": "4f6ad53", "force": true}
+{"severity": "INFO", "event": "partition_done", "time": "2026-10-30T22:35:53.383+00:00", "partition": "ptt/2026-10", "status": "failed", "docs_per_sec": 2977.6, "gates": {"G1": {"pass": true, "raw": 6685, "es_at_target": 6685}, "G2": {"pass": false, "url_fragment": 17, "phone_like": 0, "pure_number": 0, "hard_stopwords": 0, "must_keep_split": {}}, "G3": {"pass": true, "write_rejected": 0, "canary_p95_ms_before": 10.0, "canary_p95_ms_after": 5.0}, "G4": {"pass": false, "pm_spot_check_required": true}}}
+{"severity": "INFO", "event": "job_done", "time": "2026-10-30T22:35:53.384+00:00", "partitions": 1, "dict_version": "qsearch-q6-2026.10.30.2"}

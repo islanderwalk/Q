@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
+<body><script>
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (a) 歷史資料回朔',
+  title: '(a) 一批怎麼跑：讀原文、斷詞、條件寫入、過閘門',
+  sub: '讀取走 BigQuery，不壓線上 ES；寫入是冪等的條件更新，所以失敗只要重跑那一批。四道閘門全過才放行下一批。',
+  height: 610,
+  nodes: [
+    { id: 'list', x: 0, y: 40, w: 230, tag: 'BigQuery 表', title: '分區清單', sub: 'channel、month、slice 數、檢查點、狀態' },
+    { id: 'read', x: 265, y: 40, w: 230, cls: 'store', tag: 'BigQuery Storage Read', title: '讀這一批原文', sub: '讀取壓力不落在線上 ES' },
+    { id: 'jobs', x: 530, y: 32, w: 260, cls: 'accent', tag: 'Cloud Run Jobs · N 個 task', title: '清洗 → 斷詞 → 過濾', sub: '一個 task 一個 slice（doc_id 雜湊）；segmenter 映像＋字典 vN' },
+    { id: 'write', x: 825, y: 40, w: 260, tag: 'bulk 條件更新', title: '寫 terms_v2＋seg_ver', sub: '版本只能前進；限速每秒 3,000 篇、離峰；遇 429 退避' },
+    { id: 'es', x: 1120, y: 40, w: 400, cls: 'store', tag: 'Elasticsearch', title: 'posts-YYYY.MM', sub: '<code>terms_v1</code> 不動（A/B 對照）· <code>terms_v2</code> 新寫入 · <code>seg_ver</code>' },
+
+    { id: 'gates', x: 40, y: 205, w: 1480, h: 215, cls: 'ghost', title: '每批閘門：四項全過才放行下一批' },
+    { id: 'g1', x: 70, y: 250, w: 330, cls: 'gate', tag: 'G1 完整性', title: '筆數守恆', sub: '來源篇數 = v2 寫入 + 有理由跳過；每篇恰一個 seg_ver；DLQ 清空' },
+    { id: 'g2', x: 430, y: 250, w: 340, cls: 'gate', tag: 'G2 品質', title: '洩漏 = 0、必不可拆全過', sub: 'top-200 無網址碎片、電話、停用詞；地名與搜尋熱詞 100% 完整；分佈在 POC 區間 ±20%' },
+    { id: 'g3', x: 800, y: 250, w: 330, cls: 'gate', tag: 'G3 叢集', title: '線上不受影響', sub: '寫入拒絕 = 0；線上 p95 惡化 < 10%；磁碟 < 75%；超過就自動降速' },
+    { id: 'g4', x: 1160, y: 250, w: 340, cls: 'gate', tag: 'G4 產品', title: '各渠道首月 PM 抽查', sub: '熱門 30 個查詢 v1／v2 並排；之後月份只要 G1–G3 正常就自動放行' },
+
+    { id: 'pass', x: 300, y: 480, w: 380, cls: 'accent', tag: '四項全過', title: '標記完成 → 下一批', sub: '分區清單更新狀態；同渠道往更舊的月份走' },
+    { id: 'fail', x: 860, y: 480, w: 440, cls: 'bad', tag: '任一項失敗', title: '停線 → 修正 → 只重跑這一批', sub: '寫入以 doc_id＋seg_ver 冪等，重跑不會重複；其他批不受影響' }
+  ],
+  edges: [
+    { from: 'list', to: 'read', align: 'y' },
+    { from: 'read', to: 'jobs', align: 'y' },
+    { from: 'jobs', to: 'write', align: 'y' },
+    { from: 'write', to: 'es', align: 'y' },
+    { from: 'es', to: 'gates', sides: ['bottom', 'top'], align: 'x', label: '這一批寫完', color: 'warn' },
+    { from: 'gates', to: 'pass', sides: ['bottom', 'top'], fromT: 0.297, align: 'x', color: 'accent' },
+    { from: 'gates', to: 'fail', sides: ['bottom', 'top'], fromT: 0.696, align: 'x', color: 'bad' },
+    { from: 'pass', to: 'list', sides: ['left', 'bottom'], toT: 0.065, route: 'hv', color: 'accent', dashed: true }
+  ],
+  footL: '示意圖 · 3,000 篇/秒、±20%、p95 < 10% 為本研究假設的門檻，POC 時實測校正',
+  footR: 'q6/architecture/a-backfill/diagram-batch-flow-gates.png'
+});
+</script></body></html>

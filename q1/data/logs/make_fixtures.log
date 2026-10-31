@@ -1,0 +1,26 @@
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q1/code/make_fixtures.py --out <scratch>/run3/fx
+wrote <scratch>/run3/fx: emails=40000 surveys=2000 seed=20261030
+real	0m2.364s
+exit=0
+
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q1/code/make_fixtures.py --out <scratch>/run3/fx2
+wrote <scratch>/run3/fx2: emails=40000 surveys=2000 seed=20261030
+real	0m1.756s
+exit=0
+
+# 逐檔 sha256（sha256sum）；fx2 與 fx 相同，也和前一次嘗試（<scratch>/final/fx）相同：
+emails.jsonl 335833eebd1425e01e57bc93b2fa65877e5b1c13c218893e7e3dda7ab3773bfd size=14498441 fx2_same=yes prev_attempt_same=yes
+emails_truth.jsonl 70443d08a4870e4624d0407a31c14a64d8979c2a490910dff68a79662b48b705 size=14801298 fx2_same=yes prev_attempt_same=yes
+emails_preview.jsonl 48299b3c4d14d92cf4085d6d55b30a2e2a6b828cbd5cba9f2f6543c767fc2b1a size=21424 fx2_same=yes prev_attempt_same=yes
+survey.csv 5a29af088a49779b0c2e132296f937a6f5bc7efc76803c49c31b790ecbce8501 size=80296 fx2_same=yes prev_attempt_same=yes
+fixture_params.json 6469317598bb3ec5cb6d38e20a5d5c44b1c33775f31443209ea9f2d03b397eea size=1378 fx2_same=yes prev_attempt_same=yes
+
+# 和上一版（顧客手機尾碼隨機 100～999，第一次實作的 <scratch>/fx_full）比：
+# 舊 emails.jsonl 有 865 種不同的 0900-000-xxx。把舊檔的 0900-000-xxx 換成 0900-000-000 後（sed -E 's/0900-000-[0-9]{3}/0900-000-000/g'），
+# 用 cmp 比對，5 個檔都和新檔逐位元組相同：只有電話號碼改變。
+emails.jsonl old_with_phone_masked==new: yes
+emails_truth.jsonl old_with_phone_masked==new: yes
+emails_preview.jsonl old_with_phone_masked==new: yes
+survey.csv old_with_phone_masked==new: yes
+fixture_params.json old_with_phone_masked==new: yes
+# 新 emails.jsonl 裡符合 09xx-xxx-xxx 的字串只有 0900-000-000（2,769 次）。

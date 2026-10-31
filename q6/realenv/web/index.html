@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QSearch 文字雲 A/B</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>QSearch 文字雲</b><span class="muted">PM A/B 驗收 · 第 6 題真實環境</span></div>
+  <div class="env" id="env">連線中…</div>
+</header>
+<section class="controls">
+  <label class="q">關鍵字<input id="q" placeholder="例：高雄、咖啡（空白＝全部文章）"></label>
+  <div class="chips" id="chips"></div>
+  <label>起<input id="from" type="date"></label>
+  <label>迄<input id="to" type="date"></label>
+  <label class="tog"><input id="soft" type="checkbox" checked>排除軟停用詞</label>
+  <label class="tog"><input id="merge" type="checkbox" checked>合併變體</label>
+  <label>詞數<select id="size"><option>40</option><option selected>60</option><option>100</option></select></label>
+  <button id="go">查詢</button>
+</section>
+<main class="ab">
+  <section class="pane" id="pane-v1">
+    <div class="ph"><h2>舊版 <code>terms_v1</code></h2><div class="meta" id="meta-v1"></div></div>
+    <div class="noise" id="noise-v1"></div>
+    <svg class="cloud" id="cloud-v1" viewBox="0 0 640 380" role="img" aria-label="舊版文字雲"></svg>
+  </section>
+  <section class="pane" id="pane-v2">
+    <div class="ph"><h2>新版 <code>terms_v2</code></h2><div class="meta" id="meta-v2"></div></div>
+    <div class="noise" id="noise-v2"></div>
+    <svg class="cloud" id="cloud-v2" viewBox="0 0 640 380" role="img" aria-label="新版文字雲"></svg>
+  </section>
+</main>
+<section class="diff">
+  <div class="dh"><h3>差異清單</h3><span class="muted" id="scope"></span></div>
+  <div class="cols">
+    <div><h4>只在舊版前 N 名</h4><ol id="only-v1"></ol></div>
+    <div><h4>只在新版前 N 名</h4><ol id="only-v2"></ol></div>
+    <div class="wide"><h4>排名對照（新版前 20）</h4><table id="rank"><thead><tr><th>詞</th><th>新版名次</th><th>篇數</th><th>舊版名次</th><th>篇數</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+<aside class="drawer" id="drawer" hidden>
+  <div class="dh"><h3 id="dr-title"></h3><button id="dr-close" aria-label="關閉">×</button></div>
+  <div id="dr-body"></div>
+</aside>
+<footer class="foot muted" id="foot"></footer>
+<script src="/static/cloud.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

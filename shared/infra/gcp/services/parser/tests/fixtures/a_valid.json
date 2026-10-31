@@ -1,0 +1,1 @@
+{"event_id": "evt-local-0001", "schema_version": 1, "job_id": "job-ptt-gossiping-20261030", "platform": "ptt", "event_type": "crawl.fetched", "raw_data_uri": "gs://qsearch-local-raw-scraped/ptt/Gossiping/M.1761800000.A.001.html"}

@@ -1,0 +1,238 @@
+[
+  {
+    "id": "ev_00_gcp_qsearch_stack",
+    "cat": "overview",
+    "url": "https://cloud.google.com/customers/qsearch",
+    "source": "Google Cloud 客戶案例：QSearch",
+    "claim": "QSearch 在 Google Cloud 上跑資料平台（案例列出 BigQuery、Cloud Storage、Pub/Sub 等），所以回朔讀原文走 BigQuery／GCS、串流沿用 Pub/Sub。",
+    "excerpts": [
+      {
+        "find": "43.2 billion records in 8 hours"
+      },
+      {
+        "find": "Founded in 2014"
+      },
+      {
+        "find": "Cloud Pub/Sub"
+      }
+    ]
+  },
+  {
+    "id": "ev_a1_es_update_reindex",
+    "cat": "a-backfill",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html",
+    "source": "Elasticsearch Guide 8.19 · Update API",
+    "claim": "部分更新只帶一個欄位，ES 仍會把整篇文件重新索引；update 需要 _source。所以回補寫入要限速、離峰跑。",
+    "excerpts": [
+      {
+        "find": "The document must still be reindexed"
+      },
+      {
+        "find": "field must be enabled to use"
+      }
+    ],
+    "keep": [
+      2
+    ]
+  },
+  {
+    "id": "ev_a2_es_source_excludes",
+    "cat": "a-backfill",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/mapping-source-field.html",
+    "source": "Elasticsearch Guide 8.19 · _source field",
+    "claim": "用 excludes 修剪 _source 的缺點和關閉 _source 類似（例如不能 reindex）；update 也靠 _source。所以 terms_v2 必須留在 _source。",
+    "excerpts": [
+      {
+        "find": "and reindex APIs"
+      },
+      {
+        "find": "similar downsides to disabling"
+      }
+    ]
+  },
+  {
+    "id": "ev_a3_es_update_by_query",
+    "cat": "a-backfill",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update-by-query.html",
+    "source": "Elasticsearch Guide 8.19 · Update by query API",
+    "claim": "requests_per_second 可以替每批補等待時間來限速；既有文件也能用 _update_by_query 吃到新加的欄位或 multi-field。",
+    "excerpts": [
+      {
+        "find": "pads each batch with a wait time"
+      },
+      {
+        "find": "to pick up the new mapping"
+      }
+    ]
+  },
+  {
+    "id": "ev_a4_es_tune_indexing",
+    "cat": "a-backfill",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/tune-for-indexing-speed.html",
+    "source": "Elasticsearch Guide 8.19 · Tune for indexing speed",
+    "claim": "大量寫入時：bulk 從 100 篇開始往上試、遇到 429 用隨機指數退避、初次載入可暫時把 replicas 設 0。",
+    "excerpts": [
+      {
+        "find": "First try to index 100 documents at once"
+      },
+      {
+        "find": "randomized exponential backoff"
+      },
+      {
+        "find": "to speed up indexing"
+      }
+    ]
+  },
+  {
+    "id": "ev_a5_es_global_ordinals",
+    "cat": "a-backfill",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/eager-global-ordinals.html",
+    "source": "Elasticsearch Guide 8.19 · eager_global_ordinals",
+    "claim": "回補完、不再寫入的月份 index 可以 force merge 成單一 segment，這時 terms 聚合不用另外建 global ordinals。",
+    "excerpts": [
+      {
+        "find": "already global to the shard"
+      },
+      {
+        "find": "never write to again"
+      }
+    ],
+    "keep": [
+      1
+    ]
+  },
+  {
+    "id": "ev_a6_es_random_sampler",
+    "cat": "a-backfill",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-random-sampler-aggregation.html",
+    "source": "Elasticsearch Guide 8.19 · Random sampler aggregation",
+    "claim": "random_sampler 能大幅加速大範圍聚合，但仍是 technical preview：3 分鐘目標只能把它當選項，不能當唯一依靠。",
+    "excerpts": [
+      {
+        "find": "technical preview"
+      },
+      {
+        "find": "significant speed improvement"
+      }
+    ]
+  },
+  {
+    "id": "ev_a7_jieba_readme_speed",
+    "cat": "a-backfill",
+    "url": "https://github.com/fxsjy/jieba",
+    "source": "jieba README（GitHub fxsjy/jieba）",
+    "claim": "jieba 官方效能：精確模式約 400 KB/s（i7-2600 3.4GHz）。本研究 VM 實測每核每秒約 26–29 萬字，量級一致。",
+    "excerpts": [
+      {
+        "find": "400 KB / Second in Default Mode"
+      }
+    ]
+  },
+  {
+    "id": "ev_b1_jieba_dict_big_userdict",
+    "cat": "b-dictionary",
+    "url": "https://github.com/fxsjy/jieba",
+    "source": "jieba README（GitHub fxsjy/jieba）",
+    "claim": "dict.txt.big 對繁體支援較好；自訂詞典一行一詞，格式是「詞 詞頻 詞性」，可以直接由字典 repo 編譯產生。",
+    "excerpts": [
+      {
+        "find": "better support for traditional Chinese"
+      },
+      {
+        "find": "divided into three parts"
+      }
+    ]
+  },
+  {
+    "id": "ev_b2_ckiptagger_table_dictionary",
+    "cat": "b-dictionary",
+    "url": "https://github.com/ckiplab/ckiptagger",
+    "source": "CkipTagger README（GitHub ckiplab/ckiptagger）",
+    "claim": "ASBC 4.0 測試集斷詞 F1：CkipTagger 97.33%、jieba-zh_TW 89.80%；CkipTagger 支援推薦詞與強制詞字典，適合離線做新詞發現與 golden set 預標。",
+    "excerpts": [
+      {
+        "find": "Jieba-zh_TW",
+        "row": true,
+        "up": "TABLE"
+      },
+      {
+        "find": "coerce_dictionary"
+      }
+    ]
+  },
+  {
+    "id": "ev_b3_ckip_transformers_table",
+    "cat": "b-dictionary",
+    "url": "https://github.com/ckiplab/ckip-transformers",
+    "source": "ckip-transformers README（GitHub ckiplab/ckip-transformers）",
+    "claim": "ckip-transformers 斷詞 F1：bert-base 97.60%、albert-tiny 96.66%；授權 GPL-3.0，商用前要問法務。",
+    "excerpts": [
+      {
+        "find": "97.60%",
+        "row": true,
+        "up": "TABLE"
+      },
+      {
+        "find": "GPL-3.0 License"
+      }
+    ]
+  },
+  {
+    "id": "ev_b5_es_reload_search_analyzers",
+    "cat": "b-dictionary",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/indices-reload-analyzers.html",
+    "source": "Elasticsearch Guide 8.19 · Reload search analyzers API",
+    "claim": "只有「只用在 search analyzer、標了 updateable」的 synonym filter 能熱更新；所以搜尋端的同義詞可以每週 reload，index-time 斷詞的變更要排定 reindex。",
+    "excerpts": [
+      {
+        "find": "updateable"
+      }
+    ]
+  },
+  {
+    "id": "ev_c1_jieba_add_word_total",
+    "cat": "c-consistency",
+    "url": "https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py#L418-L437",
+    "source": "jieba 原始碼 jieba/__init__.py（GitHub，第 418–437 行）",
+    "claim": "add_word 會把新詞頻率加進 self.total（第 428–429 行），覆寫舊詞時也不扣回舊頻率。所以常駐 worker 熱改字典，結果會和整份重載的批次 job 不同。",
+    "excerpts": [
+      {
+        "find": "self.total += freq",
+        "pad": [
+          330,
+          330
+        ],
+        "fullWidth": true
+      }
+    ]
+  },
+  {
+    "id": "ev_c2_jieba_calc_logtotal",
+    "cat": "c-consistency",
+    "url": "https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py#L172-L178",
+    "source": "jieba 原始碼 jieba/__init__.py（GitHub，第 172–178 行）",
+    "claim": "每個候選切法的分數是 Σ log(詞頻) − log(total)。total 一變，所有句子的分數一起平移，平手的切法可能翻轉；固定 total 才能讓影響範圍只限於含新詞的句子。",
+    "excerpts": [
+      {
+        "find": "logtotal = log(self.total)",
+        "pad": [
+          140,
+          200
+        ],
+        "fullWidth": true
+      }
+    ]
+  },
+  {
+    "id": "ev_c4_es_terms_exclude",
+    "cat": "c-consistency",
+    "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-bucket-terms-aggregation.html",
+    "source": "Elasticsearch Guide 8.19 · Terms aggregation",
+    "claim": "terms 聚合的 include／exclude 可以用 regex，也可以給精確值陣列：軟停用詞與黑名單放在查詢時，改了立即生效、不用重跑。",
+    "excerpts": [
+      {
+        "find": "arrays of exact values"
+      }
+    ]
+  }
+]

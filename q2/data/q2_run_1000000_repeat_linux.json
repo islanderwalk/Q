@@ -1,0 +1,196 @@
+{
+  "started_at": "2026-10-30T07:36:30+00:00",
+  "python": "3.13.17",
+  "params": {
+    "rows": 1000000,
+    "mode": "repeat",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_linux",
+    "ctype": "C.UTF-8",
+    "maintenance_work_mem": "1GB",
+    "bigram_timeout_min": 30.0,
+    "skip_bigram": false,
+    "out": "/var/lib/qsearch-pg/out/q2_run_1000000_repeat_linux.json"
+  },
+  "steps_seconds": {
+    "generate_and_insert": 24.19
+  },
+  "index_build": {
+    "btree_page_id": {
+      "seconds": 0.56,
+      "timed_out": false
+    },
+    "simple_tsv": {
+      "seconds": 7.2,
+      "timed_out": false
+    },
+    "trgm": {
+      "seconds": 114.42,
+      "timed_out": false
+    },
+    "bigram": {
+      "seconds": 387.4,
+      "timed_out": false
+    }
+  },
+  "measure": {
+    "distinct_check": [
+      {
+        "rows": 1000000,
+        "distinct_messages": 1000,
+        "distinct_like_cnt": 3000,
+        "distinct_post_ids": 1000000,
+        "message_runs": 1000
+      }
+    ],
+    "trgm_sanity": [
+      {
+        "trgm_per_row": 251
+      }
+    ],
+    "table_size": [
+      {
+        "table_bytes": 1024000000,
+        "table_pages": 125000,
+        "rows": 1000000
+      }
+    ],
+    "heap_page0_lp": [
+      {
+        "rows_on_page0": 8,
+        "avg_lp_len": 920.0,
+        "min_lp_len": 920,
+        "max_lp_len": 920
+      }
+    ],
+    "avg_column_size": [
+      {
+        "avg_row_datum_bytes": 920.0,
+        "avg_message_bytes": 754.0
+      }
+    ],
+    "index_sizes": [
+      {
+        "index_name": "fb_posts_bigram_gin",
+        "index_bytes": 406257664
+      },
+      {
+        "index_name": "fb_posts_page_id_btree",
+        "index_bytes": 6873088
+      },
+      {
+        "index_name": "fb_posts_simple_gin",
+        "index_bytes": 3268608
+      },
+      {
+        "index_name": "fb_posts_trgm_gin",
+        "index_bytes": 409788416
+      }
+    ],
+    "gin_bigram_meta": [
+      {
+        "n_entries": 248926,
+        "n_total_pages": 49592,
+        "n_entry_pages": 49591,
+        "n_data_pages": 0
+      }
+    ],
+    "gin_trgm_meta": [
+      {
+        "n_entries": 249158,
+        "n_total_pages": 50023,
+        "n_entry_pages": 50011,
+        "n_data_pages": 11
+      }
+    ],
+    "gin_simple_meta": [
+      {
+        "n_pending_pages": 0,
+        "n_entries": 1000,
+        "n_total_pages": 399,
+        "n_entry_pages": 398,
+        "n_data_pages": 0
+      }
+    ]
+  },
+  "queries": {
+    "bigram_contains": {
+      "count": 1000,
+      "median_ms": 1.416,
+      "all_ms": [
+        1.416,
+        1.448,
+        1.148
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_bigram_gin"
+      ]
+    },
+    "trgm_like": {
+      "count": 1000,
+      "median_ms": 1.246,
+      "all_ms": [
+        1.277,
+        1.24,
+        1.246
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_trgm_gin"
+      ]
+    },
+    "simple_tsvector": {
+      "count": 0,
+      "median_ms": 0.509,
+      "all_ms": [
+        0.522,
+        0.509,
+        0.421
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_simple_gin"
+      ]
+    },
+    "btree_page_id": {
+      "count": 100,
+      "median_ms": 0.588,
+      "all_ms": [
+        0.681,
+        0.588,
+        0.581
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_page_id_btree"
+      ]
+    }
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+    "shared_buffers": "128MB",
+    "maintenance_work_mem": "1GB",
+    "max_parallel_maintenance_workers": "2",
+    "block_size": "8192",
+    "datctype": "C.UTF-8",
+    "os": "Linux 6.18.44-fc-v185"
+  },
+  "query_term": "蟟价崿杸",
+  "consistency": {
+    "counts": {
+      "bigram_contains": 1000,
+      "trgm_like": 1000,
+      "simple_tsvector": 0,
+      "btree_page_id": 100
+    },
+    "bigram_equals_trgm_like": true
+  },
+  "finished_at": "2026-10-30T07:45:28+00:00"
+}

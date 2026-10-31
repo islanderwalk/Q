@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script>
+<style>
+  .grid { display: grid; grid-template-columns: 180px repeat(46, 23px); column-gap: 3px; row-gap: 5px; align-items: center; }
+  .yr { font-size: 13px; font-weight: 700; color: var(--muted); border-left: 2px solid #c3cdd3; padding-left: 6px; height: 22px; line-height: 22px; }
+  .mo { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--muted); text-align: center; }
+  .ch { font-size: 15.5px; font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
+  .ch small { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+  .ch i { font-style: normal; font-family: "JetBrains Mono", monospace; font-size: 12px; color: #fff; background: var(--ink); border-radius: 50%; width: 20px; height: 20px; display: inline-grid; place-items: center; }
+  .cell { height: 36px; border-radius: 4px; position: relative; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 700; }
+  .cell.none { background: repeating-linear-gradient(45deg, #e4e9ec, #e4e9ec 4px, #fff 4px, #fff 8px); border: 1px dashed #c3cdd3; }
+  .order { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--accent); }
+  .order svg { flex: none; }
+  .legend { display: flex; gap: 22px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 22px; height: 16px; border-radius: 3px; display: inline-block; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .facts .card b { display: block; font-size: 22px; font-family: "JetBrains Mono", monospace; margin: 2px 0; }
+</style></head>
+<body><script>
+const months = [];
+for (let y = 2023; y <= 2026; y++) for (let m = 1; m <= 12; m++) if (y < 2026 || m <= 10) months.push([y, m]);
+const channels = [
+  { name: 'Facebook' }, { name: 'Instagram' }, { name: 'YouTube' },
+  { name: '論壇' }, { name: '媒體' }, { name: 'Threads', start: [2023, 7] }
+];
+const n = months.length;
+let html = '<div class="grid"><div></div>';
+for (const [y, cnt] of [[2023, 12], [2024, 12], [2025, 12], [2026, 10]]) html += `<div class="yr" style="grid-column: span ${cnt}">${y}</div>`;
+html += '<div></div>';
+months.forEach(([y, m]) => { html += `<div class="mo">${m === 1 || m % 3 === 1 ? m : ''}</div>`; });
+channels.forEach((c, ci) => {
+  const has = months.filter(([y, m]) => !c.start || (y > c.start[0] || (y === c.start[0] && m >= c.start[1]))).length;
+  html += `<div class="ch"><i>${ci + 1}</i>${c.name}<small>${has} 批</small></div>`;
+  months.forEach(([y, m], i) => {
+    const before = c.start && (y < c.start[0] || (y === c.start[0] && m < c.start[1]));
+    if (before) { html += '<div class="cell none"></div>'; return; }
+    const alpha = (0.16 + 0.84 * (i / (n - 1))).toFixed(3);
+    const newest = i === n - 1;
+    const mark = newest ? (ci === 0 ? '◆' : '●') : '';
+    html += `<div class="cell" style="background: rgba(12,107,99,${alpha})">${mark}</div>`;
+  });
+});
+html += '</div>';
+
+const arrow = `<div class="order"><svg width="1196" height="22" viewBox="0 0 1196 22"><defs><marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0c6b63"/></marker></defs><line x1="1190" y1="11" x2="8" y2="11" stroke="#0c6b63" stroke-width="3" marker-end="url(#o)"/></svg></div>`;
+const legend = `<div class="legend">
+  <span><i class="sw" style="background: rgba(12,107,99,1)"></i>顏色越深越早處理（每個渠道由新到舊）</span>
+  <span><i class="sw" style="background: repeating-linear-gradient(45deg,#e4e9ec,#e4e9ec 4px,#fff 4px,#fff 8px); border: 1px dashed #c3cdd3"></i>Threads 2023/07 上線前沒有資料</span>
+  <span>◆ POC：1 渠道 × 1 月</span>
+  <span>● 各渠道第一批：G4 由 PM 抽查</span>
+  <span>渠道順序依查詢量排定（此處為示意）</span>
+</div>`;
+const facts = `<div class="facts">
+  <div class="card"><h3>批數</h3><b>270 批</b>5 渠道 × 46 個月（2023/01–2026/10）＋ Threads 40 個月</div>
+  <div class="card"><h3>每批大小</h3><b>≈ 185 萬篇</b>5 億 ÷ 270；限速每秒 3,000 篇時約 10 分鐘寫完（假設，POC 實測校正）</div>
+  <div class="card"><h3>為什麼是渠道 × 月</h3>渠道決定清洗規則與驗收標準；月份控制批量、失敗只重跑一格。大格再用 doc_id 雜湊切 slice 平行跑；slice 是執行單位，不是驗收單位。</div>
+</div>`;
+
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (a) 歷史資料回朔',
+  title: '(a) 批次單位：渠道 × 月，一格就是一批',
+  sub: '比較過「年份」（一批上億篇，失敗要重跑一整年）與「渠道」（大小不均、中途無法檢查），選渠道 × 月：每批都能過閘門，最常被查的近期資料先完成。',
+  height: 560,
+  blocks: [
+    { x: 183, y: 0, html: arrow },
+    { x: 1385, y: 2, html: '<div style="font-size:14px;font-weight:700;color:#0c6b63">由新到舊</div>' },
+    { x: 0, y: 34, w: 1520, html },
+    { x: 0, y: 360, w: 1520, html: legend },
+    { x: 0, y: 410, w: 1520, html: facts }
+  ],
+  footL: '格子結構與數量依題目條件推算；顏色深淺代表處理順序，不代表各月實際篇數',
+  footR: 'q6/architecture/a-backfill/diagram-partition-grid.png'
+});
+</script></body></html>

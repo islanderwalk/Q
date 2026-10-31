@@ -1,0 +1,125 @@
+{
+  "steps": [
+    {
+      "step": "斷詞先到（文件還不存在）：scripted upsert 建出文件",
+      "result": {
+        "created": 1,
+        "updated": 0,
+        "noop": 0,
+        "errors": 0
+      },
+      "seg_ver_v2": 22026103005,
+      "terms_v2": [
+        "肥宅",
+        "新北投"
+      ],
+      "content": "肥宅在新北投",
+      "channel": "ptt"
+    },
+    {
+      "step": "parser 晚到：部分更新本體欄位，斷詞欄位不動",
+      "result": {
+        "updated": 1
+      },
+      "seg_ver_v2": 22026103005,
+      "terms_v2": [
+        "肥宅",
+        "新北投"
+      ],
+      "content": "肥宅在新北投（更新）",
+      "channel": "ptt"
+    },
+    {
+      "step": "同一版重送：noop",
+      "result": {
+        "created": 0,
+        "updated": 0,
+        "noop": 1,
+        "errors": 0
+      },
+      "seg_ver_v2": 22026103005,
+      "terms_v2": [
+        "肥宅",
+        "新北投"
+      ],
+      "content": "肥宅在新北投（更新）",
+      "channel": "ptt"
+    },
+    {
+      "step": "舊版晚到（r4）：noop，不倒退",
+      "result": {
+        "created": 0,
+        "updated": 0,
+        "noop": 1,
+        "errors": 0
+      },
+      "seg_ver_v2": 22026103005,
+      "terms_v2": [
+        "肥宅",
+        "新北投"
+      ],
+      "content": "肥宅在新北投（更新）",
+      "channel": "ptt"
+    },
+    {
+      "step": "新版（r6）：更新",
+      "result": {
+        "created": 0,
+        "updated": 1,
+        "noop": 0,
+        "errors": 0
+      },
+      "seg_ver_v2": 22026103006,
+      "terms_v2": [
+        "肥宅",
+        "新北投",
+        "r6"
+      ],
+      "content": "肥宅在新北投（更新）",
+      "channel": "ptt"
+    },
+    {
+      "step": "force 同版（修程式重跑）：覆寫",
+      "result": {
+        "created": 0,
+        "updated": 1,
+        "noop": 0,
+        "errors": 0
+      },
+      "seg_ver_v2": 22026103006,
+      "terms_v2": [
+        "肥宅",
+        "新北投",
+        "r6-fixed"
+      ],
+      "content": "肥宅在新北投（更新）",
+      "channel": "ptt"
+    },
+    {
+      "step": "force 舊版：仍然 noop",
+      "result": {
+        "created": 0,
+        "updated": 0,
+        "noop": 1,
+        "errors": 0
+      },
+      "seg_ver_v2": 22026103006,
+      "terms_v2": [
+        "肥宅",
+        "新北投",
+        "r6-fixed"
+      ],
+      "content": "肥宅在新北投（更新）",
+      "channel": "ptt"
+    }
+  ],
+  "concurrent": {
+    "writers": 8,
+    "versions_written_shuffled": 40,
+    "final_seg_ver": 22026103040,
+    "expected": 22026103040,
+    "ok": true,
+    "errors": []
+  },
+  "script": "String f = params.f;\ndef cur = ctx._source['seg_ver_' + f];\nboolean force = params.containsKey('force') && params.force;\nif (cur != null && (force ? cur > params.seg_ver : cur >= params.seg_ver)) { ctx.op = 'noop'; return; }\nfor (entry in params.base.entrySet()) {\n  if (!ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null) { ctx._source[entry.getKey()] = entry.getValue(); }\n}\nfor (entry in params.seg.entrySet()) { ctx._source[entry.getKey()] = entry.getValue(); }"
+}

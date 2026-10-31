@@ -1,0 +1,58 @@
+{
+  "v1 全期": {
+    "docs": 425154,
+    "api_p50_ms": 94.2,
+    "api_p95_ms": 120.1,
+    "es_took_p50_ms": 86.0,
+    "cached_repeat_ms": 2.9
+  },
+  "v1 近一年": {
+    "docs": 109450,
+    "api_p50_ms": 30.3,
+    "api_p95_ms": 36.3,
+    "es_took_p50_ms": 24.0,
+    "cached_repeat_ms": 2.8
+  },
+  "v1 近一個月": {
+    "docs": 6903,
+    "api_p50_ms": 9.4,
+    "api_p95_ms": 10.5,
+    "es_took_p50_ms": 3.0,
+    "cached_repeat_ms": 2.5
+  },
+  "v1 關鍵字「颱風」": {
+    "docs": 2053,
+    "api_p50_ms": 8.8,
+    "api_p95_ms": 12.6,
+    "es_took_p50_ms": 3.0,
+    "cached_repeat_ms": 3.1
+  },
+  "v2 全期": {
+    "docs": 425154,
+    "api_p50_ms": 130.3,
+    "api_p95_ms": 166.4,
+    "es_took_p50_ms": 121.5,
+    "cached_repeat_ms": 3.0
+  },
+  "v2 近一年": {
+    "docs": 109450,
+    "api_p50_ms": 44.4,
+    "api_p95_ms": 55.5,
+    "es_took_p50_ms": 37.5,
+    "cached_repeat_ms": 3.2
+  },
+  "v2 近一個月": {
+    "docs": 6903,
+    "api_p50_ms": 9.8,
+    "api_p95_ms": 12.8,
+    "es_took_p50_ms": 3.0,
+    "cached_repeat_ms": 2.8
+  },
+  "v2 關鍵字「颱風」": {
+    "docs": 2053,
+    "api_p50_ms": 8.4,
+    "api_p95_ms": 10.8,
+    "es_took_p50_ms": 3.0,
+    "cached_repeat_ms": 3.3
+  }
+}

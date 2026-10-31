@@ -1,0 +1,383 @@
+{
+ "ev_00_gcp_qsearch_stack": {
+  "id": "ev_00_gcp_qsearch_stack",
+  "url": "https://cloud.google.com/customers/qsearch",
+  "crops": [
+   {
+    "file": "ev_00_gcp_qsearch_stack_1.png",
+    "find": "43.2 billion records in 8 hours",
+    "cssW": 316,
+    "cssH": 366,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_00_gcp_qsearch_stack_2.png",
+    "find": "Founded in 2014",
+    "cssW": 341,
+    "cssH": 290,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_00_gcp_qsearch_stack_3.png",
+    "find": "Cloud Pub/Sub",
+    "cssW": 826,
+    "cssH": 356,
+    "matches": 2,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "QSearch Case Study  |  Google Cloud",
+  "finalUrl": "https://cloud.google.com/customers/qsearch",
+  "capturedAt": "2026-10-30T01:44:26Z"
+ },
+ "ev_a1_es_update_reindex": {
+  "id": "ev_a1_es_update_reindex",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html",
+  "crops": [
+   {
+    "file": "ev_a1_es_update_reindex_1.png",
+    "find": "The document must still be reindexed",
+    "cssW": 789,
+    "cssH": 210,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_a1_es_update_reindex_2.png",
+    "find": "field must be enabled to use",
+    "cssW": 789,
+    "cssH": 237,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "Update API | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html",
+  "capturedAt": "2026-10-30T01:44:37Z"
+ },
+ "ev_a2_es_source_excludes": {
+  "id": "ev_a2_es_source_excludes",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/mapping-source-field.html",
+  "crops": [
+   {
+    "file": "ev_a2_es_source_excludes_1.png",
+    "find": "and reindex APIs",
+    "cssW": 637,
+    "cssH": 190,
+    "matches": 1,
+    "tag": "LI"
+   },
+   {
+    "file": "ev_a2_es_source_excludes_2.png",
+    "find": "similar downsides to disabling",
+    "cssW": 669,
+    "cssH": 234,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "_source field | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/mapping-source-field.html",
+  "capturedAt": "2026-10-30T01:44:47Z"
+ },
+ "ev_a3_es_update_by_query": {
+  "id": "ev_a3_es_update_by_query",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update-by-query.html",
+  "crops": [
+   {
+    "file": "ev_a3_es_update_by_query_1.png",
+    "find": "pads each batch with a wait time",
+    "cssW": 789,
+    "cssH": 235,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_a3_es_update_by_query_2.png",
+    "find": "to pick up the new mapping",
+    "cssW": 789,
+    "cssH": 186,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "Update By Query API | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update-by-query.html",
+  "capturedAt": "2026-10-30T01:45:06Z"
+ },
+ "ev_a4_es_tune_indexing": {
+  "id": "ev_a4_es_tune_indexing",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/tune-for-indexing-speed.html",
+  "crops": [
+   {
+    "file": "ev_a4_es_tune_indexing_1.png",
+    "find": "First try to index 100 documents at once",
+    "cssW": 789,
+    "cssH": 376,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_a4_es_tune_indexing_2.png",
+    "find": "randomized exponential backoff",
+    "cssW": 789,
+    "cssH": 259,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_a4_es_tune_indexing_3.png",
+    "find": "to speed up indexing",
+    "cssW": 789,
+    "cssH": 283,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "Tune for indexing speed | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/tune-for-indexing-speed.html",
+  "capturedAt": "2026-10-30T01:45:15Z"
+ },
+ "ev_a5_es_global_ordinals": {
+  "id": "ev_a5_es_global_ordinals",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/eager-global-ordinals.html",
+  "crops": [
+   {
+    "file": "ev_a5_es_global_ordinals_1.png",
+    "find": "already global to the shard",
+    "cssW": 757,
+    "cssH": 285,
+    "matches": 1,
+    "tag": "LI"
+   },
+   {
+    "file": "ev_a5_es_global_ordinals_2.png",
+    "find": "never write to again",
+    "cssW": 757,
+    "cssH": 285,
+    "matches": 1,
+    "tag": "LI"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "eager_global_ordinals | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/eager-global-ordinals.html",
+  "capturedAt": "2026-10-30T01:45:26Z"
+ },
+ "ev_a6_es_random_sampler": {
+  "id": "ev_a6_es_random_sampler",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-random-sampler-aggregation.html",
+  "crops": [
+   {
+    "file": "ev_a6_es_random_sampler_1.png",
+    "find": "technical preview",
+    "cssW": 669,
+    "cssH": 232,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_a6_es_random_sampler_2.png",
+    "find": "significant speed improvement",
+    "cssW": 789,
+    "cssH": 234,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "Random sampler aggregation | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-random-sampler-aggregation.html",
+  "capturedAt": "2026-10-30T01:45:36Z"
+ },
+ "ev_a7_jieba_readme_speed": {
+  "id": "ev_a7_jieba_readme_speed",
+  "url": "https://github.com/fxsjy/jieba",
+  "crops": [
+   {
+    "file": "ev_a7_jieba_readme_speed_1.png",
+    "find": "400 KB / Second in Default Mode",
+    "cssW": 878,
+    "cssH": 184,
+    "matches": 2,
+    "tag": "LI"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "GitHub - fxsjy/jieba: 结巴中文分词 · GitHub",
+  "finalUrl": "https://github.com/fxsjy/jieba",
+  "capturedAt": "2026-10-30T01:48:11Z"
+ },
+ "ev_b1_jieba_dict_big_userdict": {
+  "id": "ev_b1_jieba_dict_big_userdict",
+  "url": "https://github.com/fxsjy/jieba",
+  "crops": [
+   {
+    "file": "ev_b1_jieba_dict_big_userdict_1.png",
+    "find": "better support for traditional Chinese",
+    "cssW": 878,
+    "cssH": 208,
+    "matches": 1,
+    "tag": "P"
+   },
+   {
+    "file": "ev_b1_jieba_dict_big_userdict_2.png",
+    "find": "divided into three parts",
+    "cssW": 878,
+    "cssH": 237,
+    "matches": 1,
+    "tag": "LI"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "GitHub - fxsjy/jieba: 结巴中文分词 · GitHub",
+  "finalUrl": "https://github.com/fxsjy/jieba",
+  "capturedAt": "2026-10-30T01:48:21Z"
+ },
+ "ev_b2_ckiptagger_table_dictionary": {
+  "id": "ev_b2_ckiptagger_table_dictionary",
+  "url": "https://github.com/ckiplab/ckiptagger",
+  "crops": [
+   {
+    "file": "ev_b2_ckiptagger_table_dictionary_1.png",
+    "find": "Jieba-zh_TW",
+    "cssW": 625,
+    "cssH": 309,
+    "matches": 1,
+    "tag": "TD"
+   },
+   {
+    "file": "ev_b2_ckiptagger_table_dictionary_2.png",
+    "find": "coerce_dictionary",
+    "cssW": 866,
+    "cssH": 606,
+    "matches": 1,
+    "tag": "PRE"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "GitHub - ckiplab/ckiptagger: CKIP Neural Chinese Word Segmentation, POS Tagging, and NER · GitHub",
+  "finalUrl": "https://github.com/ckiplab/ckiptagger",
+  "capturedAt": "2026-10-30T01:46:18Z"
+ },
+ "ev_b3_ckip_transformers_table": {
+  "id": "ev_b3_ckip_transformers_table",
+  "url": "https://github.com/ckiplab/ckip-transformers",
+  "crops": [
+   {
+    "file": "ev_b3_ckip_transformers_table_1.png",
+    "find": "97.60%",
+    "cssW": 884,
+    "cssH": 568,
+    "matches": 2,
+    "tag": "TD"
+   },
+   {
+    "file": "ev_b3_ckip_transformers_table_2.png",
+    "find": "GPL-3.0 License",
+    "cssW": 910,
+    "cssH": 184,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "GitHub - ckiplab/ckip-transformers: CKIP Transformers · GitHub",
+  "finalUrl": "https://github.com/ckiplab/ckip-transformers",
+  "capturedAt": "2026-10-30T01:48:39Z"
+ },
+ "ev_b5_es_reload_search_analyzers": {
+  "id": "ev_b5_es_reload_search_analyzers",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/indices-reload-analyzers.html",
+  "crops": [
+   {
+    "file": "ev_b5_es_reload_search_analyzers_1.png",
+    "find": "updateable",
+    "cssW": 789,
+    "cssH": 235,
+    "matches": 4,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "Reload search analyzers API | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/indices-reload-analyzers.html",
+  "capturedAt": "2026-10-30T01:46:46Z"
+ },
+ "ev_c1_jieba_add_word_total": {
+  "id": "ev_c1_jieba_add_word_total",
+  "url": "https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py#L418-L437",
+  "crops": [
+   {
+    "file": "ev_c1_jieba_add_word_total_1.png",
+    "find": "self.total += freq",
+    "cssW": 1280,
+    "cssH": 680,
+    "matches": 1,
+    "tag": "DIV"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "jieba/jieba/__init__.py at master · fxsjy/jieba · GitHub",
+  "finalUrl": "https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py#L418-L437",
+  "capturedAt": "2026-10-30T01:52:15Z"
+ },
+ "ev_c2_jieba_calc_logtotal": {
+  "id": "ev_c2_jieba_calc_logtotal",
+  "url": "https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py#L172-L178",
+  "crops": [
+   {
+    "file": "ev_c2_jieba_calc_logtotal_1.png",
+    "find": "logtotal = log(self.total)",
+    "cssW": 1280,
+    "cssH": 360,
+    "matches": 1,
+    "tag": "DIV"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "jieba/jieba/__init__.py at master · fxsjy/jieba · GitHub",
+  "finalUrl": "https://github.com/fxsjy/jieba/blob/master/jieba/__init__.py#L172-L178",
+  "capturedAt": "2026-10-30T01:52:25Z"
+ },
+ "ev_c4_es_terms_exclude": {
+  "id": "ev_c4_es_terms_exclude",
+  "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-bucket-terms-aggregation.html",
+  "crops": [
+   {
+    "file": "ev_c4_es_terms_exclude_1.png",
+    "find": "arrays of exact values",
+    "cssW": 789,
+    "cssH": 235,
+    "matches": 1,
+    "tag": "P"
+   }
+  ],
+  "notes": [],
+  "status": 200,
+  "title": "Terms aggregation | Elasticsearch Guide [8.19] | Elastic",
+  "finalUrl": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/search-aggregations-bucket-terms-aggregation.html",
+  "capturedAt": "2026-10-30T01:47:19Z"
+ }
+}

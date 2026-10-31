@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script>
+<style>
+  .ex { display: grid; gap: 10px; }
+  .ex .row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; }
+  .ex .row > span { font-size: 14px; font-weight: 700; color: var(--muted); }
+  .cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .cmp th, .cmp td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #e2e8eb; vertical-align: top; }
+  .cmp th { font-size: 12.5px; color: var(--muted); }
+  .cmp tr:last-child td { border-bottom: 0; }
+  .cmp .good { color: #0c6b63; font-weight: 700; }
+  .cmp .bad { color: #b0223d; font-weight: 700; }
+</style></head>
+<body><script>
+const precise = ['台北捷運', '週末', '加開班次'];
+const search = ['台北', '捷運', '台北捷運', '週末', '加開', '開班', '班次', '加開班次'];
+const chips = (arr, cls) => arr.map(w => `<span class="tok ${cls || ''}">${w}</span>`).join('');
+const example = `<div class="card ex">
+  <h3>同一份字典，兩種粒度 <span class="chip run">VM 實測 · jieba 0.42.1</span></h3>
+  <div style="font-size:14px;color:#55646f">輸入：台北捷運週末加開班次</div>
+  <div class="row"><span>精確模式（文字雲）</span><div>${chips(precise)}</div></div>
+  <div class="row"><span>搜尋模式（召回）</span><div>${chips(search, 's')}</div></div>
+</div>`;
+const compare = `<div class="card">
+  <h3>共用 vs 分開（工期為原團隊估計）</h3>
+  <table class="cmp">
+    <tr><th></th><th>共用核心詞庫</th><th>各自一份字典</th></tr>
+    <tr><td>工期</td><td class="good">約 10 天</td><td class="bad">再多 20 天以上</td></tr>
+    <tr><td>症狀 5</td><td>結構上就一致</td><td>靠同步，一不同步就復發</td></tr>
+    <tr><td>點詞下鑽</td><td>計數對得上</td><td>要「詞 → 查詢」轉換層</td></tr>
+    <tr><td>多出的工</td><td>版本釘選</td><td>同步、差異報表、兩套回歸</td></tr>
+  </table>
+</div>`;
+
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (b) 字典維護',
+  title: '(b) 共用一份核心詞庫，用途層與斷詞粒度分開',
+  sub: '共用的是「兩端都必須認得的詞」；文字雲要可讀、搜尋要召回，所以停用詞、同義詞、切分粒度與生效時間各自控制。',
+  height: 800,
+  nodes: [
+    { id: 'core', x: 540, y: 10, w: 440, cls: 'accent', tag: '共用：兩端都必須認得的詞', title: '核心詞庫', sub: '地名、品牌、人物、產品、新詞；同一個 <code>dict_version</code>' },
+    { id: 'wc', x: 40, y: 190, w: 560, tag: '文字雲層（可讀性）', title: '停用詞、變體合併、過濾、精確模式', sub: '硬停用詞入庫前丟；軟停用詞查詢時 exclude；臺／台合併；數字與單字白名單（228、101、雙11；讚、爛、貴）' },
+    { id: 'sr', x: 920, y: 190, w: 560, tag: '搜尋層（召回）', title: '同義詞、細粒度切分', sub: '同義詞放 search analyzer，可 reload；細粒度切分（jieba 搜尋模式／IK ik_max_word）' },
+    { id: 'wa', x: 40, y: 370, w: 560, cls: 'store', tag: '產物 → 回朔＋串流的 segmenter', title: 'jieba 字典（含固定 total）、停用詞表、變體表', sub: '每週發版；只重跑受影響文件' },
+    { id: 'sa', x: 920, y: 370, w: 560, cls: 'store', tag: '產物 → ES 搜尋端', title: '分析器字典、synonyms', sub: '同義詞即時 reload；index-time 變更累積到排定的 reindex' }
+  ],
+  edges: [
+    { from: 'core', to: 'wc', sides: ['left', 'top'], route: 'hv', color: 'accent' },
+    { from: 'core', to: 'sr', sides: ['right', 'top'], route: 'hv', color: 'accent' },
+    { from: 'wc', to: 'wa', sides: ['bottom', 'top'], align: 'x' },
+    { from: 'sr', to: 'sa', sides: ['bottom', 'top'], align: 'x' }
+  ],
+  blocks: [
+    { x: 40, y: 520, w: 820, html: example },
+    { x: 900, y: 520, w: 580, html: compare }
+  ],
+  footL: '精確／搜尋模式的切法是 VM 實際輸出；工期數字來自題目提示',
+  footR: 'q6/architecture/b-dictionary/diagram-shared-core-overlays.png'
+});
+</script></body></html>

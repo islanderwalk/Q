@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>PTT 全文搜尋 ETL 架構</title>
+<style>
+  /* 架構圖原始檔：用 q3/answer/src/capture.js charts 轉成 q3/architecture/architecture.png */
+  :root {
+    --ink: #0b0b0b; --ink2: #52514e; --muted: #898781; --line: #e1e0d9; --surface: #fcfcfb;
+    --ext: #eb6834;  --ext-bg: #fdf0ea;   /* 外部來源 */
+    --run: #2a78d6;  --run-bg: #ecf3fc;   /* 運算（Cloud Run／Scheduler） */
+    --store: #1baf7a; --store-bg: #e9f7f1; /* 儲存 */
+    --ops: #6250d6;  --ops-bg: #f0eefc;   /* 驗證與告警 */
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #f9f9f7; font-family: "WenQuanYi Zen Hei", system-ui, sans-serif; color: var(--ink); padding: 24px; }
+  #diagram { position: relative; width: 1600px; height: 1060px; background: var(--surface);
+             border: 1px solid rgba(11,11,11,.10); border-radius: 14px; }
+  .title { position: absolute; left: 40px; top: 28px; }
+  .title .tag { display: inline-block; font-size: 14px; color: var(--ink2); border: 1px solid var(--line);
+                border-radius: 99px; padding: 2px 12px; margin-bottom: 10px; }
+  .title h1 { font-size: 30px; font-weight: 600; }
+  .title p { font-size: 16px; color: var(--ink2); margin-top: 8px; }
+  .box { position: absolute; border-radius: 12px; border: 1.5px solid; padding: 14px 18px; line-height: 1.45; }
+  .box h2 { font-size: 19px; font-weight: 600; }
+  .box .kind { font-size: 12.5px; letter-spacing: .02em; color: var(--ink2); margin-bottom: 4px; }
+  .box p, .box li { font-size: 14.5px; color: var(--ink2); }
+  .box ul { padding-left: 18px; margin-top: 6px; }
+  .box li { margin-top: 3px; }
+  .ext { border-color: var(--ext); background: var(--ext-bg); }
+  .run { border-color: var(--run); background: var(--run-bg); }
+  .store { border-color: var(--store); background: var(--store-bg); }
+  .ops { border-color: var(--ops); background: var(--ops-bg); }
+  .user { border-color: #c3c2b7; background: #fff; }
+  .step { background: #fff; border: 1px solid #c9dcf4; border-radius: 9px; padding: 10px 12px; margin-top: 10px; position: relative; }
+  .step b { font-size: 15.5px; color: var(--ink); }
+  .step .num { position: absolute; right: 10px; top: 9px; font-size: 14px; font-weight: 600; color: var(--run);
+               background: var(--run-bg); border-radius: 99px; padding: 1px 10px; }
+  .chip { display: inline-block; font-size: 13px; color: var(--ink); background: #fff; border: 1px solid var(--line);
+          border-radius: 99px; padding: 1px 9px; margin-top: 6px; }
+  svg#arrows { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .lbl { position: absolute; font-size: 13.5px; color: var(--ink); background: var(--surface); padding: 1px 6px;
+         border-radius: 6px; white-space: nowrap; }
+  .lbl.muted { color: var(--ink2); }
+  .legend { position: absolute; left: 40px; bottom: 26px; display: flex; gap: 22px; font-size: 14px; color: var(--ink2); }
+  .legend span::before { content: ""; display: inline-block; width: 14px; height: 14px; border-radius: 4px;
+                         margin-right: 7px; vertical-align: -2px; border: 1.5px solid; }
+  .lg-ext::before { border-color: var(--ext) !important; background: var(--ext-bg); }
+  .lg-run::before { border-color: var(--run) !important; background: var(--run-bg); }
+  .lg-store::before { border-color: var(--store) !important; background: var(--store-bg); }
+  .lg-ops::before { border-color: var(--ops) !important; background: var(--ops-bg); }
+  .why { position: absolute; left: 980px; top: 870px; width: 580px; font-size: 13.5px; color: var(--ink2); line-height: 1.55;
+         border-top: 1px solid var(--line); padding-top: 10px; }
+  .why b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div id="diagram">
+  <div class="title">
+    <div class="tag">第 3 題・第 2 小題｜架構圖</div>
+    <h1>PTT 八卦板全文搜尋 ETL（GCP + Python）</h1>
+    <p>依實測規模設計：每天約 890 篇新文章｜7 天約 6,200 篇、23 萬則留言、23 MB 純文字｜每天約 6,300 次請求（0.073 次/秒）</p>
+  </div>
+
+  <!-- 外部來源 -->
+  <div class="box ext" style="left:40px; top:360px; width:250px; height:200px;">
+    <div class="kind">外部來源</div>
+    <h2>PTT 網頁版</h2>
+    <p>www.ptt.cc／八卦板</p>
+    <ul>
+      <li>沒有 API，只能抓網頁</li>
+      <li>過量請求會被擋</li>
+      <li>需帶 over18 cookie</li>
+    </ul>
+  </div>
+
+  <!-- 排程 -->
+  <div class="box run" style="left:380px; top:160px; width:520px; height:84px;">
+    <div class="kind">排程</div>
+    <h2>Cloud Scheduler：每小時觸發一次</h2>
+  </div>
+
+  <!-- 爬蟲 job -->
+  <div class="box run" style="left:380px; top:300px; width:520px; height:450px;">
+    <div class="kind">ETL 主體（Extract → Transform → Load）</div>
+    <h2>Cloud Run Job「crawl」</h2>
+    <p>Python｜單一 worker 依序抓｜每秒 1 次｜每小時跑約 5–8 分鐘</p>
+    <div class="step">
+      <span class="num">規格 1</span>
+      <b>① discover：找新文章並首抓</b>
+      <p>從上次的頁碼重讀到最新頁（跳過置底公告），新文章各抓一次 → 發文後 1 小時內入庫</p>
+      <span class="chip">≈ 960 次/天</span>
+    </div>
+    <div class="step">
+      <span class="num">規格 2</span>
+      <b>② refresh：重抓 7 天內的文章</b>
+      <p>挑「發文 7 天內、且 23 小時以上沒抓過」的文章重抓留言 → 每篇每天更新一次</p>
+      <span class="chip">≈ 5,340 次/天</span>
+    </div>
+    <div class="step">
+      <b>③ 共用：抓取 → 解析 → 寫入</b>
+      <p>解析內文、留言、刪文佔位；失敗退避重試；狀態全存在 BigQuery，失敗下一輪自動補</p>
+    </div>
+  </div>
+
+  <!-- 儲存 -->
+  <div class="box store" style="left:980px; top:160px; width:580px; height:118px;">
+    <div class="kind">原始資料</div>
+    <h2>Cloud Storage：原始 HTML</h2>
+    <p>gzip 壓縮、保留 30 天；7 天份約 105 MB<br>解析規則改了可以直接重新解析，不必重爬 PTT</p>
+  </div>
+
+  <div class="box store" style="left:980px; top:330px; width:580px; height:210px;">
+    <div class="kind">整理後的資料（依發文日分區）</div>
+    <h2>BigQuery</h2>
+    <ul>
+      <li><b>articles</b>：文章 ID、標題、作者、發文時間、內文、上次抓取時間（約 6,200 列）</li>
+      <li><b>comments</b>：文章 ID、序號、推/噓/→、帳號、內容、時間（約 23 萬列）</li>
+      <li><b>index_slots</b>：頁碼、格位、文章 ID（給不變量檢查用）</li>
+    </ul>
+    <span class="chip">純文字約 23 MB</span>
+    <span class="chip">爬蟲狀態也存這裡 → job 可重跑不重複</span>
+  </div>
+
+  <!-- 搜尋 -->
+  <div class="box run" style="left:980px; top:600px; width:580px; height:100px;">
+    <div class="kind">查詢服務</div>
+    <h2>Cloud Run Service「search」（FastAPI）</h2>
+    <p>子字串比對、不需斷詞；只掃最近 7 天分區；每次查詢約 1–3 秒</p>
+  </div>
+
+  <div class="box user" style="left:980px; top:760px; width:580px; height:76px;">
+    <div class="kind">使用者</div>
+    <h2>輸入關鍵字 → 7 天內的文章與留言</h2>
+  </div>
+
+  <!-- 驗證與告警 -->
+  <div class="box ops" style="left:380px; top:800px; width:520px; height:170px;">
+    <div class="kind">資料品質（第 4 小題）</div>
+    <h2>Cloud Run Job「verify」：每天一次</h2>
+    <ul>
+      <li>每個填滿的列表頁剛好 20 格，且文章 ID 的時間由舊到新</li>
+      <li>每個非刪文的格子都有對應的文章；留言只增不改（前綴不變）</li>
+      <li>列表推文數 ≈ 推 − 噓（容許 ±2）</li>
+    </ul>
+  </div>
+
+  <div class="box ops" style="left:40px; top:800px; width:250px; height:170px;">
+    <div class="kind">告警（第 5 小題）</div>
+    <h2>Cloud Monitoring</h2>
+    <p>只監控結果：</p>
+    <ul>
+      <li>job 執行失敗</li>
+      <li>最新文章入庫延遲 &gt; 2 小時</li>
+      <li>不變量檢查失敗</li>
+    </ul>
+  </div>
+
+  <svg id="arrows" width="1600" height="1060">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#52514e"/>
+      </marker>
+    </defs>
+    <g stroke="#52514e" stroke-width="2" fill="none">
+      <!-- Scheduler → crawl -->
+      <path d="M640,244 V298" marker-end="url(#ah)"/>
+      <!-- crawl ↔ PTT -->
+      <path d="M380,460 H292" marker-end="url(#ah)" marker-start="url(#ah)"/>
+      <!-- crawl → GCS -->
+      <path d="M900,340 H940 V219 H978" marker-end="url(#ah)"/>
+      <!-- crawl → BigQuery -->
+      <path d="M900,470 H978" marker-end="url(#ah)"/>
+      <!-- GCS ⇢ BigQuery（重新解析） -->
+      <path d="M1460,278 V328" stroke-dasharray="6 5" marker-end="url(#ah)"/>
+      <!-- BigQuery → search -->
+      <path d="M1270,540 V598" marker-end="url(#ah)"/>
+      <!-- search ↔ user -->
+      <path d="M1270,700 V758" marker-end="url(#ah)" marker-start="url(#ah)"/>
+      <!-- BigQuery → verify -->
+      <path d="M980,500 H950 V885 H902" marker-end="url(#ah)"/>
+      <!-- verify → monitoring -->
+      <path d="M380,885 H292" marker-end="url(#ah)"/>
+      <!-- crawl → monitoring（job 失敗、入庫延遲） -->
+      <path d="M380,700 H165 V798" marker-end="url(#ah)"/>
+    </g>
+  </svg>
+
+  <div class="lbl" style="left:652px; top:258px;">每小時</div>
+  <div class="lbl" style="left:298px; top:430px;">HTTP GET</div>
+  <div class="lbl muted" style="left:298px; top:470px;">1 次/秒</div>
+  <div class="lbl" style="left:948px; top:292px;">原始 HTML</div>
+  <div class="lbl muted" style="left:906px; top:430px;">MERGE</div>
+  <div class="lbl muted" style="left:1472px; top:292px;">重新解析</div>
+  <div class="lbl muted" style="left:1282px; top:558px;">讀 7 天分區</div>
+  <div class="lbl muted" style="left:956px; top:740px;">每日讀取</div>
+  <div class="lbl muted" style="left:300px; top:858px;">失敗</div>
+  <div class="lbl muted" style="left:196px; top:672px;">job 失敗、入庫延遲</div>
+
+  <div class="why">
+    <b>刻意不用的東西（和估算數字一致）：</b>Kafka／Dataflow：每秒才 0.07 個請求，用不到串流；
+    Elasticsearch：23 MB 全掃就夠，又在既有技術棧外；代理池：實測以每秒 1 次連抓 1.6 小時沒被擋；
+    Cloud Composer：每月數百美元又要維運，一個人兩週不划算。
+  </div>
+
+  <div class="legend">
+    <span class="lg-ext">外部來源</span>
+    <span class="lg-run">運算（Cloud Scheduler／Cloud Run）</span>
+    <span class="lg-store">儲存（Cloud Storage／BigQuery）</span>
+    <span class="lg-ops">驗證與告警</span>
+  </div>
+</div>
+</body>
+</html>

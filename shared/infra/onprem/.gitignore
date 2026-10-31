@@ -1,0 +1,4 @@
+# pg_bigm 原始碼 tarball 由 postgres-bigm/fetch_pg_bigm.py 下載，不進版控
+postgres-bigm/vendor/
+.env
+__pycache__/

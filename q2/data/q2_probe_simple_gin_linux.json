@@ -1,0 +1,156 @@
+{
+  "started_at": "2026-10-30T12:28:14+00:00",
+  "python": "3.13.17",
+  "params": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_linux",
+    "mem": [
+      "64MB",
+      "1GB"
+    ],
+    "nonalpha_from": [
+      "9FBC",
+      "9FC4",
+      "9FCC"
+    ],
+    "out": "q2/data/q2_probe_simple_gin_linux.json"
+  },
+  "runs": [
+    {
+      "maintenance_work_mem": "64MB",
+      "build_seconds": 6.78,
+      "index_bytes": 3268608,
+      "pages": 399,
+      "meta": {
+        "n_pending_pages": 0,
+        "n_entries": 1000,
+        "n_total_pages": 399,
+        "n_entry_pages": 398,
+        "n_data_pages": 0
+      },
+      "entry_leaf_pages": 333,
+      "other_pages": 65,
+      "entries_on_leaves": 1000,
+      "avg_entries_per_leaf": 3.003,
+      "avg_leaf_fill": 0.703,
+      "entries_per_leaf_histogram": {
+        "3": 332,
+        "4": 1
+      }
+    },
+    {
+      "maintenance_work_mem": "1GB",
+      "build_seconds": 6.99,
+      "index_bytes": 3268608,
+      "pages": 399,
+      "meta": {
+        "n_pending_pages": 0,
+        "n_entries": 1000,
+        "n_total_pages": 399,
+        "n_entry_pages": 398,
+        "n_data_pages": 0
+      },
+      "entry_leaf_pages": 333,
+      "other_pages": 65,
+      "entries_on_leaves": 1000,
+      "avg_entries_per_leaf": 3.003,
+      "avg_leaf_fill": 0.703,
+      "entries_per_leaf_histogram": {
+        "3": 332,
+        "4": 1
+      }
+    }
+  ],
+  "server": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+  "datctype": "C.UTF-8",
+  "rows": 1000000,
+  "lexemes_per_row": 1.0,
+  "nonalpha": [
+    {
+      "from": "U+9FBC",
+      "chars_stripped": 68,
+      "simple": {
+        "index_bytes": 4825088,
+        "pages": 589,
+        "build_seconds": 99.84,
+        "meta": {
+          "n_pending_pages": 0,
+          "n_entries": 1787,
+          "n_total_pages": 589,
+          "n_entry_pages": 588,
+          "n_data_pages": 0
+        }
+      },
+      "trgm": {
+        "index_bytes": 409649152,
+        "pages": 50006,
+        "build_seconds": 209.28,
+        "meta": {
+          "n_pending_pages": 0,
+          "n_entries": 249090,
+          "n_total_pages": 50006,
+          "n_entry_pages": 49991,
+          "n_data_pages": 14
+        }
+      }
+    },
+    {
+      "from": "U+9FC4",
+      "chars_stripped": 60,
+      "simple": {
+        "index_bytes": 4677632,
+        "pages": 571,
+        "build_seconds": 89.89,
+        "meta": {
+          "n_pending_pages": 0,
+          "n_entries": 1700,
+          "n_total_pages": 571,
+          "n_entry_pages": 570,
+          "n_data_pages": 0
+        }
+      },
+      "trgm": {
+        "index_bytes": 409526272,
+        "pages": 49991,
+        "build_seconds": 204.66,
+        "meta": {
+          "n_pending_pages": 0,
+          "n_entries": 249095,
+          "n_total_pages": 49991,
+          "n_entry_pages": 49976,
+          "n_data_pages": 14
+        }
+      }
+    },
+    {
+      "from": "U+9FCC",
+      "chars_stripped": 52,
+      "simple": {
+        "index_bytes": 4505600,
+        "pages": 550,
+        "build_seconds": 80.91,
+        "meta": {
+          "n_pending_pages": 0,
+          "n_entries": 1616,
+          "n_total_pages": 550,
+          "n_entry_pages": 549,
+          "n_data_pages": 0
+        }
+      },
+      "trgm": {
+        "index_bytes": 409485312,
+        "pages": 49986,
+        "build_seconds": 192.2,
+        "meta": {
+          "n_pending_pages": 0,
+          "n_entries": 249107,
+          "n_total_pages": 49986,
+          "n_entry_pages": 49973,
+          "n_data_pages": 12
+        }
+      }
+    }
+  ]
+}

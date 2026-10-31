@@ -1,0 +1,666 @@
+[
+  {
+    "account": "nasa",
+    "browser": {
+      "device": "mobile",
+      "status": 200,
+      "navigations": [
+        "/@nasa",
+        "/@nasa",
+        "/@nasa?hpir&http_ref",
+        "/@nasa?hpir&http_ref",
+        "/@nasa?hpir&http_ref"
+      ],
+      "documents": [
+        {
+          "status": 200,
+          "url": "/@nasa",
+          "phase": "load",
+          "wire_bytes": 152341
+        },
+        {
+          "status": 302,
+          "url": "/aymh/?next",
+          "phase": "load",
+          "error": "Error"
+        },
+        {
+          "status": 200,
+          "url": "/@nasa?hpir&http_ref",
+          "phase": "load",
+          "wire_bytes": 150110
+        }
+      ],
+      "document": {
+        "wire_bytes": 152341,
+        "html_bytes": 1004607,
+        "threads": 4,
+        "posts": 5,
+        "own_posts": 5,
+        "posts_with_all_3_fields": 5,
+        "page_info": {
+          "threads": 4,
+          "has_next_page": true,
+          "end_cursor_len": 120
+        },
+        "preloaded_queries": [
+          {
+            "name": "BarcelonaProfilePageDirectQuery",
+            "query_id": "28894437973498594",
+            "variables": [
+              "canSeeFeedsTab",
+              "showLinkedIGStats",
+              "userID"
+            ],
+            "first": null
+          },
+          {
+            "name": "BarcelonaProfileThreadsTabDirectQuery",
+            "query_id": "28967344372926951",
+            "variables": [
+              "allow_page_info_for_lox_user",
+              "first",
+              "userID"
+            ],
+            "first": 4
+          }
+        ],
+        "login_wall_text": true
+      },
+      "rendered_after_load": {
+        "post_links": 5,
+        "own_post_links": 5,
+        "links_with_time": 5,
+        "login_wall": true,
+        "scroll_y": 0,
+        "scroll_height": 844,
+        "view_height": 844,
+        "dialogs": [
+          "Thread on Threads\nThere's more to do, see, and chat about in"
+        ]
+      },
+      "rendered_after_scroll": {
+        "post_links": 5,
+        "own_post_links": 5,
+        "links_with_time": 5,
+        "login_wall": true,
+        "scroll_y": 0,
+        "scroll_height": 844,
+        "view_height": 844,
+        "dialogs": [
+          "Thread on Threads\nThere's more to do, see, and chat about in"
+        ]
+      },
+      "scroll_steps": [
+        {
+          "how": "inner",
+          "inner": {
+            "before": 0,
+            "after": 1792,
+            "height": 2636,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 5,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 1792,
+            "after": 1792,
+            "height": 2636,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 5,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 1792,
+            "after": 1792,
+            "height": 2636,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 5,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 1792,
+            "after": 1792,
+            "height": 2636,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 5,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 1792,
+            "after": 1792,
+            "height": 2636,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 5,
+          "graphql_so_far": 2
+        }
+      ],
+      "graphql": [
+        {
+          "name": "fetchBarcelonaExperimentQuery",
+          "doc_id": "26349442214668312",
+          "status": 200,
+          "bytes": 216,
+          "variables": [
+            "checks"
+          ],
+          "first": null,
+          "after_is_null": true,
+          "threads": 0,
+          "posts": 0,
+          "posts_with_all_3_fields": 0,
+          "wire_bytes": 3539,
+          "phase": "load"
+        },
+        {
+          "name": "fetchBarcelonaExperimentQuery",
+          "doc_id": "26349442214668312",
+          "status": 200,
+          "bytes": 216,
+          "variables": [
+            "checks"
+          ],
+          "first": null,
+          "after_is_null": true,
+          "threads": 0,
+          "posts": 0,
+          "posts_with_all_3_fields": 0,
+          "wire_bytes": 3571,
+          "phase": "load"
+        }
+      ],
+      "total_requests": 92,
+      "requests_by_type": {
+        "ping": 3,
+        "stylesheet": 2,
+        "document": 3,
+        "script": 42,
+        "image": 20,
+        "xhr": 17,
+        "fetch": 2,
+        "other": 3
+      },
+      "total_wire_bytes": 2930413,
+      "document_wire_bytes": 302451,
+      "seconds": 24.1,
+      "posts_before_scroll": 5,
+      "threads_before_scroll": 4,
+      "posts_after_scroll": 5,
+      "threads_after_scroll": 4,
+      "scroll_loaded_more": false
+    }
+  },
+  {
+    "account": "zuck",
+    "browser": {
+      "device": "mobile",
+      "status": 200,
+      "navigations": [
+        "/@zuck",
+        "/@zuck",
+        "/@zuck?hpir&http_ref",
+        "/@zuck?hpir&http_ref",
+        "/@zuck?hpir&http_ref"
+      ],
+      "documents": [
+        {
+          "status": 200,
+          "url": "/@zuck",
+          "phase": "load",
+          "wire_bytes": 164859
+        },
+        {
+          "status": 302,
+          "url": "/aymh/?next",
+          "phase": "load",
+          "error": "Error"
+        },
+        {
+          "status": 200,
+          "url": "/@zuck?hpir&http_ref",
+          "phase": "load",
+          "wire_bytes": 162698
+        }
+      ],
+      "document": {
+        "wire_bytes": 164859,
+        "html_bytes": 1275840,
+        "threads": 4,
+        "posts": 10,
+        "own_posts": 10,
+        "posts_with_all_3_fields": 10,
+        "page_info": {
+          "threads": 4,
+          "has_next_page": true,
+          "end_cursor_len": 120
+        },
+        "preloaded_queries": [
+          {
+            "name": "BarcelonaProfilePageDirectQuery",
+            "query_id": "28894437973498594",
+            "variables": [
+              "canSeeFeedsTab",
+              "showLinkedIGStats",
+              "userID"
+            ],
+            "first": null
+          },
+          {
+            "name": "BarcelonaProfileThreadsTabDirectQuery",
+            "query_id": "28967344372926951",
+            "variables": [
+              "allow_page_info_for_lox_user",
+              "first",
+              "userID"
+            ],
+            "first": 4
+          }
+        ],
+        "login_wall_text": true
+      },
+      "rendered_after_load": {
+        "post_links": 10,
+        "own_post_links": 10,
+        "links_with_time": 10,
+        "login_wall": true,
+        "scroll_y": 0,
+        "scroll_height": 844,
+        "view_height": 844,
+        "dialogs": [
+          "Thread on Threads\nThere's more to do, see, and chat about in"
+        ]
+      },
+      "rendered_after_scroll": {
+        "post_links": 10,
+        "own_post_links": 10,
+        "links_with_time": 10,
+        "login_wall": true,
+        "scroll_y": 0,
+        "scroll_height": 844,
+        "view_height": 844,
+        "dialogs": [
+          "Thread on Threads\nThere's more to do, see, and chat about in"
+        ]
+      },
+      "scroll_steps": [
+        {
+          "how": "inner",
+          "inner": {
+            "before": 0,
+            "after": 3298,
+            "height": 4142,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 10,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 3298,
+            "after": 3298,
+            "height": 4142,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 10,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 3298,
+            "after": 3298,
+            "height": 4142,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 10,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 3298,
+            "after": 3298,
+            "height": 4142,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 10,
+          "graphql_so_far": 2
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 3298,
+            "after": 3298,
+            "height": 4142,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 10,
+          "graphql_so_far": 2
+        }
+      ],
+      "graphql": [
+        {
+          "name": "fetchBarcelonaExperimentQuery",
+          "doc_id": "26349442214668312",
+          "status": 200,
+          "bytes": 216,
+          "variables": [
+            "checks"
+          ],
+          "first": null,
+          "after_is_null": true,
+          "threads": 0,
+          "posts": 0,
+          "posts_with_all_3_fields": 0,
+          "wire_bytes": 3581,
+          "phase": "load"
+        },
+        {
+          "name": "fetchBarcelonaExperimentQuery",
+          "doc_id": "26349442214668312",
+          "status": 200,
+          "bytes": 216,
+          "variables": [
+            "checks"
+          ],
+          "first": null,
+          "after_is_null": true,
+          "threads": 0,
+          "posts": 0,
+          "posts_with_all_3_fields": 0,
+          "wire_bytes": 3565,
+          "phase": "load"
+        }
+      ],
+      "total_requests": 106,
+      "requests_by_type": {
+        "ping": 4,
+        "script": 42,
+        "stylesheet": 2,
+        "image": 33,
+        "document": 3,
+        "xhr": 17,
+        "fetch": 2,
+        "other": 3
+      },
+      "total_wire_bytes": 3548588,
+      "document_wire_bytes": 327557,
+      "seconds": 25.4,
+      "posts_before_scroll": 10,
+      "threads_before_scroll": 4,
+      "posts_after_scroll": 10,
+      "threads_after_scroll": 4,
+      "scroll_loaded_more": false
+    }
+  },
+  {
+    "account": "natgeo",
+    "browser": {
+      "device": "mobile",
+      "status": 200,
+      "navigations": [
+        "/@natgeo",
+        "/@natgeo",
+        "/@natgeo?hpir&http_ref",
+        "/@natgeo?hpir&http_ref",
+        "/@natgeo?hpir&http_ref"
+      ],
+      "documents": [
+        {
+          "status": 200,
+          "url": "/@natgeo",
+          "phase": "load",
+          "wire_bytes": 147570
+        },
+        {
+          "status": 302,
+          "url": "/aymh/?next",
+          "phase": "load",
+          "error": "Error"
+        },
+        {
+          "status": 200,
+          "url": "/@natgeo?hpir&http_ref",
+          "phase": "load",
+          "wire_bytes": 145551
+        }
+      ],
+      "document": {
+        "wire_bytes": 147570,
+        "html_bytes": 846469,
+        "threads": 4,
+        "posts": 5,
+        "own_posts": 4,
+        "posts_with_all_3_fields": 5,
+        "page_info": {
+          "threads": 4,
+          "has_next_page": true,
+          "end_cursor_len": 120
+        },
+        "preloaded_queries": [
+          {
+            "name": "BarcelonaProfilePageDirectQuery",
+            "query_id": "28894437973498594",
+            "variables": [
+              "canSeeFeedsTab",
+              "showLinkedIGStats",
+              "userID"
+            ],
+            "first": null
+          },
+          {
+            "name": "BarcelonaProfileThreadsTabDirectQuery",
+            "query_id": "28967344372926951",
+            "variables": [
+              "allow_page_info_for_lox_user",
+              "first",
+              "userID"
+            ],
+            "first": 4
+          }
+        ],
+        "login_wall_text": true
+      },
+      "rendered_after_load": {
+        "post_links": 5,
+        "own_post_links": 4,
+        "links_with_time": 5,
+        "login_wall": true,
+        "scroll_y": 0,
+        "scroll_height": 844,
+        "view_height": 844,
+        "dialogs": [
+          "Thread on Threads\nThere's more to do, see, and chat about in"
+        ]
+      },
+      "rendered_after_scroll": {
+        "post_links": 22,
+        "own_post_links": 18,
+        "links_with_time": 22,
+        "login_wall": true,
+        "scroll_y": 0,
+        "scroll_height": 844,
+        "view_height": 844,
+        "dialogs": [
+          "Thread on Threads\nThere's more to do, see, and chat about in"
+        ]
+      },
+      "scroll_steps": [
+        {
+          "how": "inner",
+          "inner": {
+            "before": 0,
+            "after": 7380,
+            "height": 8224,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 22,
+          "graphql_so_far": 3
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 7380,
+            "after": 7380,
+            "height": 8224,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 22,
+          "graphql_so_far": 3
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 7380,
+            "after": 7380,
+            "height": 8224,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 22,
+          "graphql_so_far": 3
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 7380,
+            "after": 7380,
+            "height": 8224,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 22,
+          "graphql_so_far": 3
+        },
+        {
+          "how": "inner",
+          "inner": {
+            "before": 7380,
+            "after": 7380,
+            "height": 8224,
+            "client": 844
+          },
+          "scroll_y": 0,
+          "scroll_height": 844,
+          "post_links": 22,
+          "graphql_so_far": 3
+        }
+      ],
+      "graphql": [
+        {
+          "name": "fetchBarcelonaExperimentQuery",
+          "doc_id": "26349442214668312",
+          "status": 200,
+          "bytes": 216,
+          "variables": [
+            "checks"
+          ],
+          "first": null,
+          "after_is_null": true,
+          "threads": 0,
+          "posts": 0,
+          "posts_with_all_3_fields": 0,
+          "wire_bytes": 3538,
+          "phase": "load"
+        },
+        {
+          "name": "fetchBarcelonaExperimentQuery",
+          "doc_id": "26349442214668312",
+          "status": 200,
+          "bytes": 216,
+          "variables": [
+            "checks"
+          ],
+          "first": null,
+          "after_is_null": true,
+          "threads": 0,
+          "posts": 0,
+          "posts_with_all_3_fields": 0,
+          "wire_bytes": 3572,
+          "phase": "load"
+        },
+        {
+          "name": "BarcelonaProfileThreadsTabRefetchableDirectQuery",
+          "doc_id": "39825889313693314",
+          "status": 200,
+          "bytes": 215228,
+          "variables": [
+            "after",
+            "allow_page_info_for_lox_user",
+            "before",
+            "first",
+            "last",
+            "userID"
+          ],
+          "first": 11,
+          "after_is_null": false,
+          "threads": 11,
+          "posts": 17,
+          "posts_with_all_3_fields": 17,
+          "has_next_page": true,
+          "wire_bytes": 24623,
+          "phase": "scroll"
+        }
+      ],
+      "total_requests": 98,
+      "requests_by_type": {
+        "ping": 4,
+        "stylesheet": 2,
+        "script": 41,
+        "image": 22,
+        "document": 3,
+        "xhr": 21,
+        "other": 3,
+        "fetch": 2
+      },
+      "total_wire_bytes": 3084172,
+      "document_wire_bytes": 293121,
+      "seconds": 21.1,
+      "posts_before_scroll": 5,
+      "threads_before_scroll": 4,
+      "posts_after_scroll": 5,
+      "threads_after_scroll": 4,
+      "scroll_loaded_more": true
+    }
+  }
+]

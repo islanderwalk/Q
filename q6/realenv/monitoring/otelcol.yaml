@@ -1,0 +1,30 @@
+# Ops Agent 的 Elasticsearch／PostgreSQL 整合底層就是這兩個 OpenTelemetry receiver（GoogleCloudPlatform/ops-agent apps/elasticsearch.go）。
+# 本機把指標轉成 Prometheus 格式；GCP 上由 Ops Agent 送 Cloud Monitoring（workload.googleapis.com/elasticsearch.*）。
+receivers:
+  elasticsearch:
+    endpoint: http://es:9200
+    nodes: ["_local"]
+    collection_interval: 10s
+    metrics:
+      elasticsearch.node.operations.current: { enabled: true }
+      elasticsearch.index.operations.completed: { enabled: true }
+  postgresql:
+    endpoint: pg:5432
+    transport: tcp
+    username: qsearch
+    password: qsearch
+    databases: [qsearch]
+    collection_interval: 15s
+    tls: { insecure: true }
+processors:
+  batch: {}
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion: { enabled: true }
+service:
+  pipelines:
+    metrics:
+      receivers: [elasticsearch, postgresql]
+      processors: [batch]
+      exporters: [prometheus]

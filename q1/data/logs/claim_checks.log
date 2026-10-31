@@ -1,0 +1,118 @@
+# RESULTS 裡沒有直接寫在 summary.json／report.md 的數字，用 q1/code/checks/ 的檢查腳本對 <scratch>/run3 的實跑結果驗證。
+# 腳本只讀 <scratch> 裡的實跑輸出，不寫 repo（seed7.py 會在系統暫存區產生 1,500 封的小樣本）。<scratch> = <tmp>/work/q1。
+# 輸出只留和 RESULTS 有關的行（第 2 節的 true-est 那行只留後半）。
+# 腳本原本在 <scratch>/fix、<scratch>/run3；2026-10-30 搬進 repo，只把 import 路徑改成相對路徑、seed7.py 的暫存目錄改用系統暫存區，
+# 搬完重跑一次，8 支退出碼都是 0，下面保留的每一行輸出都和搬之前相同（第 6 節例外：那是 2026-10-31 答案改字後重跑的輸出，見該節註解）。sha256（搬進 repo 後）：
+d0987609bfe9a8de3360a795e6ebe226f7e5e04bf3575a98b2944d92f7207d48  q1/code/checks/answer_len.py
+3a85339310863a92472954a1e9941289869969da1b1c60f6007851d732ba0f25  q1/code/checks/check_claims.py
+ec5b95855fd7a0c938a3c5977957237a0560d0bd188bcfd13724a200d3a5b199  q1/code/checks/check_claims2.py
+d6449a55d86a84d2a37bfa9fd82a3725fa8dcfed21cf2bb662edca960b1b98a5  q1/code/checks/check_resend.py
+5f3714b92619b762271ec16eba3afa01085b78411d0b3ebfd0e8ec0c41fdebd7  q1/code/checks/compare_summary.py
+8bfb895b0fff5c4a944c1a51b6150a7c66af18a7f8629829e6bb65cf2a8bf76e  q1/code/checks/seed7.py
+e19e00cb89851a8bb54f2f64fc63ca36045b1f633886a432ad65d6909e286a80  q1/code/checks/verify_reviewer.py
+045de276143d7fafacccbe93025846ffce505a65ca68029f59048afd21778567  q1/code/checks/verify_survey.py
+
+## 1. 罐頭判定逐步對照、被排除的 53 封顧客信、否定句的拆解（審查意見的數字）
+$ <tmp>/venv/bin/python -B q1/code/checks/verify_reviewer.py <scratch>/run3/fx
+min_df 200 frequent 66 pairs(final) 13 pairs(conf0) 31
+agent_reply            total=3,991 naive=1,669 residual=1,654 adjacent=1,267 final=0 excluded_canned=0
+canned                 total=13,920 naive=13,920 residual=13,920 adjacent=13,920 final=13,899 excluded_canned=13,899
+customer               total=20,069 naive=3,835 residual=1,296 adjacent=151 final=47 excluded_canned=47
+customer_resend        total=1,194 naive=205 residual=66 adjacent=11 final=6 excluded_canned=6
+conf range 0.843-0.949
+n extra pairs 18 max conf among extra 0.183
+n 53 own<12 0 no_issue 39 pasted_reply 53 Counter({'customer': 47, 'customer_resend': 6})
+own chars min/max 27 73 residual max 11
+{(True, False): 217, 'extra': 246, 'nomissing': 217, (False, True): 100, 'noextra': 100, 'missing': 129, (True, True): 29} {'閃退與當機': 246}
+exit=0
+
+## 2. 其他清理數字
+$ <tmp>/venv/bin/python -B q1/code/checks/check_claims.py <scratch>/run3
+pasted-intro line '你們上次回覆我:' len 8 df 631 frequent True min_df 200
+outcome canned|* {'canned|agent_signature': 21, 'canned|canned_template': 13899}
+hard pasted_reply {'total': 631, 'naive': 616, 'residual': 53, 'adjacent': 53, 'final': 53} no_signature {'total': 205, 'naive': 84, 'residual': 83, 'adjacent': 61, 'final': 0}
+true-est pp min/max 0.71 2.93 all below True
+included strata sizes {'介面與操作': 1455, '付款與扣款': 2778, '匯出與報表': 627, '同步與資料遺失': 4077, '登入與帳號': 1818, '通知與提醒': 803, '速度與效能': 1865, '閃退與當機': 3943, '未分類': 2988} sum 20354
+pure proportional 260: {'介面與操作': 18.6, '付款與扣款': 35.5, '匯出與報表': 8.0, '同步與資料遺失': 52.1, '登入與帳號': 23.2, '通知與提醒': 10.3, '速度與效能': 23.8, '閃退與當機': 50.4, '未分類': 38.2}
+sample strata {'介面與操作': 22, '付款與扣款': 33, '匯出與報表': 15, '同步與資料遺失': 44, '登入與帳號': 25, '通知與提醒': 17, '速度與效能': 26, '閃退與當機': 43, '未分類': 35, '排除：客服個別回覆': 20, '排除：罐頭回覆': 20}
+exit=0
+
+$ <tmp>/venv/bin/python -B q1/code/checks/check_claims2.py <scratch>/run3
+max|est-oracle| (pp, 4 dp) 0.0996
+lost body lines {'謝謝': 3070} total 3070
+leaked {'name_only': 1202} total 1202
+  no-issue line 想詢問企業方案的價格 df 253 frequent True
+  no-issue line 請問可以開統一編號的發票嗎 df 282 frequent True
+  no-issue line 想了解學生方案怎麼申請 df 243 frequent True
+  no-issue line 請問有沒有合作提案的窗口 df 256 frequent True
+  no-issue line 想問年繳跟月繳差多少 df 254 frequent True
+exit=0
+
+# 納入分析的 161 封重寄為什麼沒被去重
+$ <tmp>/venv/bin/python -B q1/code/checks/check_resend.py <scratch>/run3
+{'texts_differ_by_name_line_only': 157, 'same_text': 4} total 161
+included resends with text under the 20-char dedupe minimum: 4 [19, 19, 16, 19]
+exit=0
+
+## 3. 問卷：兩兩差距 vs 兩個 CI 半寬的合成值（is_close 的準則）
+$ <tmp>/venv/bin/python -B q1/code/checks/verify_survey.py <scratch>/run3/fx/survey.csv
+## unweighted n=1,960 n_eff=1960
+    rank1 vs rank2: diff=0.0740 combined=0.0283 close=False
+    rank2 vs rank3: diff=0.0107 combined=0.0271 close=True
+    rank3 vs rank4: diff=0.0071 combined=0.0267 close=True
+    rank4 vs rank5: diff=0.0582 combined=0.0253 close=False
+## weighted n=1,960 n_eff=1262
+    rank1 vs rank2: diff=0.0148 combined=0.0341 close=True
+    rank1 vs rank4: diff=0.0322 combined=0.0337 close=True
+    rank2 vs rank3: diff=0.0102 combined=0.0336 close=True
+    rank2 vs rank5: diff=0.0353 combined=0.0329 close=False
+    rank3 vs rank4: diff=0.0072 combined=0.0332 close=True
+    rank4 vs rank5: diff=0.0179 combined=0.0325 close=True
+## old_only n=1,565 n_eff=1565
+    rank1 vs rank2: diff=0.0850 combined=0.0328 close=False
+exit=0
+
+# 產生器期望值的同分程度（精確列舉）
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -c '
+import sys; sys.path.insert(0, "q1/code"); import make_fixtures as mf
+e50, e80 = mf.expected_survey_shares(0.5), mf.expected_survey_shares(0.8)
+g50 = [e50[i] for i in ("登入與帳號", "介面與操作", "閃退與當機")]; g80 = [e80[i] for i in ("速度與效能", "匯出與報表", "閃退與當機")]
+print("0.50 login/ui/crash", [round(100*x, 3) for x in g50], "spread pp", round(100*(max(g50)-min(g50)), 3))
+print("0.80 speed/export/crash", [round(100*x, 3) for x in g80], "spread pp", round(100*(max(g80)-min(g80)), 3))
+print("0.50 speed", round(100*e50["速度與效能"], 3), "3rd expected", round(100*sorted(e50.values())[-3], 3), "gap", round(100*(sorted(e50.values())[-3]-e50["速度與效能"]), 3))'
+0.50 login/ui/crash [23.933, 23.905, 23.837] spread pp 0.096
+0.80 speed/export/crash [24.31, 23.987, 23.891] spread pp 0.419
+0.50 speed 20.484 3rd expected 23.905 gap 3.421
+exit=0
+
+## 4. 和上一版 commit 的 summary.json 比（git show 3e2565c:q1/data/synthetic_run_40000/summary.json，sha256 前 16 碼 fc1f37552870e97f）
+$ <tmp>/venv/bin/python -B q1/code/checks/compare_summary.py <scratch>/run3/head_summary.json <scratch>/run3/out/summary.json
+shared leaf values=918 differences=14
+   only-old .email.stats.naive_rule_canned
+   value .coverage.rows[3].raw: 200 -> '—'
+   value .coverage.rows[3].excluded: 0 -> '—'
+   value .coverage.rows[3].method: '人工定性檢視，看有沒有信件與問卷沒出現的大問題' -> '計畫，未執行：人工定性檢視，看有沒有信件與問卷沒出現的大問題（預計 200 則）'
+   only-old .truth_eval.canned_by_kind.agent_reply.naive_rule
+# （其餘 9 行同型略：5 種信件各有 naive_rule、this_rule 兩個鍵，共 10 個，新版改名為 naive、final）
+exit=0
+# 改名的鍵數值都相同：naive_rule_canned 19629 = canned_rule_counts.naive 19629；
+# 5 種信件的 naive_rule／this_rule 都等於新的 naive／final（例如 customer 3835／47）。
+
+## 5. pytest 用的小樣本（1,500 封、seed 7）：測試 docstring 裡的數字，以及第一次 pytest 失敗（第 1、2 名互換）的原因
+# seed7.py 的跑法和 test_pipeline 的 fixture 相同
+$ <tmp>/venv/bin/python -B q1/code/checks/seed7.py
+canned_by_kind customer {'total': 777, 'naive': 143, 'residual': 42, 'adjacent': 3, 'final': 0}
+  閃退與當機    true=0.221 oracle=0.210 est=0.209 est-oracle=-0.0010 est-true=-0.0126 oracle/true=0.948 rec=0.885 prec=0.928
+  同步與資料遺失  true=0.242 oracle=0.199 est=0.196 est-oracle=-0.0033 est-true=-0.0457 oracle/true=0.824 rec=0.824 prec=0.994
+max|est-oracle|=0.0033 max|est-true|=0.0457
+true top3 ['同步與資料遺失', '閃退與當機', '付款與扣款'] est top3 ['閃退與當機', '同步與資料遺失', '付款與扣款']
+exit=0
+
+## 6. 答案字數（q1/README.md「## 答案（草稿）」到下一條 ---）
+# 2026-10-31 答案第 3 點「三個候選問題」改成「各問題」後重跑（改字前是 388、376、370、364）
+$ <tmp>/venv/bin/python -B q1/code/checks/answer_len.py q1/README.md
+non-whitespace with **: 385
+non-whitespace without **: 373
+also without list numbers: 367
+wide/fullwidth chars only (CJK + fullwidth punctuation): 361
+exit=0

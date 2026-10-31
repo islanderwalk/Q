@@ -1,0 +1,23 @@
+# SEND=<tmp>/work/q5/fix/send；在 q5/code/backfill/ 執行
+$ python make_sample.py --out $SEND/sample --posts 2000 --reels 200 --seed 5
+{"records": {"threads": 3521, "instagram": 200}, "injected": {"missing_reshare_key": 157, "missing_container": 78, "display_string": 18, "same_crawl_duplicate": 46, "null_reshare_observed": 659}, "faults": {"bad_json_line": 1, "bad_crawled_at": 1}}
+exit=0
+$ python demo_send.py $SEND
+seeded docs=1980 not_in_es=20 online_newer_all=20 online_newer_repost_only=20 item_429_once=8 http_429_first_requests=1
+[S1 首次送出] exit=0 elapsed=10.57s requests_seen_by_es=9
+    send={'files_sent': 4, 'http_retry_429': 1, 'noop': 20, 'not_in_index': 19, 'ok': 1940, 'requests': 9, 'retried_items': 508}
+    mismatches vs expected: 0
+[S2 同目錄重跑（帳本跳過）] exit=0 elapsed=0.31s requests_seen_by_es=9
+    send={'files_skipped_already_sent': 4}
+[S3 新目錄整批重送（應全部 noop）] exit=0 elapsed=1.34s requests_seen_by_es=13
+    send={'files_sent': 4, 'noop': 1960, 'not_in_index': 19, 'requests': 4}
+    mismatches vs expected: 0
+
+reseeded docs=1980; HTTP 500 on request #3
+[S4 中斷（第 3 個請求 500）] exit=4 elapsed=1.30s requests_seen_by_es=4
+    send={'files_incomplete': 1, 'files_sent': 3, 'http_500': 1, 'noop': 15, 'not_in_index': 14, 'ok': 1450, 'requests': 4}
+    ledger files: ['bulk_00001.ndjson', 'bulk_00002.ndjson', 'bulk_00004.ndjson']
+[S5 修好後重跑（只送沒送完的檔）] exit=0 elapsed=0.62s requests_seen_by_es=5
+    send={'files_sent': 1, 'files_skipped_already_sent': 3, 'noop': 5, 'not_in_index': 5, 'ok': 490, 'requests': 1}
+    mismatches vs expected: 0
+exit=0

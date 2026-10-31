@@ -1,0 +1,210 @@
+{
+  "doc_count_is_docs": {
+    "docs": [
+      [
+        "颱風",
+        "颱風",
+        "颱風",
+        "放假"
+      ],
+      [
+        "颱風"
+      ]
+    ],
+    "buckets": [
+      {
+        "key": "颱風",
+        "doc_count": 2
+      },
+      {
+        "key": "放假",
+        "doc_count": 1
+      }
+    ]
+  },
+  "shard_size": {
+    "size10_default_shard_size": {
+      "took_ms": 54,
+      "doc_count_error_upper_bound": 9497,
+      "buckets": [
+        {
+          "term": "八卦",
+          "count": 78119,
+          "error": 0,
+          "exact": 78119
+        },
+        {
+          "term": "有沒有",
+          "count": 71915,
+          "error": 0,
+          "exact": 71915
+        },
+        {
+          "term": "什麼",
+          "count": 63846,
+          "error": 0,
+          "exact": 63846
+        },
+        {
+          "term": "台灣",
+          "count": 33100,
+          "error": 0,
+          "exact": 33100
+        },
+        {
+          "term": "肥宅",
+          "count": 22265,
+          "error": 0,
+          "exact": 22265
+        },
+        {
+          "term": "可以",
+          "count": 22263,
+          "error": 0,
+          "exact": 22263
+        },
+        {
+          "term": "是不是",
+          "count": 21677,
+          "error": 0,
+          "exact": 21677
+        },
+        {
+          "term": "怎麼",
+          "count": 21276,
+          "error": 0,
+          "exact": 21276
+        },
+        {
+          "term": "現在",
+          "count": 16980,
+          "error": 0,
+          "exact": 16980
+        },
+        {
+          "term": "真的",
+          "count": 15609,
+          "error": 0,
+          "exact": 15609
+        }
+      ]
+    },
+    "size10_shard_size_500": {
+      "took_ms": 67,
+      "doc_count_error_upper_bound": 810,
+      "buckets": [
+        {
+          "term": "八卦",
+          "count": 78119,
+          "error": 0,
+          "exact": 78119
+        },
+        {
+          "term": "有沒有",
+          "count": 71915,
+          "error": 0,
+          "exact": 71915
+        },
+        {
+          "term": "什麼",
+          "count": 63846,
+          "error": 0,
+          "exact": 63846
+        },
+        {
+          "term": "台灣",
+          "count": 33100,
+          "error": 0,
+          "exact": 33100
+        },
+        {
+          "term": "肥宅",
+          "count": 22265,
+          "error": 0,
+          "exact": 22265
+        },
+        {
+          "term": "可以",
+          "count": 22263,
+          "error": 0,
+          "exact": 22263
+        },
+        {
+          "term": "是不是",
+          "count": 21677,
+          "error": 0,
+          "exact": 21677
+        },
+        {
+          "term": "怎麼",
+          "count": 21276,
+          "error": 0,
+          "exact": 21276
+        },
+        {
+          "term": "現在",
+          "count": 16980,
+          "error": 0,
+          "exact": 16980
+        },
+        {
+          "term": "真的",
+          "count": 15609,
+          "error": 0,
+          "exact": 15609
+        }
+      ]
+    }
+  },
+  "filter_vs_post_filter": {
+    "query_filter": [
+      [
+        "什麼",
+        480
+      ],
+      [
+        "台灣",
+        368
+      ],
+      [
+        "颱風",
+        324
+      ],
+      [
+        "是不是",
+        305
+      ],
+      [
+        "沈伯洋",
+        269
+      ]
+    ],
+    "post_filter": [
+      [
+        "八卦",
+        78119
+      ],
+      [
+        "有沒有",
+        71915
+      ],
+      [
+        "什麼",
+        63846
+      ],
+      [
+        "台灣",
+        33100
+      ],
+      [
+        "肥宅",
+        22265
+      ]
+    ]
+  },
+  "reindex": {
+    "copied": 6903,
+    "seconds": 0.77,
+    "top50_identical": true
+  }
+}

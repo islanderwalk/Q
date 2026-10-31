@@ -1,0 +1,238 @@
+{
+  "started_at": "2026-10-30T12:43:55+00:00",
+  "python": "3.13.17",
+  "params": {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_ptt",
+    "terms": [
+      "台灣",
+      "高雄",
+      "颱風",
+      "政府",
+      "捷運站",
+      "柯文哲",
+      "中華民國"
+    ],
+    "repeats": 3,
+    "out": "../data/q2_query_bench_ptt.json"
+  },
+  "terms": {
+    "台灣": {
+      "bigram_contains": {
+        "count": 542820,
+        "median_ms": 42614.677,
+        "all_ms": [
+          42614.677,
+          44046.642,
+          42472.618
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 542820,
+        "median_ms": 577.548,
+        "all_ms": [
+          577.548,
+          615.066,
+          550.133
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "counts_equal": true
+    },
+    "高雄": {
+      "bigram_contains": {
+        "count": 46393,
+        "median_ms": 139.104,
+        "all_ms": [
+          139.104,
+          154.542,
+          135.126
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 46393,
+        "median_ms": 513.04,
+        "all_ms": [
+          504.72,
+          513.04,
+          563.366
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "counts_equal": true
+    },
+    "颱風": {
+      "bigram_contains": {
+        "count": 33977,
+        "median_ms": 112.594,
+        "all_ms": [
+          102.525,
+          120.497,
+          112.594
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 33977,
+        "median_ms": 9503.959,
+        "all_ms": [
+          10547.876,
+          9503.959,
+          9121.558
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "counts_equal": true
+    },
+    "政府": {
+      "bigram_contains": {
+        "count": 34617,
+        "median_ms": 108.739,
+        "all_ms": [
+          108.739,
+          109.829,
+          107.152
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 34617,
+        "median_ms": 10010.814,
+        "all_ms": [
+          10010.814,
+          9685.429,
+          10234.705
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "counts_equal": true
+    },
+    "捷運站": {
+      "bigram_contains": {
+        "count": 3152,
+        "median_ms": 23.41,
+        "all_ms": [
+          23.841,
+          23.089,
+          23.41
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 3152,
+        "median_ms": 24.45,
+        "all_ms": [
+          30.098,
+          24.45,
+          22.462
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "counts_equal": true
+    },
+    "柯文哲": {
+      "bigram_contains": {
+        "count": 1578,
+        "median_ms": 26.409,
+        "all_ms": [
+          26.409,
+          30.804,
+          21.604
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 1578,
+        "median_ms": 3.13,
+        "all_ms": [
+          3.057,
+          3.256,
+          3.13
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "counts_equal": true
+    },
+    "中華民國": {
+      "bigram_contains": {
+        "count": 28336,
+        "median_ms": 100.959,
+        "all_ms": [
+          102.893,
+          100.959,
+          94.369
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_bigram_gin"
+        ]
+      },
+      "trgm_like": {
+        "count": 28336,
+        "median_ms": 125.972,
+        "all_ms": [
+          125.738,
+          125.972,
+          126.979
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "counts_equal": true
+    }
+  },
+  "server": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+  "rows": 1000000
+}

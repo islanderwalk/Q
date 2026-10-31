@@ -1,0 +1,81 @@
+{
+ "prev_captured_at": "2026-10-30T11:05:03+08:00",
+ "captured_at": "2026-10-30T15:39:27+08:00",
+ "status": 200,
+ "final_url_path": "https://www.instagram.com/nasa/reels/",
+ "field": "play_count",
+ "rows": [
+  {
+   "code": "DfF3eqGSKKc",
+   "prev": 1104795,
+   "now": 1428226,
+   "delta": 323431,
+   "pct": 29.27520490226694,
+   "taken_at": null
+  },
+  {
+   "code": "De7XCa_TJ4h",
+   "prev": 4298087,
+   "now": 4322058,
+   "delta": 23971,
+   "pct": 0.5577132338177426,
+   "taken_at": null
+  },
+  {
+   "code": "De2t82PPyx9",
+   "prev": 2929414,
+   "now": 2940974,
+   "delta": 11560,
+   "pct": 0.39461817278131395,
+   "taken_at": null
+  },
+  {
+   "code": "Dez3pRXgW1d",
+   "prev": 2400913,
+   "now": 2409469,
+   "delta": 8556,
+   "pct": 0.35636443303026805,
+   "taken_at": null
+  },
+  {
+   "code": "DeuH0dDFGcg",
+   "prev": 3994446,
+   "now": 4001806,
+   "delta": 7360,
+   "pct": 0.18425583923277472,
+   "taken_at": null
+  },
+  {
+   "code": "DeTUk4sDSp-",
+   "prev": 11082721,
+   "now": 11089658,
+   "delta": 6937,
+   "pct": 0.06259293182603803,
+   "taken_at": null
+  },
+  {
+   "code": "DeSM5CYPDfd",
+   "prev": 3707327,
+   "now": 3707963,
+   "delta": 636,
+   "pct": 0.017155217222543356,
+   "taken_at": null
+  },
+  {
+   "code": "DePHLhtON_i",
+   "prev": 3191143,
+   "now": 3192098,
+   "delta": 955,
+   "pct": 0.02992658116543195,
+   "taken_at": null
+  },
+  {
+   "code": "DeMIwYYPAMt",
+   "prev": 4728200,
+   "now": 4730227,
+   "delta": 2027,
+   "pct": 0.04287043695275158,
+   "taken_at": null
+  }
+ ]
+}

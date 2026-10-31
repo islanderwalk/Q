@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "CrawlFetchedEvent",
+  "namespace": "qsearch.crawl",
+  "doc": "crawl.fetched 事件（由 crawler-worker 發佈到 qsearch-crawl-fetched）。欄位與 services/parser 的 Pydantic model 與 lab 的 publish 範例一致。",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "schema_version", "type": "int"},
+    {"name": "job_id", "type": "string"},
+    {"name": "platform", "type": "string"},
+    {"name": "event_type", "type": "string"},
+    {"name": "raw_data_uri", "type": "string"}
+  ]
+}

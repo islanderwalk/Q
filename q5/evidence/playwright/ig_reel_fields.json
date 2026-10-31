@@ -1,0 +1,86 @@
+[
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[0].node",
+  "play_count": 1104795,
+  "code": "DfF3eqGSKKc"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[1].node",
+  "play_count": 4298087,
+  "code": "De7XCa_TJ4h"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[2].node",
+  "play_count": 2929414,
+  "code": "De2t82PPyx9"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[3].node",
+  "play_count": 2400913,
+  "code": "Dez3pRXgW1d"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[4].node",
+  "play_count": 3994446,
+  "code": "DeuH0dDFGcg"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[5].node",
+  "play_count": 11082721,
+  "code": "DeTUk4sDSp-"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[6].node",
+  "play_count": 3707327,
+  "code": "DeSM5CYPDfd"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[7].node",
+  "play_count": 3191143,
+  "code": "DePHLhtON_i"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[8].node",
+  "play_count": 4728200,
+  "code": "DeMIwYYPAMt"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[9].node",
+  "play_count": 2857777,
+  "code": "DeIXf9SNQVO"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[10].node",
+  "play_count": 3735860,
+  "code": "DeFBxH0RF00"
+ },
+ {
+  "page": "reels_grid",
+  "source": "document_inline_json",
+  "path": "script.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xig_user_by_username.polaris_clips_connection.edges[11].node",
+  "play_count": 6099952,
+  "code": "DeCPVhERA8e"
+ }
+]

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#ffffff;}
+  svg{font-family:'WenQuanYi Zen Hei','Noto Sans CJK TC',sans-serif;}
+  .title{font-size:26px;font-weight:700;fill:#0f172a;}
+  .subtitle{font-size:14px;fill:#475569;}
+  .boxtitle{font-size:15.5px;font-weight:700;}
+  .boxline{font-size:12.5px;}
+  .mono{font-family:'DejaVu Sans Mono',monospace;font-size:11.5px;}
+  .lane{font-size:13px;font-weight:700;fill:#94a3b8;letter-spacing:2px;}
+  .alabel{font-size:11.5px;fill:#334155;}
+  .alabel-bg{fill:#ffffff;opacity:0.85;}
+  .note{font-size:12.5px;fill:#334155;}
+  .noteb{font-size:13px;font-weight:700;fill:#0f172a;}
+</style>
+</head>
+<body>
+<svg width="1300" height="880" viewBox="0 0 1300 880" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrowdash" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1300" height="880" fill="#ffffff"/>
+  <text x="50" y="42" class="title">Q4 · Threads 公開貼文爬蟲系統架構</text>
+  <text x="50" y="66" class="subtitle">匿名 GraphQL 擷取　·　每帳號每輪 1 次請求　·　無需登入　·　風控壓在出口 IP</text>
+  <line x1="50" y1="80" x2="1250" y2="80" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- lane labels -->
+  <text x="165" y="104" class="lane" text-anchor="middle">資料與控制</text>
+  <text x="545" y="104" class="lane" text-anchor="middle">擷取運算</text>
+  <text x="865" y="104" class="lane" text-anchor="middle">處理與儲存</text>
+  <text x="1155" y="104" class="lane" text-anchor="middle">外部服務</text>
+
+  <!-- ===== arrows (drawn first, under boxes) ===== -->
+  <!-- source -> scheduler -->
+  <path d="M165,210 L165,238" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <!-- scheduler -> worker -->
+  <path d="M280,281 L418,281" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <!-- token -> worker -->
+  <path d="M280,495 C360,495 360,360 418,345" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <!-- worker -> proxy -->
+  <path d="M672,290 L757,290" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <!-- proxy -> threads -->
+  <path d="M970,285 L1048,285" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <!-- threads -> parser (response, dashed red) -->
+  <path d="M1155,375 C1155,470 1000,520 972,520" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrowdash)" fill="none"/>
+  <!-- parser -> storage -->
+  <path d="M865,565 L865,616" stroke="#475569" stroke-width="2" marker-end="url(#arrow)" fill="none"/>
+  <!-- monitor dotted observe worker -->
+  <path d="M545,470 L545,352" stroke="#0891b2" stroke-width="1.6" stroke-dasharray="2 4" fill="none"/>
+  <!-- monitor dotted observe proxy -->
+  <path d="M672,540 C740,540 820,440 820,330" stroke="#0891b2" stroke-width="1.6" stroke-dasharray="2 4" fill="none"/>
+
+  <!-- arrow labels -->
+  <g>
+    <rect x="300" y="270" width="88" height="18" class="alabel-bg"/>
+    <text x="344" y="283" class="alabel" text-anchor="middle">派發 userID</text>
+    <rect x="300" y="430" width="84" height="18" class="alabel-bg"/>
+    <text x="342" y="443" class="alabel" text-anchor="middle">注入 token</text>
+    <rect x="678" y="270" width="88" height="18" class="alabel-bg"/>
+    <text x="722" y="283" class="alabel" text-anchor="middle">① req + token</text>
+    <rect x="969" y="270" width="74" height="18" class="alabel-bg"/>
+    <text x="1006" y="283" class="alabel" text-anchor="middle">②匿名換IP</text>
+    <rect x="1000" y="437" width="92" height="18" class="alabel-bg"/>
+    <text x="1046" y="450" class="alabel" text-anchor="middle" fill="#dc2626">③ 10 串 JSON</text>
+    <rect x="800" y="585" width="80" height="18" class="alabel-bg"/>
+    <text x="840" y="598" class="alabel" text-anchor="middle">④ 欄位落地</text>
+    <text x="560" y="415" class="alabel" fill="#0891b2">觀測</text>
+  </g>
+
+  <!-- ===== boxes ===== -->
+  <!-- source (blue) -->
+  <g>
+    <rect x="50" y="124" width="230" height="86" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <text x="66" y="152" class="boxtitle" fill="#1e40af">目標來源</text>
+    <text x="66" y="175" class="boxline" fill="#1e3a8a">40 萬公開帳號清單</text>
+    <text x="66" y="194" class="boxline" fill="#1e3a8a">userID 快取（一次性查）</text>
+  </g>
+  <!-- scheduler (green) -->
+  <g>
+    <rect x="50" y="238" width="230" height="86" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+    <text x="66" y="266" class="boxtitle" fill="#065f46">排程器 Scheduler</text>
+    <text x="66" y="289" class="boxline" fill="#064e3b">每天 4 輪 · 切分任務佇列</text>
+    <text x="66" y="308" class="boxline" fill="#064e3b">均攤 ≈ 18.5 req/s（日均）</text>
+  </g>
+  <!-- token provider (slate) -->
+  <g>
+    <rect x="50" y="440" width="230" height="112" rx="10" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+    <text x="66" y="468" class="boxtitle" fill="#334155">Token 供應器</text>
+    <text x="66" y="491" class="boxline" fill="#1e293b">無頭瀏覽器定期載入公開頁</text>
+    <text x="66" y="510" class="boxline" fill="#1e293b">取 lsd + csrftoken</text>
+    <text x="66" y="529" class="boxline" fill="#1e293b">跨帳號共用 · 分鐘級刷新</text>
+    <text x="66" y="546" class="boxline" fill="#64748b">（匿名技術 token，非登入憑證）</text>
+  </g>
+  <!-- worker (green dark) -->
+  <g>
+    <rect x="418" y="210" width="254" height="142" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+    <text x="436" y="238" class="boxtitle" fill="#14532d">Worker 池</text>
+    <text x="436" y="262" class="boxline" fill="#166534">每帳號每輪 1 次</text>
+    <text x="436" y="283" class="mono" fill="#166534">POST /graphql/query</text>
+    <text x="436" y="304" class="mono" fill="#166534">variables: {userID,</text>
+    <text x="436" y="321" class="mono" fill="#166534">  first:10, after:null}</text>
+    <text x="436" y="342" class="boxline" fill="#166534">回應：最新 10 串</text>
+  </g>
+  <!-- monitor (teal) -->
+  <g>
+    <rect x="418" y="470" width="254" height="130" rx="10" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+    <text x="436" y="498" class="boxtitle" fill="#155e75">監控面板</text>
+    <text x="436" y="521" class="boxline" fill="#0e4a5e">成功率 · req/s · 每次串數</text>
+    <text x="436" y="540" class="boxline" fill="#0e4a5e">IP 健康 · 401 率 · 延遲 p50</text>
+    <text x="436" y="559" class="boxline" fill="#0e4a5e">貼文新鮮度（4 輪覆蓋）</text>
+    <text x="436" y="582" class="boxline" fill="#0e7490">成功率↓ → 觸發全局降速</text>
+  </g>
+  <!-- proxy (amber) -->
+  <g>
+    <rect x="757" y="238" width="213" height="94" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="773" y="266" class="boxtitle" fill="#92400e">住宅輪替代理池</text>
+    <text x="773" y="289" class="boxline" fill="#78350f">每請求換出口 IP</text>
+    <text x="773" y="308" class="boxline" fill="#78350f">單 IP ~5 req/s、80–100 次</text>
+    <text x="773" y="325" class="boxline" fill="#b45309">即被 401（換 IP 才解）</text>
+  </g>
+  <!-- parser (green) -->
+  <g>
+    <rect x="757" y="476" width="213" height="90" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+    <text x="773" y="504" class="boxtitle" fill="#065f46">解析器 Parser</text>
+    <text x="773" y="527" class="boxline" fill="#064e3b">抽 URL / 全文 / taken_at</text>
+    <text x="773" y="548" class="mono" fill="#064e3b">URL=/@user/post/{code}</text>
+  </g>
+  <!-- storage (purple) -->
+  <g>
+    <rect x="757" y="616" width="213" height="78" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+    <text x="773" y="648" class="boxtitle" fill="#5b21b6">儲存</text>
+    <text x="773" y="672" class="boxline" fill="#4c1d95">PostgreSQL / 物件儲存</text>
+  </g>
+  <!-- threads external (red, dashed border) -->
+  <g>
+    <rect x="1050" y="200" width="210" height="175" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 4"/>
+    <text x="1066" y="228" class="boxtitle" fill="#991b1b">Threads（外部）</text>
+    <text x="1066" y="251" class="boxline" fill="#7f1d1d">GraphQL 端點</text>
+    <text x="1066" y="271" class="mono" fill="#7f1d1d">www.threads.com</text>
+    <text x="1066" y="289" class="mono" fill="#7f1d1d">/graphql/query</text>
+    <text x="1066" y="312" class="boxline" fill="#7f1d1d">doc_id</text>
+    <text x="1066" y="330" class="mono" fill="#7f1d1d">39551525044493602</text>
+    <text x="1066" y="356" class="boxline" fill="#b91c1c">→ 回最新 10 串 JSON</text>
+  </g>
+
+  <!-- ===== control loop notes ===== -->
+  <line x1="50" y1="730" x2="1250" y2="730" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="756" class="noteb">控制迴路與風控</text>
+  <text x="50" y="781" class="note">①　401（IP 封鎖）→ 剔除該出口 IP　+　指數退避　+　換 IP 重試（換 token 無效，封鎖以 IP 為單位）</text>
+  <text x="50" y="803" class="note">②　成功率 &lt; 閾值 → 全局降速；每次回傳串數 &lt; 10 → 告警（可能 doc_id 失效或結構變動）</text>
+  <text x="50" y="825" class="note">③　doc_id / token 由無頭瀏覽器定期重抽，防 Meta 旋轉持久化查詢；userID 一次性快取避免重複抓 HTML</text>
+  <text x="50" y="847" class="note">④　流量估算：每次 req ≈ 32 KB（壓縮）；每月 4,800 萬次 ≈ 1.5 TB（含 TLS 握手 ≈ 1.8 TB）</text>
+
+  <!-- legend -->
+  <g transform="translate(980,748)">
+    <text x="0" y="0" class="noteb">圖例</text>
+    <rect x="0" y="10" width="14" height="14" rx="3" fill="#dbeafe" stroke="#2563eb"/><text x="20" y="22" class="note">資料源</text>
+    <rect x="90" y="10" width="14" height="14" rx="3" fill="#d1fae5" stroke="#059669"/><text x="110" y="22" class="note">運算/解析</text>
+    <rect x="200" y="10" width="14" height="14" rx="3" fill="#fef3c7" stroke="#d97706"/><text x="220" y="22" class="note">代理</text>
+    <rect x="0" y="32" width="14" height="14" rx="3" fill="#ede9fe" stroke="#7c3aed"/><text x="20" y="44" class="note">儲存</text>
+    <rect x="90" y="32" width="14" height="14" rx="3" fill="#cffafe" stroke="#0891b2"/><text x="110" y="44" class="note">監控</text>
+    <rect x="200" y="32" width="14" height="14" rx="3" fill="#fee2e2" stroke="#dc2626" stroke-dasharray="4 2"/><text x="220" y="44" class="note">外部</text>
+  </g>
+</svg>
+</body>
+</html>

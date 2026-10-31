@@ -1,0 +1,236 @@
+{
+ "window": {
+  "start": "2026-10-19T03:36+08:00",
+  "end": "2026-10-26T03:36+08:00"
+ },
+ "index": {
+  "rows": 6685,
+  "pages": 335,
+  "newest_page": 39213,
+  "newest_page_rows": 5,
+  "full_pages": 334,
+  "full_pages_with_20": 334,
+  "adjacent_pairs": 6259,
+  "ts_inversions": 0,
+  "deleted_rows": 425
+ },
+ "daily": {
+  "per_day": {
+   "2026-10-19": 829,
+   "2026-10-20": 902,
+   "2026-10-21": 894,
+   "2026-10-22": 1109,
+   "2026-10-23": 886,
+   "2026-10-24": 805,
+   "2026-10-25": 744,
+   "2026-10-26": 68
+  },
+  "full_days": 6,
+  "full_day_mean": 890.0,
+  "full_day_min": 744,
+  "full_day_max": 1109,
+  "script_style_per_day": 894.6
+ },
+ "census": {
+  "records": 6237,
+  "targets_equal_window_alive": true,
+  "status": {
+   "200": 6224,
+   "404": 13
+  },
+  "comments": 234577,
+  "comments_per_article": 37.7,
+  "latency_p95_s": 0.455,
+  "latency_max_below_5s": 2.423,
+  "latency_5s_or_more": {
+   "articles": 10,
+   "min": 5.593,
+   "max": 7.186,
+   "over_15s": 0,
+   "fetched_at": [
+    "10/27 16:39",
+    "10/27 16:57",
+    "10/27 17:18",
+    "10/27 17:26",
+    "10/27 17:48",
+    "10/27 21:08",
+    "10/27 21:08",
+    "10/27 21:08",
+    "10/27 21:17",
+    "10/27 21:20"
+   ]
+  },
+  "http_requests_range": [
+   6237,
+   6247
+  ],
+  "http_requests_note": "下限是篇數；上限假設回應時間 ≥5 秒的文章各多送 1 次，不含中斷當下沒有紀錄的請求"
+ },
+ "short_windows": [
+  {
+   "window_hours": 1.2,
+   "windows": 857,
+   "empty_windows": 13,
+   "step_s": 600,
+   "min": 0,
+   "p5": 103,
+   "median": 1027,
+   "p95": 1634,
+   "max": 2623,
+   "share_within_10pct_of_mean": 0.114,
+   "share_ge_short_run": 0.029,
+   "median_by_end_hour": {
+    "0": 1067,
+    "1": 553,
+    "2": 286,
+    "3": 212,
+    "4": 140,
+    "5": 150,
+    "6": 143,
+    "7": 338,
+    "8": 739,
+    "9": 950,
+    "10": 1269,
+    "11": 1270,
+    "12": 1418,
+    "13": 1466,
+    "14": 1216,
+    "15": 1157,
+    "16": 1110,
+    "17": 1110,
+    "18": 1160,
+    "19": 1142,
+    "20": 1114,
+    "21": 1215,
+    "22": 1187,
+    "23": 1148
+   }
+  },
+  {
+   "window_hours": 6,
+   "windows": 829,
+   "empty_windows": 0,
+   "step_s": 600,
+   "min": 112,
+   "p5": 194,
+   "median": 1019,
+   "p95": 1500,
+   "max": 1751,
+   "share_within_10pct_of_mean": 0.1,
+   "share_ge_short_run": 0.0,
+   "median_by_end_hour": {
+    "0": 1146,
+    "1": 1058,
+    "2": 902,
+    "3": 735,
+    "4": 529,
+    "5": 383,
+    "6": 224,
+    "7": 192,
+    "8": 262,
+    "9": 387,
+    "10": 636,
+    "11": 849,
+    "12": 1025,
+    "13": 1189,
+    "14": 1243,
+    "15": 1270,
+    "16": 1225,
+    "17": 1200,
+    "18": 1143,
+    "19": 1085,
+    "20": 1065,
+    "21": 1081,
+    "22": 1142,
+    "23": 1173
+   }
+  },
+  {
+   "window_hours": 24,
+   "windows": 721,
+   "empty_windows": 0,
+   "step_s": 600,
+   "min": 684,
+   "p5": 703,
+   "median": 896,
+   "p95": 1116,
+   "max": 1135,
+   "share_within_10pct_of_mean": 0.596,
+   "share_ge_short_run": 0.0
+  }
+ ],
+ "young_articles": {
+  "visible_comments_by_age_min": {
+   "0": 1.9,
+   "36": 19.6,
+   "72": 24.7
+  },
+  "visible_comments_age_uniform_0_72_min": 17.9,
+  "visible_at_1_2h_window_end": {
+   "windows": 844,
+   "p5": 4.2,
+   "median": 15.8,
+   "p95": 26.7
+  },
+  "visible_at_1_2h_window_end_ge_short_run": {
+   "windows": 25,
+   "end_hours": [
+    10,
+    11,
+    12,
+    13,
+    19,
+    20
+   ],
+   "min": 17.2,
+   "median": 25.7,
+   "max": 30.7
+  },
+  "visible_at_36_min_by_post_hour": {
+   "0": 15.1,
+   "1": 12.7,
+   "2": 8.3,
+   "3": 9.4,
+   "4": 9.0,
+   "5": 5.3,
+   "6": 11.8,
+   "7": 18.0,
+   "8": 19.5,
+   "9": 19.9,
+   "10": 27.8,
+   "11": 22.5,
+   "12": 20.0,
+   "13": 22.0,
+   "14": 19.4,
+   "15": 22.6,
+   "16": 21.3,
+   "17": 19.6,
+   "18": 21.7,
+   "19": 20.6,
+   "20": 19.4,
+   "21": 17.2,
+   "22": 16.0,
+   "23": 15.2
+  },
+  "final_comments_per_article": 37.7,
+  "short_run_implied_comments_per_article": 6.0
+ },
+ "spec_cost": {
+  "readme": {
+   "per_day": 890,
+   "spec1": 960,
+   "spec2": 5340,
+   "ratio": 5.56,
+   "ratio_range_by_day": [
+    5.48,
+    5.64
+   ]
+  },
+  "measure_script": {
+   "per_day": 895,
+   "spec1": 947,
+   "spec2": 6262,
+   "ratio": 6.61
+  }
+ }
+}

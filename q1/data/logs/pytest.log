@@ -1,0 +1,19 @@
+# 2026-10-31，答案第 3 點改字後重跑（--basetemp 指到 repo 外的暫存目錄）
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -p no:cacheprovider -q --basetemp=<tmp>/work/q1log/pt q1/code/tests
+.............................................                            [100%]
+45 passed in 0.95s
+real	0m1.352s
+exit=0
+
+# 各檔項數（同一指令改 -v、--basetemp=<tmp>/work/q1log/pt2，全部 PASSED，退出碼 0）：
+test_email_clean.py 10
+test_issue_tags.py 12
+test_survey_weight.py 9
+test_pipeline.py 12
+test_answer_length.py 2
+
+$ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -c "import sys; sys.path.insert(0, 'q1/code/tests'); import test_answer_length as t; s = t.answer_section(t.README.read_text(encoding='utf-8')); print('without_markdown', t.count_chars(s, keep_markdown=False), 'with_markdown', t.count_chars(s))"
+without_markdown 373 with_markdown 385
+exit=0
+
+# 跑完後 q1/ 內沒有 __pycache__、.pytest_cache（find q1 -name __pycache__ -o -name .pytest_cache 沒有輸出）。

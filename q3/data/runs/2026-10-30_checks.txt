@@ -1,0 +1,77 @@
+# Q3 2026-10-30 Linux 驗證紀錄（摘要；完整 log 在 <tmp>/work/q3/，未進 repo）
+# 說明見 q3/code/RESULTS.md。本次沒有抓任何 PTT 列表頁或文章頁。
+# 前一輪 07:38–12:59Z；本輪 17:22–17:45Z（<tmp>/work/q3/fix_1730/）。
+
+## 1. robots.txt（只抓這一個檔，共 3 次，都在前一輪；時間是 scratch 檔案的修改時間）
+URL: https://www.ptt.cc/robots.txt
+第 1 次: 2026-10-30T07:38:38Z  robots/robots.txt          3,259 bytes（沒有留下狀態碼與退出碼）
+第 2 次: 2026-10-30T07:47:56Z  robots_recheck/robots.txt  3,259 bytes；HTTP 200
+第 3 次: 2026-10-30T12:25:56Z  robots_2/robots.txt        3,259 bytes；HTTP 200；curl 退出碼 0
+3 次 sha256 相同: 0563ce67fbc4e4d58b49682897c6d74c272618c27503668fb7cbb32ee9f2ea36
+相關規則（原文節錄）：
+  User-agent: *
+  Content-Signal: search=yes,ai-train=no,use=reference
+  Allow: /
+  User-agent: ClaudeBot / anthropic-ai / Claude-Web / Claude-User
+  Disallow: /
+
+## 2. ptt_q3_census.py --report 重產（本輪，scratch 複本，exit 0，0.5 秒）：sha256 前 16 碼
+result_A.txt  repo e6908dcd450ce608  重產 e6908dcd450ce608  相同
+result_B.txt  改之前 a454716041b782ee  重產 01d082a8b0f6ce08  只差第 7 行（重試改成推測語氣），已複製回 repo
+（再前一版是 726a0db394e81135，把篇數寫成「請求 6,237 次」）
+
+## 3. ptt_q3_recheck.py（本輪，exit 0，1.0 秒）：輸出與 2026-10-30_recheck.json 逐位元組相同
+1.2 小時視窗含 13 個沒有文章的視窗：857 個，最小 0、P5 103、中位數 1,027、P95 1,634，11.4% 落在 890 ±10%
+普查請求數：至少 6,237、最多約 6,247（10 篇回應時間 5.593–7.186 秒，其他最多 2.423 秒）
+
+## 4. make_charts.py 重產（本輪，repo 內跑一次、scratch 複本再跑一次，exit 0）：sha256 前 16 碼 repo / 複本
+相同 6358f42df2b7ffe9 6358f42df2b7ffe9 answer/1-scale/chart-daily-posts.html
+相同 c0389ba9d64fe73e c0389ba9d64fe73e answer/1-scale/chart-hourly-posts.html
+相同 774f53850970cad5 774f53850970cad5 answer/1-scale/chart-scale-table.html
+相同 2db53805ecb81b35 2db53805ecb81b35 answer/3-cost/chart-comment-arrival.html
+相同 db015a989e87e23f db015a989e87e23f answer/3-cost/chart-spec-cost.html
+相同 5b76b788009f9199 5b76b788009f9199 answer/4-invariant/chart-invariant-results.html
+相同 d56589d88d484090 d56589d88d484090 answer/5-not-monitored/chart-crawl-stats.html
+相同 4934ebc1f156eb82 4934ebc1f156eb82 answer/6-spec-change/chart-refresh-marginal.html
+相同 05c07a16cd2072a9 05c07a16cd2072a9 answer/7-question/chart-text-share.html
+相同 4796cd38c37ed930 4796cd38c37ed930 answer/src/ptt_targets.json
+只有 chart-crawl-stats.html 和上一版不同（上一版 f2fecb98ef72caad；再前一版 144e1dce66a1a792 寫「請求失敗／被擋 0 / 6,237」）
+
+## 5. PNG（Playwright，Chrome for Testing 153.0.8010.12，WenQuanYi Zen Hei；設定同 capture.js charts：viewport 1700×1200、deviceScaleFactor 1.5，只開 file://）
+chart-crawl-stats.png 重轉並更新（本輪）：1440×548，sha256 1be7492a498c40ad（上一版 c772a3b7dfe063ae），只差副標那一行（差異像素 1.26%）
+其他 9 張沒動。前一輪（07:54Z）在 Linux 重轉、與 repo 內 PNG 比較：
+answer/1-scale/chart-daily-posts.png  雜湊不同  尺寸 (1440, 770) vs (1440, 774)
+answer/1-scale/chart-hourly-posts.png  雜湊不同  尺寸 (1440, 770) vs (1440, 774)
+answer/1-scale/chart-scale-table.png  雜湊不同  尺寸相同 (1440, 762)  差異像素 6.35%
+answer/3-cost/chart-comment-arrival.png  雜湊不同  尺寸 (1440, 770) vs (1440, 774)
+answer/3-cost/chart-spec-cost.png  雜湊不同  尺寸 (1440, 725) vs (1440, 729)
+answer/4-invariant/chart-invariant-results.png  雜湊不同  尺寸 (1440, 546) vs (1440, 549)
+answer/6-spec-change/chart-refresh-marginal.png  雜湊不同  尺寸 (1440, 819) vs (1440, 824)
+answer/7-question/chart-text-share.png  雜湊不同  尺寸 (1440, 455) vs (1440, 459)
+architecture/architecture.png  雜湊不同  尺寸相同 (2400, 1590)  差異像素 5.77%
+
+## 6. 離線重播（不是實測，本輪）：三支程式的 main()，session 換成讀 shared/capture/html，真的時鐘，unshare -n 無網路
+程式               參數                                                      退出碼  請求  最短間隔   結束
+ptt_measure.py     --pages 2 --articles 3 --delay 1.5 --max-requests 4        0       4     1.518 秒   capped
+ptt_measure.py     --pages 1 --articles 1（預設間隔）                         0       2     1.610 秒   ok
+ptt_q3_measure.py  --days 2 --per-day 0 --delay 1.5 --max-requests 5          0       5     1.515 秒   capped（全是列表）
+ptt_q3_measure.py  --days 2 --per-day 0 --max-requests 3（預設間隔）          0       3     1.516 秒   capped
+ptt_q3_measure.py  --days 2 --per-day 0 --max-requests 0                      1       0     —          exit: 已達請求上限 0，第一個列表頁沒有送出
+ptt_q3_census.py   視窗 10/29 22:36–10/30 01:00（22 篇）--max-requests 6      0       6     1.558 秒   capped
+ptt_q3_census.py   同上，不設上限續抓                                         0       16    1.556 秒   ok；run_summary.jsonl 2 行，累計 22 個請求
+ptt_q3_census.py   視窗 10/29 02:00–10/30 02:00（列表最舊 10/29 22:33）       1       0     —          列表沒涵蓋視窗，不抓
+ptt_q3_census.py   4 秒後送 SIGINT                                             130     3     1.579 秒   interrupted（JSONL 3 行）
+ptt_q3_measure.py  4 秒後送 SIGINT                                             130     3     1.516 秒   interrupted
+ptt_measure.py     4 秒後送 SIGINT                                             130     3     1.516 秒   interrupted
+RESULTS 的補跑指令照抄（--window-end 展開成 2026-10-31T00:00）：
+ptt_q3_measure.py  --days 2 --per-day 0 --delay 1.5 --max-requests 120        0       120   1.513 秒   capped（假頁面翻不到 2 天前）
+ptt_q3_census.py   --days 1 --delay 1.5 --max-requests 1080                   0       15    1.554 秒   ok（先提醒視窗尾端可能沒涵蓋）
+加總指令（兩個 run_summary.jsonl 的 requests 相加）                           0       印出 135
+
+## 7. 防呆（本輪，unshare -n）
+python q3/code/ptt_q3_census.py --window-end 2026-10-30T00:00 --days 1   退出碼 1，未寫入 q3/data/ptt_q3_census_out
+python q3/code/ptt_q3_measure.py --days 1                                 退出碼 1，未寫入 q3/data/ptt_q3_out
+
+## 8. pytest（本輪）
+PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider q3/code/tests   20 passed，退出碼 0
+同一個指令加 unshare -n（無網路）                                                                         20 passed，退出碼 0

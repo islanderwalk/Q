@@ -1,0 +1,8 @@
+time="2026-10-30T22:47:44Z" level=warning msg="Found orphan containers (seed-2, seed-1, seed-0) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container qsearch-q6-seg-job-run-8fb4de67b534 Creating 
+ Container qsearch-q6-seg-job-run-8fb4de67b534 Created 
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.3/base.dict ...
+Dumping model to file cache /tmp/qseg-dict/jieba.u680a43fc927dd82003359d354cd3f03c.cache
+Loading model cost 0.999 seconds.
+Prefix dict has been built successfully.
+{"severity": "INFO", "event": "job_done", "time": "2026-10-30T22:47:46.375+00:00", "partitions": 0, "dict_version": "qsearch-q6-2026.10.30.3"}

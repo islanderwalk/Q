@@ -1,0 +1,16 @@
+== q6 fb/ig residential 2026-10-31T01:46:14+08:00 ==
+fb cnanewstaiwan: status=200 url=https://www.facebook.com/cnanewstaiwan posts=1 dialog=True login=False title=中央社新聞粉絲團 | Facebook
+fb PNNPTS: status=200 url=https://www.facebook.com/pnnpts/ posts=1 dialog=True login=False title=公視新聞網 PNN | Facebook
+fb ftvnews53: status=200 url=https://www.facebook.com/FTVNews53/ posts=1 dialog=True login=False title=民視新聞 | Facebook
+fb NASA: status=200 url=https://www.facebook.com/NASA posts=1 dialog=True login=False title=NASA - National Aeronautics and Space Administration | Facebook
+ig cnanews_tw/: status=200 url=https://www.instagram.com/cnanews_tw/ posts=12 login=False dialog=True
+ig cnanews_tw/reels/: status=200 url=https://www.instagram.com/cnanews_tw/reels/ posts=0 login=False dialog=True
+ig pts.news/: status=200 url=https://www.instagram.com/pts.news/ posts=12 login=False dialog=True
+ig pts.news/reels/: status=200 url=https://www.instagram.com/pts.news/reels/ posts=0 login=False dialog=True
+ig ftvnews/: status=200 url=https://www.instagram.com/ftvnews/ posts=12 login=False dialog=True
+ig ftvnews/reels/: status=200 url=https://www.instagram.com/ftvnews/reels/ posts=0 login=False dialog=True
+ig nasa/: status=200 url=https://www.instagram.com/nasa/ posts=12 login=False dialog=True
+ig nasa/reels/: status=200 url=https://www.instagram.com/nasa/reels/ posts=0 login=False dialog=True
+facebook: 4 posts
+instagram: 48 posts
+loads: {"fb": 4, "ig": 8}

@@ -1,0 +1,1592 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Postgres 貼文表解剖</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: a zoom sequence — disk file → 8 KB page → one row → the GIN index — each level drawn to scale from real measurements */
+:root {
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --fg: #16202b;
+  --muted: #5a6776;
+  --line: #d3dae2;
+  --heap: #1d5f8a;
+  --heap-soft: #cfe1ee;
+  --idx: #b5601a;
+  --idx-soft: #f3dcc7;
+  --free: #e4e9ee;
+  --hdr: #6b5aa6;
+  --ptr: #2f8a6b;
+  --pad: #c2402f;
+  --pid: #b03a7a;
+  --pname: #8a7a12;
+  --display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1318; --panel: #151c23; --fg: #e2e8ee; --muted: #93a0ae; --line: #2a3541;
+    --heap: #6db0de; --heap-soft: #1d3446; --idx: #e8a061; --idx-soft: #3c2a1b;
+    --free: #222b35; --hdr: #a596e0; --ptr: #5fc49e; --pad: #ef7a68; --pid: #e889bd; --pname: #d6c65a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1318; --panel: #151c23; --fg: #e2e8ee; --muted: #93a0ae; --line: #2a3541;
+  --heap: #6db0de; --heap-soft: #1d3446; --idx: #e8a061; --idx-soft: #3c2a1b;
+  --free: #222b35; --hdr: #a596e0; --ptr: #5fc49e; --pad: #ef7a68; --pid: #e889bd; --pname: #d6c65a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body);
+  font-size: 16px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+main { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 900; }
+h2 { font-size: clamp(22px, 3.2vw, 28px); font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+.mono, code { font-family: var(--mono); font-size: .9em; }
+code { overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 18px; min-width: 0; }
+.level { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.level .zoom { font-family: var(--mono); font-size: 13px; color: var(--heap); border: 1px solid var(--heap); border-radius: 3px; padding: 0 7px; }
+.level.idx .zoom { color: var(--idx); border-color: var(--idx); }
+
+/* hero */
+header { display: grid; gap: 18px; }
+.answer {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+}
+.answer > div { background: var(--panel); padding: 18px 20px; display: grid; gap: 4px; align-content: start; }
+.answer .k { font-size: 13px; color: var(--muted); }
+.answer .v { font-family: var(--mono); font-size: clamp(26px, 4vw, 34px); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.answer .v.heap { color: var(--heap); }
+.answer .v.idx { color: var(--idx); }
+.answer .s { font-size: 13px; color: var(--muted); }
+
+.figure { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.scroll { overflow-x: auto; }
+.figure > *, main > * { min-width: 0; }
+@media (max-width: 560px) {
+  .qline { font-size: 15.5px; }
+  .dv, .dv tbody { display: block; }
+  .dv tr { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .dv td { border: none !important; padding: 0; }
+  .dv td.q { grid-column: 1; grid-row: 1; white-space: normal; }
+  .dv td.b { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .dv td.f { grid-column: 1; grid-row: 2; padding-left: 12px; color: var(--muted); font-size: 12.5px; }
+  .dv tr.sum { border-bottom: none; border-top: 2px solid var(--fg); }
+  .dv .tag { display: table; margin: 4px 0 0 12px; }
+}
+svg text { font-family: var(--mono); fill: var(--fg); }
+svg .t-muted { fill: var(--muted); }
+
+/* squares */
+.squares { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.sq-group { display: grid; gap: 8px; align-content: start; }
+.sq-head { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; flex-wrap: wrap; }
+.sq-head b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.sq { display: flex; flex-wrap: wrap; gap: 3px; }
+.sq i { width: 11px; height: 11px; border-radius: 1.5px; background: var(--heap); display: block; }
+.sq.idx i { background: var(--idx); }
+.sq i.part { opacity: .45; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; cursor: default; border-radius: 3px; padding: 1px 4px; }
+.legend span.on { background: var(--free); }
+.legend i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; flex: none; }
+.seg { transition: opacity .15s; }
+.dim .seg:not(.hot) { opacity: .28; }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 12.5px; letter-spacing: .04em; }
+td.r, th.r { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tr.hot td { background: var(--heap-soft); }
+
+.tids { display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--mono); font-size: 13px; }
+.tids span { border: 1px solid var(--idx); color: var(--idx); border-radius: 3px; padding: 1px 7px; background: var(--idx-soft); }
+.tids span.more { border-style: dashed; background: none; }
+
+.note { border-left: 3px solid var(--idx); padding: 4px 0 4px 14px; font-size: 15px; color: var(--fg); }
+.note.heap { border-color: var(--heap); }
+
+/* comparison bars */
+.bars { display: grid; gap: 12px; }
+.bar { display: grid; grid-template-columns: minmax(110px, 190px) 1fr; gap: 12px; align-items: center; }
+.bar .lab { font-size: 14px; line-height: 1.35; }
+.bar .lab small { display: block; color: var(--muted); font-size: 12px; }
+.bar .track { position: relative; height: 26px; background: var(--free); border-radius: 3px; min-width: 0; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--idx); }
+.bar .fill.heap { background: var(--heap); }
+.bar .val { position: absolute; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* calculator */
+.calc { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.calc label { display: grid; gap: 6px; font-size: 14px; }
+.calc label span.val { font-family: var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.calc input[type=range] { width: 100%; accent-color: var(--idx); }
+.calc input:focus-visible { outline: 2px solid var(--idx); outline-offset: 2px; }
+.calc-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.calc-out div { border: 1px solid var(--line); border-radius: 4px; padding: 10px 14px; display: grid; }
+.calc-out .k { font-size: 12.5px; color: var(--muted); }
+.calc-out .v { font-family: var(--mono); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.formula { font-family: var(--mono); font-size: 13.5px; background: var(--free); border-radius: 4px; padding: 12px 14px; overflow-x: auto; white-space: pre; line-height: 1.6; }
+/* derivation */
+.qline { font-size: 17px; line-height: 2.1; max-width: none; }
+.qline mark { color: var(--fg); background: color-mix(in srgb, var(--c) 20%, transparent); border-bottom: 3px solid var(--c); padding: 1px 3px; border-radius: 2px; }
+.dv { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.dv td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.dv td.q { white-space: nowrap; }
+.dv td.q span { border-left: 4px solid var(--c); padding-left: 8px; font-weight: 600; }
+.dv td.q span.assume { font-weight: 400; color: var(--muted); }
+.dv td.f { font-family: var(--mono); font-size: 13.5px; }
+.dv td.b { text-align: right; font-family: var(--mono); font-weight: 600; font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dv tr.sum td { border-bottom: none; border-top: 2px solid var(--fg); font-weight: 700; }
+.dv .tag { margin-left: 6px; }
+.stack { display: flex; height: 34px; border-radius: 4px; overflow: hidden; gap: 1px; background: var(--panel); }
+.stack i { display: block; background: var(--c); min-width: 3px; }
+.stack i.big { display: flex; align-items: center; padding-left: 10px; font-style: normal; font-family: var(--mono); font-size: 13px; color: var(--panel); white-space: nowrap; overflow: hidden; }
+.stack-cap { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-family: var(--mono); }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chain .box { border: 2px solid var(--c, var(--heap)); border-radius: 6px; padding: 8px 14px; display: grid; text-align: center; background: var(--panel); }
+.chain .box b { font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.chain .box small { font-size: 12px; color: var(--muted); }
+.chain .box.final { background: var(--c, var(--heap)); }
+.chain .box.final b, .chain .box.final small { color: var(--panel); }
+.chain .op { display: grid; justify-items: center; font-size: 12.5px; color: var(--muted); max-width: 11em; text-align: center; line-height: 1.35; }
+.chain .op::after { content: "→"; font-size: 20px; color: var(--fg); line-height: 1; }
+.chain-k { font-family: var(--display); font-weight: 700; font-size: 16px; }
+
+/* 字元換算台 */
+.cv { border: 1px solid var(--line); border-top: 4px solid var(--idx); border-radius: 6px; padding: 18px; display: grid; gap: 18px; min-width: 0; background: var(--bg); }
+.cv > * { min-width: 0; }
+.cv button { font: inherit; color: inherit; cursor: pointer; }
+.cv-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 16px; }
+.cv-top .chain-k { font-size: 20px; }
+.cv-in { display: grid; gap: 10px; }
+.cv-in input { width: 100%; font: 500 26px/1.3 var(--body); padding: 10px 14px; border: 2px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
+.cv-in input:focus-visible { outline: none; border-color: var(--idx); }
+.cv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13.5px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 2px 11px; }
+.chip:hover, .chip:focus-visible { border-color: var(--idx); outline: none; }
+.chip small { color: var(--muted); margin-left: 4px; font-size: 11.5px; }
+.cv-len { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.cv-len > div { background: var(--panel); padding: 12px 14px; display: grid; gap: 3px; align-content: start; }
+.cv-len .k { font-size: 13.5px; font-weight: 700; }
+.cv-len .v { font-family: var(--mono); font-size: 30px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.cv-len .v small { font: 400 12.5px var(--body); color: var(--muted); margin-left: 5px; }
+.cv-len .off .v { color: var(--pad); }
+.cv-len .ne { font-size: 12px; color: var(--pad); font-weight: 700; min-height: 1.4em; }
+.cv-len .who { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.cv-len .fn { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.45; }
+@media (max-width: 700px) { .cv-len { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cv-len .v { font-size: 26px; } }
+.cv-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.cv-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 18%, var(--panel)); vertical-align: -1px; margin-right: 5px; }
+.cv-strip-w { overflow-x: auto; padding: 4px 2px 6px; }
+.cv-strip { display: flex; gap: 8px; align-items: flex-start; width: max-content; }
+.cv-g { display: grid; gap: 4px; }
+.cv-g.multi { border: 1px dashed var(--muted); border-radius: 7px; padding: 4px; }
+.cv-gr { display: flex; gap: 3px; }
+.cv-gl { font-size: 11.5px; color: var(--muted); text-align: center; white-space: nowrap; }
+.cv-cp { border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 10%, var(--panel)); border-radius: 5px; padding: 4px 4px 3px; display: grid; gap: 3px; justify-items: center; }
+.cv-cp.sel { background: color-mix(in srgb, var(--c) 32%, var(--panel)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 40%, transparent); }
+.cv-cp.broken { border-style: dashed; border-color: var(--pad); }
+.cv-cp:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.cv-glyph { font-size: 24px; line-height: 1.25; height: 1.25em; display: flex; align-items: center; }
+.cv-glyph.tag { font: 600 11px var(--mono); color: var(--muted); }
+.cv-bytes { display: flex; gap: 2px; }
+.cv-bytes > span { width: 28px; display: grid; justify-items: center; font-family: var(--mono); font-size: 12.5px; background: var(--panel); border-radius: 3px; padding: 1px 0 2px; position: relative; transition: opacity .15s; }
+.cv-bytes small { font-size: 9.5px; color: var(--muted); line-height: 1.3; }
+.cv-bytes > span.gone { opacity: .22; }
+.cv-bytes > span.edge::after { content: ""; position: absolute; top: -8px; bottom: -8px; right: -3px; border-right: 2px dashed var(--pad); }
+.cv-nb { font: 600 11px var(--mono); color: var(--c); }
+.cv-rd { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; }
+.cv-rd > * { min-width: 0; }
+.cv-rd-k { font-size: 14px; font-weight: 700; }
+.bc { display: grid; grid-template-columns: 1fr 1fr 2fr 0.7fr; gap: 8px; }
+.bc input.bc-ch { font: 500 17px/1.2 var(--body); text-align: center; padding: 5px 8px; }
+.bc input.bc-ch::placeholder { font-size: 12px; color: var(--muted); }
+.bc label { display: grid; gap: 3px; min-width: 0; }
+.bc span { font-size: 12px; color: var(--muted); }
+.bc input { width: 100%; min-width: 0; font: 500 15px var(--mono); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+.bc input:focus-visible { outline: none; border-color: var(--idx); }
+.bc input.bad { border-color: var(--pad); color: var(--pad); }
+@media (max-width: 560px) { .bc { grid-template-columns: 1fr; } }
+.rd { width: auto; border-collapse: separate; border-spacing: 3px 0; font-family: var(--mono); font-size: 13px; }
+.rd th { font: 400 12.5px var(--body); color: var(--muted); text-align: right; padding: 5px 10px 5px 0; white-space: nowrap; position: sticky; left: 0; background: var(--panel); }
+.rd td { text-align: center; padding: 4px 6px; border: none; cursor: pointer; white-space: pre; line-height: 1.35; transition: opacity .15s; }
+.rd td.hx { font-weight: 600; font-size: 14px; color: var(--c); }
+.rd td s { text-decoration: none; color: var(--fg); background: var(--free); outline: 1px solid var(--muted); border-radius: 2px; padding: 0 1px; margin-right: 2px; }
+.rd td b { font-weight: 600; color: var(--c); }
+.rd td.hd { color: var(--muted); font-weight: 600; }
+.rd tr:nth-child(5) td { font: 400 11.5px var(--body); color: var(--muted); }
+.rd td.br { border: 2px solid var(--c); border-top: none; border-radius: 0 0 8px 8px; padding: 2px 0 4px; font: 400 20px var(--body); }
+.rd td.br .tag { font: 600 11px var(--mono); color: var(--muted); }
+.rd td.nm1 { padding-top: 10px; }
+.rd td.nm2 { font-weight: 600; font-size: 15px; color: var(--c); }
+.rd td.nm3 { font: 400 11.5px var(--body); color: var(--muted); }
+.rd td.sel { background: color-mix(in srgb, var(--c) 18%, transparent); }
+.rd td.gone { opacity: .22; }
+.cv-cut { display: grid; grid-template-columns: auto minmax(120px, 1fr); gap: 8px 14px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+.cv-cut label { font-size: 14px; white-space: nowrap; }
+.cv-cut label b { font-family: var(--mono); }
+.cv-cut input { width: 100%; accent-color: var(--pad); }
+.cv-cut .out { grid-column: 1 / -1; font-size: 14px; display: grid; gap: 4px; }
+.cv-cut .res { font-size: 22px; font-family: var(--body); }
+.cv-cut .res .bad { color: var(--pad); font-weight: 700; }
+.cv-cut .h { font-weight: 700; }
+@media (max-width: 560px) { .cv-cut { grid-template-columns: 1fr; } .cv { padding: 14px 12px; } .cv-top .chain-k { font-size: 18px; } }
+.cv-dec { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 12px; }
+.cv-dec h3, .cv-card h3 { margin: 0; font-family: var(--display); font-size: 17px; line-height: 1.4; }
+.cv-dec h3 .mono { font-size: .95em; }
+.bits { display: grid; grid-template-columns: minmax(0, 14em) minmax(0, 1fr); gap: 12px 16px; align-items: center; font-family: var(--mono); font-size: 14px; }
+.bits > * { min-width: 0; }
+.bits .k { font-family: var(--body); font-size: 13px; color: var(--muted); }
+.bits .full { grid-column: 1 / -1; }
+.bits .k.full { margin-bottom: -6px; }
+.bits b { font-weight: 700; }
+.bits small { font-family: var(--body); }
+.b1 { color: var(--heap); } .b2 { color: var(--ptr); } .b3 { color: var(--idx); } .b4 { color: var(--pid); }
+.nib { display: flex; flex-wrap: wrap; gap: 6px; }
+.nib > span { display: grid; justify-items: center; border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; letter-spacing: .06em; }
+.nib em { font-style: normal; font-size: 12px; color: var(--idx); font-weight: 600; }
+.bb { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+.bb > span { display: grid; justify-items: center; gap: 2px; }
+.bb i { font-style: normal; border: 1px solid var(--line); border-radius: 3px; padding: 3px 7px; background: var(--panel); letter-spacing: .04em; }
+.bb s { text-decoration: none; color: var(--muted); opacity: .75; }
+.bb em { font-style: normal; font-size: 13px; font-weight: 600; }
+.ladder { font-size: 13px; min-width: 560px; }
+.ladder td, .ladder th { padding: 5px 8px; white-space: nowrap; }
+.ladder td.m { font-family: var(--mono); }
+.ladder s { text-decoration: none; color: var(--muted); }
+.ladder tr.on td { background: var(--idx-soft); font-weight: 600; }
+.ladder .here { color: var(--idx); font-weight: 700; }
+@media (max-width: 560px) { .bits { grid-template-columns: 1fr; gap: 4px; } .bits .k { margin-top: 8px; } }
+.cv-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.cv-card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; min-width: 0; font-size: 14px; }
+.cv-card .sub { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+.rowsz { font-size: 12.5px; }
+.rowsz th, .rowsz td { padding: 4px 8px 4px 0; }
+.rowsz tr.sum td { border-bottom: none; border-top: 2px solid var(--fg); font-weight: 700; }
+.cv-card input[type=number] { width: 7.5em; font: 600 15px var(--mono); padding: 3px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); }
+.cv-card input:focus-visible { outline: 2px solid var(--idx); outline-offset: 1px; }
+.vd { display: grid; gap: 8px; }
+.vr { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+.vr:last-child { border-bottom: none; }
+.vr > span:first-child { min-width: 0; }
+.vz { display: grid; justify-items: end; text-align: right; flex: none; max-width: 48%; }
+.vz .no { white-space: normal; }
+.vd .c { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ok { color: var(--ptr); font-weight: 700; white-space: nowrap; } .no { color: var(--pad); font-weight: 700; white-space: nowrap; }
+.vd small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.mm td, .mm th { padding: 4px 6px; font-size: 13px; }
+.mm td.g { font-size: 20px; }
+.mm td.x { color: var(--pad); font-weight: 700; }
+.enc { display: grid; gap: 3px; }
+.enc .k { font-size: 12.5px; color: var(--muted); }
+.enc code { display: block; background: var(--bg); border-radius: 4px; padding: 6px 9px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.enc code span.sel { background: color-mix(in srgb, var(--idx) 30%, transparent); border-radius: 2px; outline: 1px solid var(--idx); }
+.cap { display: grid; gap: 4px; }
+.cap .eq { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+.cap .big { font: 600 22px var(--mono); }
+
+/* TOAST box */
+.toast { border: 1px dashed var(--heap); border-radius: 6px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+.toast h3 { margin: 0; font-family: var(--display); font-size: 19px; }
+.toast ol { margin: 0; padding-left: 1.5em; display: grid; gap: 6px; max-width: 68ch; }
+.toast-fig { display: grid; gap: 8px; overflow-x: auto; }
+.tf-row { display: flex; gap: 4px; align-items: center; font-size: 13px; }
+.tf-k { flex: none; width: 7.5em; color: var(--muted); }
+.tf-cell { flex: none; border-radius: 3px; padding: 4px 10px; white-space: nowrap; }
+.tf-cell.num { background: var(--heap-soft); }
+.tf-cell.ptr { background: var(--ptr); color: var(--panel); }
+.tf-cell.chunk { background: var(--free); border: 1px solid var(--line); }
+
+/* exam question */
+.exam { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--fg); border-radius: 6px; padding: 22px 24px; display: grid; gap: 14px; min-width: 0; }
+.exam .src { display: flex; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.exam .src b { font-family: var(--display); color: var(--fg); font-size: 15px; font-weight: 700; }
+.exam .facts { display: flex; flex-wrap: wrap; gap: 6px; }
+.exam .facts span { font-size: 13px; border: 1px solid var(--line); border-radius: 3px; padding: 0 8px; background: var(--bg); }
+.exam .facts b { font-family: var(--mono); font-weight: 600; }
+.exam ol { margin: 0; padding-left: 1.6em; display: grid; gap: 8px; }
+.exam li { padding-left: 2px; }
+.exam ul.sub { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.exam ul.sub li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.tag { font-family: var(--mono); font-size: 11.5px; border-radius: 3px; padding: 0 6px; white-space: nowrap; border: 1px solid var(--line); color: var(--muted); }
+.tag.done { border-color: var(--ptr); color: var(--ptr); }
+.exam .limit { font-size: 13px; color: var(--muted); font-style: italic; }
+footer { font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+#hdr-tip { position: fixed; z-index: 50; max-width: min(460px, calc(100vw - 24px)); background: var(--panel); color: var(--fg); border: 1.5px solid var(--hdr); border-radius: 6px; padding: 10px 12px; background: color-mix(in srgb, var(--panel) 60%, transparent); pointer-events: none; font-size: 12.5px; }
+#info-tip { position: fixed; z-index: 50; max-width: min(320px, calc(100vw - 24px)); color: var(--fg); border: 1px solid var(--hdr); border-radius: 5px; padding: 6px 8px; background: color-mix(in srgb, var(--panel) 60%, transparent); pointer-events: none; font-size: 11px; }
+#info-tip .h { font-weight: 600; color: var(--hdr); margin-bottom: 3px; }
+#info-tip table { border-collapse: collapse; }
+#info-tip td, #info-tip th { padding: 2px 6px; border-bottom: 1px solid var(--line); text-align: left; font-size: 11px; white-space: nowrap; }
+#info-tip th { color: var(--muted); font-weight: 500; }
+#info-tip tr:last-child td { border-bottom: 0; }
+#head-tip { position: fixed; z-index: 50; color: var(--fg); border: 1px solid var(--hdr); border-radius: 5px; padding: 7px 9px; background: color-mix(in srgb, var(--panel) 60%, transparent); pointer-events: none; font-size: 11px; }
+#head-tip .h { font-weight: 600; color: var(--hdr); margin-bottom: 6px; }
+#head-tip .eq { display: flex; align-items: center; gap: 6px; }
+#head-tip .chip { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; padding: 3px 6px; border-radius: 3px; line-height: 1.25; font-family: var(--mono); }
+#head-tip .chip b { font-size: 12px; }
+#head-tip .chip small { font-size: 10px; color: inherit; }
+#head-tip .c-hdr { background: var(--hdr); color: var(--panel); }
+#head-tip .c-pos { background: var(--heap-soft); color: var(--fg); }
+#head-tip .op { font-size: 14px; color: var(--muted); }
+#head-tip .ht-note { margin-top: 6px; color: var(--muted); font-size: 11px; }
+#hdr-tip .h { font-weight: 600; color: var(--hdr); margin-bottom: 6px; }
+#hdr-tip table { border-collapse: collapse; }
+#hdr-tip td, #hdr-tip th { padding: 3px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+#hdr-tip th { color: var(--muted); font-weight: 500; }
+#hdr-tip td:nth-child(2) { white-space: nowrap; font-family: var(--mono); }
+#hdr-tip tr:last-child td { border-bottom: 0; font-weight: 600; white-space: normal; }
+</style>
+
+<main>
+  <section class="exam" aria-label="題目">
+    <div class="src"><b>第二題　[估算與選型]</b><span>QSearch 資料工程師筆試題目 v2026.07</span></div>
+    <p>有 100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言，另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。</p>
+    <p>這是一個內部工具：約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。由你一個人維運，每月基礎設施預算 3,000 元。</p>
+    <div class="facts">
+      <span><b>100 萬</b> 則</span><span><b>250</b> 字／則</span><span><b>10</b> 位使用者</span>
+      <span><b>500</b> 次查詢／天</span><span><b>+3,000</b> 則／天</span><span><b>1</b> 人維運</span><span><b>3,000</b> 元／月</span>
+    </div>
+    <ol>
+      <li>請估算：(a) 原始資料總量；(b) 粉絲頁 ID 索引；(c) 貼文中文全文索引。寫出算式與你假設的每一個參數，數量級對即可。
+        <ul class="sub">
+          <li><span>(a) 原始資料總量</span><span class="tag done">本頁實測</span></li>
+          <li><span>(b) 粉絲頁 ID 索引：21 MB（每則不同粉絲頁）／6.6 MB（5,000 個粉絲頁）</span><span class="tag done">本頁實測</span></li>
+          <li><span>(c) 貼文中文全文索引</span><span class="tag done">本頁實測</span></li>
+        </ul>
+      </li>
+      <li>承上，你選哪一套方案？請說明是估算結果的哪一個數字決定了你的選擇。</li>
+      <li>你選的中文斷詞策略是什麼？它會漏掉哪一類查詢？</li>
+      <li>資料量或查詢量成長到多少，你會換掉現在的選擇？換成什麼？</li>
+      <li>題目中缺了哪一個數字，會讓你的估算差距最大？</li>
+    </ol>
+    <p class="limit">上限 600 字（不含算式）。</p>
+  </section>
+
+  <section id="derive">
+    <div class="level"><span class="zoom">推算</span><h2>從題目這一句，算出 (a) 和 (c)</h2></div>
+    <div class="figure">
+      <p class="qline">有 <mark style="--c:var(--fg)">100 萬則</mark> Facebook 粉絲頁貼文，<mark style="--c:var(--idx)">平均 250 字中文</mark>，不含留言，另含<mark style="--c:var(--ptr)">心情互動統計</mark>、<mark style="--c:var(--heap)">發文時間</mark>、<mark style="--c:var(--pname)">粉絲頁名稱</mark>、<mark style="--c:var(--pid)">粉絲頁 ID</mark> 等欄位。</p>
+      <div class="scroll">
+        <table class="dv">
+          <tr><td class="q"><span style="--c:var(--idx)">平均 250 字中文</span></td><td class="f">250 字 × 3 B（UTF-8，見下）＋ 4 B 長度</td><td class="b">754 B</td></tr>
+          <tr><td class="q"><span style="--c:var(--ptr)">心情互動統計</span></td><td class="f">7 種心情 × 4 B 整數</td><td class="b">28 B</td></tr>
+          <tr><td class="q"><span style="--c:var(--heap)">發文時間</span></td><td class="f">時間戳記固定 8 B</td><td class="b">8 B</td></tr>
+          <tr><td class="q"><span style="--c:var(--pname)">粉絲頁名稱</span></td><td class="f">假設 20 字 × 3 B ＋ 1 B 長度</td><td class="b">61 B</td></tr>
+          <tr><td class="q"><span style="--c:var(--pid)">粉絲頁 ID</span></td><td class="f">15 位數字 → 8 B 整數</td><td class="b">8 B</td></tr>
+          <tr><td class="q"><span class="assume" style="--c:var(--muted)">貼文 ID</span><span class="tag">題目沒寫，自己補</span></td><td class="f">31 字元 ＋ 1 B 長度</td><td class="b">32 B</td></tr>
+          <tr><td class="q"><span class="assume" style="--c:var(--hdr)">每列固定開銷</span><span class="tag">PostgreSQL 規定</span></td><td class="f">列標頭 24 B ＋ 對齊補 3 B</td><td class="b">27 B</td></tr>
+          <tr class="sum"><td>一則貼文</td><td class="f">加總</td><td class="b">918 B</td></tr>
+        </table>
+      </div>
+      <div class="cv" id="cv">
+        <div class="cv-top">
+          <div class="chain-k">字元換算台：為什麼中文一個字是 3 bytes？</div>
+          <span class="muted" style="font-size:13px">打字或貼上，下面全部即時跟著算</span>
+        </div>
+        <div class="cv-in">
+          <input id="cv-text" type="text" value="台灣🔥A" autocomplete="off" spellcheck="false" aria-label="輸入要換算的文字">
+          <div class="cv-chips" id="cv-chips"></div>
+        </div>
+
+        <div class="cv-len" id="cv-len" aria-live="polite"></div>
+
+        <div class="cv-legend">
+          <span>每格＝1 個 byte，寫成 16 進位。外框顏色＝這個字占幾個 byte：</span>
+          <span><i style="--c:var(--muted)"></i>1 B</span><span><i style="--c:var(--ptr)"></i>2 B</span><span><i style="--c:var(--idx)"></i>3 B</span><span><i style="--c:var(--pid)"></i>4 B</span>
+          <span>點一個字 → 看它怎麼變成 bytes</span>
+        </div>
+        <div class="cv-strip-w"><div class="cv-strip" id="cv-strip"></div></div>
+
+        <div class="cv-rd">
+          <div class="bc">
+            <label><span>10 進位</span><input id="bc-10" inputmode="numeric" spellcheck="false" autocomplete="off" value="21,488"></label>
+            <label><span>16 進位</span><input id="bc-16" spellcheck="false" autocomplete="off" value="53F0"></label>
+            <label><span>2 進位</span><input id="bc-2" inputmode="numeric" spellcheck="false" autocomplete="off" value="0101 0011 1111 0000"></label>
+            <label><span>符號</span><input id="bc-ch" class="bc-ch" spellcheck="false" autocomplete="off" value="台"></label>
+          </div>
+          <div id="cv-read"></div>
+        </div>
+
+        <div class="cv-cut">
+          <label for="cv-cut">為什麼變亂碼？ ✂ 只留前 <b id="cv-cut-v">0</b> 個 byte</label>
+          <input type="range" id="cv-cut" min="0" max="0" step="1" value="0">
+          <div class="out" id="cv-cut-out"></div>
+        </div>
+
+        <div class="cv-dec" id="cv-dec"></div>
+
+        <div class="cv-cards">
+          <div class="cv-card">
+            <h3>為什麼存不下？</h3>
+            <label class="sub">開欄位時寫的長度 N <input type="number" id="cv-n" min="1" max="100000" value="4"> （10 進位）</label>
+            <div class="sub muted">N＝varchar(N)、maxlength=N 裡的 N。同一個 N，各系統數長度的方法不同。</div>
+            <div class="vd" id="cv-fit"></div>
+          </div>
+          <div class="cv-card">
+            <h3>為什麼長度對不上？</h3>
+            <div id="cv-mm"></div>
+          </div>
+          <div class="cv-card">
+            <h3>網址、JSON、資料庫裡為什麼變成一串怪碼？</h3>
+            <div class="sub">同一串 UTF-8 bytes 的三種寫法。框起來的是你點選的字。</div>
+            <div id="cv-enc" style="display:grid;gap:10px"></div>
+          </div>
+          <div class="cv-card">
+            <h3>要開多大的硬碟？</h3>
+            <label class="sub">每則平均 <input type="number" id="cv-w" min="1" value="250"> 字，共 <input type="number" id="cv-rows" min="1" step="1000" value="1000000"> 則</label>
+            <div class="cap" id="cv-cap"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stack" aria-hidden="true">
+        <i style="--c:var(--hdr);flex:27"></i><i style="--c:var(--pid);flex:8"></i><i style="--c:var(--heap);flex:8"></i><i style="--c:var(--ptr);flex:28"></i><i style="--c:var(--muted);flex:32"></i><i style="--c:var(--pname);flex:61"></i><i class="big" style="--c:var(--idx);flex:754">內文 754 B，占 82%</i>
+      </div>
+      <div class="stack-cap"><span>0</span><span>918 B</span></div>
+
+      <div class="chain-k">(a) 原始資料總量</div>
+      <div class="chain" style="--c:var(--heap)">
+        <div class="box"><b>918 B</b><small>一則</small></div>
+        <div class="op">一頁 8,192 B 只塞得下 8 則</div>
+        <div class="box"><b>1,024 B</b><small>每則實際占用</small></div>
+        <div class="op">× 100 萬則</div>
+        <div class="box final"><b>977 MB</b><small>≈ 1 GB（實測吻合）</small></div>
+      </div>
+
+      <div class="chain-k" style="color:var(--idx)">(c) 中文全文索引</div>
+      <div class="chain" style="--c:var(--idx)">
+        <div class="box"><b>250 字</b><small>一則</small></div>
+        <div class="op">每兩字切一個詞</div>
+        <div class="box"><b>249 個詞</b><small>一則</small></div>
+        <div class="op">× 100 萬則</div>
+        <div class="box"><b>2.49 億</b><small>筆 (頁, 格) 位址</small></div>
+        <div class="op">× 每筆 1.63 B（實測）</div>
+        <div class="box final"><b>388 MB</b><small>≈ 原始資料的 40%</small></div>
+      </div>
+    </div>
+  </section>
+
+  <header>
+    <div class="eyebrow">JD 第二題 · 100 萬則貼文 · PostgreSQL 16 實測</div>
+    <h1>PostgreSQL 裡面長什麼樣子</h1>
+    <div class="figure">
+      <div class="scroll"><svg id="map-svg" viewBox="0 0 1000 554" width="100%" style="min-width:700px" role="img" aria-label="總覽：檔案、頁、一則貼文、全文索引、粉絲頁 ID 索引的關係"></svg></div>
+    </div>
+    <div class="answer">
+      <div><span class="k">(a) 原始資料</span><span class="v heap num" id="a-table"></span><span class="s">100 萬則 × 每則 1,024 B（含頁內浪費）</span></div>
+      <div><span class="k">(c) 全文索引（兩字詞 GIN）</span><span class="v idx num" id="a-idx"></span><span class="s" id="a-idx-s"></span></div>
+      <div><span class="k">索引 ÷ 原始資料</span><span class="v num" id="a-ratio"></span><span class="s" id="a-ratio-s"></span></div>
+    </div>
+  </header>
+
+  <section id="lv1">
+    <div class="level"><span class="zoom">①</span><h2>檔案：表和索引在硬碟上各是一個檔案</h2></div>
+    <p>表的檔案：<code id="path"></code>。下圖一格 = 1,000 頁（約 8 MB）。</p>
+    <div class="figure">
+      <div class="squares">
+        <div class="sq-group"><div class="sq-head"><span>posts 表（heap）</span><b id="sq-table-l"></b></div><div class="sq" id="sq-table"></div></div>
+        <div class="sq-group"><div class="sq-head"><span>兩字詞全文索引（GIN）</span><b id="sq-idx-l"></b></div><div class="sq idx" id="sq-idx"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="lv2">
+    <div class="level"><span class="zoom">②</span><h2>一頁：8,192 bytes 裡放了 8 則貼文</h2></div>
+    <p>第 0 頁的真實內容，用 <code>pageinspect</code> 讀出。滑鼠移到格子上，會標出指標和貼文的對應。</p>
+    <div class="figure">
+      <div class="scroll"><svg id="page-svg" viewBox="0 0 1000 268" width="100%" style="min-width:640px" role="img" aria-label="第 0 頁的位元組配置圖"></svg></div>
+      <div class="scroll">
+        <table id="lp-table">
+          <thead><tr><th>列指標</th><th class="r">位置 lp_off</th><th class="r">長度 lp_len</th><th>貼文 ID</th><th>內文開頭</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note heap" id="page-note"></p>
+    </div>
+  </section>
+
+  <section id="lv3">
+    <div class="level"><span class="zoom">③</span><h2>一則貼文：918 bytes 拆開</h2></div>
+    <p>欄位依建表順序排。紅色是為了對齊補的空白。</p>
+    <div class="figure">
+      <div class="scroll"><svg id="row-svg" viewBox="0 0 1000 170" width="100%" style="min-width:640px" role="img" aria-label="一列 918 bytes 的欄位配置"></svg></div>
+      <div class="legend" id="row-legend"></div>
+      <p class="note heap">內文前面剛好是 164 bytes。你一開始估「內文以外的欄位約 164 bytes」，和實際位置一模一樣，只是組成不同：實際上列標頭只有 24 bytes，另外多了 3 個長度標頭和 3 bytes 補齊。</p>
+    </div>
+    <div class="toast">
+      <h3>TOAST 是什麼：太長的貼文怎麼辦</h3>
+      <p>一列一定要放進一頁，但 Facebook 貼文最長可以寫 6 萬多字。所以只要一列超過約 <b class="mono">2 KB</b>，PostgreSQL 就會自動處理太長的欄位。這個機制叫 <b>TOAST</b>（The Oversized-Attribute Storage Technique，超大欄位儲存技術）。</p>
+      <ol>
+        <li><b>先壓縮</b>：把長的內文壓縮，壓完能放回頁裡就結束。</li>
+        <li><b>壓了還太大，就搬走</b>：把內文切成約 2 KB 一段，存到一張隱藏的副表 <code>pg_toast.pg_toast_&lt;編號&gt;</code>。原本那一列只留下一個 18 bytes 的「去副表拿」指標。</li>
+      </ol>
+      <div class="toast-fig" aria-hidden="true">
+        <div class="tf-row"><span class="tf-k">頁裡的那一列</span><span class="tf-cell num">數字欄位</span><span class="tf-cell num">粉絲頁名稱</span><span class="tf-cell ptr">內文 → 18 B 指標</span></div>
+        <div class="tf-row"><span class="tf-k">TOAST 副表</span><span class="tf-cell chunk">第 1 段 ~2 KB</span><span class="tf-cell chunk">第 2 段 ~2 KB</span><span class="tf-cell chunk">…</span></div>
+      </div>
+      <p><b>對這題的影響：</b>中文 UTF-8 每字 3 bytes，大約 <b class="mono">680 字</b>以上才會觸發 TOAST。實測的每則貼文是 918 B，遠低於 2 KB，所以內文完整留在頁裡，量到的 977 MB 就是全部。真實資料裡的長文會被壓縮，實際佔的空間比「字數 × 3 B」小。全文索引記的位置仍然是頁裡那一列，所以 TOAST 不影響索引找得到哪則貼文。</p>
+    </div>
+  </section>
+
+  <section id="lv4">
+    <div class="level idx"><span class="zoom">④</span><h2>全文索引：從「詞」查到「第幾頁第幾則」</h2></div>
+    <p>內文每兩個字切成一個詞：「台北美食」→「台北、北美、美食」。索引記錄每個詞出現在哪些 <code>(頁, 格)</code>。</p>
+    <div class="figure">
+      <div class="scroll"><svg id="gin-svg" viewBox="0 0 1000 300" width="100%" style="min-width:680px" role="img" aria-label="GIN 倒排索引結構"></svg></div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:8px">實際查到的一個詞</div>
+        <p id="term-p"></p>
+      </div>
+      <div class="tids" id="tids"></div>
+      <p class="note" id="gin-note"></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="level idx"><span class="zoom">比較</span><h2>三種建法，大小差很多</h2></div>
+    <p>同樣 100 萬則貼文，索引大小取決於「每則貼文產生幾個詞」。</p>
+    <div class="figure">
+      <div class="bars" id="bars"></div>
+      <p class="note" id="bars-note"></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="level idx"><span class="zoom">公式</span><h2>估算公式和小計算機</h2></div>
+    <p>索引大小 ≈ 貼文數 × 每則的不重複詞數 × 每筆位址的平均 bytes。「每筆位址 bytes」用這次實測反推，換成真實資料時可以再調整。</p>
+    <div class="formula" id="formula"></div>
+    <div class="figure">
+      <div class="calc">
+        <label for="c-n">貼文數 <span class="val" id="c-n-v"></span><input type="range" id="c-n" min="100000" max="100000000" step="100000" value="1000000"></label>
+        <label for="c-len">平均內文字數 <span class="val" id="c-len-v"></span><input type="range" id="c-len" min="20" max="600" step="10" value="250"></label>
+        <label for="c-uniq">不重複詞比例 <span class="val" id="c-uniq-v"></span><input type="range" id="c-uniq" min="40" max="100" step="1" value="100"></label>
+        <label for="c-bpp">每筆位址 bytes <span class="val" id="c-bpp-v"></span><input type="range" id="c-bpp" min="1" max="6" step="0.01" value="1.63"></label>
+      </div>
+      <div class="calc-out">
+        <div><span class="k">原始資料（表）</span><span class="v" id="o-table"></span></div>
+        <div><span class="k">全文索引</span><span class="v" id="o-idx"></span></div>
+        <div><span class="k">合計</span><span class="v" id="o-sum"></span></div>
+      </div>
+      <p class="muted" style="font-size:13.5px">表的部分用和實測相同的規則算：內文前 164 bytes、內文長度標頭 4 bytes、每列對齊到 8 的倍數再加 4 bytes 指標，每頁可用 8,168 bytes。真實中文貼文常有重複的詞，所以「不重複詞比例」通常低於 100%。</p>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+
+<div id="head-tip" hidden>
+  <div class="h">標頭 8 B</div>
+  <div class="eq">
+    <span class="chip c-hdr"><b>標頭</b><small>8 B</small></span>
+    <span class="op">＝</span>
+    <span class="chip c-pos"><b>(頁, 格)</b><small>6 B</small></span>
+    <span class="op">＋</span>
+    <span class="chip c-hdr"><b>資訊</b><small>2 B</small></span>
+  </div>
+  <div class="ht-note">就是不合併時「(頁, 格) ＋ 資訊」那 8 個 byte</div>
+</div>
+<div id="info-tip" hidden>
+  <div class="h">資訊 2 B</div>
+  <table>
+    <tr><th>資訊裡的內容</th><th>表那邊放在哪</th></tr>
+    <tr><td>旗標：有沒有 NULL</td><td>列標頭的 infomask</td></tr>
+    <tr><td>旗標：有沒有長度不固定的欄位</td><td>列標頭的 infomask</td></tr>
+  </table>
+</div>
+<div id="hdr-tip" hidden>
+  <div class="h">列標頭 24 B 裡存什麼</div>
+  <table>
+    <tr><th>欄位</th><th>大小</th><th>存什麼</th></tr>
+    <tr><td>xmin</td><td>4 B</td><td>寫入這則的交易編號</td></tr>
+    <tr><td>xmax</td><td>4 B</td><td>刪除或改掉這則的交易編號（0 ＝ 還沒被刪或改）</td></tr>
+    <tr><td>cid</td><td>4 B</td><td>這則是同一個交易裡的第幾個指令寫的</td></tr>
+    <tr><td>ctid</td><td>6 B</td><td>新版本在哪（頁, 格）；沒被改過就指向自己</td></tr>
+    <tr><td>infomask2</td><td>2 B</td><td>欄位數＋旗標</td></tr>
+    <tr><td>infomask</td><td>2 B</td><td>旗標（有沒有 NULL、交易提交了沒）</td></tr>
+    <tr><td>hoff</td><td>1 B</td><td>資料從這則的第幾個 byte 開始</td></tr>
+    <tr><td>合計</td><td>23 B → 補 1 B ＝ 24 B</td><td>後面的 8 B 欄位（粉絲頁 ID）要從 8 的倍數開始放</td></tr>
+  </table>
+</div>
+<script>
+const D = {
+  version: "16.15",
+  table: { bytes: 1024000000, pages: 125000, rows: 1000000, path: "base/16385/16391", dataDir: "/var/lib/postgresql/16/main" },
+  page0: {
+    lower: 56, upper: 832,
+    lps: [
+      { lp: 1, lp_off: 7272, lp_len: 918, post_id: "298987065495934_246540415411619" },
+      { lp: 2, lp_off: 6352, lp_len: 918, post_id: "611961786062725_342508570676987" },
+      { lp: 3, lp_off: 5432, lp_len: 918, post_id: "878479280253497_295672966165627" },
+      { lp: 4, lp_off: 4512, lp_len: 918, post_id: "596681389517384_570978030935738" },
+      { lp: 5, lp_off: 3592, lp_len: 918, post_id: "607345711879537_800255722048253" },
+      { lp: 6, lp_off: 2672, lp_len: 918, post_id: "560758265455164_395338696080923" },
+      { lp: 7, lp_off: 1752, lp_len: 918, post_id: "117528116240790_661021604783738" },
+      { lp: 8, lp_off: 832, lp_len: 918, post_id: "278674452292008_947371017107743" },
+    ].map(l => ({ ...l, head: "栢潎难颢靼崿鯸鏖" })),
+  },
+  idx: {
+    bigram: { bytes: 406396928, pages: 49609, meta: { n_entries: 248925, n_total_pages: 49609, n_entry_pages: 49608, n_data_pages: 0 } },
+    trgm: { bytes: 409247744, pages: 49957 },
+    simple: { bytes: 3268608, pages: 399 },
+  },
+  tpp: 249,
+  postings1m: 249000000,
+  bpp: 406396928 / 249000000,
+  sample: {
+    term: "栢潎", head: "栢潎难颢靼崿鯸鏖", count: 1000, ms: 0.202, idxPages: 5, heapPages: 125,
+    tids: ["(0,1)", "(0,2)", "(0,3)", "(0,4)", "(0,5)", "(0,6)", "(0,7)", "(0,8)", "(1,1)", "(1,2)"],
+    last: "(124,8)",
+    others: [
+      { term: "饾为", first: "(125,1) (125,2) … (249,8)", count: 1000 },
+      { term: "帞靤", first: "(250,1) (250,2) … (374,8)", count: 1000 },
+    ],
+  },
+  build: { bigram: "7 分 39 秒", trgm: "1 分 17 秒", simple: "5.5 秒" },
+};
+
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString("en-US");
+const mb = b => (b / 1048576).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " MB";
+const size = b => b >= 1073741824 ? (b / 1073741824).toFixed(2) + " GB" : mb(b);
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const css = v => `var(--${v})`;
+const hdrTip = document.getElementById("hdr-tip");
+const hdrTipOn = node => tipOn(hdrTip, node);
+function tipOn(hdrTip, node) {
+  const move = e => {
+    const w = hdrTip.offsetWidth, h = hdrTip.offsetHeight;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + w > innerWidth - 8) x = Math.max(8, e.clientX - w - 14);
+    if (y + h > innerHeight - 8) y = Math.max(8, e.clientY - h - 14);
+    hdrTip.style.left = x + "px"; hdrTip.style.top = y + "px";
+  };
+  node.addEventListener("mouseenter", e => { hdrTip.hidden = false; move(e); });
+  node.addEventListener("mousemove", move);
+  node.addEventListener("mouseleave", () => { hdrTip.hidden = true; });
+}
+
+/* hero */
+const big = D.idx.bigram;
+$("a-table").textContent = mb(D.table.bytes);
+$("a-idx").textContent = mb(big.bytes);
+$("a-idx-s").textContent = `每則 ${fmt(Math.round(big.bytes / D.table.rows))} B，共 ${fmt(big.pages)} 頁`;
+$("a-ratio").textContent = (big.bytes / D.table.bytes * 100).toFixed(0) + "%";
+$("a-ratio-s").textContent = `兩者合計 ${size(big.bytes + D.table.bytes)}`;
+
+/* overview map */
+(function () {
+  const svg = $("map-svg");
+  const T = (x, y, s, o = {}) => el("text", { x, y, "font-size": o.fs || 12.5, "text-anchor": o.a || "start", ...(o.cls ? { class: o.cls } : {}), ...(o.st ? { style: o.st } : {}) }, o.p || svg, s);
+  const R = (x, y, w, h, fill, o = {}) => el("rect", { x, y, width: w, height: h, fill: css(fill), rx: o.rx ?? 2, ...(o.stroke ? { stroke: css(o.stroke), "stroke-width": o.sw || 1.5 } : {}) }, o.p || svg);
+  const link = (id) => { const a = el("a", { href: "#" + id, style: "cursor:pointer" }, svg); return a; };
+  const top = 62, H = 240, bot = top + H;
+  const under = el("g", {}, svg);
+
+  // ① file: grid of pages
+  const a1 = link("lv1");
+  T(20, 24, "① 硬碟上的 posts 檔案", { p: a1, fs: 14, st: "font-weight:600" });
+  T(20, 44, `${mb(D.table.bytes)}＝${fmt(D.table.pages)} 頁`, { p: a1, cls: "t-muted", fs: 12 });
+  R(20, top, 200, H, "panel", { stroke: "heap", p: a1, rx: 4 });
+  const cols = 10, rows = 10, cw = 16, gap = 3, gx = 20 + (200 - cols * cw - (cols - 1) * gap) / 2, gy = top + 14;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const first = r === 0 && c === 0;
+    R(gx + c * (cw + gap), gy + r * (cw - 1 + gap), cw, cw - 1, "heap", { p: a1, rx: 1.5, ...(first ? { stroke: "fg", sw: 2 } : {}) }).setAttribute("opacity", first ? 1 : .55);
+  }
+  T(120, bot - 10, "每格＝1 頁（8 KB）", { p: a1, a: "middle", fs: 11.5, cls: "t-muted" });
+  const p0 = { x: gx, y: gy, w: cw, h: cw - 1 };
+
+  // ② page 0 (schematic)
+  const px = 290, pw = 170;
+  const a2 = link("lv2");
+  T(px, 24, "② 第 0 頁", { p: a2, fs: 14, st: "font-weight:600" });
+  T(px, 44, "8,192 B，放 8 則貼文", { p: a2, cls: "t-muted", fs: 12 });
+  R(px, top, pw, H, "panel", { stroke: "heap", p: a2, rx: 4 });
+  const ix = px + 8, iw = pw - 16;
+  let y = top + 8;
+  R(ix, y, iw, 14, "hdr", { p: a2 }); T(ix + iw / 2, y + 11, "頁頭 24 B", { p: a2, a: "middle", fs: 10.5, st: "fill:var(--panel)" }); y += 16;
+  // 列指標：8 格，每格 4 B，第 n 格記第 n 則在頁裡的位置
+  const nPtr = (D.page0.lower - 24) / 4;
+  T(ix + iw / 2, y + 10, `列指標 ${nPtr} 格 × 4 B = ${nPtr * 4} B`, { p: a2, a: "middle", fs: 10.5, st: "fill:var(--ptr);font-weight:600" }); y += 14;
+  const pcw = iw / nPtr, p1y = y + 7;
+  for (let k = 0; k < nPtr; k++) {
+    R(ix + k * pcw + .5, y, pcw - 1, 14, "ptr", { p: a2 });
+    T(ix + k * pcw + pcw / 2, y + 11, String(k + 1), { p: a2, a: "middle", fs: 10, st: "fill:var(--panel)" });
+  }
+  y += 16;
+  R(ix, y, iw, 26, "free", { p: a2 }); T(ix + iw / 2, y + 17, `空白 ${D.page0.upper - D.page0.lower} B`, { p: a2, a: "middle", fs: 10.5 }); y += 28;
+  const slotH = (bot - 8 - y - 7 * 2) / 8;
+  let s1;
+  for (let k = 8; k >= 1; k--) {
+    const isFirst = k === 1;
+    R(ix, y, iw, slotH, "heap", { p: a2, ...(isFirst ? { stroke: "fg", sw: 2 } : {}) });
+    T(ix + iw / 2, y + slotH / 2 + 4, `第 ${k} 則 918 B`, { p: a2, a: "middle", fs: 11, st: "fill:var(--panel)" });
+    if (isFirst) s1 = { x: ix, y, w: iw, h: slotH };
+    y += slotH + 2;
+  }
+  // 第 1 格列指標 → 第 1 則
+  const r1y = s1.y + s1.h / 2;
+  el("path", { d: `M${ix} ${p1y} H${ix - 5} V${r1y} H${ix - 1}`, fill: "none", stroke: css("ptr"), "stroke-width": 1.5 }, a2);
+  el("path", { d: `M${ix - 1} ${r1y - 3.5} L${ix + 3} ${r1y} L${ix - 1} ${r1y + 3.5} Z`, fill: css("ptr") }, a2);
+
+  // ③ one row (schematic)
+  const rx = 530, rw = 190;
+  const a3 = link("lv3");
+  T(rx, 24, "③ 第 1 則貼文", { p: a3, fs: 14, st: "font-weight:600" });
+  T(rx, 44, "918 B 依欄位拆開", { p: a3, cls: "t-muted", fs: 12 });
+  R(rx, top, rw, H, "panel", { stroke: "heap", p: a3, rx: 4 });
+  const fields = [["列標頭", 24, "hdr"], ["粉絲頁 ID", 8, "heap"], ["發文時間", 8, "heap"], ["7 種心情", 28, "ptr"], ["post_id", 32, "heap"], ["粉絲頁名稱", 61, "heap"]];
+  y = top + 8;
+  const fh = 18;
+  fields.forEach(([n, b, c]) => {
+    const fr = R(rx + 8, y, rw - 16, fh, c, { p: a3, rx: 1 });
+    const ft1 = T(rx + 14, y + 13, n, { p: a3, fs: 11, st: "fill:var(--panel)" });
+    const ft2 = T(rx + rw - 14, y + 13, b + " B", { p: a3, fs: 11, a: "end", st: "fill:var(--panel)" });
+    if (n === "列標頭") [fr, ft1, ft2].forEach(hdrTipOn);
+    y += fh + 2;
+  });
+  const ch = bot - 8 - y;
+  R(rx + 8, y, rw - 16, ch, "idx", { p: a3, rx: 1 });
+  T(rx + rw / 2, y + ch / 2 - 4, "內文", { p: a3, a: "middle", fs: 14, st: "fill:var(--panel);font-weight:600" });
+  T(rx + rw / 2, y + ch / 2 + 16, "250 字 × 3 B ≈ 754 B", { p: a3, a: "middle", fs: 11, st: "fill:var(--panel)" });
+
+  // ④ index
+  const xx = 790, xw = 190;
+  const a4 = link("lv4");
+  T(xx, 24, "④ 全文索引", { p: a4, fs: 14, st: "font-weight:600;fill:var(--idx)" });
+  T(xx, 44, `${mb(big.bytes)}，${fmt(big.meta.n_entries)} 個詞`, { p: a4, cls: "t-muted", fs: 12 });
+  R(xx, top, xw, H, "panel", { stroke: "idx", p: a4, rx: 4 });
+  T(xx + 12, top + 24, "詞", { p: a4, fs: 11, cls: "t-muted" });
+  T(xx + 58, top + 24, "出現在 (頁, 格)", { p: a4, fs: 11, cls: "t-muted" });
+  const entries = [[D.sample.term, "(0,1) (0,2) …", true], [D.sample.others[0].term, "(125,1) …"], [D.sample.others[1].term, "(250,1) …"]];
+  let tid01;
+  entries.forEach(([t, l, hot], i) => {
+    const ey = top + 38 + i * 34;
+    R(xx + 8, ey, xw - 16, 28, hot ? "idx-soft" : "free", { p: a4, rx: 2 });
+    T(xx + 14, ey + 19, t, { p: a4, fs: 13, st: "font-weight:600" });
+    T(xx + 58, ey + 19, l, { p: a4, fs: 12 });
+    if (hot) tid01 = { x: xx + 8, y: ey + 14 };
+  });
+  T(xx + xw / 2, top + 160, "⋮", { p: a4, a: "middle", fs: 16, cls: "t-muted" });
+  T(xx + xw / 2, top + 186, `共 ${fmt(big.meta.n_entries)} 個詞`, { p: a4, a: "middle", fs: 11.5, cls: "t-muted" });
+
+  // zoom guides ① → ② and ② → ③
+  const dash = { stroke: css("muted"), fill: "none", "stroke-dasharray": "3 3" };
+  el("path", { d: `M ${p0.x + p0.w} ${p0.y} L ${px} ${top} M ${p0.x + p0.w} ${p0.y + p0.h} L ${px} ${bot}`, ...dash }, under);
+  el("path", { d: `M ${s1.x + s1.w} ${s1.y} L ${rx} ${top} M ${s1.x + s1.w} ${s1.y + s1.h} L ${rx} ${bot}`, ...dash }, under);
+
+  // ④ → ② : (0,1) points back to page 0, slot 1
+  const ay = bot + 34;
+  el("defs", {}, svg).innerHTML = `<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--idx)"/></marker>`;
+  el("path", { d: `M ${tid01.x} ${tid01.y} L ${(rx + rw + xx) / 2} ${tid01.y} L ${(rx + rw + xx) / 2} ${ay} L ${s1.x + s1.w / 2} ${ay} L ${s1.x + s1.w / 2} ${s1.y + s1.h + 4}`, stroke: css("idx"), "stroke-width": 2, fill: "none", "marker-end": "url(#arr)" }, svg);
+  T((s1.x + s1.w / 2 + (rx + rw + xx) / 2) / 2, ay - 8, "(0,1) ＝ 第 0 頁第 1 格 → 直接去拿那一則", { a: "middle", fs: 12.5, st: "fill:var(--idx);font-weight:600" });
+
+  // ⑤ 粉絲頁 ID 索引：同一個 ID 合併
+  const fy = 392, fTop = 426, fH = 312;
+  T(20, fy, "⑤ 粉絲頁 ID 索引：同一個 ID 只存一次", { fs: 14, st: "font-weight:600;fill:var(--pid)" });
+  T(20, fy + 20, "② 第 0 頁裡，第 1、3、4、5 格是粉絲頁 222 的貼文，ID 在表裡出現四次。索引把重複的 ID 合併成一筆，後面接 (頁, 格) 清單。", { cls: "t-muted", fs: 12 });
+  const fPanel = R(20, fTop, 960, fH, "panel", { stroke: "pid", rx: 4 });
+  const bt = fTop + 30, bh = 216, ey0 = bt + 36, es = 34, eh = 30;
+  // 一格：上面是值，下面是 bytes
+  const seg = (x, y, w, val, bottom, fill, dark, tfs = 11.5) => {
+    const g = el("g", {}, svg);
+    R(x, y, w - 2, eh, fill, { rx: 2, p: g });
+    const st = dark ? "fill:var(--panel)" : "";
+    T(x + (w - 2) / 2, y + 13, val, { a: "middle", fs: tfs, st: st + ";font-weight:600", p: g });
+    T(x + (w - 2) / 2, y + 26, bottom, { a: "middle", fs: 9.5, st, p: g });
+    return g;
+  };
+  const infoTip = document.getElementById("info-tip"), headTip = document.getElementById("head-tip");
+  const posSeg = (x, y, p) => seg(x, y, 50, p, "6 B", "heap-soft");
+  const infoSeg = (x, y, n) => { const g = seg(x, y, n === 8 ? 44 : 40, n === 8 ? "標頭" : "資訊", n + " B", "hdr", true); tipOn(n === 2 ? infoTip : headTip, g); };
+  const idSeg = (x, y, id) => seg(x, y, 66, "粉絲頁 ID", id + "　8 B", "pid", true, 11);
+  const total = (x, y, t) => {
+    T(x, y + 13, "＋列指標 4", { fs: 10.5, st: "fill:var(--ptr)" });
+    T(x, y + 26, "＝ " + t + " B", { fs: 11.5, st: "font-weight:600" });
+  };
+  // 列指標：每筆一格 4 B（和 ② 的綠色列指標一樣）
+  const ptrRow = (x, n) => {
+    for (let k = 0; k < n; k++) {
+      R(x + k * 24, bt + 10, 22, 16, "ptr");
+      T(x + k * 24 + 11, bt + 22, String(k + 1), { a: "middle", fs: 10, st: "fill:var(--panel)" });
+    }
+    T(x + n * 24 + 6, bt + 22, `列指標 ${n} × 4 B ＝ ${n * 4} B`, { fs: 11, st: "fill:var(--ptr);font-weight:600" });
+  };
+
+  // ② 第 0 頁的前 5 則
+  const c0 = 36, c0w = 140;
+  T(c0, fTop + 20, "② 第 0 頁（ID 為舉例）", { fs: 11.5, cls: "t-muted" });
+  R(c0, bt, c0w, bh, "panel", { stroke: "heap", rx: 4 });
+  T(c0 + 12, bt + 22, "貼文", { fs: 11, cls: "t-muted" });
+  T(c0 + c0w - 12, bt + 22, "粉絲頁 ID", { fs: 11, a: "end", cls: "t-muted" });
+  [[1, "222"], [2, "555"], [3, "222"], [4, "222"], [5, "222"]].forEach(([k, id], i) => {
+    const ry = ey0 + i * es;
+    R(c0 + 8, ry, c0w - 16, eh, "heap");
+    T(c0 + 14, ry + 19, `第 ${k} 則`, { fs: 11.5, st: "fill:var(--panel)" });
+    T(c0 + c0w - 14, ry + 19, id, { fs: 12, a: "end", st: "fill:var(--panel);font-weight:600" });
+  });
+  T(c0 + c0w / 2, bt + bh + 18, "(0,1)＝第 0 頁第 1 格", { fs: 11, a: "middle", cls: "t-muted" });
+
+  // 不合併：每則一筆
+  const c1 = 216, c1w = 290;
+  T((c0 + c0w + c1) / 2, bt + bh / 2, "→", { a: "middle", fs: 20, cls: "t-muted" });
+  T(c1, fTop + 20, "不合併：每則貼文一筆", { fs: 11.5, cls: "t-muted" });
+  R(c1, bt, c1w, bh, "panel", { stroke: "pid", rx: 4 });
+  ptrRow(c1 + 8, 5);
+  [["(0,1)", "222"], ["(0,3)", "222"], ["(0,4)", "222"], ["(0,5)", "222"], ["(0,2)", "555"]].forEach(([p, id], i) => {
+    const y = ey0 + i * es;
+    posSeg(c1 + 8, y, p); infoSeg(c1 + 58, y, 2); idSeg(c1 + 98, y, id);
+    total(c1 + 172, y, 20);
+  });
+  T(c1 + c1w / 2, bt + bh + 18, "5 筆 × 20 B ＝ 100 B", { fs: 11.5, a: "middle", st: "font-weight:600" });
+  T(c1 + c1w / 2, bt + bh + 36, "多一則貼文 → 多一筆 20 B", { fs: 11.5, a: "middle", st: "fill:var(--pid)" });
+
+  // 合併：同一個 ID 一筆
+  const c2 = 546, c2w = 414;
+  T((c1 + c1w + c2) / 2, bt + bh / 2, "→", { a: "middle", fs: 20, cls: "t-muted" });
+  T(c2, fTop + 20, "合併：同一個 ID 只存一筆", { fs: 11.5, cls: "t-muted" });
+  R(c2, bt, c2w, bh, "panel", { stroke: "pid", rx: 4 });
+  ptrRow(c2 + 8, 2);
+  let x2 = c2 + 8;
+  infoSeg(x2, ey0, 8); x2 += 44; idSeg(x2, ey0, "222"); x2 += 66;
+  ["(0,1)", "(0,3)", "(0,4)", "(0,5)"].forEach(p => { posSeg(x2, ey0, p); x2 += 50; });
+  total(x2 + 6, ey0, 44);
+  posSeg(c2 + 8, ey0 + es, "(0,2)"); infoSeg(c2 + 58, ey0 + es, 2); idSeg(c2 + 98, ey0 + es, "555");
+  total(c2 + 172, ey0 + es, 20);
+  T(c2 + c2w / 2, bt + bh + 18, "44 B ＋ 20 B ＝ 64 B", { fs: 11.5, a: "middle", st: "font-weight:600" });
+  T(c2 + c2w / 2, bt + bh + 36, "222 多一則貼文 → 只多一格 (頁, 格) 6 B", { fs: 11.5, a: "middle", st: "fill:var(--pid)" });
+  // 21 MB、6.6 MB 怎麼算出來
+  // 21 MB、6.6 MB 怎麼算：五欄，由左往右乘
+  let cy = fTop + fH + 4;
+  R(36, cy, 928, 1, "free");
+  cy += 26;
+  T(36, cy, "21 MB、6.6 MB 怎麼算：由左往右一步一步算", { fs: 13, st: "font-weight:600;fill:var(--pid)" });
+  const cx0 = 140, cw5 = 146, cg = 20;
+  const heads = ["一則貼文佔多少（上圖）", "× 1,000,000 則", "＋ 粉絲頁 ID 本身", "÷ 0.9（每頁留 10%）", "÷ 1,048,576（換 MB）"];
+  cy += 26;
+  heads.forEach((h, i) => T(cx0 + i * (cw5 + cg) + cw5 / 2, cy, h, { a: "middle", fs: 11.5, cls: "t-muted" }));
+  [["不合併", ["20 B", "20,000,000 B", "20,000,000 B", "22,222,222 B", "21 MB"], "＋ 0（ID 已在 20 B 裡）"],
+   ["合併", ["6 B", "6,000,000 B", "6,200,000 B", "6,888,889 B", "6.6 MB"], "＋ 5,000 × 40 = 200,000"]].forEach(([n, vals, add], r) => {
+    const y = cy + 12 + r * 54;
+    T(36, y + 27, n, { fs: 13, st: "font-weight:600" });
+    vals.forEach((v, i) => {
+      const x = cx0 + i * (cw5 + cg), last = i === 4, two = i === 2;
+      R(x, y, cw5, 44, last ? "pid" : "free", { rx: 3 });
+      if (two) T(x + cw5 / 2, y + 16, add, { a: "middle", fs: 10.5, st: "fill:var(--pid)" });
+      T(x + cw5 / 2, two ? y + 35 : y + 27, v, { a: "middle", fs: last ? 14 : 13, st: last ? "font-weight:700;fill:var(--panel)" : "font-weight:600" });
+      if (i < 4) T(x + cw5 + cg / 2, y + 27, "→", { a: "middle", fs: 13, cls: "t-muted" });
+    });
+  });
+  cy += 12 + 2 * 54 + 4;
+  [
+    "40 B：合併後每個粉絲頁 ID 只存一次，加上索引標頭 8 和列指標 4 ＝ 20 B；200 個 (頁, 格) 太長分兩段存，所以存兩次 → 20 × 2 ＝ 40 B",
+    "÷ 0.9：建索引時每頁只裝到約 90%，留 10% 給之後新增的資料",
+    "實測：21 MB、6.6 MB（6,889,472 B），和上面算的一樣"
+  ].forEach(s2 => { cy += 18; T(36, cy, s2, { fs: 11.5 }); });
+  const fEnd = cy + 14;
+  fPanel.setAttribute("height", fEnd - fTop);
+  document.getElementById("map-svg").setAttribute("viewBox", "0 0 1000 " + (fEnd + 10));
+})();
+
+/* level 1 squares */
+$("path").textContent = D.table.dataDir + "/" + D.table.path;
+function squares(box, pages) {
+  const full = Math.floor(pages / 1000), rem = pages % 1000;
+  for (let i = 0; i < full; i++) box.appendChild(document.createElement("i"));
+  if (rem) { const p = document.createElement("i"); p.className = "part"; box.appendChild(p); }
+}
+squares($("sq-table"), D.table.pages);
+squares($("sq-idx"), big.pages);
+$("sq-table-l").textContent = `${fmt(D.table.pages)} 頁 · ${mb(D.table.bytes)}`;
+$("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
+
+/* level 2 page */
+(function () {
+  const svg = $("page-svg"), W = 1000, x = b => b / 8192 * W, y0 = 40, h = 46;
+  const g = el("g", {}, svg);
+  const segs = [];
+  const add = (from, to, color, key, label) => {
+    const r = el("rect", { x: x(from), y: y0, width: Math.max(x(to) - x(from), 1.2), height: h, fill: css(color), class: "seg", "data-k": key }, g);
+    r.appendChild(el("title", {}, null, label));
+    segs.push(r);
+    return r;
+  };
+  add(0, 24, "hdr", "hdr", "頁首 24 B");
+  D.page0.lps.forEach((l, i) => add(24 + i * 4, 28 + i * 4, "ptr", "lp" + l.lp, `列指標 ${l.lp}：4 B → 位置 ${l.lp_off}`));
+  add(D.page0.lower, D.page0.upper, "free", "free", `空白 ${D.page0.upper - D.page0.lower} B`);
+  D.page0.lps.forEach(l => {
+    add(l.lp_off, l.lp_off + l.lp_len, "heap", "lp" + l.lp, `貼文 ${l.lp}：${l.lp_len} B @ ${l.lp_off}`);
+    if (l.lp_len % 8) add(l.lp_off + l.lp_len, l.lp_off + Math.ceil(l.lp_len / 8) * 8, "pad", "lp" + l.lp, "對齊補 2 B");
+  });
+  D.page0.lps.forEach(l => el("text", { x: x(l.lp_off + l.lp_len / 2), y: y0 + h / 2 + 5, "text-anchor": "middle", "font-size": 13, fill: "var(--panel)", style: "fill:var(--panel);pointer-events:none" }, g, "#" + l.lp));
+  // scale (top bar, to scale)
+  [2048, 4096, 6144, 8192].forEach(b => {
+    el("line", { x1: x(b), x2: x(b), y1: y0 + h + 4, y2: y0 + h + 10, stroke: css("muted") }, svg);
+    el("text", { x: Math.min(x(b), W - 18), y: y0 + h + 24, "text-anchor": "middle", "font-size": 12, class: "t-muted" }, svg, fmt(b) + (b === 8192 ? " B" : ""));
+  });
+  // top callouts
+  const up = D.page0.upper, free = D.page0.upper - D.page0.lower;
+  el("text", { x: 0, y: 18, "font-size": 12.5 }, svg, `頁的開頭 ${fmt(up)} B（下方放大）`);
+  el("path", { d: `M 0.5 24 L 0.5 ${y0 - 2} M ${x(up)} 24 L ${x(up)} ${y0 - 2} M 0.5 24 L ${x(up)} 24`, stroke: css("muted"), fill: "none" }, svg);
+  el("text", { x: x(4700), y: 18, "font-size": 12.5, "text-anchor": "middle" }, svg, "← 貼文從頁尾往前放");
+  // zoom guides
+  const zy = 150, zh = 46;
+  el("path", { d: `M 0.5 ${y0 + h + 2} L 0.5 ${zy - 2} M ${x(up)} ${y0 + h + 2} L ${W - 0.5} ${zy - 2}`, stroke: css("muted"), fill: "none", "stroke-dasharray": "3 3" }, svg);
+  // zoom bar (schematic, not to scale)
+  const zg = el("g", {}, svg);
+  const zadd = (zx, zw, color, key, label, txt) => {
+    const r = el("rect", { x: zx, y: zy, width: zw, height: zh, fill: css(color), stroke: css("panel"), "stroke-width": 1.5, class: "seg", "data-k": key }, g);
+    r.appendChild(el("title", {}, null, label));
+    segs.push(r);
+    el("text", { x: zx + zw / 2, y: zy + zh / 2 + 5, "text-anchor": "middle", "font-size": 13, style: `fill:${color === "free" ? "var(--fg)" : "var(--panel)"};pointer-events:none` }, zg, txt);
+  };
+  zadd(0, 130, "hdr", "hdr", "頁首 24 B", "頁首 24 B");
+  D.page0.lps.forEach((l, i) => zadd(130 + i * 50, 50, "ptr", "lp" + l.lp, `列指標 ${l.lp}：4 B → 貼文 #${l.lp} 在位置 ${l.lp_off}`, "→#" + l.lp));
+  zadd(530, W - 530, "free", "free", `空白 ${free} B`, `空白 ${free} B（放不下第 9 則）`);
+  // zoom captions
+  el("text", { x: 65, y: zy + zh + 22, "font-size": 12.5, "text-anchor": "middle" }, zg, "這頁的基本資訊");
+  el("text", { x: 330, y: zy + zh + 22, "font-size": 12.5, "text-anchor": "middle" }, zg, "列指標 8 個 × 4 B＝這頁的目錄");
+  el("text", { x: 330, y: zy + zh + 40, "font-size": 12, "text-anchor": "middle", class: "t-muted" }, zg, "每格記「第幾則貼文放在頁裡哪個位置」");
+  el("text", { x: 765, y: zy + zh + 22, "font-size": 12.5, "text-anchor": "middle" }, zg, "8 則塞完剩下的浪費");
+  el("text", { x: W, y: zy + zh + 64, "font-size": 12, "text-anchor": "end", class: "t-muted" }, zg, `↑ 放大開頭 ${fmt(up)} B，示意圖，不照比例`);
+
+  const tb = $("lp-table").querySelector("tbody");
+  D.page0.lps.forEach(l => {
+    const tr = document.createElement("tr");
+    tr.dataset.k = "lp" + l.lp;
+    tr.innerHTML = `<td class="mono">#${l.lp}</td><td class="r">${fmt(l.lp_off)}</td><td class="r">${l.lp_len}</td><td class="mono">${l.post_id}</td><td>${l.head}…</td>`;
+    tb.appendChild(tr);
+  });
+  const hot = k => {
+    g.classList.toggle("dim", !!k);
+    segs.forEach(s => s.classList.toggle("hot", s.dataset.k === k));
+    tb.querySelectorAll("tr").forEach(r => r.classList.toggle("hot", r.dataset.k === k));
+  };
+  segs.forEach(s => { s.addEventListener("mouseenter", () => hot(s.dataset.k)); s.addEventListener("mouseleave", () => hot(null)); });
+  tb.querySelectorAll("tr").forEach(r => { r.addEventListener("mouseenter", () => hot(r.dataset.k)); r.addEventListener("mouseleave", () => hot(null)); });
+  const used = D.page0.lps.length * (Math.ceil(D.page0.lps[0].lp_len / 8) * 8 + 4);
+  $("page-note").textContent = `每則貼文 ${D.page0.lps[0].lp_len} B，對齊到 ${Math.ceil(D.page0.lps[0].lp_len / 8) * 8} B，再加 4 B 指標，共佔 ${Math.ceil(D.page0.lps[0].lp_len / 8) * 8 + 4} B。8,168 B 的可用空間塞 8 則用掉 ${fmt(used)} B，剩下 ${D.page0.upper - D.page0.lower} B 放不下第 9 則，只能空著。所以 100 萬則要 125,000 頁，等於每則平均佔 1,024 B。（8 則內文開頭都一樣，是因為測試資料裡同一段內文的貼文被排在一起。）`;
+})();
+
+/* level 3 row */
+(function () {
+  const parts = [
+    ["列標頭", 24, "hdr", "記錄這列的版本、是否被刪除等管理資訊"],
+    ["page_id", 8, "heap", "粉絲頁 ID，bigint"],
+    ["posted_at", 8, "heap", "發文時間，timestamptz"],
+    ["7 種心情", 28, "ptr", "7 × int"],
+    ["post_id", 32, "heap", "1 B 長度 + 31 字元"],
+    ["page_name", 61, "heap", "1 B 長度 + 20 字 × 3 B"],
+    ["補齊", 3, "pad", "長文字要從 4 的倍數開始"],
+    ["content", 754, "idx", "4 B 長度 + 250 字 × 3 B"],
+  ];
+  const svg = $("row-svg"), W = 1000, total = 918;
+  const g = el("g", {}, svg);
+  let off = 0;
+  const segs = [];
+  const zoomW = 164;
+  parts.forEach(([name, n, color, desc], i) => {
+    const r = el("rect", { x: off / total * W, y: 26, width: n / total * W, height: 34, fill: css(color), class: "seg", "data-k": i, stroke: css("panel"), "stroke-width": 1 }, g);
+    if (i === 0) hdrTipOn(r); else r.appendChild(el("title", {}, null, `${name}：${n} B（${desc}）`));
+    segs.push(r);
+    off += n;
+  });
+  el("text", { x: 0, y: 16, "font-size": 12.5 }, svg, "整列 918 B");
+  el("text", { x: 164 / total * W + 6, y: 48, "font-size": 13, style: "fill:var(--panel);pointer-events:none" }, svg, "content 754 B（4 B 長度 + 750 B 中文）");
+  // zoom of first 164 bytes
+  el("path", { d: `M 0 62 L 0 98 M ${zoomW / total * W} 62 L ${W} 98`, stroke: css("muted"), fill: "none", "stroke-dasharray": "3 3" }, svg);
+  off = 0;
+  parts.slice(0, 7).forEach(([name, n, color], i) => {
+    const xx = off / zoomW * W, ww = n / zoomW * W;
+    const r = el("rect", { x: xx, y: 100, width: ww, height: 34, fill: css(color), class: "seg", "data-k": i, stroke: css("panel"), "stroke-width": 1 }, g);
+    if (i === 0) hdrTipOn(r); else r.appendChild(el("title", {}, null, `${name}：${n} B`));
+    segs.push(r);
+    if (ww > 34) el("text", { x: xx + ww / 2, y: 122, "text-anchor": "middle", "font-size": 12, style: "fill:var(--panel);pointer-events:none" }, g, n);
+    off += n;
+  });
+  el("text", { x: 0, y: 156, "font-size": 12.5, class: "t-muted" }, svg, "放大內文前面的 164 B");
+  el("text", { x: W, y: 156, "font-size": 12.5, "text-anchor": "end", class: "t-muted" }, svg, "164");
+
+  const lg = $("row-legend");
+  const spans = parts.map(([name, n, color, desc], i) => {
+    const s = document.createElement("span");
+    s.dataset.k = i;
+    s.innerHTML = `<i style="background:${css(color)}"></i>${name} <b class="mono">${n}</b><span class="muted" style="padding:0">· ${desc}</span>`;
+    lg.appendChild(s);
+    if (i === 0) hdrTipOn(s);
+    return s;
+  });
+  const hot = k => {
+    g.classList.toggle("dim", k != null);
+    segs.forEach(s => s.classList.toggle("hot", s.dataset.k == k));
+    spans.forEach(s => s.classList.toggle("on", s.dataset.k == k));
+  };
+  [...segs, ...spans].forEach(s => { s.addEventListener("mouseenter", () => hot(s.dataset.k)); s.addEventListener("mouseleave", () => hot(null)); });
+})();
+
+/* level 4 GIN */
+(function () {
+  const svg = $("gin-svg"), m = big.meta;
+  const box = (x, y, w, h, color, title, sub) => {
+    el("rect", { x, y, width: w, height: h, rx: 4, fill: "var(--panel)", stroke: css(color), "stroke-width": 1.5 }, svg);
+    el("text", { x: x + 12, y: y + 22, "font-size": 13.5, "font-weight": 600 }, svg, title);
+    if (sub) sub.forEach((s, i) => el("text", { x: x + 12, y: y + 42 + i * 18, "font-size": 12, class: "t-muted" }, svg, s));
+  };
+  const arrow = (x1, y1, x2, y2) => {
+    el("path", { d: `M ${x1} ${y1} L ${x2} ${y2}`, stroke: css("muted"), fill: "none", "stroke-width": 1.2, "marker-end": "url(#ah)" }, svg);
+  };
+  const defs = el("defs", {}, svg);
+  const mk = el("marker", { id: "ah", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);
+  el("path", { d: "M0 0 L10 5 L0 10 z", fill: css("muted") }, mk);
+
+  box(10, 20, 220, 92, "hdr", "Meta 頁（第 0 頁）", [`${fmt(m.n_entries)} 個不重複的詞`, `${fmt(m.n_total_pages)} 頁`]);
+  box(10, 160, 220, 110, "idx", "詞的目錄（B-tree）", [`${fmt(m.n_entry_pages)} 頁`, "詞依順序排好", "一路往下找到那個詞"]);
+  arrow(120, 112, 120, 158);
+
+  box(290, 20, 340, 250, "idx", "葉節點：詞 → 位址清單", []);
+  const rows = [
+    [D.sample.term, D.sample.tids.slice(0, 3).join(" ") + " … " + D.sample.last, `${fmt(D.sample.count)} 筆`],
+    ...D.sample.others.map(o => [o.term, o.first, `${fmt(o.count)} 筆`]),
+  ];
+  rows.forEach(([t, l, c], i) => {
+    const yy = 52 + i * 62;
+    el("rect", { x: 304, y: yy, width: 312, height: 50, rx: 3, fill: i === 0 ? css("idx-soft") : css("free") }, svg);
+    el("text", { x: 316, y: yy + 21, "font-size": 15, "font-weight": 600, style: "font-family:var(--body)" }, svg, "「" + t + "」");
+    el("text", { x: 604, y: yy + 21, "font-size": 12, "text-anchor": "end", class: "t-muted" }, svg, c);
+    el("text", { x: 316, y: yy + 40, "font-size": 12 }, svg, l);
+  });
+  el("text", { x: 304, y: 252, "font-size": 12, class: "t-muted" }, svg, `清單太長時另外開一棵「位址樹」：${fmt(m.n_data_pages)} 頁`);
+  arrow(230, 215, 288, 215);
+
+  box(690, 20, 300, 250, "heap", "posts 表", []);
+  D.sample.tids.slice(0, 3).forEach((t, i) => {
+    const yy = 52 + i * 62;
+    el("rect", { x: 704, y: yy, width: 272, height: 50, rx: 3, fill: css("heap-soft") }, svg);
+    el("text", { x: 716, y: yy + 21, "font-size": 13, "font-weight": 600 }, svg, t);
+    const [pg, slot] = t.match(/\d+/g);
+    el("text", { x: 716, y: yy + 40, "font-size": 12, class: "t-muted" }, svg, `第 ${pg} 頁第 ${slot} 則（放大 2 的 #${slot}）`);
+    arrow(616, 77, 702, yy + 25);
+  });
+  el("text", { x: 704, y: 252, "font-size": 12, class: "t-muted" }, svg, "照位址直接跳到那一頁那一格");
+
+  $("term-p").innerHTML = `貼文 <code>(0,1)</code> 的內文開頭是「${D.sample.head}…」，取前兩個字「<b>${D.sample.term}</b>」去查，索引回傳 <b class="mono">${fmt(D.sample.count)}</b> 個位址（實際查詢只花 <span class="mono">${D.sample.ms} ms</span>）。前幾個：`;
+  const tids = $("tids");
+  D.sample.tids.forEach(t => { const s = document.createElement("span"); s.textContent = t; tids.appendChild(s); });
+  const more = document.createElement("span"); more.className = "more"; more.textContent = `… 共 ${fmt(D.sample.count)} 個`; tids.appendChild(more);
+  $("gin-note").textContent = `這 1,000 個位址從 ${D.sample.tids[0]} 連到 ${D.sample.last}，剛好佔滿 125 頁：測試資料只有 1,000 段內文，用同一段內文的 1,000 則在建表時被排在一起。GIN 存位址時只記「和上一個差多少」，連續的位址只差 1，用 1 B 就能記。所以這次平均每個位址（連同詞的目錄）只用 ${D.bpp.toFixed(2)} B。真實資料裡同一個詞散落在各處，位址差距大，每個大概要 2–4 B，索引會比這次大。這次查詢只讀了索引 ${D.sample.idxPages} 頁、表 ${D.sample.heapPages} 頁。`;
+})();
+
+/* comparison */
+(function () {
+  const items = [
+    ["posts 表本身", "對照用", D.table.bytes, "heap"],
+    ["兩字詞 GIN", "每則約 " + Math.round(D.tpp) + " 個詞 · 可搜任意詞", D.idx.bigram.bytes, "idx"],
+    ["pg_trgm GIN", "三字一組 · 可做模糊搜尋", D.idx.trgm.bytes, "idx"],
+    ["to_tsvector('simple')", "整段內文當成一個詞", D.idx.simple.bytes, "idx"],
+  ];
+  const max = Math.max(...items.map(i => i[2]));
+  const box = $("bars");
+  items.forEach(([n, s, b, c]) => {
+    const d = document.createElement("div");
+    d.className = "bar";
+    const pct = b / max * 100;
+    d.innerHTML = `<div class="lab">${n}<small>${s}</small></div><div class="track"><div class="fill ${c === "heap" ? "heap" : ""}" style="width:${Math.max(pct, 0.6)}%"></div><span class="val" style="${pct > 62 ? `right:calc(${100 - pct}% + 8px);color:var(--panel)` : `left:calc(${pct}% + 8px)`}">${mb(b)}</span></div>`;
+    box.appendChild(d);
+  });
+  $("bars-note").textContent = `to_tsvector('simple') 最小，但對中文沒用：它把整段 250 字當成一個詞，只有輸入一模一樣的整段文字才查得到。真正能用的中文全文搜尋，兩種能用的索引（兩字詞和 pg_trgm）都差不多是原始資料的 ${(D.idx.bigram.bytes / D.table.bytes * 100).toFixed(0)}%。`;
+})();
+
+/* calculator */
+(function () {
+  $("c-bpp").value = D.bpp.toFixed(2);
+  $("formula").textContent =
+`實測：${fmt(D.table.rows)} 則 × ${D.tpp.toFixed(1)} 個詞 = ${fmt(D.postings1m)} 筆位址
+索引 ${fmt(D.idx.bigram.bytes)} B ÷ ${fmt(D.postings1m)} 筆 = 每筆 ${D.bpp.toFixed(2)} B（已含詞的目錄）
+
+索引大小 ≈ 貼文數 × (字數 − 1) × 不重複比例 × 每筆 bytes`;
+  const ids = ["c-n", "c-len", "c-uniq", "c-bpp"];
+  function run() {
+    const n = +$("c-n").value, len = +$("c-len").value, uniq = +$("c-uniq").value / 100, bpp = +$("c-bpp").value;
+    $("c-n-v").textContent = fmt(n) + " 則";
+    $("c-len-v").textContent = len + " 字（" + len * 3 + " B）";
+    $("c-uniq-v").textContent = Math.round(uniq * 100) + "%";
+    $("c-bpp-v").textContent = bpp.toFixed(2) + " B";
+    const cb = len * 3, row = 164 + (cb > 126 ? 4 : 1) + cb;
+    const slot = Math.ceil(row / 8) * 8 + 4;
+    const perPage = Math.max(1, Math.floor(8168 / slot));
+    const table = Math.ceil(n / perPage) * 8192;
+    const idx = n * Math.max(len - 1, 0) * uniq * bpp;
+    $("o-table").textContent = size(table);
+    $("o-idx").textContent = size(idx);
+    $("o-sum").textContent = size(table + idx);
+  }
+  ids.forEach(i => $(i).addEventListener("input", run));
+  run();
+})();
+
+/* 字元換算台 */
+(function () {
+  const h = (tag, attrs, parent, text) => {
+    const e = document.createElement(tag);
+    for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const enc = new TextEncoder(), dec = new TextDecoder("utf-8"), REPL = String.fromCharCode(65533);
+  const seg = window.Intl && Intl.Segmenter ? new Intl.Segmenter("zh", { granularity: "grapheme" }) : null;
+  const COL = [null, "muted", "ptr", "idx", "pid"];
+  const PRE = [null, ["0"], ["110", "10"], ["1110", "10", "10"], ["11110", "10", "10", "10"]];
+  const BITS = [null, [7], [5, 6], [4, 6, 6], [3, 6, 6, 6]];
+  const LAD = [null,
+    { lo: 0, hi: 127, who: "英文、數字、半形符號" },
+    { lo: 128, hi: 2047, who: "é、希臘、俄文、阿拉伯" },
+    { lo: 2048, hi: 65535, who: "中日韓、泰文、全形符號" },
+    { lo: 65536, hi: 1114111, who: "emoji、罕用漢字" }];
+  /* 一列 918 B 的組成（posts_size.sql 的欄位；PostgreSQL 16 實測） */
+  const ROW = [
+    ["列頭", "PostgreSQL 每列固定 23 B，補到 24", "24"],
+    ["粉絲頁 ID", "bigint 整數", "8"],
+    ["發文時間", "timestamptz", "8"],
+    ["7 種心情數", "int 4 B × 7", "28"],
+    ["貼文 ID", "31 個英數字 × 1 B + 長度標記 1 B", "32"],
+    ["粉絲頁名稱", "20 字 × 3 B + 長度標記 1 B", "61"],
+    ["對齊補位", "內文前要補到 4 的倍數", "3"],
+    ["內文", "250 字 × 3 B + 長度標記 4 B", "754"],
+    ["合計", "", "918"]];
+  const NAMES = { 0x20: "空格", 0x09: "Tab", 0x0A: "換行", 0x200D: "ZWJ", 0xFE0F: "VS16", 0xFE0E: "VS15", 0x200B: "ZWSP", 0x3000: "全形空格", 0xA0: "NBSP" };
+  const EX = [
+    ["台灣🔥A", "混合"], ["台灣", "中文"], ["Hello", "英文"], ["café", "é 一個編號"], ["café", "é 拆成 e＋´"],
+    ["😀", "emoji"], ["👨‍👩‍👧", "家庭 emoji"], ["🇹🇼", "國旗"], ["こんにちは", "日文"], ["안녕하세요", "韓文"], ["สวัสดี", "泰文"], ["مرحبا", "阿拉伯文"]];
+  const hex = (n, w) => n.toString(16).toUpperCase().padStart(w || 2, "0");
+  const up = cp => "U+" + hex(cp, 4);
+  /* 個數、第幾個用國字，阿拉伯數字 0/1 只留給 2 進位的位 */
+  const ZH = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  const zh = n => n < 10 ? ZH[n] : (n >= 20 ? ZH[Math.floor(n / 10)] : "") + "十" + ZH[n % 10];
+  const nbOf = cp => cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  function glyph(o) {
+    if (NAMES[o.cp]) return { t: NAMES[o.cp], tag: true };
+    if (/\p{M}/u.test(o.ch)) return { t: "◌" + o.ch, tag: false };
+    if (/[\p{C}\p{Z}]/u.test(o.ch)) return { t: up(o.cp), tag: true };
+    return { t: o.ch, tag: false };
+  }
+  const say = o => glyph(o).tag ? glyph(o).t + "（" + up(o.cp) + "）" : "「" + o.ch + "」";
+
+  const inp = $("cv-text");
+  let S, sel = 0, cut = 0;
+
+  function analyze(text) {
+    const gs = seg ? Array.from(seg.segment(text), s => s.segment) : Array.from(text);
+    const cps = [];
+    let b = 0, u = 0;
+    const groups = gs.map((g, gi) => {
+      const items = [];
+      for (const ch of g) {
+        const o = { i: cps.length, gi, ch, cp: ch.codePointAt(0), bytes: Array.from(enc.encode(ch)), start: b, u16: u };
+        b += o.bytes.length; u += ch.length;
+        cps.push(o); items.push(o);
+      }
+      return { g, items, nb: sum(items.map(o => o.bytes.length)) };
+    });
+    return { text, groups, cps, nG: gs.length, nU: text.length, nC: cps.length, nB: b };
+  }
+
+  /* 四種長度 */
+  function renderLen() {
+    const box = $("cv-len"); box.textContent = "";
+    [
+      { k: "看到的字", v: S.nG, u: "個", who: "人眼、PM、規格「最多 N 字」", fn: "Intl.Segmenter" },
+      { k: "程式的 .length", v: S.nU, u: "個 UTF-16 單位", who: "前端 JS、Java、C#、網頁 maxlength", fn: "str.length" },
+      { k: "字元數（編號個數）", v: S.nC, u: "個編號", who: "Python、PostgreSQL、MySQL 的 varchar(n)", fn: "len() · length() · CHAR_LENGTH()" },
+      { k: "UTF-8 bytes", v: S.nB, u: "B", who: "硬碟、網路、API 的 byte 上限", fn: "octet_length() · MySQL 的 LENGTH()" },
+    ].forEach((L, i) => {
+      const off = i > 0 && L.v !== S.nG;
+      const d = h("div", { class: off ? "off" : "" }, box);
+      h("div", { class: "k" }, d, L.k);
+      const v = h("div", { class: "v" }, d, fmt(L.v));
+      h("small", null, v, L.u);
+      h("div", { class: "ne" }, d, off ? "≠ 看到的 " + S.nG + " 個" : "");
+      h("div", { class: "who" }, d, L.who);
+      h("div", { class: "fn" }, d, L.fn);
+    });
+  }
+
+  /* byte 色條 */
+  function renderStrip() {
+    const box = $("cv-strip"); box.textContent = "";
+    if (!S.nC) { h("span", { class: "muted" }, box, "（輸入框是空的）"); return; }
+    S.groups.forEach(G => {
+      const gd = h("div", { class: "cv-g" + (G.items.length > 1 ? " multi" : "") }, box);
+      const row = h("div", { class: "cv-gr" }, gd);
+      G.items.forEach(o => {
+        const gl = glyph(o);
+        const c = h("button", { type: "button", class: "cv-cp", "data-i": o.i, style: "--c:var(--" + COL[o.bytes.length] + ")", "aria-label": gl.t + " " + up(o.cp) + " " + o.bytes.length + " bytes" }, row);
+        h("span", { class: "cv-glyph" + (gl.tag ? " tag" : "") }, c, gl.t);
+        const bs = h("span", { class: "cv-bytes" }, c);
+        o.bytes.forEach((x, k) => {
+          const s = h("span", { "data-b": o.start + k }, bs);
+          s.appendChild(document.createTextNode(hex(x)));
+        });
+        h("span", { class: "cv-nb" }, c, o.bytes.length + " B");
+        c.addEventListener("click", () => { sel = o.i; paintSel(); renderDec(); renderEnc(); });
+      });
+      if (G.items.length > 1) h("div", { class: "cv-gl" }, gd, "看起來 1 個字，其實 " + G.items.length + " 個編號");
+    });
+  }
+  function paintSel() {
+    $("cv-strip").querySelectorAll(".cv-cp").forEach(c => c.classList.toggle("sel", +c.dataset.i === sel));
+    $("cv-read").querySelectorAll("[data-i]").forEach(c => c.classList.toggle("sel", +c.dataset.i === sel));
+  }
+
+  /* 電腦逐 byte 讀 */
+  function renderRead() {
+    const box = $("cv-read"); box.textContent = "";
+    if (!S.nB) return;
+    const MAX = 48;
+    const cps = []; let n = 0;
+    for (const o of S.cps) { if (n + o.bytes.length > MAX) break; cps.push(o); n += o.bytes.length; }
+    const w = h("div", { class: "scroll" }, box);
+    const t = h("table", { class: "rd" }, w);
+    const tr = k => { const r = h("tr", null, t); h("th", null, r, k); return r; };
+    const cell = (r, o, k, txt) => {
+      const td = h("td", { "data-i": o.i, "data-b": o.start + k, style: "--c:var(--" + COL[o.bytes.length] + ")" }, r, txt);
+      td.addEventListener("click", () => { sel = o.i; paintSel(); renderDec(); renderEnc(); });
+      return td;
+    };
+    const pre = (o, k) => PRE[o.bytes.length][k];
+    const rPos = tr("第幾個 byte"),rHex = tr("16 進位"), rBin = tr("2 進位"), rHead = tr("開頭標記"), rMean = tr("電腦讀到"), rChar = tr("拼成"), rJoin = tr("拿掉標記，x 接起來（2 進位）"), rNum = tr("號碼（10 進位）"), rRng = tr("落在範圍（10 進位）");
+    cps.forEach(o => {
+      o.bytes.forEach((x, k) => {
+        cell(rPos, o, k, "第" + zh(o.start + k + 1));
+        cell(rHex, o, k, hex(x)).classList.add("hx");
+        const b = cell(rBin, o, k), p = pre(o, k), bits = x.toString(2).padStart(8, "0");
+        h("s", null, b, p); h("b", null, b, bits.slice(p.length));
+        cell(rHead, o, k, p).classList.add("hd");
+        cell(rMean, o, k, k ? "接在前一個字後面" : o.bytes.length === 1 ? "自己就是一個字" : "新字開頭\n共" + ZH[o.bytes.length] + "個 byte");
+      });
+      const gl = glyph(o);
+      const td = h("td", { colspan: o.bytes.length, class: "br", "data-i": o.i, style: "--c:var(--" + COL[o.bytes.length] + ")" }, rChar);
+      h("span", gl.tag ? { class: "tag" } : null, td, gl.t);
+      td.addEventListener("click", () => { sel = o.i; paintSel(); renderDec(); renderEnc(); });
+      const nb = o.bytes.length, L = LAD[nb];
+      const span = (r, cls, txt) => {
+        const c = h("td", { colspan: nb, class: cls, "data-i": o.i, style: "--c:var(--" + COL[nb] + ")" }, r, txt);
+        c.addEventListener("click", () => { sel = o.i; paintSel(); renderDec(); renderEnc(); });
+        return c;
+      };
+      h("b", null, span(rJoin, "nm nm1"), o.bytes.map((x, k) => x.toString(2).padStart(8, "0").slice(pre(o, k).length)).join(" "));
+      span(rNum, "nm nm2", o.cp.toLocaleString("en-US"));
+      span(rRng, "nm nm3", L.lo.toLocaleString("en-US") + " – " + L.hi.toLocaleString("en-US") + "\n→ 共" + ZH[nb] + "個 byte");
+    });
+    if (cps.length < S.cps.length) h("div", { class: "sub muted" }, box, `只畫前 ${n} 個 byte，後面還有 ${S.nB - n} 個 byte（10 進位）。`);
+  }
+
+  /* 切斷 */
+  function renderCut() {
+    const r = $("cv-cut"); r.max = S.nB; r.value = cut;
+    $("cv-cut-v").textContent = fmt(cut);
+    $("cv").querySelectorAll("[data-b]").forEach(s => {
+      const b = +s.dataset.b;
+      s.classList.toggle("gone", b >= cut);
+      s.classList.toggle("edge", b === cut - 1 && cut < S.nB);
+    });
+    const split = S.cps.find(o => o.start < cut && cut < o.start + o.bytes.length);
+    $("cv-strip").querySelectorAll(".cv-cp").forEach(c => c.classList.toggle("broken", !!split && +c.dataset.i === split.i));
+    const out = $("cv-cut-out"); out.textContent = "";
+    if (!S.nB) return;
+    if (cut >= S.nB) {
+      h("div", { class: "muted" }, out, "現在沒切。把滑桿往左拉，模擬程式「只留前 N 個 byte」：log 截斷、byte 上限的欄位、用 byte 算的 substring。");
+      return;
+    }
+    const kept = dec.decode(enc.encode(S.text).slice(0, cut));
+    const res = h("div", { class: "res" }, out);
+    h("span", { class: "muted", style: "font-size:13px" }, res, "結果：");
+    for (const ch of kept) h("span", ch === REPL ? { class: "bad" } : null, res, ch);
+    if (split) {
+      const k = cut - split.start, n = split.bytes.length;
+      h("div", null, out, `第 ${cut} 個 byte 切在 ${say(split)} 中間：它要 ${n} 個 byte，只留了前 ${k} 個，這 ${k} 個 byte 拼不出完整的字，所以顯示成 ${REPL}（替換字元，編號 16 進位 FFFD）。`);
+      h("div", { class: "h" }, out, `安全切點：退回第 ${split.start} 個 byte，或補到第 ${split.start + n} 個 byte。`);
+    } else {
+      const G = S.groups.find(G => G.items[0].start < cut && cut < G.items[0].start + G.nb);
+      if (G) {
+        const k = G.items.filter(o => o.start + o.bytes.length <= cut).length;
+        h("div", null, out, `沒有亂碼，但把「${G.g}」拆開了：它由 ${G.items.length} 個編號黏成，只留下前 ${k} 個，畫面變成「${G.items.slice(0, k).map(o => o.ch).join("")}」。`);
+      }
+      else h("div", null, out, "切在兩個字中間，安全。");
+    }
+  }
+
+  /* 一個字的換算步驟 */
+  function renderDec() {
+    const box = $("cv-dec"); box.textContent = "";
+    const o = S.cps[sel];
+    if (!o) return;
+    const nb = o.bytes.length, bits = BITS[nb], total = sum(bits), L = LAD[nb];
+    const bin = o.cp.toString(2).padStart(total, "0");
+    const t = h("h3", null, box);
+    t.appendChild(document.createTextNode(say(o) + " 怎麼變成 "));
+    h("span", { class: "mono" }, t, o.bytes.map(x => hex(x)).join(" "));
+    t.appendChild(document.createTextNode("（" + nb + " 個 byte）"));
+    const g = h("div", { class: "bits" }, box);
+    const row = (k, fill, full) => { h("span", { class: full ? "k full" : "k" }, g, k); const v = h("div", full ? { class: "full" } : null, g); fill(v); };
+
+    row("① 編號（10 進位）", v => {
+      h("b", null, v, fmt(o.cp));
+      h("small", { class: "muted" }, v, "　Unicode 幫全世界每個字排了號碼，" + say(o) + " 是第 " + fmt(o.cp) + " 號");
+    });
+    row("② 同一個號碼，16 進位", v => {
+      h("b", null, v, hex(o.cp, 4));
+      h("small", { class: "muted" }, v, "　寫成 " + up(o.cp) + "，U+ 就是「Unicode 第幾號」");
+    });
+    row("③ 查表：號碼落在哪一格，決定用幾個 byte", v => {
+      const w = h("div", { class: "scroll" }, v);
+      const tb = h("table", { class: "ladder" }, w);
+      const hr = h("tr", null, tb);
+      ["號碼範圍（10 進位）", "誰在這格", "模板（灰＝標記，x＝放號碼）", "x 個數＝總位數 − 標記", "長度"].forEach(s => h("th", null, hr, s));
+      for (let n = 1; n <= 4; n++) {
+        const tr = h("tr", { class: n === nb ? "on" : "" }, tb);
+        h("td", { class: "m" }, tr, fmt(LAD[n].lo) + " – " + fmt(LAD[n].hi));
+        h("td", null, tr, LAD[n].who);
+        const td = h("td", { class: "m" }, tr);
+        PRE[n].forEach((p, k) => {
+          if (k) td.appendChild(document.createTextNode(" "));
+          h("s", null, td, p);
+          h("b", { class: "b" + (k + 1) }, td, "x".repeat(BITS[n][k]));
+        });
+        h("td", { class: "m" }, tr, `${n * 8} − ${n * 8 - sum(BITS[n])} = ${sum(BITS[n])}`);
+        const last = h("td", { class: "m" }, tr, n + " B");
+        if (n === nb) h("span", { class: "here" }, last, "　← 這格");
+      }
+    }, true);
+    row("④ 號碼換成 2 進位，補滿 " + total + " 位", v => {
+      const nib = h("div", { class: "nib" }, v);
+      const hx = o.cp.toString(16).toUpperCase();
+      const first = bin.length % 4 || 4;
+      const parts = [bin.slice(0, first)];
+      for (let i = first; i < bin.length; i += 4) parts.push(bin.slice(i, i + 4));
+      const hp = hx.padStart(parts.length, "0");
+      parts.forEach((p, i) => { const s = h("span", null, nib, p); h("em", null, s, hp[i]); });
+      h("small", { class: "muted" }, v, `每 4 位 2 進位＝1 位 16 進位（下方橘字），拼起來就是 ② 的 ${hp}。前面補 0 不改變數值，只是補滿模板的 ${total} 個 x。`);
+    });
+    row("⑤ 照模板切成 " + bits.join("＋"), v => {
+      let p = 0;
+      bits.forEach((n, k) => { if (k) v.appendChild(document.createTextNode(" ")); h("b", { class: "b" + (k + 1) }, v, bin.slice(p, p + n)); p += n; });
+    });
+    row("⑥ 填進模板的 x，得到 " + nb + " 個 byte", v => {
+      const bb = h("div", { class: "bb" }, v);
+      let p = 0;
+      bits.forEach((n, k) => {
+        const s = h("span", null, bb), i = h("i", null, s);
+        h("s", null, i, PRE[nb][k]);
+        h("b", { class: "b" + (k + 1) }, i, bin.slice(p, p + n));
+        p += n;
+        h("em", { class: "b" + (k + 1) }, s, hex(o.bytes[k]));
+      });
+      h("small", { class: "muted" }, v, "上排 8 位 2 進位，下排同一個 byte 的 16 進位。灰色標記告訴電腦：開頭 0＝1 B 字；110／1110／11110＝2／3／4 B 字的第 1 個 byte；10＝接在後面的 byte。");
+    });
+  }
+
+  /* 存不下 */
+  function renderFit() {
+    const n = Math.max(1, +$("cv-n").value || 1);
+    const box = $("cv-fit"); box.textContent = "";
+    const four = S.cps.filter(o => o.bytes.length === 4);
+    const line = (name, note, count, ok, why) => {
+      const r = h("div", { class: "vr" }, box);
+      const a = h("span", null, r, name); h("small", null, a, note);
+      const z = h("span", { class: "vz" }, r);
+      h("span", { class: ok ? "ok" : "no" }, z, ok ? "✓ 存得下" : "✗ " + why);
+      h("span", { class: "c" }, z, count);
+    };
+    line("PostgreSQL varchar(" + n + ")", "數編號個數", "算出 " + S.nC + " 個", S.nC <= n, "太長");
+    line("MySQL utf8mb4 VARCHAR(" + n + ")", "數編號個數", "算出 " + S.nC + " 個", S.nC <= n, "太長");
+    if (four.length) line("MySQL 舊版 utf8", "＝utf8mb3，每字最多收 3 B，" + four.slice(0, 3).map(say).join("") + " 要 4 B", "有 " + four.length + " 個 4 B 字", false, "報錯 Incorrect string value");
+    else line("MySQL 舊版 utf8", "＝utf8mb3；這段沒有 4 B 字", "算出 " + S.nC + " 個", S.nC <= n, "太長");
+    line("網頁 <input maxlength=" + n + ">", "數 UTF-16 單位，emoji 算 2", "算出 " + S.nU + " 個", S.nU <= n, "打不進去");
+    line("上限 " + n + " bytes 的欄位或 API", "數 UTF-8 bytes", "算出 " + S.nB + " B", S.nB <= n, "太長");
+  }
+
+  /* 長度對不上 */
+  function renderMM() {
+    const box = $("cv-mm"); box.textContent = "";
+    const bad = S.groups.filter(G => G.g.length !== 1 || G.items.length !== 1);
+    if (!bad.length) {
+      h("div", { class: "sub" }, box, "這段每個字：看到 1 個＝.length 1＝編號 1 個，三種算法一樣，不會對不上。試試 😀、👨‍👩‍👧 或「é 拆成 e＋´」。");
+      return;
+    }
+    h("div", { class: "sub" }, box, "只列出算法不一致的字（數字都是 10 進位）：");
+    const w = h("div", { class: "scroll" }, box);
+    const t = h("table", { class: "mm" }, w);
+    const hr = h("tr", null, t);
+    ["字", "看到", "JS .length", "Python／PG", "bytes"].forEach(s => h("th", { class: s === "字" ? "" : "r" }, hr, s));
+    const seen = new Set();
+    bad.forEach(G => {
+      if (seen.has(G.g)) return; seen.add(G.g);
+      const tr = h("tr", null, t);
+      h("td", { class: "g" }, tr, G.g);
+      h("td", { class: "r" }, tr, "1");
+      h("td", { class: "r" + (G.g.length !== 1 ? " x" : "") }, tr, G.g.length);
+      h("td", { class: "r" + (G.items.length !== 1 ? " x" : "") }, tr, G.items.length);
+      h("td", { class: "r" }, tr, G.nb);
+    });
+    if (S.cps.some(o => o.cp > 0xFFFF)) h("div", { class: "sub" }, box, "JS .length 多算：號碼超過 65,535（16 進位 FFFF）的字，UTF-16 要用 2 個單位存，所以算 2。");
+    if (S.groups.some(G => G.items.length > 1)) h("div", { class: "sub" }, box, "Python／PG 多算：一個看到的字可以由好幾個編號黏成，例如 ZWJ 黏合的家庭 emoji、兩個區域字母組成的國旗、e 加上組合重音。");
+  }
+
+  /* 三種寫法 */
+  function renderEnc() {
+    const box = $("cv-enc"); box.textContent = "";
+    const rows = [
+      ["網址參數（percent-encoding）：每個 byte 寫成 % ＋ 2 位 16 進位", o => encodeURIComponent(o.ch)],
+      ["JSON（Python json.dumps 預設）：每個 UTF-16 單位寫成 \\u ＋ 4 位 16 進位", o => o.cp >= 0x20 && o.cp < 0x7F ? o.ch : Array.from({ length: o.ch.length }, (_, k) => "\\u" + o.ch.charCodeAt(k).toString(16).padStart(4, "0")).join("")],
+      ["PostgreSQL convert_to(…, 'UTF8')：\\x 後面每 2 位 16 進位＝1 個 byte", o => o.bytes.map(x => hex(x).toLowerCase()).join("")],
+    ];
+    rows.forEach(([k, f], ri) => {
+      const d = h("div", { class: "enc" }, box);
+      h("div", { class: "k" }, d, k);
+      const c = h("code", null, d);
+      if (ri === 2) c.appendChild(document.createTextNode("\\x"));
+      S.cps.forEach(o => h("span", o.i === sel ? { class: "sel" } : null, c, f(o)));
+    });
+  }
+
+  /* 硬碟 */
+  function renderCap() {
+    const box = $("cv-cap"); box.textContent = "";
+    if (!S.nG) return;
+    const w = Math.max(1, +$("cv-w").value || 1), rows = Math.max(1, +$("cv-rows").value || 1);
+    const per = S.nB / S.nG, tot = w * per * rows;
+    const r = +per.toFixed(2);
+    const MAXG = 8, gs = S.groups.slice(0, MAXG).map(G => (G.g === " " ? "空格" : G.g) + " " + G.nb + " B").join(" + ");
+    h("div", { class: "sub" }, box, `用最上面輸入框的文字當樣本，算每個字平均幾 B（UTF-8）：`);
+    h("div", { class: "eq" }, box, `${gs}${S.nG > MAXG ? " + …" : ""} = ${fmt(S.nB)} B`);
+    h("div", { class: "eq" }, box, `${fmt(S.nB)} B ÷ ${fmt(S.nG)} 個字 = 每字平均 ${r} B`);
+    h("div", { class: "eq" }, box, `${fmt(w)} 字 × ${r} B × ${fmt(rows)} 則 =`);
+    const b = h("div", { class: "big" }, box, fmt(Math.round(tot)) + " B");
+    h("small", { class: "muted", style: "font:400 13px var(--body);margin-left:8px" }, b, "≈ " + size(tot));
+    h("div", { class: "sub" }, box, "題目假設全中文、每字 3 B：250 字 × 3 B × 1,000,000 則 = 750,000,000 B（≈ 715 MB）。這只是內文一欄，整列還有其他欄位：");
+    const wrap = h("div", { class: "scroll" }, box), t = h("table", { class: "rowsz" }, wrap);
+    const hr = h("tr", null, t); ["一則貼文存了什麼", "怎麼算", "B"].forEach((x, i) => h("th", i === 2 ? { class: "r" } : null, hr, x));
+    ROW.forEach(([k, how, n], i) => {
+      const r = h("tr", i === ROW.length - 1 ? { class: "sum" } : null, t);
+      h("td", null, r, k); h("td", { class: "muted" }, r, how); h("td", { class: "r" }, r, n);
+    });
+    h("div", { class: "sub" }, box, "長度標記：文字欄位前面要記「這段有多長」，126 B 以內用 1 B 記，更長用 4 B。存到硬碟時一頁 8,192 B 放得下 8 列（每列再加 2 B 對齊、4 B 列指標），所以每則實際佔 8,192 ÷ 8 = 1,024 B，100 萬則 = 1,024,000,000 B ≈ 977 MB。MB 這裡＝1,048,576 B。");
+  }
+
+  function all() {
+    renderLen(); renderStrip(); renderRead(); paintSel(); renderCut(); renderDec();
+    renderFit(); renderMM(); renderEnc(); renderCap();
+  }
+  function load(text, pick) {
+    S = analyze(text);
+    cut = S.nB;
+    sel = pick != null ? pick : Math.max(0, S.cps.findIndex(o => o.cp > 0x7F));
+    all();
+  }
+
+  const chips = $("cv-chips");
+  EX.forEach(([t, k]) => {
+    const b = h("button", { type: "button", class: "chip" }, chips, t);
+    h("small", null, b, k);
+    b.addEventListener("click", () => { inp.value = t; $("cv-n").value = analyze(t).nG; load(t); });
+  });
+  inp.addEventListener("input", () => {
+    const caret = inp.selectionStart || 0;
+    S = analyze(inp.value);
+    const o = S.cps.find(o => o.u16 < caret && caret <= o.u16 + o.ch.length);
+    load(inp.value, o ? o.i : Math.min(sel, Math.max(0, S.nC - 1)));
+  });
+  $("cv-cut").addEventListener("input", e => { cut = +e.target.value; renderCut(); });
+  $("cv-n").addEventListener("input", renderFit);
+  $("cv-w").addEventListener("input", renderCap);
+  $("cv-rows").addEventListener("input", renderCap);
+  load(inp.value);
+})();
+
+/* 進位換算：獨立小算盤，不跟上面的文字連動 */
+(() => {
+  const F = [["bc-10", 10, /^[0-9]+$/], ["bc-16", 16, /^[0-9a-f]+$/i], ["bc-2", 2, /^[01]+$/]];
+  const fmt = (v, b) => {
+    if (b === 10) return v.toLocaleString("en-US");
+    if (b === 16) return v.toString(16).toUpperCase();
+    const s = v.toString(2);
+    return s.padStart(Math.ceil(s.length / 4) * 4, "0").match(/.{4}/g).join(" ");
+  };
+  const parse = (id, b, re) => {
+    const raw = $(id).value.replace(/[\s,_]/g, "").replace(/^0[xb]/i, "");
+    if (raw === "" || !re.test(raw)) return null;
+    let v = 0n;
+    for (const c of raw.toLowerCase()) v = v * BigInt(b) + BigInt(parseInt(c, 16));
+    return v;
+  };
+  /* 符號欄：號碼 → 字；沒有字形的號碼改寫原因（依 Unicode 類別） */
+  const sym = $("bc-ch");
+  const why = n => {
+    if (n > 0x10FFFF) return "超過上限";
+    const c = String.fromCodePoint(n);
+    if (/\p{Cc}/u.test(c)) return "控制字元";
+    if (/\p{Cs}/u.test(c)) return "代理區，不是字";
+    if (/\p{Co}/u.test(c)) return "自訂區，字型沒畫";
+    if ((n & 0xFFFE) === 0xFFFE || (n >= 0xFDD0 && n <= 0xFDEF)) return "非字元，永不放字";
+    if (/\p{Cn}/u.test(c)) return "還沒分配";
+    if (/\p{Cf}/u.test(c)) return "格式字元，看不到";
+    return "";
+  };
+  const putSym = v => {
+    if (v === null) { sym.value = ""; sym.placeholder = ""; return; }
+    const n = v > 0x10FFFFn ? 0x110000 : Number(v), w = why(n);
+    sym.value = w ? "" : String.fromCodePoint(n);
+    sym.placeholder = w;
+  };
+  const putNums = (v, skip) => F.forEach(([id2, b2]) => {
+    if (id2 === skip) return;
+    $(id2).value = v === null ? "" : fmt(v, b2);
+    $(id2).classList.remove("bad");
+  });
+  F.forEach(([id, b, re]) => {
+    const inp = $(id);
+    inp.addEventListener("input", () => {
+      const v = parse(id, b, re), empty = inp.value.trim() === "";
+      inp.classList.toggle("bad", v === null && !empty);
+      if (empty) { putNums(null, id); putSym(null); }
+      else if (v !== null) { putNums(v, id); putSym(v); }
+    });
+    inp.addEventListener("change", () => { const v = parse(id, b, re); if (v !== null) inp.value = fmt(v, b); });
+  });
+  sym.addEventListener("input", () => {
+    const c = [...sym.value][0];
+    putNums(c === undefined ? null : BigInt(c.codePointAt(0)), null);
+    sym.placeholder = "";
+  });
+  sym.addEventListener("change", () => { const c = [...sym.value][0]; sym.value = c || ""; });
+})();
+
+$("foot").textContent =`量測環境：PostgreSQL ${D.version}（WSL Ubuntu），合成資料：1,000 段隨機中文輪流使用，每段 250 字。建索引時間：兩字詞 ${D.build.bigram}、pg_trgm ${D.build.trgm}、simple ${D.build.simple}。`;
+</script>
+
+</body></html>

@@ -1,0 +1,65 @@
+### 0. 版本
+working tree HEAD = cae19f1；本輪程式 = 工作樹的 q5/code/backfill
+Python 3.13.17
+docker server 29.9.2
+pull exit=0
+image = mirror.gcr.io/library/elasticsearch:9.5.5  mirror.gcr.io/library/elasticsearch@sha256:52ffd9f66c98b7826a25da2ef7cac6186ecec158d8fb371bff325ad00b6eca93
+
+### 1. 起 ES（單節點）
+docker run exit=0
+{"status":"green","number_of_nodes":1}
+
+### 2. 產生樣本
+exit=0
+expected.json sha256[:16] = 2accd204911ea6d0
+
+### 3. demo_real_es.py
+ES 9.5.5 (build 48acba663b09, lucene 10.5.1) at http://127.0.0.1:19201
+
+[R0] 舊 mapping（dynamic: strict，只有 post_id）
+    OK  create threads-posts: HTTP 200
+    OK  seeded base docs=1980 not_in_es=20
+[R0 產生 bulk 檔（不送）] exit=0 elapsed=0.19s
+    posts=2000 docs_written=1979 skipped_no_known_metric=21 files=4 action=update
+    OK  mapping 還沒加新欄位時送 1 筆：status 400 strict_dynamic_mapping_exception
+    OK  S5T000001 沒有被改動
+    OK  update mapping API 加新欄位（不 reindex）：HTTP 200
+    mapping counts_at = {"quote_count": {"format": "epoch_millis", "type": "date"}, "repost_count": {"format": "epoch_millis", "type": "date"}, "reshare_count": {"format": "epoch_millis", "type": "date"}}
+    OK  爬蟲較新的計數：三欄 20 篇、只有轉發數 20 篇
+
+[R1 首次送出] exit=0 elapsed=2.61s
+    send={'files_sent': 4, 'noop': 20, 'not_in_index': 19, 'ok': 1940, 'requests': 4}
+    OK  退出碼 0
+    OK  not_in_index=19（ES 沒有、回補有值的篇數）
+    OK  send_errors.jsonl 只有不在 ES 的那幾篇：{'404 document_missing_exception': 19}
+    OK  _mget 比對（值對 expected.json，counts_at 對 bulk 檔與爬蟲的時間戳）：不符 0 篇 []
+[R2 同目錄重跑（帳本跳過）] exit=0 elapsed=0.26s
+    send={'files_skipped_already_sent': 4}
+    OK  沒有送任何請求，跳過 4 檔
+[R3 新目錄整批重送] exit=0 elapsed=1.48s
+    send={'files_sent': 4, 'noop': 1960, 'not_in_index': 19, 'requests': 4}
+    OK  ok=0 noop=1960（應全部 noop）
+    OK  重送後比對：不符 0 篇
+
+[R4] 線上 counts_at 寫錯型別
+    OK  ISO 字串寫進 epoch_millis 欄位：HTTP 400 document_parsing_exception（寫入時就擋下）
+    OK  數字字串 "1900000000000" 寫得進去：HTTP 200
+    OK  _source 的 counts_at.repost_count 是字串：'1900000000000'
+[R4 整批重送] exit=4 elapsed=1.60s
+    send={'failed': 1, 'files_incomplete': 1, 'files_sent': 3, 'noop': 1959, 'not_in_index': 19, 'requests': 4}
+    OK  退出碼 4、failed=1
+    OK  send_errors.jsonl：404（不在 ES）19 筆，其餘 [{'file': 'bulk_00001.ndjson', '_id': 'S5T000003', 'status': 400, 'error': 'illegal_argument_exception'}]
+    OK  S5T000003 沒有被改動
+    單篇送同一份腳本：HTTP 400 illegal_argument_exception ← script_exception: counts_at.repost_count is not epoch_millis
+
+[R5] IG：video_view_count 回補到 ig-posts
+    OK  create ig-posts、放 198 篇（2 篇不在 ES）
+[R5 IG 送出] exit=0 elapsed=0.53s
+    send={'files_sent': 1, 'not_in_index': 2, 'ok': 193, 'requests': 1}
+    OK  退出碼 0；值比對 expected.json、counts_at 只看有沒有：不符 0 篇 []
+
+ALL OK
+exit=0
+
+### 4. 收掉容器
+docker rm exit=0

@@ -1,0 +1,1 @@
+{"id":1,"max_docs_per_sec":750,"paused":false,"updated_at":"2026-10-30T22:54:25.085216+00:00","reason":"G3 自動降速：ptt 探針 p95 127 ms > 上限 124 ms","canary_baseline_ms":74}

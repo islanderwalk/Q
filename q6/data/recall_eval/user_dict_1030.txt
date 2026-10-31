@@ -1,0 +1,19 @@
+# dict_version: qsearch-q6-2026.10.30.1
+# 格式：詞 詞頻 詞性（jieba user dict）。地名保護用，避免被拆成「高」「雄」「市」。
+高雄市 5 ns
+新北市 5 ns
+臺北市 5 ns
+台北市 5 ns
+台中市 5 ns
+臺中市 5 ns
+台南市 5 ns
+臺南市 5 ns
+桃園市 5 ns
+新竹市 5 ns
+基隆市 5 ns
+嘉義市 5 ns
+屏東縣 5 ns
+宜蘭縣 5 ns
+花蓮縣 5 ns
+台東縣 5 ns
+臺東縣 5 ns

@@ -1,0 +1,134 @@
+[
+  {
+    "account": "nasa",
+    "http": {
+      "sec_fetch": true,
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 178458,
+      "html_bytes": 946447,
+      "seconds": 1.025,
+      "threads": 4,
+      "posts": 5,
+      "own_posts": 5,
+      "posts_with_all_3_fields": 5,
+      "page_info": {
+        "threads": 4,
+        "has_next_page": true,
+        "end_cursor_len": 120
+      },
+      "preloaded_queries": [
+        {
+          "name": "BarcelonaProfilePageDirectQuery",
+          "query_id": "28894437973498594",
+          "variables": [
+            "canSeeFeedsTab",
+            "showLinkedIGStats",
+            "userID"
+          ],
+          "first": null
+        },
+        {
+          "name": "BarcelonaProfileThreadsTabDirectQuery",
+          "query_id": "28967344372926951",
+          "variables": [
+            "allow_page_info_for_lox_user",
+            "first",
+            "userID"
+          ],
+          "first": 4
+        }
+      ],
+      "login_wall_text": true,
+      "verdict": "OK"
+    }
+  },
+  {
+    "account": "zuck",
+    "http": {
+      "sec_fetch": true,
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 203384,
+      "html_bytes": 1206757,
+      "seconds": 1.56,
+      "threads": 4,
+      "posts": 10,
+      "own_posts": 10,
+      "posts_with_all_3_fields": 10,
+      "page_info": {
+        "threads": 4,
+        "has_next_page": true,
+        "end_cursor_len": 120
+      },
+      "preloaded_queries": [
+        {
+          "name": "BarcelonaProfilePageDirectQuery",
+          "query_id": "28894437973498594",
+          "variables": [
+            "canSeeFeedsTab",
+            "showLinkedIGStats",
+            "userID"
+          ],
+          "first": null
+        },
+        {
+          "name": "BarcelonaProfileThreadsTabDirectQuery",
+          "query_id": "28967344372926951",
+          "variables": [
+            "allow_page_info_for_lox_user",
+            "first",
+            "userID"
+          ],
+          "first": 4
+        }
+      ],
+      "login_wall_text": true,
+      "verdict": "OK"
+    }
+  },
+  {
+    "account": "natgeo",
+    "http": {
+      "sec_fetch": true,
+      "status": 200,
+      "content_encoding": "gzip",
+      "wire_bytes": 167858,
+      "html_bytes": 848792,
+      "seconds": 1.276,
+      "threads": 4,
+      "posts": 5,
+      "own_posts": 4,
+      "posts_with_all_3_fields": 5,
+      "page_info": {
+        "threads": 4,
+        "has_next_page": true,
+        "end_cursor_len": 120
+      },
+      "preloaded_queries": [
+        {
+          "name": "BarcelonaProfilePageDirectQuery",
+          "query_id": "28894437973498594",
+          "variables": [
+            "canSeeFeedsTab",
+            "showLinkedIGStats",
+            "userID"
+          ],
+          "first": null
+        },
+        {
+          "name": "BarcelonaProfileThreadsTabDirectQuery",
+          "query_id": "28967344372926951",
+          "variables": [
+            "allow_page_info_for_lox_user",
+            "first",
+            "userID"
+          ],
+          "first": 4
+        }
+      ],
+      "login_wall_text": true,
+      "verdict": "OK"
+    }
+  }
+]

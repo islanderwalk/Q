@@ -1,0 +1,116 @@
+{
+ "pages": [
+  {
+   "url": "https://www.threads.com/@cnanews_tw",
+   "status": 200,
+   "posts_in_json": 5,
+   "own_with_text": 5
+  },
+  {
+   "url": "https://www.threads.com/@pts.news",
+   "status": 200,
+   "posts_in_json": 8,
+   "own_with_text": 8
+  },
+  {
+   "url": "https://www.threads.com/@ftvnews",
+   "status": 200,
+   "posts_in_json": 6,
+   "own_with_text": 6
+  },
+  {
+   "url": "https://www.threads.com/@cnanews_tw/post/DfHRSAWAehe",
+   "status": 200,
+   "posts_in_json": 15,
+   "own_with_text": 2,
+   "replies_with_text": 7,
+   "direct_reply_count": 33
+  },
+  {
+   "url": "https://www.threads.com/@pts.news/post/DfHV8wamZVW",
+   "status": 200,
+   "posts_in_json": 15,
+   "own_with_text": 2,
+   "replies_with_text": 8,
+   "direct_reply_count": 51
+  },
+  {
+   "url": "https://www.threads.com/@ftvnews/post/DfH2Y41mfl7",
+   "status": 200,
+   "posts_in_json": 6,
+   "own_with_text": 2,
+   "replies_with_text": 1,
+   "direct_reply_count": 5
+  },
+  {
+   "url": "https://www.threads.com/@cnanews_tw/post/DfHXyUFE6Jz",
+   "status": 200,
+   "posts_in_json": 8,
+   "own_with_text": 1,
+   "replies_with_text": 2,
+   "direct_reply_count": 3
+  },
+  {
+   "url": "https://www.threads.com/@pts.news/post/DfH2RHPGS38",
+   "status": 200,
+   "posts_in_json": 17,
+   "own_with_text": 2,
+   "replies_with_text": 10,
+   "direct_reply_count": 47
+  },
+  {
+   "url": "https://www.threads.com/@ftvnews/post/DfH3OWhmX6Z",
+   "status": 200,
+   "posts_in_json": 9,
+   "own_with_text": 2,
+   "replies_with_text": 1,
+   "direct_reply_count": 4
+  },
+  {
+   "url": "https://www.threads.com/@cnanews_tw/post/DfHUs6Ugfgl",
+   "status": 200,
+   "posts_in_json": 6,
+   "own_with_text": 1,
+   "replies_with_text": 0,
+   "direct_reply_count": 1
+  },
+  {
+   "url": "https://www.threads.com/@pts.news/post/DfHNhU2Dv5X",
+   "status": 200,
+   "posts_in_json": 16,
+   "own_with_text": 2,
+   "replies_with_text": 8,
+   "direct_reply_count": 22
+  },
+  {
+   "url": "https://www.threads.com/@ftvnews/post/DfH1uMjkvIc",
+   "status": 200,
+   "posts_in_json": 6,
+   "own_with_text": 1,
+   "replies_with_text": 0,
+   "direct_reply_count": 3
+  },
+  {
+   "url": "https://www.threads.com/@pts.news/post/DfHiktnmRV2",
+   "status": 200,
+   "posts_in_json": 12,
+   "own_with_text": 2,
+   "replies_with_text": 5,
+   "direct_reply_count": 7
+  },
+  {
+   "url": "https://www.threads.com/@ftvnews/post/DfH1-9AGc3V",
+   "status": 200,
+   "posts_in_json": 7,
+   "own_with_text": 1,
+   "replies_with_text": 0,
+   "direct_reply_count": 1
+  }
+ ],
+ "failures": [],
+ "network_loads_this_run": {
+  "www.threads.com": 14
+ },
+ "cache_hits": 0,
+ "note": "整體載入次數以 _meta/fetch_log.jsonl＋manual_probes.json 為準"
+}

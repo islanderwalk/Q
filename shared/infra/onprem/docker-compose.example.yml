@@ -1,0 +1,167 @@
+# 地端對照的 compose 示意檔。
+# 狀態：【未實際啟動】本機沒有 docker / docker compose，只做了 YAML 解析檢查。
+# 用途：讓 UIUX 看到「哪個 GCP 節點對應哪個地端服務」，不是可直接上線的部署。
+#
+# 使用前必須處理：
+#   1. 把 image 換成實際建置的映像（crawler-api、crawler-worker、parser、scheduler、backfill 目前是佔位名稱）。
+#   2. postgres 要用含 pg_bigm 的映像（官方 postgres 映像沒有 pg_bigm），範例以註解標示。
+#   3. 密碼一律從 .env 讀取，範例用 :? 強制要求設定，不放預設值。
+#   4. opensearch 範例關閉 security plugin 只適用本機開發，不可直接對外。
+#   5. 本檔沒有 Redis Streams／Kafka 的完整設定；派工選 RabbitMQ 是為了示意（見 infra/onprem/README.md）。
+
+name: qsearch-onprem
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  # ---- 排（scheduler）----
+  scheduler:
+    <<: *restart
+    image: crawler-scheduler:latest   # 佔位：對應 GCP scheduler Cloud Run 服務；由 cron 或 APScheduler 觸發 /tick
+    environment:
+      AMQP_URL: amqp://${RABBITMQ_USER:?set in .env}:${RABBITMQ_PASSWORD:?set in .env}@rabbitmq:5672/
+      PG_DSN: postgresql://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/crawler
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks: [qsearch]
+
+  # ---- 派（dispatch）：RabbitMQ 取代 Cloud Tasks + Pub/Sub 的派工與 DLQ ----
+  rabbitmq:
+    <<: *restart
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set in .env}
+    ports:
+      - "127.0.0.1:15672:15672"   # 管理介面只綁本機
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [qsearch]
+
+  # ---- 抓（crawl）----
+  crawler-api:
+    <<: *restart
+    image: crawler-api:latest         # 佔位：對應 GCP crawler-api（POST /crawl）
+    environment:
+      AMQP_URL: amqp://${RABBITMQ_USER:?set in .env}:${RABBITMQ_PASSWORD:?set in .env}@rabbitmq:5672/
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [qsearch]
+
+  crawler-worker:
+    <<: *restart
+    image: crawler-worker:latest      # 佔位：對應 GCP crawler-worker；出口走地端固定 IP 或 proxy
+    environment:
+      AMQP_URL: amqp://${RABBITMQ_USER:?set in .env}:${RABBITMQ_PASSWORD:?set in .env}@rabbitmq:5672/
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:?set in .env}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set in .env}
+      HTTP_PROXY: ${CRAWL_HTTP_PROXY:-}       # 出口 proxy（Q4）；空字串 = 直連
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks: [qsearch]
+
+  # ---- 存（store）：MinIO 取代 GCS（S3 相容）----
+  minio:
+    <<: *restart
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env}
+    ports:
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    networks: [qsearch]
+
+  # ---- 解（parse）+ 狀態 ----
+  parser:
+    <<: *restart
+    image: qsearch-parser:latest      # 佔位：可由 infra/gcp/services/parser 改寫為 RabbitMQ consumer
+    environment:
+      AMQP_URL: amqp://${RABBITMQ_USER:?set in .env}:${RABBITMQ_PASSWORD:?set in .env}@rabbitmq:5672/
+      PG_DSN: postgresql://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/crawler
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks: [qsearch]
+
+  # 對應 GCP Cloud SQL（狀態、去重、中文全文搜尋用 pg_bigm）。
+  postgres:
+    <<: *restart
+    # image: 換成含 pg_bigm 的 postgres 映像（官方映像沒有）
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: crawler
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d crawler"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [qsearch]
+
+  # 對應 BigQuery（分析）。ClickHouse 比 PostgreSQL 適合大量聚合，這裡保留位置。
+  clickhouse:
+    <<: *restart
+    image: clickhouse/clickhouse-server:24.8
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:?set in .env}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set in .env}
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks: [qsearch]
+
+  # ---- 用（serve）：對應 Elasticsearch ----
+  opensearch:
+    <<: *restart
+    image: opensearchproject/opensearch:2.15.0
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"   # 僅本機示意，不可對外
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks: [qsearch]
+
+  # 對應 Firestore session 池（GCP 架構 A/B/C 的控制面）。Redis 需開持久化。
+  redis:
+    <<: *restart
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks: [qsearch]
+
+networks:
+  qsearch:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+  minio-data:
+  postgres-data:
+  clickhouse-data:
+  opensearch-data:
+  redis-data:

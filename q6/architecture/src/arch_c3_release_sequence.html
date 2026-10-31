@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
+<body><script>
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (c) 一致性',
+  title: '(c) 每週發版時序：先換串流，再補舊資料，最後檢查收斂',
+  sub: '新文章從換版那一刻起就是新版本；舊文章由同一個批次 job 依 doc_id 清單補上。收斂條件是可以查詢的數字，不靠人工判斷。',
+  height: 430,
+  lanes: [
+    { x: 0, y: 0, w: 1520, h: 230, label: '發版（時間點為示意）' },
+    { x: 0, y: 250, w: 1520, h: 170, label: '每日監控（每個渠道）', cls: 'warm' }
+  ],
+  nodes: [
+    { id: 'r1', x: 20, y: 48, w: 270, tag: 'T0', title: '發版', sub: 'CI 全過；manifest 記下變更詞與預估篇數' },
+    { id: 'r2', x: 320, y: 48, w: 270, tag: 'T0 ＋ 數分鐘', title: '串流換版', sub: 'worker 滾動重啟、載入 vN；新文章 = 新 seg_ver' },
+    { id: 'r3', x: 620, y: 48, w: 270, tag: 'T0 ＋ 約 1 小時', title: '圈出受影響文件', sub: 'BigQuery：含任一變更字串、且 seg_ver < vN' },
+    { id: 'r4', x: 920, y: 48, w: 270, tag: '當晚離峰', title: '限速重跑', sub: '同一個批次 job 跑 doc_id 清單；條件寫入' },
+    { id: 'r5', x: 1220, y: 48, w: 280, cls: 'accent', tag: '收斂檢查', title: '發版完成', sub: '含變更字串且 seg_ver < vN 的篇數 = 0；抽樣不含字串的文件重算，差異 = 0' },
+
+    { id: 'm1', x: 20, y: 300, w: 280, cls: 'small', title: '影子比對差異 > 0', sub: '批次與串流的版本或設定漂移' },
+    { id: 'm2', x: 320, y: 300, w: 280, cls: 'small', title: '洩漏率 > 0', sub: '網址碎片、電話、停用詞進 top-200：新的短網址網域或電話格式' },
+    { id: 'm3', x: 620, y: 300, w: 280, cls: 'small', title: '分佈偏離 ±20%', sub: '平均詞數、單字詞比例、字典外詞比例；抓平台改版與新流行語' },
+    { id: 'm4', x: 920, y: 300, w: 280, cls: 'small', title: 'seg_ver 24 小時未收斂', sub: '重跑 job 卡住或失敗' },
+    { id: 'm5', x: 1220, y: 300, w: 280, cls: 'small', title: 'top-100 Jaccard 突降', sub: '洗版、爬蟲異常' }
+  ],
+  edges: [
+    { from: 'r1', to: 'r2', align: 'y' },
+    { from: 'r2', to: 'r3', align: 'y' },
+    { from: 'r3', to: 'r4', align: 'y' },
+    { from: 'r4', to: 'r5', align: 'y' },
+    { from: 'r5', to: 'r4', sides: ['bottom', 'bottom'], fromT: 0.3, toT: 0.6, route: 'v', my: 212, color: 'bad', dashed: true, label: '未收斂：再跑一次' }
+  ],
+  footL: '監控門檻為本研究建議值；觸發時告警並暫停下一次發版',
+  footR: 'q6/architecture/c-consistency/diagram-release-sequence.png'
+});
+</script></body></html>

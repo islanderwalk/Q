@@ -1,0 +1,4 @@
+time="2026-10-30T22:47:46Z" level=warning msg="Found orphan containers (seed-2, seed-1, seed-0) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container qsearch-q6-seg-job-run-47ea327eb8c1 Creating 
+ Container qsearch-q6-seg-job-run-47ea327eb8c1 Created 
+{"severity": "INFO", "event": "pm_approved", "time": "2026-10-30T22:47:47.915+00:00", "partition": "ptt/2026-10", "by": "PM（模擬）"}

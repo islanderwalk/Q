@@ -1,0 +1,204 @@
+{
+  "started_at": "2026-10-30T07:48:37+00:00",
+  "python": "3.13.17",
+  "params": {
+    "rows": 1000000,
+    "mode": "corpus",
+    "corpus": "/var/lib/qsearch-pg/corpus/ptt_recombine_250.txt",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_ptt",
+    "ctype": "C.UTF-8",
+    "maintenance_work_mem": "1GB",
+    "bigram_timeout_min": 120.0,
+    "skip_bigram": false,
+    "out": "/var/lib/qsearch-pg/out/q2_run_1000000_corpus-ptt_recombine_250.json"
+  },
+  "steps_seconds": {
+    "load_corpus": 14.18,
+    "generate_and_insert": 28.18
+  },
+  "index_build": {
+    "btree_page_id": {
+      "seconds": 0.77,
+      "timed_out": false
+    },
+    "simple_tsv": {
+      "seconds": 132.64,
+      "timed_out": false
+    },
+    "trgm": {
+      "seconds": 573.6,
+      "timed_out": false
+    },
+    "bigram": {
+      "seconds": 889.72,
+      "timed_out": false
+    }
+  },
+  "measure": {
+    "distinct_check": [
+      {
+        "rows": 1000000,
+        "distinct_messages": 1000000,
+        "distinct_like_cnt": 3000,
+        "distinct_post_ids": 1000000,
+        "message_runs": 1000000
+      }
+    ],
+    "trgm_sanity": [
+      {
+        "trgm_per_row": 224
+      }
+    ],
+    "table_size": [
+      {
+        "table_bytes": 910172160,
+        "table_pages": 111105,
+        "rows": 1000000
+      }
+    ],
+    "heap_page0_lp": [
+      {
+        "rows_on_page0": 9,
+        "avg_lp_len": 852.44,
+        "min_lp_len": 832,
+        "max_lp_len": 864
+      }
+    ],
+    "avg_column_size": [
+      {
+        "avg_row_datum_bytes": 842.6,
+        "avg_message_bytes": 679.5
+      }
+    ],
+    "index_sizes": [
+      {
+        "index_name": "fb_posts_bigram_gin",
+        "index_bytes": 946946048
+      },
+      {
+        "index_name": "fb_posts_page_id_btree",
+        "index_bytes": 6873088
+      },
+      {
+        "index_name": "fb_posts_simple_gin",
+        "index_bytes": 340230144
+      },
+      {
+        "index_name": "fb_posts_trgm_gin",
+        "index_bytes": 1371783168
+      }
+    ],
+    "gin_bigram_meta": [
+      {
+        "n_entries": 848556,
+        "n_total_pages": 115594,
+        "n_entry_pages": 43818,
+        "n_data_pages": 71775
+      }
+    ],
+    "gin_trgm_meta": [
+      {
+        "n_entries": 3189347,
+        "n_total_pages": 167454,
+        "n_entry_pages": 123231,
+        "n_data_pages": 44222
+      }
+    ],
+    "gin_simple_meta": [
+      {
+        "n_pending_pages": 0,
+        "n_entries": 1603063,
+        "n_total_pages": 41532,
+        "n_entry_pages": 40707,
+        "n_data_pages": 824
+      }
+    ]
+  },
+  "queries": {
+    "bigram_contains": {
+      "count": 587,
+      "median_ms": 9.063,
+      "all_ms": [
+        9.013,
+        9.091,
+        9.063
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_bigram_gin"
+      ]
+    },
+    "trgm_like": {
+      "count": 587,
+      "median_ms": 5.374,
+      "all_ms": [
+        5.437,
+        5.374,
+        5.106
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_trgm_gin"
+      ]
+    },
+    "simple_tsvector": {
+      "count": 3,
+      "median_ms": 0.565,
+      "all_ms": [
+        0.565,
+        0.503,
+        0.589
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_simple_gin"
+      ]
+    },
+    "btree_page_id": {
+      "count": 100,
+      "median_ms": 0.557,
+      "all_ms": [
+        0.848,
+        0.557,
+        0.544
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_page_id_btree"
+      ]
+    }
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+    "shared_buffers": "128MB",
+    "maintenance_work_mem": "1GB",
+    "max_parallel_maintenance_workers": "2",
+    "block_size": "8192",
+    "datctype": "C.UTF-8",
+    "os": "Linux 6.18.44-fc-v185"
+  },
+  "corpus": {
+    "file": "ptt_recombine_250.txt",
+    "sha256": "8ae108549f2c6dd8c7fc93efdcf576e4c12bf54d2a50adf4a56a2a01d0d05056",
+    "rows": 1000000,
+    "avg_chars": 250.0
+  },
+  "query_term": "有沒有蛋",
+  "consistency": {
+    "counts": {
+      "bigram_contains": 587,
+      "trgm_like": 587,
+      "simple_tsvector": 3,
+      "btree_page_id": 100
+    },
+    "bigram_equals_trgm_like": true
+  },
+  "finished_at": "2026-10-30T08:16:09+00:00"
+}

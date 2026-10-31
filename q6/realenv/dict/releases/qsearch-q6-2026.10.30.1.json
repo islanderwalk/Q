@@ -1,0 +1,10 @@
+{
+  "dict_version": "qsearch-q6-2026.10.30.1",
+  "note": "第 1 版 = repo 現行 q6/code/dict/user_dict.txt 與 stopwords.txt 原樣（Python 驗證討論串指出兩個問題：沒有「高雄」、高雄市 5 會把主字典的 31 蓋掉）",
+  "user_dict_from": "../../../code/dict/user_dict.txt",
+  "stopwords_from": "../../../code/dict/stopwords.txt",
+  "add_words": [],
+  "soft_stopwords": [],
+  "merges": {},
+  "search_synonyms": []
+}

@@ -1,0 +1,204 @@
+{
+  "started_at": "2026-10-30T08:16:09+00:00",
+  "python": "3.13.17",
+  "params": {
+    "rows": 1000000,
+    "mode": "corpus",
+    "corpus": "/var/lib/qsearch-pg/corpus/wiki_250.txt",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_wiki",
+    "ctype": "C.UTF-8",
+    "maintenance_work_mem": "1GB",
+    "bigram_timeout_min": 120.0,
+    "skip_bigram": false,
+    "out": "/var/lib/qsearch-pg/out/q2_run_1000000_corpus-wiki_250.json"
+  },
+  "steps_seconds": {
+    "load_corpus": 7.98,
+    "generate_and_insert": 17.73
+  },
+  "index_build": {
+    "btree_page_id": {
+      "seconds": 0.61,
+      "timed_out": false
+    },
+    "simple_tsv": {
+      "seconds": 235.29,
+      "timed_out": false
+    },
+    "trgm": {
+      "seconds": 755.0,
+      "timed_out": false
+    },
+    "bigram": {
+      "seconds": 1043.76,
+      "timed_out": false
+    }
+  },
+  "measure": {
+    "distinct_check": [
+      {
+        "rows": 1000000,
+        "distinct_messages": 999918,
+        "distinct_like_cnt": 3000,
+        "distinct_post_ids": 1000000,
+        "message_runs": 1000000
+      }
+    ],
+    "trgm_sanity": [
+      {
+        "trgm_per_row": 233
+      }
+    ],
+    "table_size": [
+      {
+        "table_bytes": 902643712,
+        "table_pages": 110186,
+        "rows": 1000000
+      }
+    ],
+    "heap_page0_lp": [
+      {
+        "rows_on_page0": 9,
+        "avg_lp_len": 848.0,
+        "min_lp_len": 736,
+        "max_lp_len": 904
+      }
+    ],
+    "avg_column_size": [
+      {
+        "avg_row_datum_bytes": 847.1,
+        "avg_message_bytes": 684.0
+      }
+    ],
+    "index_sizes": [
+      {
+        "index_name": "fb_posts_bigram_gin",
+        "index_bytes": 1165492224
+      },
+      {
+        "index_name": "fb_posts_page_id_btree",
+        "index_bytes": 6873088
+      },
+      {
+        "index_name": "fb_posts_simple_gin",
+        "index_bytes": 1480933376
+      },
+      {
+        "index_name": "fb_posts_trgm_gin",
+        "index_bytes": 1551712256
+      }
+    ],
+    "gin_bigram_meta": [
+      {
+        "n_entries": 4716600,
+        "n_total_pages": 142272,
+        "n_entry_pages": 82158,
+        "n_data_pages": 60113
+      }
+    ],
+    "gin_trgm_meta": [
+      {
+        "n_entries": 14542045,
+        "n_total_pages": 189418,
+        "n_entry_pages": 156430,
+        "n_data_pages": 32987
+      }
+    ],
+    "gin_simple_meta": [
+      {
+        "n_pending_pages": 0,
+        "n_entries": 16374930,
+        "n_total_pages": 180778,
+        "n_entry_pages": 179626,
+        "n_data_pages": 1151
+      }
+    ]
+  },
+  "queries": {
+    "bigram_contains": {
+      "count": 50,
+      "median_ms": 3.418,
+      "all_ms": [
+        3.371,
+        3.526,
+        3.418
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_bigram_gin"
+      ]
+    },
+    "trgm_like": {
+      "count": 50,
+      "median_ms": 1820.799,
+      "all_ms": [
+        1701.976,
+        1835.742,
+        1820.799
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_trgm_gin"
+      ]
+    },
+    "simple_tsvector": {
+      "count": 1,
+      "median_ms": 0.693,
+      "all_ms": [
+        0.869,
+        0.603,
+        0.693
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_simple_gin"
+      ]
+    },
+    "btree_page_id": {
+      "count": 100,
+      "median_ms": 0.669,
+      "all_ms": [
+        0.704,
+        0.566,
+        0.669
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_page_id_btree"
+      ]
+    }
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+    "shared_buffers": "128MB",
+    "maintenance_work_mem": "1GB",
+    "max_parallel_maintenance_workers": "2",
+    "block_size": "8192",
+    "datctype": "C.UTF-8",
+    "os": "Linux 6.18.44-fc-v185"
+  },
+  "corpus": {
+    "file": "wiki_250.txt",
+    "sha256": "41d378431c6886c6676b2d60a7f6042b4e34d1dff0325254f2267e5eb0abdd23",
+    "rows": 1000000,
+    "avg_chars": 250.0
+  },
+  "query_term": "列（20",
+  "consistency": {
+    "counts": {
+      "bigram_contains": 50,
+      "trgm_like": 50,
+      "simple_tsvector": 1,
+      "btree_page_id": 100
+    },
+    "bigram_equals_trgm_like": true
+  },
+  "finished_at": "2026-10-30T08:50:58+00:00"
+}

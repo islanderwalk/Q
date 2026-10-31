@@ -1,0 +1,204 @@
+{
+  "started_at": "2026-10-30T07:45:36+00:00",
+  "python": "3.13.17",
+  "params": {
+    "rows": 50446,
+    "mode": "corpus",
+    "corpus": "/var/lib/qsearch-pg/corpus/ptt_concat_250.txt",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_ptt_concat",
+    "ctype": "C.UTF-8",
+    "maintenance_work_mem": "1GB",
+    "bigram_timeout_min": 30.0,
+    "skip_bigram": false,
+    "out": "/var/lib/qsearch-pg/out/q2_run_50446_corpus-ptt_concat_250.json"
+  },
+  "steps_seconds": {
+    "load_corpus": 0.41,
+    "generate_and_insert": 0.94
+  },
+  "index_build": {
+    "btree_page_id": {
+      "seconds": 0.04,
+      "timed_out": false
+    },
+    "simple_tsv": {
+      "seconds": 9.48,
+      "timed_out": false
+    },
+    "trgm": {
+      "seconds": 29.29,
+      "timed_out": false
+    },
+    "bigram": {
+      "seconds": 39.89,
+      "timed_out": false
+    }
+  },
+  "measure": {
+    "distinct_check": [
+      {
+        "rows": 50446,
+        "distinct_messages": 50446,
+        "distinct_like_cnt": 3000,
+        "distinct_post_ids": 50446,
+        "message_runs": 50446
+      }
+    ],
+    "trgm_sanity": [
+      {
+        "trgm_per_row": 239
+      }
+    ],
+    "table_size": [
+      {
+        "table_bytes": 45916160,
+        "table_pages": 5605,
+        "rows": 50446
+      }
+    ],
+    "heap_page0_lp": [
+      {
+        "rows_on_page0": 9,
+        "avg_lp_len": 839.11,
+        "min_lp_len": 800,
+        "max_lp_len": 864
+      }
+    ],
+    "avg_column_size": [
+      {
+        "avg_row_datum_bytes": 841.7,
+        "avg_message_bytes": 678.7
+      }
+    ],
+    "index_sizes": [
+      {
+        "index_name": "fb_posts_bigram_gin",
+        "index_bytes": 99033088
+      },
+      {
+        "index_name": "fb_posts_page_id_btree",
+        "index_bytes": 606208
+      },
+      {
+        "index_name": "fb_posts_simple_gin",
+        "index_bytes": 116154368
+      },
+      {
+        "index_name": "fb_posts_trgm_gin",
+        "index_bytes": 227287040
+      }
+    ],
+    "gin_bigram_meta": [
+      {
+        "n_entries": 846918,
+        "n_total_pages": 12089,
+        "n_entry_pages": 10856,
+        "n_data_pages": 1232
+      }
+    ],
+    "gin_trgm_meta": [
+      {
+        "n_entries": 3092164,
+        "n_total_pages": 27745,
+        "n_entry_pages": 27182,
+        "n_data_pages": 562
+      }
+    ],
+    "gin_simple_meta": [
+      {
+        "n_pending_pages": 0,
+        "n_entries": 1110626,
+        "n_total_pages": 14179,
+        "n_entry_pages": 14173,
+        "n_data_pages": 5
+      }
+    ]
+  },
+  "queries": {
+    "bigram_contains": {
+      "count": 1,
+      "median_ms": 0.254,
+      "all_ms": [
+        0.254,
+        0.217,
+        0.277
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_bigram_gin"
+      ]
+    },
+    "trgm_like": {
+      "count": 1,
+      "median_ms": 0.637,
+      "all_ms": [
+        0.741,
+        0.637,
+        0.584
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_trgm_gin"
+      ]
+    },
+    "simple_tsvector": {
+      "count": 0,
+      "median_ms": 0.253,
+      "all_ms": [
+        0.35,
+        0.253,
+        0.157
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_simple_gin"
+      ]
+    },
+    "btree_page_id": {
+      "count": 6,
+      "median_ms": 0.122,
+      "all_ms": [
+        0.142,
+        0.116,
+        0.122
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_page_id_btree"
+      ]
+    }
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+    "shared_buffers": "128MB",
+    "maintenance_work_mem": "1GB",
+    "max_parallel_maintenance_workers": "2",
+    "block_size": "8192",
+    "datctype": "C.UTF-8",
+    "os": "Linux 6.18.44-fc-v185"
+  },
+  "corpus": {
+    "file": "ptt_concat_250.txt",
+    "sha256": "31a8da37818a87632798cef65738365f5226e5882caf658abfe09cb145394989",
+    "rows": 50446,
+    "avg_chars": 250.0
+  },
+  "query_term": "維 退休",
+  "consistency": {
+    "counts": {
+      "bigram_contains": 1,
+      "trgm_like": 1,
+      "simple_tsvector": 0,
+      "btree_page_id": 6
+    },
+    "bigram_equals_trgm_like": true
+  },
+  "finished_at": "2026-10-30T07:46:56+00:00"
+}

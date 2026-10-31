@@ -1,0 +1,369 @@
+{
+  "facebook": {
+    "scope": {
+      "channels": "facebook",
+      "size": 30
+    },
+    "v1": {
+      "docs": 4,
+      "noise_in_top30": {
+        "stopword": 1,
+        "symbol": 10,
+        "number": 7,
+        "url_or_code": 4,
+        "single_char": 0
+      },
+      "top15": [
+        "。",
+        ".",
+        "/",
+        ":",
+        "https",
+        "、",
+        "》",
+        "的",
+        "，",
+        "#",
+        ",",
+        "-",
+        "1",
+        "125",
+        "2"
+      ]
+    },
+    "v2": {
+      "docs": 4,
+      "noise_in_top30": {
+        "stopword": 0,
+        "symbol": 0,
+        "number": 0,
+        "url_or_code": 1,
+        "single_char": 0
+      },
+      "top15": [
+        "78th",
+        "accords",
+        "artemis",
+        "become",
+        "doing",
+        "exploration",
+        "nation",
+        "safe",
+        "sign",
+        "space",
+        "support",
+        "sustainable",
+        "vietnam",
+        "welcome",
+        "一天"
+      ]
+    },
+    "overlay_dict_version": "qsearch-q6-2026.10.30.6"
+  },
+  "instagram": {
+    "scope": {
+      "channels": "instagram",
+      "size": 30
+    },
+    "v1": {
+      "docs": 48,
+      "noise_in_top30": {
+        "stopword": 5,
+        "symbol": 13,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 8
+      },
+      "top15": [
+        "#",
+        "「",
+        "」",
+        "，",
+        "。",
+        "、",
+        "的",
+        ".",
+        "台",
+        "在",
+        "為",
+        "也",
+        "是",
+        "表示",
+        "人"
+      ]
+    },
+    "v2": {
+      "docs": 48,
+      "noise_in_top30": {
+        "stopword": 0,
+        "symbol": 0,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 0
+      },
+      "top15": [
+        "表示",
+        "台灣",
+        "市長",
+        "民進黨",
+        "nasa",
+        "剪輯",
+        "台北",
+        "沈伯洋",
+        "蔣萬安",
+        "電視",
+        "來源",
+        "看到",
+        "ftv",
+        "ftvnews",
+        "一個"
+      ]
+    },
+    "overlay_dict_version": "qsearch-q6-2026.10.30.6"
+  },
+  "youtube": {
+    "scope": {
+      "channels": "youtube",
+      "size": 30
+    },
+    "v1": {
+      "docs": 45,
+      "noise_in_top30": {
+        "stopword": 2,
+        "symbol": 13,
+        "number": 0,
+        "url_or_code": 3,
+        "single_char": 3
+      },
+      "top15": [
+        "，",
+        "#",
+        ".",
+        "/",
+        ":",
+        "https",
+        "【",
+        "】",
+        "新聞",
+        "訂閱",
+        "台",
+        "的",
+        "、",
+        "「",
+        "」"
+      ]
+    },
+    "v2": {
+      "docs": 45,
+      "noise_in_top30": {
+        "stopword": 0,
+        "symbol": 0,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 0
+      },
+      "top15": [
+        "訂閱",
+        "台灣",
+        "即時",
+        "即時新聞",
+        "新聞網",
+        "追蹤",
+        "live",
+        "政治",
+        "最新",
+        "app",
+        "手法",
+        "24h",
+        "facebook",
+        "instagram",
+        "news"
+      ]
+    },
+    "overlay_dict_version": "qsearch-q6-2026.10.30.6"
+  },
+  "ptt": {
+    "scope": {
+      "channels": "ptt",
+      "size": 30,
+      "date_from": "2026-10-01"
+    },
+    "v1": {
+      "docs": 6732,
+      "noise_in_top30": {
+        "stopword": 7,
+        "symbol": 11,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 7
+      },
+      "top15": [
+        "[",
+        "]",
+        "卦",
+        "問",
+        "？",
+        "新聞",
+        ":",
+        "Re",
+        "的",
+        "嗎",
+        "！",
+        "被",
+        "了",
+        "「",
+        "台"
+      ]
+    },
+    "v2": {
+      "docs": 6732,
+      "noise_in_top30": {
+        "stopword": 0,
+        "symbol": 0,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 0
+      },
+      "top15": [
+        "台灣",
+        "颱風",
+        "是不是",
+        "沈伯洋",
+        "法國",
+        "蔣萬安",
+        "中國",
+        "高雄",
+        "日本",
+        "台北",
+        "民調",
+        "洋流",
+        "明天",
+        "到底",
+        "烏克蘭"
+      ]
+    },
+    "overlay_dict_version": "qsearch-q6-2026.10.30.6"
+  },
+  "media": {
+    "scope": {
+      "channels": "media",
+      "size": 30
+    },
+    "v1": {
+      "docs": 61,
+      "noise_in_top30": {
+        "stopword": 6,
+        "symbol": 7,
+        "number": 3,
+        "url_or_code": 0,
+        "single_char": 8
+      },
+      "top15": [
+        "。",
+        "，",
+        "（",
+        "）",
+        "30",
+        "中央社",
+        "日電",
+        "記者",
+        "今天",
+        "、",
+        "的",
+        "台北",
+        "「",
+        "」",
+        "為"
+      ]
+    },
+    "v2": {
+      "docs": 61,
+      "noise_in_top30": {
+        "stopword": 0,
+        "symbol": 0,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 0
+      },
+      "top15": [
+        "今天",
+        "表示",
+        "市長",
+        "參選人",
+        "台北",
+        "三讀",
+        "交保",
+        "登場",
+        "總統",
+        "萬元",
+        "選舉",
+        "中心",
+        "修正",
+        "出席",
+        "台灣"
+      ]
+    },
+    "overlay_dict_version": "qsearch-q6-2026.10.30.6"
+  },
+  "threads": {
+    "scope": {
+      "channels": "threads",
+      "size": 30
+    },
+    "v1": {
+      "docs": 61,
+      "noise_in_top30": {
+        "stopword": 7,
+        "symbol": 11,
+        "number": 0,
+        "url_or_code": 4,
+        "single_char": 7
+      },
+      "top15": [
+        "，",
+        "的",
+        ".",
+        "！",
+        "/",
+        ":",
+        "https",
+        "了",
+        "志",
+        "恩",
+        "雄",
+        "高",
+        "「",
+        "」",
+        "在"
+      ]
+    },
+    "v2": {
+      "docs": 61,
+      "noise_in_top30": {
+        "stopword": 0,
+        "symbol": 0,
+        "number": 0,
+        "url_or_code": 0,
+        "single_char": 0
+      },
+      "top15": [
+        "柯志恩",
+        "高雄",
+        "瑞隆",
+        "一下",
+        "市長",
+        "公視",
+        "新潮流",
+        "連結",
+        "不用",
+        "之所以",
+        "人點",
+        "刑責",
+        "劃法",
+        "加重",
+        "反而"
+      ]
+    },
+    "overlay_dict_version": "qsearch-q6-2026.10.30.6"
+  }
+}

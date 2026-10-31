@@ -1,0 +1,204 @@
+{
+  "started_at": "2026-10-30T07:46:57+00:00",
+  "python": "3.13.17",
+  "params": {
+    "rows": 50446,
+    "mode": "corpus",
+    "corpus": "/var/lib/qsearch-pg/corpus/ptt_recombine_250.txt",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_ptt_small",
+    "ctype": "C.UTF-8",
+    "maintenance_work_mem": "1GB",
+    "bigram_timeout_min": 30.0,
+    "skip_bigram": false,
+    "out": "/var/lib/qsearch-pg/out/q2_run_50446_corpus-ptt_recombine_250.json"
+  },
+  "steps_seconds": {
+    "load_corpus": 15.03,
+    "generate_and_insert": 2.04
+  },
+  "index_build": {
+    "btree_page_id": {
+      "seconds": 0.07,
+      "timed_out": false
+    },
+    "simple_tsv": {
+      "seconds": 6.79,
+      "timed_out": false
+    },
+    "trgm": {
+      "seconds": 25.63,
+      "timed_out": false
+    },
+    "bigram": {
+      "seconds": 40.31,
+      "timed_out": false
+    }
+  },
+  "measure": {
+    "distinct_check": [
+      {
+        "rows": 50446,
+        "distinct_messages": 50446,
+        "distinct_like_cnt": 3000,
+        "distinct_post_ids": 50446,
+        "message_runs": 50446
+      }
+    ],
+    "trgm_sanity": [
+      {
+        "trgm_per_row": 232
+      }
+    ],
+    "table_size": [
+      {
+        "table_bytes": 45916160,
+        "table_pages": 5605,
+        "rows": 50446
+      }
+    ],
+    "heap_page0_lp": [
+      {
+        "rows_on_page0": 9,
+        "avg_lp_len": 852.44,
+        "min_lp_len": 832,
+        "max_lp_len": 864
+      }
+    ],
+    "avg_column_size": [
+      {
+        "avg_row_datum_bytes": 842.5,
+        "avg_message_bytes": 679.5
+      }
+    ],
+    "index_sizes": [
+      {
+        "index_name": "fb_posts_bigram_gin",
+        "index_bytes": 90742784
+      },
+      {
+        "index_name": "fb_posts_page_id_btree",
+        "index_bytes": 606208
+      },
+      {
+        "index_name": "fb_posts_simple_gin",
+        "index_bytes": 80625664
+      },
+      {
+        "index_name": "fb_posts_trgm_gin",
+        "index_bytes": 188932096
+      }
+    ],
+    "gin_bigram_meta": [
+      {
+        "n_entries": 673972,
+        "n_total_pages": 11077,
+        "n_entry_pages": 9848,
+        "n_data_pages": 1228
+      }
+    ],
+    "gin_trgm_meta": [
+      {
+        "n_entries": 2282840,
+        "n_total_pages": 23063,
+        "n_entry_pages": 22495,
+        "n_data_pages": 567
+      }
+    ],
+    "gin_simple_meta": [
+      {
+        "n_pending_pages": 0,
+        "n_entries": 723052,
+        "n_total_pages": 9842,
+        "n_entry_pages": 9836,
+        "n_data_pages": 5
+      }
+    ]
+  },
+  "queries": {
+    "bigram_contains": {
+      "count": 11,
+      "median_ms": 0.292,
+      "all_ms": [
+        0.318,
+        0.269,
+        0.292
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_bigram_gin"
+      ]
+    },
+    "trgm_like": {
+      "count": 11,
+      "median_ms": 0.685,
+      "all_ms": [
+        0.685,
+        0.762,
+        0.525
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_trgm_gin"
+      ]
+    },
+    "simple_tsvector": {
+      "count": 0,
+      "median_ms": 0.442,
+      "all_ms": [
+        0.442,
+        0.588,
+        0.417
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_simple_gin"
+      ]
+    },
+    "btree_page_id": {
+      "count": 6,
+      "median_ms": 0.301,
+      "all_ms": [
+        0.363,
+        0.301,
+        0.247
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_page_id_btree"
+      ]
+    }
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+    "shared_buffers": "128MB",
+    "maintenance_work_mem": "1GB",
+    "max_parallel_maintenance_workers": "2",
+    "block_size": "8192",
+    "datctype": "C.UTF-8",
+    "os": "Linux 6.18.44-fc-v185"
+  },
+  "corpus": {
+    "file": "ptt_recombine_250.txt",
+    "sha256": "8ae108549f2c6dd8c7fc93efdcf576e4c12bf54d2a50adf4a56a2a01d0d05056",
+    "rows": 1000000,
+    "avg_chars": 250.0
+  },
+  "query_term": "鄉民支持",
+  "consistency": {
+    "counts": {
+      "bigram_contains": 11,
+      "trgm_like": 11,
+      "simple_tsvector": 0,
+      "btree_page_id": 6
+    },
+    "bigram_equals_trgm_like": true
+  },
+  "finished_at": "2026-10-30T07:48:36+00:00"
+}

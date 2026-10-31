@@ -1,0 +1,184 @@
+{
+  "started_at": "2026-10-30T11:29:59+08:00",
+  "python": "3.10.8",
+  "params": {
+    "rows": 100000,
+    "mode": "repeat",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "user": "postgres",
+    "db": "q2_bench",
+    "maintenance_work_mem": "1GB",
+    "bigram_timeout_min": 30.0,
+    "skip_bigram": false,
+    "out": "<repo>/q2/data/q2_run_100000_repeat.json"
+  },
+  "steps_seconds": {
+    "generate_and_insert": 14.95
+  },
+  "index_build": {
+    "btree_page_id": {
+      "seconds": 0.71,
+      "timed_out": false
+    },
+    "simple_tsv": {
+      "seconds": 2.33,
+      "timed_out": false
+    },
+    "trgm": {
+      "seconds": 13.12,
+      "timed_out": false
+    },
+    "bigram": {
+      "seconds": 35.09,
+      "timed_out": false
+    }
+  },
+  "measure": {
+    "distinct_check": [
+      {
+        "rows": 100000,
+        "distinct_messages": 100,
+        "distinct_like_cnt": 3000,
+        "distinct_post_ids": 100000,
+        "message_runs": 100
+      }
+    ],
+    "trgm_sanity": [
+      {
+        "trgm_per_row": 251
+      }
+    ],
+    "table_size": [
+      {
+        "table_bytes": 102400000,
+        "table_pages": 12500,
+        "rows": 100000
+      }
+    ],
+    "heap_page0_lp": [
+      {
+        "rows_on_page0": 8,
+        "avg_lp_len": 920.0,
+        "min_lp_len": 920,
+        "max_lp_len": 920
+      }
+    ],
+    "avg_column_size": [
+      {
+        "avg_row_datum_bytes": 920.0,
+        "avg_message_bytes": 754.0
+      }
+    ],
+    "index_sizes": [
+      {
+        "index_name": "fb_posts_bigram_gin",
+        "index_bytes": 41009152
+      },
+      {
+        "index_name": "fb_posts_page_id_btree",
+        "index_bytes": 958464
+      },
+      {
+        "index_name": "fb_posts_simple_gin",
+        "index_bytes": 475136
+      },
+      {
+        "index_name": "fb_posts_trgm_gin",
+        "index_bytes": 41353216
+      }
+    ],
+    "gin_bigram_meta": [
+      {
+        "n_entries": 24899,
+        "n_total_pages": 5006,
+        "n_entry_pages": 5005,
+        "n_data_pages": 0
+      }
+    ],
+    "gin_trgm_meta": [
+      {
+        "n_entries": 25079,
+        "n_total_pages": 5048,
+        "n_entry_pages": 5047,
+        "n_data_pages": 0
+      }
+    ]
+  },
+  "queries": {
+    "bigram_contains": {
+      "count": 1000,
+      "median_ms": 0.556,
+      "all_ms": [
+        0.556,
+        0.529,
+        0.661
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_bigram_gin"
+      ]
+    },
+    "trgm_like": {
+      "count": 1000,
+      "median_ms": 0.541,
+      "all_ms": [
+        0.587,
+        0.541,
+        0.516
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_trgm_gin"
+      ]
+    },
+    "simple_tsvector": {
+      "count": 0,
+      "median_ms": 0.283,
+      "all_ms": [
+        0.33,
+        0.23,
+        0.283
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_simple_gin"
+      ]
+    },
+    "btree_page_id": {
+      "count": 10,
+      "median_ms": 0.186,
+      "all_ms": [
+        0.206,
+        0.186,
+        0.176
+      ],
+      "top_node": "Aggregate",
+      "plan_uses": [
+        "Bitmap Index Scan",
+        "fb_posts_page_id_btree"
+      ]
+    }
+  },
+  "server": {
+    "version": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit",
+    "shared_buffers": "128MB",
+    "maintenance_work_mem": "1GB",
+    "max_parallel_maintenance_workers": "2",
+    "block_size": "8192"
+  },
+  "query_term": "蟟价崿杸",
+  "consistency": {
+    "counts": {
+      "bigram_contains": 1000,
+      "trgm_like": 1000,
+      "simple_tsvector": 0,
+      "btree_page_id": 10
+    },
+    "bigram_equals_trgm_like": true
+  },
+  "finished_at": "2026-10-30T11:31:22+08:00"
+}

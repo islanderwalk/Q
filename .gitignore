@@ -1,0 +1,19 @@
+q4/data/threads_q4_out/browser_*.html
+q4/data/threads_q4_out/http_*.html
+__pycache__/
+q6/evidence/src/cards/
+
+# 本機環境與快取（不進 repo）
+node_modules/
+/package.json
+/package-lock.json
+.venv/
+venv/
+.pytest_cache/
+
+# 腳本的暫存輸出：確認後手動併回正式位置（見 shared/capture/README.md）
+shared/capture/out/
+shared/capture/ptt_refresh_shots.json
+shared/capture/capture_gaps_new_entries.json
+shared/architecture/thumbs/
+q6/evidence/src/paper_pages/

@@ -1,0 +1,72 @@
+{
+  "word": "肥宅",
+  "from": "qsearch-q6-2026.10.30.2",
+  "to": "qsearch-q6-2026.10.30.5",
+  "sample_text": "肥宅在新北投好市多排隊",
+  "before": {
+    "ik_smart": [
+      "肥",
+      "宅",
+      "新",
+      "北投",
+      "好市多",
+      "排",
+      "隊"
+    ],
+    "ik_max_word": [
+      "肥",
+      "宅",
+      "新",
+      "北投",
+      "好市多",
+      "排",
+      "隊"
+    ],
+    "phrase_hits_ik": 22088,
+    "docs_containing_word_bigram": 22271
+  },
+  "switched_at": "2026-10-30T22:59:27Z",
+  "reload_seconds": 8.0,
+  "polls": 4,
+  "after_reload": {
+    "ik_smart": [
+      "肥宅",
+      "新北投",
+      "好市多",
+      "排",
+      "隊"
+    ],
+    "ik_max_word": [
+      "肥宅",
+      "新北投",
+      "新北",
+      "北投",
+      "好市多",
+      "排",
+      "隊"
+    ],
+    "phrase_hits_ik": 22088,
+    "docs_containing_word_bigram": 22271
+  },
+  "update_by_query": {
+    "updated": 22271,
+    "took_ms": 2154,
+    "failures": 0,
+    "wall_seconds": 2.16
+  },
+  "after_reindex": {
+    "phrase_hits_ik": 22271,
+    "docs_containing_word_bigram": 22271
+  },
+  "synonyms": {
+    "rule": "肥宅, 阿宅",
+    "hits_for_alias_before": 155,
+    "hits_for_alias_after": 155,
+    "seconds_after_put": 0.01,
+    "analyze_search": [
+      "肥宅",
+      "阿",
+      "宅"
+    ]
+  }
+}

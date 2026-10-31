@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
+<body><script>
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (b) 字典維護',
+  title: '(b) 字典維護流程：字典當程式碼管，每週發一版',
+  sub: '候選詞要附證據才進審核；CI 擋掉會讓症狀復發的改動；發版產物帶固定的 total 與影響篇數，三個消費端各自決定何時生效。',
+  height: 560,
+  nodes: [
+    { id: 's1', x: 0, y: 10, w: 250, cls: 'small', title: '搜尋熱詞', sub: '每週前 1,000 名中，不在字典或會被切開的' },
+    { id: 's2', x: 0, y: 98, w: 250, cls: 'small', title: '客戶監測關鍵字', sub: '客戶專案設定的品牌與產品詞' },
+    { id: 's3', x: 0, y: 186, w: 250, cls: 'small', title: '地名庫', sub: '行政區、商圈、夜市、捷運站；含臺／台變體' },
+    { id: 's4', x: 0, y: 274, w: 250, cls: 'small', title: '新詞發現', sub: 'n-gram 頻率＋凝固度（PMI）＋左右鄰字熵' },
+    { id: 's5', x: 0, y: 362, w: 250, cls: 'small', title: 'CKIP 差集', sub: 'CKIP 斷成一個詞、jieba 卻切開的' },
+    { id: 's6', x: 0, y: 450, w: 250, cls: 'small', title: 'PM／客戶回報', sub: '在文字雲上看到的錯切' },
+
+    { id: 'queue', x: 320, y: 196, w: 230, tag: '候選佇列', title: '附證據', sub: '出現次數、例句、預估影響篇數' },
+    { id: 'review', x: 600, y: 196, w: 220, tag: '人工・每週', title: '審核', sub: '分析師或 PM 核可；不自動上線' },
+    { id: 'pr', x: 870, y: 196, w: 230, tag: 'Git', title: 'PR 進字典 repo', sub: '詞、頻率、詞性、類別、來源、新增者、日期' },
+    { id: 'ci', x: 1150, y: 0, w: 370, tag: 'CI', title: '三種檢查', sub: '① 格式：重複、衝突、含標點、單字詞<br>② 回歸：必不可拆 100%、症狀偵測 = 0、golden set 差異報告<br>③ 影響：BigQuery 掃原文，估受影響篇數' },
+    { id: 'rel', x: 1150, y: 210, w: 370, cls: 'accent', tag: 'GCS', title: '發版 artifact（每週一版）', sub: '<code>dict_version: 202644</code> · <code>total</code> 固定 · <code>sha256</code><br><code>changed</code> · <code>affected_docs</code> · <code>rerun: targeted|full|none</code>' },
+
+    { id: 'stream', x: 760, y: 440, w: 240, tag: '串流', title: '滾動重啟載入新版', sub: '不在常駐 process 裡 add_word' },
+    { id: 'batch', x: 1020, y: 440, w: 240, tag: '回朔 job', title: '只重跑受影響文件', sub: '原文含變更字串、seg_ver 較舊' },
+    { id: 'search', x: 1280, y: 440, w: 240, tag: '搜尋端', title: '依自己的節奏', sub: '同義詞 reload；index-time 變更排定 reindex' }
+  ],
+  edges: [
+    { from: 's1', to: 'queue', route: 'h', mx: 287, toT: 0.15 },
+    { from: 's2', to: 'queue', route: 'h', mx: 287, toT: 0.29 },
+    { from: 's3', to: 'queue', route: 'h', mx: 287, toT: 0.43 },
+    { from: 's4', to: 'queue', route: 'h', mx: 287, toT: 0.57 },
+    { from: 's5', to: 'queue', route: 'h', mx: 287, toT: 0.71 },
+    { from: 's6', to: 'queue', route: 'h', mx: 287, toT: 0.85 },
+    { from: 'queue', to: 'review', align: 'y' },
+    { from: 'review', to: 'pr', align: 'y' },
+    { from: 'pr', to: 'ci', sides: ['right', 'left'], route: 'h', mx: 1125, toT: 0.5 },
+    { from: 'ci', to: 'rel', sides: ['bottom', 'top'], align: 'x', label: '全過才發版' },
+    { from: 'rel', to: 'stream', sides: ['bottom', 'top'], fromT: 0.12, my: 405, color: 'accent', dashed: true },
+    { from: 'rel', to: 'batch', sides: ['bottom', 'top'], fromT: 0.5, my: 405, color: 'accent', dashed: true },
+    { from: 'rel', to: 'search', sides: ['bottom', 'top'], fromT: 0.88, my: 405, color: 'accent', dashed: true }
+  ],
+  footL: '示意圖 · 流程為本研究設計；dict_version 202644 代表 2026 年第 44 週',
+  footR: 'q6/architecture/b-dictionary/diagram-dictionary-lifecycle.png'
+});
+</script></body></html>

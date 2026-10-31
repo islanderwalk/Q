@@ -1,0 +1,117 @@
+
+### 0. 版本
+working tree HEAD = b9da1cb；本輪程式 = 工作樹的 q5/code/backfill
+fc0b075^ = 0ee6bf8: backfill.py normalize.py 
+fc0b075 = fc0b075: backfill.py normalize.py tests/fake_es.py 
+Python 3.13.17
+
+### A. 產生樣本
+{"records": {"threads": 3521, "instagram": 200}, "injected": {"missing_reshare_key": 157, "missing_container": 78, "display_string": 18, "same_crawl_duplicate": 46, "null_reshare_observed": 659}, "faults": {"bad_json_line": 1, "bad_crawled_at": 1}}
+exit=0
+d43b233eba422aa2  34212 B  src/instagram/2026-05-04/reels.jsonl
+c5f4ff20145e9bb1  84845 B  src/threads/2026-05-04/batch_0001.json
+67899ec469eaeeb3  171725 B  src/threads/2026-05-11/batch_0001.json
+4034ed275ad55b28  270819 B  src/threads/2026-05-18/part-0000.jsonl
+3c9da5dc08007f71  415078 B  src/threads/2026-05-25/part-0000.jsonl
+expected.json sha256[:16] = 2accd204911ea6d0
+
+### B. 原型（V0）跑 python.md 記的示範指令（原型的輸入只有 *.json）
+exit=0
+posts=745 files=745 quality={'records': 973, 'alias_used:repost_count': 949, 'alias_used:quote_count': 949, 'alias_used:reshare_count': 891, 'missing:reshare_count': 58, 'null:reshare_count': 292, 'duplicate_older_dropped': 228, 'missing_container': 24, 'null:repost_count': 27, 'null:quote_count': 2
+bulk files: 745
+
+### C. 本輪跑同一個指令（--batch-docs 1）
+exit=0
+posts=2000 docs_written=1979 skipped_no_known_metric=21 files=1979 action=update quality={'alias_used:container=textPostAppInfo': 316, 'alias_used:quote_count=quoteCount': 316, 'alias_used:quote_count=quote_cnt': 633, 'alias_used:repost_count=repostCount': 316, 'alias_used:repost_count=repost_cnt': 
+bulk files: 1979
+
+### D. 預設批次（500 篇／5 MB）跑兩次到不同目錄，比對每個輸出檔的 sha256
+exit=0
+exit=0
+IDENTICAL outputs: 7 files
+22c753543c4542d0  bulk_00001.ndjson
+6201f1af923a0347  bulk_00002.ndjson
+a7b014d79e589072  bulk_00003.ndjson
+d001fc5b62ae1acd  bulk_00004.ndjson
+ce128fbca1850b76  manifest.json
+b05a70610e74ea4b  quality.json
+6cd02a163f7b0a87  rejects.jsonl
+IDENTICAL stdout
+run1 ids=1979 unique=1979 sha256[:16]=4f2316c1f30ae538
+run2 ids=1979 unique=1979 sha256[:16]=4f2316c1f30ae538
+out_b1 ids=1979 unique=1979 sha256[:16]=4f2316c1f30ae538
+exit=0
+
+### E. 同一個輸出目錄再跑一次（覆寫），輸出檔 sha256 不變
+exit=0
+IDENTICAL after rerun in place
+
+### F. 與 make_sample 的 expected.json 獨立核對；quality.json 節錄
+written=1979 expected=1979 mismatches=0
+exit=0
+gate {'max_reject_rate': 0.01, 'max_bad_files': 0, 'max_unknown_rate': 0.2} gate_failures []
+counts {"alias_used:container=textPostAppInfo": 316, "alias_used:quote_count=quoteCount": 316, "alias_used:quote_count=quote_cnt": 633, "alias_used:repost_count=repostCount": 316, "alias_used:repost_count=repost_cnt": 633, "alias_used:reshare_count=reshareCount": 295, "alias_used:reshare_count=reshare_cnt": 596, "docs": 2000, "dropped:bad_crawled_at": 1, "duplicate_records": 1521, "duplicate_same_crawled_at": 46, "from_older_crawl:quote_count": 23, "from_older_crawl:repost_count": 28, "from_older_crawl:reshare_count": 58, "invalid_type:repost_count": 18, "missing:reshare_count": 159, "missing_container": 78, "null:reshare_count": 366, "records": 3521, "rejected:bad_json_line": 1, "skipped:platform=instagram": 200, "unknown:quote_count": 21, "unknown:repost_count": 26, "unknown:reshare_count": 72}
+partition instagram/2026-05-04 records=0 rejected=0 skipped=200 unknown_rate={'repost_count': None, 'quote_count': None, 'reshare_count': None}
+partition threads/2026-05-04 records=321 rejected=0 skipped=0 unknown_rate={'repost_count': 0.0187, 'quote_count': 0.0156, 'reshare_count': 0.081}
+partition threads/2026-05-11 records=652 rejected=0 skipped=0 unknown_rate={'repost_count': 0.0322, 'quote_count': 0.0291, 'reshare_count': 0.0859}
+partition threads/2026-05-18 records=1005 rejected=0 skipped=0 unknown_rate={'repost_count': 0.0249, 'quote_count': 0.0179, 'reshare_count': 0.0557}
+partition threads/2026-05-25 records=1543 rejected=2 skipped=0 unknown_rate={'repost_count': 0.0285, 'quote_count': 0.0233, 'reshare_count': 0.0642}
+keys threads/2026-05-11: ['caption.text', 'text_post_app_info.quote_cnt', 'text_post_app_info.repost_cnt', 'text_post_app_info.reshare_cnt', 'user.username']
+
+### G. 壞資料：整檔截斷（.json）
+V0 exit=1
+json.decoder.JSONDecodeError: Unterminated string starting at: line 1 column 4990 (char 4989)
+exit=3
+GATE FAILED: ['bad_files 1 > 0'] quality={'alias_used:quote_count=quote_cnt': 633, 'alias_used:repost_count=repost_cnt': 633, 'alias_used:reshare_count=reshare_cnt': 596, 'docs': 1968, 'dropped:bad_cr
+quality.json
+rejects.jsonl
+{"where": "threads/2026-05-04/batch_0001.json", "reason": "bad_json_file"}
+{"where": "threads/2026-05-25/part-0000.jsonl:772", "reason": "bad_json_line"}
+{"where": "threads/2026-05-25/part-0000.jsonl:1545", "reason": "bad_crawled_at"}
+--max-bad-files 1 exit=0
+posts=1968 docs_written=1946 skipped_no_known_metric=22 files=4 action=update quality={'alias_used:quote_count=quote_cnt': 633, 'alias_used:repost_count=repost_
+
+### H. 壞資料：2026-05-18 分區每 10 行截斷 1 行
+truncated_lines=101
+exit=0
+exit=3
+GATE FAILED: ['reject_rate 103/3523=0.0292 > 0.01'] quality={'alias_used:container=textPostAppInfo': 316, 'alias_used:quote_count=quoteCount': 316, 'alias_used:quote_count=quote_cnt': 633, 'alias_used
+V0 exit=0
+posts=745 files=2 quality={'records': 973, 'alias_used:repost_count': 949, 'alias_used:quote_count': 949, 'alias_used:re
+
+### I. 參數錯誤
+exit=2
+backfill.py: error: --src 不是目錄：<tmp>/work/q5/fix/cli/run/nope
+
+### J. IG（platform=instagram，src 指到 instagram prefix）
+exit=0
+posts=200 docs_written=195 skipped_no_known_metric=5 files=1 action=update quality={'alias_used:video_view_count=video_view_count': 18, 'docs': 200, 'missing:video_view_count': 5, 'records': 200, 'unknown:video_view_count': 5}
+written=195 expected=195 mismatches=0
+exit=0
+
+### K. 分區關卡：2026-05-11 一週的計數欄位改成別名表沒有的名稱（reposts／quotes／reshares）
+renamed_keys=1862
+exit=0
+V1 exit=0
+V1 gate_failures [] skipped_no_known_metric 117 docs_written 1883
+exit=3
+gate_failures ['unknown_rate threads/2026-05-11 repost_count 652/652=1.0000 > 0.2', 'unknown_rate threads/2026-05-11 quote_count 652/652=1.0000 > 0.2', 'unknown_rate threads/2026-05-11 reshare_count 652/652=1.0000 > 0.2']
+threads/2026-05-11 records 652 unknown_rate {'repost_count': 1.0, 'quote_count': 1.0, 'reshare_count': 1.0} count keys ['text_post_app_info.quotes', 'text_post_app_info.reposts', 'text_post_app_info.reshares']
+quality.json
+rejects.jsonl
+--max-unknown-rate 1 exit=0
+posts=2000 docs_written=1883 skipped_no_known_metric=117 files=4 action=update quality={'alias_used:container=textPostAp
+
+### L. 送出端遇到單筆 429：原型（V0）與本輪
+send={'failed': 1, 'files_sent': 1, 'ok': 1} es_requests=1 rejected_item_stored=False
+V0 exit=0
+send={'files_sent': 1, 'ok': 2, 'requests': 2, 'retried_items': 1} es_requests=2 rejected_item_stored=True
+exit=0
+
+### M. 時間戳：線上 T2 已有 repost 20，回補只有 T1（三欄）與 T3（缺 repost key）：上一輪（V1）與本輪
+send={'files_sent': 1, 'ok': 1, 'requests': 1}
+online_after={"counts_crawled_at": 1778100000000, "post_id": "P1", "text_post_app_info": {"quote_count": 3, "repost_count": 10, "reshare_count": 3}}
+V1 exit=0
+send={'files_sent': 1, 'ok': 1, 'requests': 1}
+online_after={"counts_at": {"quote_count": 1778100000000, "repost_count": 1778000000000, "reshare_count": 1778100000000}, "post_id": "P1", "text_post_app_info": {"quote_count": 3, "repost_count": 20, "reshare_count": 3}}
+exit=0

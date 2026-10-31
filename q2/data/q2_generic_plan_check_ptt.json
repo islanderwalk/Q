@@ -1,0 +1,260 @@
+{
+  "started_at": "2026-10-30T23:32:52+00:00",
+  "python": "3.13.17",
+  "psycopg": "3.3.6",
+  "params": {
+    "host": "127.0.0.1",
+    "port": 55433,
+    "user": "postgres",
+    "db": "q2_ptt_bigm",
+    "terms": [
+      "台灣",
+      "高雄",
+      "颱風",
+      "政府",
+      "捷運站",
+      "柯文哲",
+      "中華民國"
+    ],
+    "explain_terms": [
+      "颱風",
+      "政府"
+    ],
+    "repeats": 3,
+    "out": "<tmp>/work/q2bigm/out3/q2_generic_plan_check_ptt.json"
+  },
+  "runs": {
+    "psycopg_default": {
+      "台灣": {
+        "count": 542820,
+        "median_ms": 592.573,
+        "all_ms": [
+          618.195,
+          586.575,
+          592.573
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "高雄": {
+        "count": 46393,
+        "median_ms": 583.007,
+        "all_ms": [
+          582.661,
+          588.067,
+          583.007
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "颱風": {
+        "count": 33977,
+        "median_ms": 9720.607,
+        "all_ms": [
+          9663.186,
+          9781.516,
+          9720.607
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "政府": {
+        "count": 34617,
+        "median_ms": 10581.553,
+        "all_ms": [
+          10581.553,
+          10989.955,
+          10157.439
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "捷運站": {
+        "count": 3152,
+        "median_ms": 23.35,
+        "all_ms": [
+          22.656,
+          23.35,
+          30.029
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "柯文哲": {
+        "count": 1578,
+        "median_ms": 3.77,
+        "all_ms": [
+          3.77,
+          4.794,
+          3.697
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "中華民國": {
+        "count": 28336,
+        "median_ms": 134.077,
+        "all_ms": [
+          127.394,
+          140.014,
+          134.077
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      }
+    },
+    "prepare_false": {
+      "台灣": {
+        "count": 542820,
+        "median_ms": 591.599,
+        "all_ms": [
+          560.837,
+          616.692,
+          591.599
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "高雄": {
+        "count": 46393,
+        "median_ms": 545.259,
+        "all_ms": [
+          545.259,
+          550.441,
+          542.406
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "颱風": {
+        "count": 33977,
+        "median_ms": 547.351,
+        "all_ms": [
+          622.549,
+          547.351,
+          534.23
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "政府": {
+        "count": 34617,
+        "median_ms": 666.361,
+        "all_ms": [
+          659.26,
+          669.83,
+          666.361
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Seq Scan"
+        ]
+      },
+      "捷運站": {
+        "count": 3152,
+        "median_ms": 24.19,
+        "all_ms": [
+          24.367,
+          24.082,
+          24.19
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "柯文哲": {
+        "count": 1578,
+        "median_ms": 4.143,
+        "all_ms": [
+          4.355,
+          4.143,
+          3.971
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      },
+      "中華民國": {
+        "count": 28336,
+        "median_ms": 126.933,
+        "all_ms": [
+          126.933,
+          126.91,
+          129.027
+        ],
+        "top_node": "Aggregate",
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ]
+      }
+    }
+  },
+  "explain": {
+    "颱風": {
+      "force_custom_plan": {
+        "plan_uses": [
+          "Seq Scan"
+        ],
+        "rows": 1,
+        "execution_ms": 579.435
+      },
+      "force_generic_plan": {
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ],
+        "rows": 1,
+        "execution_ms": 9707.759
+      }
+    },
+    "政府": {
+      "force_custom_plan": {
+        "plan_uses": [
+          "Seq Scan"
+        ],
+        "rows": 1,
+        "execution_ms": 644.787
+      },
+      "force_generic_plan": {
+        "plan_uses": [
+          "Bitmap Index Scan",
+          "fb_posts_trgm_gin"
+        ],
+        "rows": 1,
+        "execution_ms": 9600.997
+      }
+    }
+  },
+  "server": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "rows": 1000000,
+  "rival_dropped_in_tx": "fb_posts_pg_bigm_gin",
+  "finished_at": "2026-10-30T23:35:12+00:00"
+}

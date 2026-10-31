@@ -1,0 +1,123 @@
+== q3 ==
+  + q3-ptt-over18 | 沒帶 cookie 時被導到 https://www.ptt.cc/ask/over18
+  + q3-ptt-index-latest | 最新頁 index39391，置底線以上 15 篇
+  + q3-ptt-index-20 | index39386：20 篇
+  + q3-ptt-live-invariants | 10 頁中篇數不是 20 的有 0 頁；時間戳倒退 0 次（共 197 篇）
+  + q3-ptt-article-top | 這篇留言 203 則
+  + q3-ptt-article-comments | 推 108、噓 7、→ 88；截斷提示列 0
+== q4 ==
+  + q4-threads-profile-nasa | 內嵌 4 串、5 篇
+  + q4-threads-profile-zuck | 內嵌 4 串、10 篇
+  ! pending q4-threads-graphql-observed 這次捲動沒觀察到帶貼文的 GraphQL 回應
+  + q4-threads-post-url | https://www.threads.com/@nasa/post/DfFP4pEET5Y
+  + q5-threads-repost-visible | 讚 —、回覆 —、轉發 —、分享 —
+== q5 ==
+  + q5-ig-reels-grid | 縮圖數字：4.2M、2.9M、2.3M、3.9M
+  + q5-ig-reel-page | 頁面沒有顯示觀看數文字
+== q2 ==
+  + q2-fb-page | 粉專名稱：NASA - National Aeronautics and Space Administration ；心情數 有；有登入視窗
+== q4 / q5 threads (v2) ==
+  + q4-threads-profile-nasa | 內嵌 4 串、5 篇
+  + q4-threads-graphql-observed | doc_id 28880431481598345、HTTP 200、11 串、401 KB
+  + q4-threads-profile-zuck | 內嵌 4 串、10 篇
+  + q4-threads-mobile-wall | 看到「Log in to see more from nasa.」；帶貼文的 GraphQL 回應 2 個
+  + q4-threads-post-url | https://www.threads.com/@nasa/post/DfFP4pEET5Y
+  + q5-threads-repost-visible | 讚 148、回覆 —、轉發 16、分享 1；5.5K views
+== gaps (2026-10-30 補證據：Q2 FB 貼文、Q5 IG JSON 對照、Q6 PTT 雜訊) ==
+  + q2-fb-post | 粉專名稱有；發文時間 5h；心情統計有；粉專數字 ID 未見（網址使用者名稱 NASA）；有登入視窗，照實截下
+  + q5-ig-reels-json-vs-grid | 縮圖 8 支皆有 play_count；前 6 支無條件捨去後與縮圖文字一致
+  + q5-ig-reel-fields-json | Reels 分頁 12 筆；單支 Reel 頁內嵌 JSON 42 段、觀看數 0 筆、XHR 0 筆
+  + q6-ptt-noise-01..04 | 4 張：短網址＋地名、地名、地名＋電話、電話（同篇聚焦電話）
+  loads（含探測腳本）: fb 9、ig 9、ptt 30（已達 30 上限，不再載入）；單一腳本內每站兩次導覽間隔 ≥2 秒
+  Q3 chart PNG: node q3/tools/capture.js charts 重產 10 張（來源說明已更新）
+== round2 (2026-10-30)：雲端容器 capture_round2_cloud.js ＋ 本機 capture_round2_residential.py ==
+-- 雲端容器（含重拍；最後採用的版本見 capture_manifest.json 的 round2 條目）
+== round2 cloud 2026-10-30T15:30:04+08:00 ==
+  threads {"hops":[{"status":200,"url":"https://www.threads.com/@nasa/post/DfFP4pEET5Y"}],"final":"https://www.threads.com/@nasa/post/DfFP4pEET5Y","err":null,"served":true} {"like":"266","repost":"22","share":"1","views":"9.1K views"} {"code":"DfFP4pEET5Y","taken_at":1793284975,"like_count":266,"direct_reply_count":14,"repost_count":18,"quote_count":4,"reshare_count":1}
+  + q5-threads-repost-drift | 第 1 次 2026-10-30T01:56:24+08:00：讚 148、轉發 16、分享 1、5.5K views；第 2 次：讚 266、轉發 22、分享 1、9.1K views；JSON repost_count 18、quote_count 4、reshare_count 1
+  fb {"hops":[{"status":302,"url":"https://www.facebook.com/NASA"},{"status":200,"url":"https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FNASA"}],"final":"https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FNASA","err":null,"login":true}
+  + q2-fb-cloud-ip-login | 302 → 200；最後網址 https://www.facebook.com/login/；登入表單 有
+  ig {"hops":[{"status":302,"url":"https://www.instagram.com/nasa/reels/"},{"status":429,"url":"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnasa%2Freels%2F&is_from_rle"}],"final":"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnasa%2Freels%2F&is_from_rle","err":null,"login":false}
+  + q5-ig-cloud-ip-login | 302 → 429；最後網址 https://www.instagram.com/accounts/login/；登入表單 無
+  loads: {"threads":1,"fb":1,"ig":1}
+== round2 cloud 2026-10-30T15:31:30+08:00 ==
+  threads {"hops":[{"status":200,"url":"https://www.threads.com/@nasa/post/DfFP4pEET5Y"}],"final":"https://www.threads.com/@nasa/post/DfFP4pEET5Y","err":null,"served":true} {"like":"266","repost":"22","share":"1","views":"9.1K views"} {"code":"DfFP4pEET5Y","taken_at":1793284975,"like_count":266,"direct_reply_count":14,"repost_count":18,"quote_count":4,"reshare_count":1}
+  + q5-threads-repost-drift | 第 1 次 2026-10-30T01:56:24+08:00：讚 148、轉發 16、分享 1、5.5K views；第 2 次：讚 266、轉發 22、分享 1、9.1K views；JSON repost_count 18、quote_count 4、reshare_count 1
+  fb {"hops":[{"status":302,"url":"https://www.facebook.com/NASA"},{"status":200,"url":"https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FNASA"}],"final":"https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2FNASA","err":null,"login":true}
+  + q2-fb-cloud-ip-login | 302 → 200；最後網址 https://www.facebook.com/login/；登入表單 有
+  ig {"hops":[{"status":302,"url":"https://www.instagram.com/nasa/reels/"},{"status":429,"url":"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnasa%2Freels%2F&is_from_rle"}],"final":"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnasa%2Freels%2F&is_from_rle","err":null,"login":false}
+  + q5-ig-cloud-ip-login | 302 → 429；最後網址 https://www.instagram.com/accounts/login/；登入表單 無
+  loads: {"threads":1,"fb":1,"ig":1}
+== round2 cloud 2026-10-30T15:32:23+08:00 ==
+  ig {"hops":[{"status":302,"url":"https://www.instagram.com/nasa/reels/"},{"status":429,"url":"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnasa%2Freels%2F&is_from_rle"}],"final":"https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fnasa%2Freels%2F&is_from_rle","err":null,"login":false}
+  + q5-ig-cloud-ip-login | 302 → 429；最後網址 https://www.instagram.com/accounts/login/；登入表單 無
+  loads: {"ig":1}
+== round2 ptt 2026-10-30T15:33:02+08:00 ==
+  ptt rows=31 candidates=22
+  ptt article domains=reurl.cc,tinyurl.com phones=0 title=[情報] 2026年全台捐血贈品
+  + q6-ptt-noise-05 | 短網址網域 reurl.cc、tinyurl.com；紅框 2 處；電話 0 則（已遮）
+  ptt article domains=- phones=0 title=[情報] 蝦皮直營 3M雙線牙線棒350入205元
+  ptt article domains=- phones=0 title=[情報] 石二鍋line集章任務最後一集
+  ptt article domains=- phones=0 title=[情報] 食二鍋看影片送肉豆腐水晶餃
+  ptt article domains=- phones=0 title=[情報] 新竹市：炎鹹酥雞，雞皮買一送一
+  ptt article domains=- phones=1 title=[情報] line 禮物 限量 中熱拿 -21元禮卷
+  ptt article domains=- phones=0 title=[情報] friday影音 2026的雙11方案
+  ptt article domains=- phones=0 title=[情報] 2026 雙11檔期 OTT 優惠
+  ptt article domains=- phones=0 title=[情報] 7-11早餐大冰奶特價
+  ptt article domains=- phones=0 title=[情報] 萊爾富限時/7-11超值/全家康康10/2
+  ptt article domains=- phones=0 title=[情報] 全新玉山證券APP 社群分享 最高可拿25
+  ptt article domains=bit.ly phones=0 title=[情報] 柯南展、奇美博埃及展折31元
+  + q6-ptt-noise-06 | 短網址網域 bit.ly；紅框 1 處；電話 0 則（已遮）
+  loads: {"ptt":14}
+== round2 ptt 2026-10-30T15:33:33+08:00 ==
+  ptt rows=0 candidates=1
+  ptt article domains=reurl.cc,tinyurl.com phones=0 title=[情報] 2026年全台捐血贈品
+  + q6-ptt-noise-05 | 短網址網域 reurl.cc、tinyurl.com；紅框 2 處；電話 0 則（已遮）
+  loads: {"ptt":1}
+== round2 ptt 2026-10-30T15:33:52+08:00 ==
+  ptt rows=0 candidates=1
+  ptt article domains=reurl.cc,tinyurl.com phones=0 title=[情報] 2026年全台捐血贈品
+  + q6-ptt-noise-05 | 短網址網域 reurl.cc、tinyurl.com；紅框 3 處；電話 0 則（已遮）
+  loads: {"ptt":1}
+== round2 ptt 2026-10-30T15:34:15+08:00 ==
+  ptt rows=0 candidates=1
+  ptt article domains=reurl.cc,tinyurl.com phones=0 title=[情報] 2026年全台捐血贈品
+  + q6-ptt-noise-05 | 短網址網域 reurl.cc、tinyurl.com；紅框 5 處；電話 0 則（已遮）
+  loads: {"ptt":1}
+== round2 cloud 2026-10-30T20:29:07+08:00 ==
+  threads {"hops":[{"status":200,"url":"https://www.threads.com/@nasa/post/DfFP4pEET5Y"}],"final":"https://www.threads.com/@nasa/post/DfFP4pEET5Y","err":null,"served":true} {"like":"288","repost":"22","share":"1","views":"10.1K views"} {"code":"DfFP4pEET5Y","taken_at":1793284975,"like_count":288,"direct_reply_count":17,"repost_count":18,"quote_count":4,"reshare_count":1}
+  + q5-threads-repost-drift | 第 1 次 2026-10-30T01:56:24+08:00：讚 148、轉發 16、分享 1、5.5K views；第 2 次 2026-10-30T15:31:17+08:00：讚 266、轉發 22（18＋4）、9.1K views；第 3 次：讚 288、轉發 22、分享 1、10.1K views；JSON repost_count 18、quote_count 4、reshare_count 1
+  loads: {"threads":1}
+== round2 q3fix 2026-10-30T20:29:12+08:00 ==
+  + q3-ptt-article-comments | 留言 261 則：推 150、噓 10、→ 101；帳號 261 個與 IP 262 處已遮
+  loads: {"ptt":1}
+== round2 q3fix 2026-10-30T20:29:42+08:00 ==
+  + q3-ptt-article-comments | 留言 261 則：推 150、噓 10、→ 101；帳號 261 個與 IP 262 處已遮
+  loads: {"ptt":1}
+-- 本機（住宅 IP）
+== round2 residential fb,ig 2026-10-30T15:39:27+08:00 ==
+  fb home: {"ids": {"userID": ["100044561550831"]}, "metas": {"al:android:url": "profile/100044561550831", "al:ios:url": "profile/100044561550831"}, "ctimes": [{"t": 1793310300, "n": 3}], "ptimes": [], "rel": "9h", "heads": ["NASA - National Aeronautics and Space Administration", "Intro", "Photos"], "dialog": true, "title": "NASA - National Aeronautics and Space Administration | Facebook"} post: https://www.facebook.com/NASA/posts/pfbid02i7hXRsxkXQbb9mvtxBb5jCBdb4pk8xitpnP3cCZF6C56PXk5SNU8sfuwEobZzV5zl
+  fb post: {"ids": {"actorID": ["100044561550831"]}, "metas": {}, "ctimes": [{"t": 1793310300, "n": 3}], "ptimes": [], "rel": "9h", "heads": ["NASA - National Aeronautics and Space Administration's Post", "NASA - National Aeronautics and Space Administration"], "dialog": true, "title": "Welc... - NASA - National Aeronautics and Space Administration | Facebook"}
+  + q2-fb-post-time-ids | 畫面 9h；creation_time 1793310300（2026-10-30 05:45，距今 9.9 小時）；一致；ID 欄位 userID: 100044561550831；actorID: 100044561550831；al:android:url: profile/100044561550831；al:ios:url: profile/100044561550831
+  fb transparency: {"pageIdText": "54971236771", "created": null, "hasLabel": true, "dialog": true, "url": "https://www.facebook.com/NASA/about_profile_transparency"}
+  + q2-fb-page-transparency | Page ID 字樣 有；數字 54971236771；登入視窗 有
+  ig status=200 final=https://www.instagram.com/nasa/reels/ wall=False codes_now=12 matched=9
+   DfF3eqGSKKc: 1104795 -> 1428226 (+323431, 29.28%)
+   De7XCa_TJ4h: 4298087 -> 4322058 (+23971, 0.56%)
+   De2t82PPyx9: 2929414 -> 2940974 (+11560, 0.39%)
+   Dez3pRXgW1d: 2400913 -> 2409469 (+8556, 0.36%)
+   DeuH0dDFGcg: 3994446 -> 4001806 (+7360, 0.18%)
+   DeTUk4sDSp-: 11082721 -> 11089658 (+6937, 0.06%)
+   DeSM5CYPDfd: 3707327 -> 3707963 (+636, 0.02%)
+   DePHLhtON_i: 3191143 -> 3192098 (+955, 0.03%)
+   DeMIwYYPAMt: 4728200 -> 4730227 (+2027, 0.04%)
+  + q5-ig-reels-play-count-drift | 對上 9 支；DfF3eqGSKKc +323,431（+29.28%）；De7XCa_TJ4h +23,971（+0.56%）；De2t82PPyx9 +11,560（+0.39%）；Dez3pRXgW1d +8,556（+0.36%）
+  loads: {"fb": 3, "ig": 1}
+== round2 residential fb 2026-10-30T20:26:13+08:00 ==
+  fb home: {"ids": {"userID": ["100044561550831"]}, "metas": {"al:android:url": "profile/100044561550831", "al:ios:url": "profile/100044561550831"}, "ctimes": [{"t": 1793310300, "n": 3}], "ptimes": [], "rel": "14h", "heads": ["NASA - National Aeronautics and Space Administration", "Intro", "Photos"], "dialog": true, "title": "NASA - National Aeronautics and Space Administration | Facebook"} post: https://www.facebook.com/NASA/posts/pfbid02i7hXRsxkXQbb9mvtxBb5jCBdb4pk8xitpnP3cCZF6C56PXk5SNU8sfuwEobZzV5zl
+  fb post: {"ids": {"actorID": ["100044561550831"]}, "metas": {}, "ctimes": [{"t": 1793310300, "n": 3}], "ptimes": [], "rel": "14h", "heads": ["NASA - National Aeronautics and Space Administration's Post", "NASA - National Aeronautics and Space Administration"], "dialog": true, "title": "Welc... - NASA - National Aeronautics and Space Administration | Facebook"}
+  + q2-fb-post-time-ids | 畫面 14h；creation_time 1793310300（2026-10-30 05:45，距今 14.7 小時）；一致；ID 欄位 userID: 100044561550831；actorID: 100044561550831；al:android:url: profile/100044561550831；al:ios:url: profile/100044561550831
+  fb transparency: {"pageIdText": "54971236771", "created": null, "hasLabel": true, "dialog": true, "url": "https://www.facebook.com/NASA/about_profile_transparency"}
+  + q2-fb-page-transparency | Page ID 字樣 有；數字 54971236771；登入視窗 有
+  loads: {"fb": 3, "ig": 0}
+  載入次數合計：PTT 20（含 07:22 curl 1 次）、Threads 4（含 curl 1 次）、FB 雲端 4（含 curl 2 次）＋住宅 6、IG 雲端 5（含 curl 2 次）＋住宅 1；同站兩次導覽間隔 ≥2 秒

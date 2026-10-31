@@ -1,0 +1,149 @@
+{
+ "note": "publish_channels.py 送 267 篇後整批重送一次（至少一次投遞的重複），再送一則壞訊息 {not json}。訂閱 maxDeliveryAttempts=5。DLQ 訊息只 pull 不 ack（留著當證據）。計數取自 Prometheus max_over_time(...[3h])，含同一時段先前的重送測試。",
+ "dlq_messages": [
+  {
+   "data": "{not json",
+   "attributes": {
+    "channel": "ptt",
+    "post_id": "bad-1",
+    "CloudPubSubDeadLetterSourceDeliveryCount": "5",
+    "CloudPubSubDeadLetterSourceSubscription": "parsed-posts-seg-v1",
+    "CloudPubSubDeadLetterSourceTopicPublishTime": "2026-10-30T23:02:45.932Z",
+    "CloudPubSubDeadLetterSourceSubscriptionProject": "qsearch-local"
+   },
+   "publishTime": "2026-10-30T23:02:50.821Z"
+  },
+  {
+   "data": "{not json",
+   "attributes": {
+    "channel": "ptt",
+    "post_id": "bad-1",
+    "CloudPubSubDeadLetterSourceDeliveryCount": "5",
+    "CloudPubSubDeadLetterSourceSubscription": "parsed-posts-seg-v2",
+    "CloudPubSubDeadLetterSourceTopicPublishTime": "2026-10-30T23:02:45.932Z",
+    "CloudPubSubDeadLetterSourceSubscriptionProject": "qsearch-local"
+   },
+   "publishTime": "2026-10-30T23:02:50.993Z"
+  }
+ ],
+ "qseg_messages_total": [
+  {
+   "metric": {
+    "instance": "seg-v1:9108",
+    "job": "seg-service",
+    "pipeline": "v1",
+    "result": "ack"
+   },
+   "value": "631"
+  },
+  {
+   "metric": {
+    "instance": "seg-v2:9108",
+    "job": "seg-service",
+    "pipeline": "v2",
+    "result": "ack"
+   },
+   "value": "631"
+  },
+  {
+   "metric": {
+    "instance": "seg-v1:9108",
+    "job": "seg-service",
+    "pipeline": "v1",
+    "result": "bad"
+   },
+   "value": "5"
+  },
+  {
+   "metric": {
+    "instance": "seg-v2:9108",
+    "job": "seg-service",
+    "pipeline": "v2",
+    "result": "bad"
+   },
+   "value": "5"
+  }
+ ],
+ "qseg_docs_total_stream": [
+  {
+   "metric": {
+    "instance": "seg-v1:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v1",
+    "result": "created"
+   },
+   "value": "0"
+  },
+  {
+   "metric": {
+    "instance": "seg-v1:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v1",
+    "result": "updated"
+   },
+   "value": "267"
+  },
+  {
+   "metric": {
+    "instance": "seg-v1:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v1",
+    "result": "noop"
+   },
+   "value": "364"
+  },
+  {
+   "metric": {
+    "instance": "seg-v1:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v1",
+    "result": "errors"
+   },
+   "value": "0"
+  },
+  {
+   "metric": {
+    "instance": "seg-v2:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v2",
+    "result": "created"
+   },
+   "value": "0"
+  },
+  {
+   "metric": {
+    "instance": "seg-v2:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v2",
+    "result": "updated"
+   },
+   "value": "267"
+  },
+  {
+   "metric": {
+    "instance": "seg-v2:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v2",
+    "result": "noop"
+   },
+   "value": "364"
+  },
+  {
+   "metric": {
+    "instance": "seg-v2:9108",
+    "job": "seg-service",
+    "mode": "stream",
+    "pipeline": "v2",
+    "result": "errors"
+   },
+   "value": "0"
+  }
+ ]
+}

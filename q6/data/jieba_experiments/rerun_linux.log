@@ -1,0 +1,37 @@
+# Q6 jieba 實驗 Linux 重跑（2026-10-30，Ubuntu 24.04.5 容器，Python 3.13.17，jieba 0.42.1）
+# 下載：dict.txt.big sha256=b16011275c42955ccd81fc1adecc93a59dbb7926af69d93fc95d4943d40f6aad
+#       Gossiping-QA-Dataset.txt sha256=cf5ef0a931a8a14444a9854aa13cf6e7516b3ec4922b7cde5d45d13ed825ae79
+# 輸出寫在 scratch，不進 repo；這裡只留 verify 輸出、退出碼與比對結果
+
+$ python -I wordcloud_q6_verify.py dict.txt.big Gossiping-QA-Dataset.txt
+[2026-10-30T12:32:57Z] 環境：Python 3.13.17 · jieba 0.42.1 · CPU Intel(R) Xeon(R) Processor @ 2.10GHz · 單一行程
+[2026-10-30T12:32:57Z] 檔案 sha256（前 16 碼）：dict.txt.big=b16011275c42955c · Gossiping-QA-Dataset.txt=cf5ef0a931a8a144
+[2026-10-30T12:32:57Z] 語料：前 200,000 篇，5,804,392 字，平均 29.0 字
+[2026-10-30T12:33:03Z] 1) 吞吐：dict.txt.big＋HMM，50,000 篇／1,448,432 字，4.80 秒 → 301,854 字/秒
+[2026-10-30T12:33:03Z] 2) dict.txt.big 是否收錄：台積電=無、法說會=無、蝦皮購物=無、臺北車站=無、台北捷運=無、瑞豐夜市=無、護國神山=無、高雄市=有、臺北市=有
+[2026-10-30T12:33:48Z] 3) 新增「肥宅」（total 預設累加，total 87,043,992 → 87,043,993）：含該詞且改變 2,162 篇；不含該詞卻改變 52 篇
+[2026-10-30T12:34:10Z] 3) 新增「肥宅」（total 固定，total 87,043,992 → 87,043,992）：含該詞且改變 2,160 篇；不含該詞卻改變 0 篇
+[2026-10-30T12:34:10Z] 完成
+
+# 退出碼（第一輪 exp2、exp3 因輸出目錄不存在而 FileNotFoundError；補上 OUT.mkdir 後重跑）
+verify exit=0
+exp1 exit=0
+exp2 exit=1
+exp3 exit=1
+compare exit=1
+exp2(after mkdir fix) exit=0
+exp3(after mkdir fix) exit=0
+compare exit=0
+
+$ python -I compare_results.py q6/data/jieba_experiments <rerun_out>
+results.json: repo sha256=d0b50118846b53cde292cae38b2de5d08cf43b70be2586129aa0b35863a168d6 rerun sha256=2568b59a564c162aea209221b5a7095f6bc7e77149594a00fde35a9c2208d37e raw_equal=False equal_without_timing=True diff_fields=8 non_timing_diff_fields=0
+  $.throughput.default_dict_hmm_False.chars_per_sec: 512651 -> 537595
+  $.throughput.default_dict_hmm_False.seconds: 5.66 -> 5.4
+  $.throughput.default_dict_hmm_True.chars_per_sec: 209288 -> 206163
+  $.throughput.default_dict_hmm_True.seconds: 13.87 -> 14.08
+  $.throughput.dict_big_hmm_False.chars_per_sec: 511619 -> 526362
+  $.throughput.dict_big_hmm_False.seconds: 5.67 -> 5.51
+  $.throughput.dict_big_hmm_True.chars_per_sec: 285652 -> 290700
+  $.throughput.dict_big_hmm_True.seconds: 10.16 -> 9.98
+results2.json: repo sha256=12b3fbd79af98f843f158e7a8d368ed020fa0e81107e1548961d822009a8ea91 rerun sha256=12b3fbd79af98f843f158e7a8d368ed020fa0e81107e1548961d822009a8ea91 raw_equal=True equal_without_timing=True diff_fields=0 non_timing_diff_fields=0
+results3.json: repo sha256=22a51907c4409926f4de357fbdcd4f0bcf2b89e90833555b0d4f95f89319c83e rerun sha256=22a51907c4409926f4de357fbdcd4f0bcf2b89e90833555b0d4f95f89319c83e raw_equal=True equal_without_timing=True diff_fields=0 non_timing_diff_fields=0

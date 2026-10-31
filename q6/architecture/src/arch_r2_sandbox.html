@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script>
+<style>
+.row { display: grid; grid-template-columns: 300px 590px 590px; gap: 0; background: #fff; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; }
+.row > div { padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
+.row > div + div { border-left: 1.5px solid var(--line); }
+.row b { font-size: 14.5px; }
+.row.head { background: transparent; border: none; }
+.row.head > div { font-weight: 700; color: var(--muted); font-size: 13px; letter-spacing: .04em; padding-bottom: 0; }
+.row.head > div + div { border-left: none; }
+.n { color: var(--violet); font-weight: 700; }
+.k { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--muted); margin-right: 4px; }
+</style></head>
+<body><script>
+const R = [
+  ['新詞爆紅：加「肥宅」', '字典發版 r5（只加詞，total 固定）',
+   '文字雲：ES 找出原文含該字串、版本較舊的文章，只重算這些；搜尋：IK 遠端字典自動重載，接著對同一批文章 update_by_query',
+   '全量地面真值：42.5 萬篇中含該詞 <span class="n">22,271</span>、詞表會變 <span class="n">5,253</span>、不含該詞 <span class="n">0</span>；ES 定向重跑 22,271 篇 <span class="n">8.6 秒</span>，數字一致。IK 切版後 <span class="n">8–58 秒</span>生效，生效瞬間舊文件片語搜尋 <span class="n">22,088 → 0</span>，update_by_query <span class="n">1.9 秒</span>後回到 22,271'],
+  ['字典切錯被閘門擋', 'r3 回補：「全新／北」「出新／北」「問新／北投」',
+   'G2 必不可拆詞看斷點位置（「台北市長」→ 台北／市長 是對的，不算）；沒過的批次不放行，修字典發 r4，只重跑沒過的批次',
+   '12 批沒過 → r4 只重跑這 12 批，10 批過；剩 2 篇（「換新北放半天」「痛電新北」）詞頻拉到 3,000 仍切錯，<span class="n">人工豁免並寫進帳本</span>；其餘 34 批裡含「新北」的 787 篇定向重跑 0.28 秒'],
+  ['檢查規則本身錯', '第一輪 r2：46 批全部被「網址殘片」擋',
+   '查原文：PTT 的 www 是笑、NET 是服飾品牌、PHP 是話題；改成「詞出現在原文網址裡、且網址外沒有這個字才算洩漏」',
+   '改規則後誤擋 <span class="n">0</span>；真正的洩漏「信箱是msn.com」是清洗規則的 bug（中文緊貼網域時正規式失效），修程式後用 <span class="n">--force</span> 同版重跑'],
+  ['回補拖慢 PM 查詢', '3 個 task 同時寫',
+   'G3 改成跟「發版前、沒有回補時」量的探針基準比；超過上限就自動把全域限速砍半、等 15 秒再量',
+   '同一台機器上跑斷詞＋ES：全期查詢 p95 <span class="n">114 → 192 ms</span>（每秒 3,000 篇）、<span class="n">262 ms</span>（不限速）；只有 ES 寫入時 3,000 篇 p95 只多 <span class="n">11–27%</span>。G3 實際自動降速 <span class="n">3,000 → 1,500 → 750</span> 後通過'],
+  ['回補 task 被砍', '處理到第 3,000 篇時模擬 OOM（exit 137）',
+   'checkpoint 寫在 PostgreSQL；心跳超過 2 分鐘才能被別的 task 接手；重做的部分因 seg_ver 守門變 noop',
+   '心跳還新時另一個 task 領到 <span class="n">0</span> 個分區；過期後從第 <span class="n">3,000</span> 行接續。順手抓到：失敗分區會被同一個 Job 反覆重領、字典版本不符會無限迴圈 → 都改掉了'],
+  ['亂序、重送、壞訊息', 'Pub/Sub 至少一次投遞；回補與串流同時寫同一篇',
+   'Painless 腳本：seg_ver 只能前進；scripted upsert 讓斷詞可以比 parser 先到；parser 只做部分更新',
+   '8 個寫者、40 個版本亂序寫同一篇 → 最後一定是最大版；267 篇整批重送 <span class="n">全部 noop</span>；壞訊息 <span class="n">5 次</span>後進 DLQ；parser 先寫或後寫都不會蓋掉斷詞欄位'],
+  ['停用詞要加', '英文貼文（NASA）讓 and／of／in 進了 Facebook 文字雲',
+   '軟停用詞屬於顯示層：發 r6 只改查詢時清單，API 每 30 秒讀一次 current',
+   'API <span class="n">21 秒</span>後套用，ES <span class="n">0 次寫入</span>。順手抓到 API 讀清單時中文被當 Latin-1 解碼，軟停用詞其實一直沒生效 → 已修'],
+  ['六種渠道格式不同', 'FB、IG、YouTube、PTT、媒體、Threads 真實樣本',
+   '清洗依渠道（PTT 引言與簽名檔、媒體署名、FB「查看更多」、YouTube 時間碼），一律先處理完整網址再斷詞',
+   '前 30 詞雜訊：舊版 <span class="n">21–29</span> 個（標點、單字、網址殘片），新版 <span class="n">0</span>（FB 只剩 1 個「78th」）；FB 未登入只拿到 4 篇，樣本偏少'],
+  ['版本號排序', '字典版本 2026.10.30.10 對上 2026.11.01.1',
+   'seg_ver 逐段解析補零：演算法 × 10¹⁰ ＋ 年月日 × 100 ＋ 當天序號',
+   '原本直接把數字串起來，第 10 版會排在下個月第 1 版後面，舊版本會蓋掉新版本；改完用 update_by_query 遷移 42.5 萬篇，<span class="n">每秒 1.9 萬篇</span>'],
+  ['GCP 部署（不花錢）', '同一套容器搬到 GCP',
+   'GCS、Pub/Sub、Cloud Run 服務與 Jobs、Compute Engine 上的 ES＋Ops Agent、Cloud SQL、Cloud Monitoring 一一對應本機替身',
+   'PR #7 的 terraform plan 102 個資源、test 30 項通過，但不含 ES、斷詞服務、文字雲 API 與監控；這次只在本機跑，<span class="n">不 apply、0 元</span>']
+];
+const rowH = 104, top0 = 0;
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · 沙盤推演（真實環境實測）',
+  title: 'Q6 會碰到的 10 種情境：系統怎麼反應、實際跑出來的數字',
+  sub: '每列三欄：情境與觸發｜系統怎麼反應（設計）｜實測。前 9 列都在 q6/realenv 真的觸發過一次，第 10 列引用 PR #7 的 Terraform 結果；數字與日誌在 q6/realenv/results/，截圖在 q6/evidence/realenv/。',
+  height: top0 + R.length * (rowH + 10) + 10,
+  lanes: [], nodes: [], edges: [],
+  blocks: [
+    ...R.map((r, i) => ({ x: 0, y: top0 + i * (rowH + 10), w: 1520,
+      html: `<div class="row" style="height:${rowH}px"><div><b>${i + 1}. ${r[0]}</b><br><span class="k">觸發</span>${r[1]}</div><div>${r[2]}</div><div>${r[3]}</div></div>` }))
+  ],
+  footL: '環境：官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、OTel、Prometheus、Grafana；全部在容器內，零成本',
+  footR: 'q6/architecture/realenv/diagram-sandbox-scenarios.png'
+});
+</script></body></html>

@@ -1,0 +1,35 @@
+{
+ "channels": [
+  {
+   "handle": "TVBSNEWS01",
+   "handle_url": "https://www.youtube.com/@TVBSNEWS01",
+   "channel_id": "UC5nwNW4KdC0SzrhF9BXEYOQ",
+   "feed": "https://www.youtube.com/feeds/videos.xml?channel_id=UC5nwNW4KdC0SzrhF9BXEYOQ",
+   "feed_status": 200,
+   "name": "TVBS NEWS",
+   "entries": 15
+  },
+  {
+   "handle": "PNNPTS",
+   "handle_url": "https://www.youtube.com/@PNNPTS",
+   "channel_id": "UCexpzYDEnfmAvPSfG4xbcjA",
+   "feed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCexpzYDEnfmAvPSfG4xbcjA",
+   "feed_status": 200,
+   "name": "公視新聞網",
+   "entries": 15
+  },
+  {
+   "handle": "newsebc",
+   "handle_url": "https://www.youtube.com/@newsebc",
+   "channel_id": "UCR3asjvr_WAaxwJYEDV_Bfw",
+   "feed": "https://www.youtube.com/feeds/videos.xml?channel_id=UCR3asjvr_WAaxwJYEDV_Bfw",
+   "feed_status": 200,
+   "name": "東森新聞 CH51",
+   "entries": 15
+  }
+ ],
+ "failures": [],
+ "network_loads_this_run": {},
+ "cache_hits": 6,
+ "note": "整體載入次數以 _meta/fetch_log.jsonl＋manual_probes.json 為準"
+}

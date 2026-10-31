@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
+<body><script>
+const ev = (chip, text) => `<div class="card" style="font-size:13.5px;line-height:1.65">${chip} ${text}</div>`;
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (c) 一致性',
+  title: '(c) 字典改了要不要全部重跑？看改的是哪一層',
+  sub: '多數變更不需要全量重跑：顯示層在查詢時處理，斷詞層只重跑原文含變更字串的文件，只有換演算法才全量。',
+  height: 640,
+  nodes: [
+    { id: 'root', x: 610, y: 0, w: 300, tag: '每週發版前分類', title: '字典或規則變更' },
+    { id: 't1', x: 20, y: 150, w: 460, tag: '顯示層', title: '軟停用詞、黑名單、臺／台合併、同義合併', sub: '只改怎麼顯示，不改斷詞結果' },
+    { id: 't2', x: 530, y: 150, w: 460, tag: '斷詞層', title: '新增詞、刪詞、調頻率、新網址網域規則', sub: '只有原文含變更字串的句子會變（前提：total 固定）' },
+    { id: 't3', x: 1040, y: 150, w: 460, tag: '演算法層', title: '換斷詞器或模型、改過濾邏輯、改 total', sub: '所有文件都可能變' },
+    { id: 'a1', x: 20, y: 335, w: 460, cls: 'accent', tag: '不重跑', title: '查詢時套用', sub: 'terms 聚合的 exclude、聚合後合併；立即生效、可回復' },
+    { id: 'a2', x: 530, y: 335, w: 460, cls: 'gate', tag: '只重跑受影響文件', title: 'BigQuery 一次掃整批變更詞', sub: '圈出原文含變更字串、且 seg_ver 較舊的 doc_id → 限速重跑、條件寫入' },
+    { id: 'a3', x: 1040, y: 335, w: 460, cls: 'bad', tag: '全量', title: '開 terms_v3，藍綠切換', sub: '照 (a) 的批次流程跑；建議一季最多一次' }
+  ],
+  edges: [
+    { from: 'root', to: 't1', sides: ['bottom', 'top'], fromT: 0.2, my: 112 },
+    { from: 'root', to: 't2', sides: ['bottom', 'top'], align: 'x' },
+    { from: 'root', to: 't3', sides: ['bottom', 'top'], fromT: 0.8, my: 112 },
+    { from: 't1', to: 'a1', sides: ['bottom', 'top'], align: 'x', color: 'accent' },
+    { from: 't2', to: 'a2', sides: ['bottom', 'top'], align: 'x', color: 'warn' },
+    { from: 't3', to: 'a3', sides: ['bottom', 'top'], align: 'x', color: 'bad' }
+  ],
+  blocks: [
+    { x: 20, y: 500, w: 460, html: ev('<span class="chip doc">官方文件</span>', 'terms 聚合的 include／exclude 可以用 regex，也可以給精確值陣列，所以軟停用詞放查詢時就能生效。') },
+    { x: 530, y: 500, w: 460, html: ev('<span class="chip run">VM 實測</span>', '20 萬篇 PTT 貼文加入「肥宅」：total 預設累加時，52 篇不含該詞也變；total 固定後 0 篇。6 個流行詞影響 5% 貼文，超過門檻（例如 2%）就排夜間限速。') },
+    { x: 1040, y: 500, w: 460, html: ev('<span class="chip est">設計</span>', '改 total 會讓所有句子的路徑分數一起平移，屬於演算法層，要走完整的回朔流程。') }
+  ],
+  footL: '分層與門檻為本研究設計；實測腳本在 q6/code/jieba_experiments/',
+  footR: 'q6/architecture/c-consistency/diagram-change-tiers.png'
+});
+</script></body></html>

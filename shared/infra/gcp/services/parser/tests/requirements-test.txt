@@ -1,0 +1,4 @@
+# 只供測試（不進映像）。先裝 ../requirements.txt，再裝這份。
+pytest>=8,<10
+httpx>=0.27,<1      # fastapi.testclient 需要
+fastavro>=1.9,<2    # 選用：沒裝時 test_fastavro_check 會 skip，其餘照跑

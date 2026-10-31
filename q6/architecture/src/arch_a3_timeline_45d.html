@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script>
+<style>
+  .gantt { display: grid; grid-template-columns: 260px repeat(45, 26px); row-gap: 10px; align-items: center; }
+  .ax { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--muted); text-align: center; }
+  .lbl { font-size: 15px; font-weight: 600; padding-right: 12px; display: flex; justify-content: space-between; align-items: baseline; }
+  .lbl small { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .bar { height: 30px; border-radius: 6px; background: #0c6b63; color: #fff; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; padding: 0 8px; white-space: nowrap; overflow: hidden; }
+  .bar.crit { background: #b0223d; }
+  .bar.buf { background: repeating-linear-gradient(45deg, #dfe5e8, #dfe5e8 5px, #fff 5px, #fff 10px); color: var(--ink); border: 1.5px solid #c3cdd3; }
+  .bar.mach { height: 14px; background: #6a3cc0; opacity: .8; }
+  .ms { font-size: 12.5px; color: var(--ink); font-weight: 600; white-space: nowrap; }
+  .ms::before { content: "◆ "; color: #9a5806; }
+  .row-sep { grid-column: 1 / -1; border-top: 1px dashed #d6dee2; height: 0; }
+  .two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; }
+  .legend { display: flex; gap: 22px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 22px; height: 12px; border-radius: 3px; display: inline-block; }
+</style></head>
+<body><script>
+const tasks = [
+  ['基準量測', 1, 2, ''],
+  ['POC（1 渠道 × 1 月）', 3, 5, ''],
+  ['字典整併（共用字典）', 8, 10, 'crit'],
+  ['工程化：批次＋串流＋API', 18, 6, ''],
+  ['6 渠道回朔與驗收', 24, 12, 'crit'],
+  ['壓測與切換', 36, 3, ''],
+  ['緩衝', 39, 7, 'buf']
+];
+let g = '<div class="gantt"><div class="lbl" style="color:#55646f;font-size:13px">工作天</div>';
+for (let d = 1; d <= 45; d++) g += `<div class="ax">${d === 1 || d % 5 === 0 ? d : ''}</div>`;
+for (const [name, s, len, k] of tasks) {
+  g += `<div class="lbl">${name}<small>${len} 天</small></div>`;
+  if (s > 1) g += `<div style="grid-column: span ${s - 1}"></div>`;
+  g += `<div class="bar ${k}" style="grid-column: span ${len}">D${s}–${s + len - 1}</div>`;
+  if (s + len - 1 < 45) g += `<div style="grid-column: span ${45 - (s + len - 1)}"></div>`;
+}
+g += '<div class="row-sep"></div>';
+g += '<div class="lbl" style="color:#6a3cc0">機器：ES 寫入<small>約 46 小時</small></div>';
+g += '<div style="grid-column: span 23"></div><div class="bar mach" style="grid-column: span 12"></div><div style="grid-column: span 10"></div>';
+g += '<div class="lbl" style="color:#9a5806">里程碑</div>';
+g += '<div style="grid-column: span 6"></div><div class="ms" style="grid-column: span 10">D7 POC 指標過門檻</div>';
+g += '<div style="grid-column: span 6"></div><div class="ms" style="grid-column: span 10">D23 開始回補</div>';
+g += '<div style="grid-column: span 5"></div><div class="ms" style="grid-column: span 8">D38 6 渠道切預設</div>';
+g += '</div>';
+
+const legend = `<div class="legend">
+  <span><i class="sw" style="background:#0c6b63"></i>人力工作</span>
+  <span><i class="sw" style="background:#b0223d"></i>關鍵路徑：字典與驗收</span>
+  <span><i class="sw" style="background:#6a3cc0"></i>機器時間（離峰背景跑，不加進工期）</span>
+  <span><i class="sw" style="background:repeating-linear-gradient(45deg,#dfe5e8,#dfe5e8 4px,#fff 4px,#fff 8px);border:1px solid #c3cdd3"></i>緩衝</span>
+</div>`;
+const cards = `<div class="two">
+  <div class="card"><h3>假設</h3><ol>
+    <li>5 億篇、平均 300 字 → 1.5 × 10<sup>11</sup> 字</li>
+    <li>jieba 每核每秒 28.6 萬字 <span class="chip run">VM 實測</span></li>
+    <li>ES 部分更新會重新索引整篇 <span class="chip doc">官方文件</span>；限速每秒 3,000 篇、只在離峰 8 小時 <span class="chip est">假設</span></li>
+    <li>共用字典方案，字典整併約 10 天（題目提示）；PM 每渠道回饋 1–2 天</li>
+  </ol></div>
+  <div class="card"><h3>機器時間（和人力平行）</h3>
+    斷詞：1.5e11 ÷ 2.86e5 字/秒 ≈ 146 核心小時 → 64 核心約 2.3 小時<br>
+    寫入：5e8 ÷ 3,000 篇/秒 ≈ 46 小時 → 離峰約 6 晚<br>
+    改走不同字典：再加 20 天以上，約 65 天
+  </div>
+</div>`;
+
+renderDiagram({
+  eyebrow: 'QSearch 筆試 · 第 6 題 · (a) 歷史資料回朔',
+  title: '(a) 一位工程師 45 個工作天：關鍵路徑是字典與驗收',
+  sub: '機器時間算得出來、而且在背景跑；真正不確定的是字典迭代與 PM 驗收的來回，所以 POC 時就把驗收標準講定，並留 7 天緩衝。',
+  height: 640,
+  blocks: [
+    { x: 0, y: 0, w: 1520, html: g },
+    { x: 0, y: 420, w: 1520, html: legend },
+    { x: 0, y: 462, w: 1520, html: cards }
+  ],
+  footL: '估算：本研究假設＋VM 實測吞吐（jieba 0.42.1、Intel Xeon 2.1GHz 單核）',
+  footR: 'q6/architecture/a-backfill/diagram-timeline-45d.png'
+});
+</script></body></html>

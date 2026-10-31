@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<comment>IK Analyzer 擴充設定：遠端字典 = 字典 artifact（與 jieba 斷詞服務同一版核心詞庫）</comment>
+	<entry key="ext_dict"></entry>
+	<entry key="ext_stopwords"></entry>
+	<entry key="remote_ext_dict">http://dictsrv/current/ik_ext.dic</entry>
+	<entry key="remote_ext_stopwords">http://dictsrv/current/ik_stop.dic</entry>
+</properties>

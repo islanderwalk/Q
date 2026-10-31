@@ -1,0 +1,64 @@
+time="2026-10-30T22:56:50Z" level=warning msg="Found orphan containers (job-2, job-1, job-0, seed-2, seed-1, seed-0) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container qsearch-q6-seg-job-run-f5f1822734af Creating 
+ Container qsearch-q6-seg-job-run-f5f1822734af Created 
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.4/base.dict ...
+Dumping model to file cache /tmp/qseg-dict/jieba.udeddccb2d423168c4df71fb899d34da6.cache
+Loading model cost 1.122 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Dumping model to file cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 1.078 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 1.208 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.4/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.udeddccb2d423168c4df71fb899d34da6.cache
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.4/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.udeddccb2d423168c4df71fb899d34da6.cache
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.4/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.udeddccb2d423168c4df71fb899d34da6.cache
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.4/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.udeddccb2d423168c4df71fb899d34da6.cache
+Loading model cost 1.497 seconds.
+Prefix dict has been built successfully.
+Loading model cost 1.555 seconds.
+Prefix dict has been built successfully.
+Loading model cost 1.588 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 1.693 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 1.670 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 1.842 seconds.
+Prefix dict has been built successfully.
+Loading model cost 2.058 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 2.089 seconds.
+Prefix dict has been built successfully.
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Building prefix dict from /tmp/qseg-dict/qsearch-q6-2026.10.30.5/base.dict ...
+Loading model from cache /tmp/qseg-dict/jieba.u91a5ca5c494f5ca67afe67ec7d51c9ee.cache
+Loading model cost 1.934 seconds.
+Prefix dict has been built successfully.
+Loading model cost 1.815 seconds.
+Prefix dict has been built successfully.
+Loading model cost 2.021 seconds.
+Prefix dict has been built successfully.
+Loading model cost 2.174 seconds.
+Prefix dict has been built successfully.
+{"old": "qsearch-q6-2026.10.30.4", "new": "qsearch-q6-2026.10.30.5", "words": ["肥宅"], "docs": 424887, "contain_word": 22271, "changed_pinned_total": 5253, "changed_unpinned_total": 5253, "changed_without_word_pinned": 0, "changed_without_word_unpinned": 0, "examples_without_word_unpinned": [], "raw_tokens_changed_without_word_pinned": 0, "raw_tokens_changed_without_word_unpinned": 10, "total_pinned": 87043992, "total_unpinned": 87048656}

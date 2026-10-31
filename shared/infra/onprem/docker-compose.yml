@@ -1,0 +1,247 @@
+# QSearch 地端 stack（可實際啟動；驗證紀錄見 VERIFY.md）。
+# 與 docker-compose.example.yml（示意、未啟動）不同，本檔的每個映像都固定 tag@digest，並且跑過端到端測試。
+#
+#   docker compose -p qsearch-onprem --env-file .env.example up -d --build --wait
+#   docker compose -p qsearch-onprem --env-file .env.example run --rm smoke
+#   docker compose -p qsearch-onprem --env-file .env.example down -v
+#
+# 六段對照：排=scheduler、派=rabbitmq、抓=worker、存=minio、解=parser+postgres(pg_bigm)、用=clickhouse/opensearch/redis
+# 主機埠只綁 127.0.0.1:18100–18199（本機開發用；不可直接對外）。
+# 映像來源：Docker Hub 匿名拉取會 429，所以用 mirror.gcr.io（Docker Hub 的公開快取）。MinIO 官方已不再發佈
+# Docker 映像（docker.io/minio/minio、quay.io/minio/minio 皆拉不到），改用 bitnamilegacy/minio。
+
+name: qsearch-onprem
+
+x-app-env: &app-env
+  AMQP_URL: amqp://${RABBITMQ_USER:?set in .env}:${RABBITMQ_PASSWORD:?set in .env}@rabbitmq:5672/%2F
+  RABBITMQ_MGMT_URL: http://rabbitmq:15672
+  RABBITMQ_USER: ${RABBITMQ_USER:?set in .env}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?set in .env}
+  S3_ENDPOINT: minio:9000
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:?set in .env}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set in .env}
+  RAW_BUCKET: qsearch-raw-scraped
+  PG_DSN: postgresql://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/crawler
+  CLICKHOUSE_HOST: clickhouse
+  CLICKHOUSE_USER: ${CLICKHOUSE_USER:?set in .env}
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set in .env}
+  CLICKHOUSE_DB: qsearch
+  OPENSEARCH_URL: http://opensearch:9200
+  OPENSEARCH_INDEX: ptt-posts
+  REDIS_URL: redis://redis:6379/0
+  FIXTURE_ROOT: /fixtures
+  SCHEMA_PATH: /schemas/qsearch-crawl-event-v1.avsc
+  CRAWL_SOURCES: ptt
+  CRAWL_MAX_ATTEMPTS: "5"        # = Cloud Tasks retry_config.max_attempts
+  PARSER_MAX_ATTEMPTS: "5"       # = Pub/Sub qsearch-parser-sub max_delivery_attempts
+  CRAWL_RATE_PER_SECOND: "5"     # = Cloud Tasks max_dispatches_per_second
+  RETRY_BACKOFF_SECONDS: "0.5"
+
+x-build-common: &build-common
+  # 只有出口走 TLS 攔截 proxy 的建置環境需要 build_ca（CA bundle 以 BuildKit secret 掛載，不進映像層）。
+  secrets: [build_ca]
+
+x-app: &app
+  image: qsearch-onprem/app:0.1.0
+  build:
+    <<: *build-common
+    context: ./app
+  environment: *app-env
+  volumes:
+    # 「抓」只讀 repo 內的 fixture，不連外（不爬真實網站）。
+    - ../../capture/html:/fixtures/capture:ro
+    - ../../../q6/data/ptt_titles_7d.jsonl:/fixtures/q6/ptt_titles_7d.jsonl:ro
+    # 事件格式與 GCP 共用同一份 Avro schema。
+    - ../gcp/schemas:/schemas:ro
+  networks: [qsearch]
+
+services:
+  # ---------------- 派：RabbitMQ（Cloud Tasks + Pub/Sub 的替代）----------------
+  rabbitmq:
+    image: mirror.gcr.io/library/rabbitmq:3.13.7-management@sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set in .env}
+    ports:
+      - "127.0.0.1:18172:15672"   # 管理介面
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      # 先確認 server（rabbitmq 使用者）已建立 .erlang.cookie 才呼叫 CLI。
+      # 否則以 root 執行的健康檢查會搶先建立 root 擁有的 cookie，server 讀取時 eacces 而退出（實測發生過）。
+      test: ["CMD-SHELL", "test -f /var/lib/rabbitmq/.erlang.cookie && rabbitmq-diagnostics -q check_port_connectivity"]
+      interval: 5s
+      timeout: 20s
+      retries: 30
+      start_period: 10s
+    networks: [qsearch]
+
+  # ---------------- 存：MinIO（GCS raw-scraped 的替代，S3 相容）----------------
+  minio:
+    image: mirror.gcr.io/bitnamilegacy/minio:2025.4.22@sha256:50cec18ac4184af4671a78aedd5554942c8ae105d51a465fa82037949046da01
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env}
+    ports:
+      - "127.0.0.1:18190:9000"    # S3 API
+      - "127.0.0.1:18191:9001"    # console
+    volumes:
+      - minio-data:/bitnami/minio/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [qsearch]
+
+  # ---------------- 解：PostgreSQL 15 + pg_bigm（Cloud SQL POSTGRES_15 的替代）----------------
+  postgres:
+    image: qsearch-onprem/postgres-bigm:15.19-pgbigm1.2-20250903
+    build:
+      <<: *build-common
+      context: ./postgres-bigm
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: crawler
+    ports:
+      - "127.0.0.1:18132:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d crawler"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [qsearch]
+
+  # ---------------- 用：ClickHouse（BigQuery ingest_events 的替代）----------------
+  clickhouse:
+    image: mirror.gcr.io/library/clickhouse:24.8@sha256:9eb59796efe815711207122267e407dd3b42efd90d01537e1c80118bfc642a11
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:?set in .env}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set in .env}
+      CLICKHOUSE_DB: qsearch
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    # 官方建議 ulimits nofile=262144；本次驗證的 sandbox 不允許提高 rlimit（runc: operation not permitted），所以不設定。
+    # 正式機請加上：ulimits: {nofile: {soft: 262144, hard: 262144}}
+    ports:
+      - "127.0.0.1:18123:8123"    # HTTP 介面
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [qsearch]
+
+  # ---------------- 用：OpenSearch（Elasticsearch 的替代；單節點、關閉 security，僅本機）----------------
+  opensearch:
+    image: mirror.gcr.io/opensearchproject/opensearch:2.19.2@sha256:69588c664014fa3d3260ed5dd337f8538fec94790dad00bfbe92301eaaaac240
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "false"
+      DISABLE_SECURITY_PLUGIN: "true"        # 僅本機驗證；不可對外
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # 本次驗證的 sandbox 磁碟對 OpenSearch 而言已用 92%（超過 high watermark 90%），
+      # OpenSearch 會自動設 cluster.blocks.create_index=true，連重建索引都會被擋。
+      # 只在本機驗證關閉磁碟水位檢查；正式機應保留預設並監控磁碟。
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+    ports:
+      - "127.0.0.1:18192:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+    networks: [qsearch]
+
+  # ---------------- 用：Redis（Firestore session 池的替代；AOF 持久化）----------------
+  redis:
+    image: mirror.gcr.io/library/redis:7.4.6@sha256:a9cc41d6d01da2aa26c219e4f99ecbeead955a7b656c1c499cce8922311b2514
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    ports:
+      - "127.0.0.1:18179:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [qsearch]
+
+  # ---------------- 一次性初始化（對應 Terraform 建 bucket/topic/subscription/table）----------------
+  bootstrap:
+    <<: *app
+    command: ["python", "-m", "qsearch_onprem.bootstrap"]
+    restart: "no"
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+      minio: {condition: service_healthy}
+      postgres: {condition: service_healthy}
+      clickhouse: {condition: service_healthy}
+      opensearch: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  # ---------------- 排：scheduler（Cloud Scheduler crawl-tick 每 15 分鐘）----------------
+  scheduler:
+    <<: *app
+    command: ["python", "-m", "qsearch_onprem.scheduler", "loop"]
+    environment:
+      <<: *app-env
+      TICK_INTERVAL_SECONDS: "900"
+      TICK_ON_START: "false"       # 驗證時由 smoke test 手動 tick，避免競態
+    restart: unless-stopped
+    depends_on:
+      bootstrap: {condition: service_completed_successfully}
+
+  # ---------------- 抓＋存：crawler worker ----------------
+  worker:
+    <<: *app
+    command: ["python", "-m", "qsearch_onprem.worker"]
+    restart: unless-stopped
+    depends_on:
+      bootstrap: {condition: service_completed_successfully}
+
+  # ---------------- 解：parser（RabbitMQ consumer）----------------
+  parser:
+    <<: *app
+    command: ["python", "-m", "qsearch_onprem.parser"]
+    restart: unless-stopped
+    depends_on:
+      bootstrap: {condition: service_completed_successfully}
+
+  # ---------------- 端到端 smoke test（只在 run 時啟動）----------------
+  smoke:
+    <<: *app
+    profiles: ["tools"]
+    command: ["python", "-m", "pytest", "-v", "-s", "-p", "no:cacheprovider", "tests"]
+    environment:
+      <<: *app-env
+      RESULTS_DIR: /results
+    depends_on:
+      worker: {condition: service_started}
+      parser: {condition: service_started}
+
+networks:
+  qsearch:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+  minio-data:
+  postgres-data:
+  clickhouse-data:
+  opensearch-data:
+  redis-data:
+
+secrets:
+  build_ca:
+    # TLS 攔截 proxy 的 CA（只在建置時用、不進映像層）。一般環境留空即可。
+    file: ${BUILD_CA_BUNDLE:-./build/empty-ca.pem}
