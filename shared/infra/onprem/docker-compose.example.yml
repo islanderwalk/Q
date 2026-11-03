@@ -1,6 +1,6 @@
 # 地端對照的 compose 示意檔。
 # 狀態：【未實際啟動】本機沒有 docker / docker compose，只做了 YAML 解析檢查。
-# 用途：讓 UIUX 看到「哪個 GCP 節點對應哪個地端服務」，不是可直接上線的部署。
+# 用途：讓讀者看到「哪個 GCP 節點對應哪個地端服務」，不是可直接上線的部署。
 #
 # 使用前必須處理：
 #   1. 把 image 換成實際建置的映像（crawler-api、crawler-worker、parser、scheduler、backfill 目前是佔位名稱）。

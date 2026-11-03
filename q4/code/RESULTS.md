@@ -14,7 +14,7 @@
 
 | 項目 | 值 |
 |---|---|
-| OS | Linux 6.18.44（雲端容器），對外連線經過容器的代理，出口 IP 沒有記錄 |
+| OS | Linux 6.18.44（容器），對外連線經過容器的代理，出口 IP 沒有記錄 |
 | Python | 3.13.17（`<tmp>/venv/bin/python`） |
 | 套件 | requests 2.34.2、urllib3 2.8.0、playwright 1.64.1、pytest 9.2.0 |
 | 瀏覽器 | Google Chrome for Testing 153.0.8010.12（`/opt/pw-browsers/chromium`），無頭 |
@@ -47,7 +47,7 @@ cd <repo> && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q4/code/threads_q4_
 | 9 | 22:33:51–22:34:14 | pytest（審查修正後，指令見「pytest 結果」） | 0 | 16 passed |
 | 10 | 22:34:22–22:34:23 | `PYTHONDONTWRITEBYTECODE=1 PLAYWRIGHT_BROWSERS_PATH=<tmp>/work/q4/fix2/empty_pw <tmp>/venv/bin/python -m pytest -q -rs -p no:cacheprovider q4/code/tests` | 0 | 13 passed、3 skipped（找不到 Chromium 時的行為） |
 | 11 | 22:34:23 | `PYTHONDONTWRITEBYTECODE=1 HTTPS_PROXY=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 <tmp>/venv/bin/python q4/code/threads_q4_measure.py --mode http --delay 0 --out q4/data/threads_q4_out` | 2 | `results.json 已經存在，不覆蓋`；stdout 是空的，沒有開新目錄，舊檔 sha256 不變（`5926a514…`） |
-| 12 | 22:26:45 | `cd <tmp>/work/q4/fix2 && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -I replay_dump.py > replay_dump.log 2>&1` | 0 | 重放結果與 commit `0ee6bf8` 逐位元組相同；12:32:37 與 12:43:57 兩版只差 1 行註解 |
+| 12 | 22:26:45 | `cd <tmp>/work/q4/fix2 && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -I replay_dump.py > replay_dump.log 2>&1` | 0 | 重放結果與 commit 進 repo 的 12:43:57 版逐位元組相同；12:32:37 與 12:43:57 兩版只差 1 行註解 |
 | 13 | 22:23（結束於 22:23:46） | `cd /tmp && PYTHONDONTWRITEBYTECODE=1 timeout 120 <tmp>/venv/bin/python -I <tmp>/work/q4/fix2/navs_probe.py /opt/pw-browsers/chromium > <tmp>/work/q4/fix2/navs_probe.log 2>&1` | 0 | 本機假站：單純一頁 `navigations` 1 筆、文件 1 份；載入後 `history.replaceState` 一次是 2 筆、1 份；JS 轉址加 302 是 2 筆、3 份 |
 | 14 | 2026-10-31 04:03:38–04:03:59 | `PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=<tmp>/work/q4ans/pt14 q4/code/tests > <tmp>/work/q4ans/q4_pytest_1031.log 2>&1`（補答案字數測試 `test_q4_answer_length.py` 後） | 0 | 17 passed |
 | 15 | 2026-10-31 04:24:05–04:24:29 | 同 #14，`--basetemp=<tmp>/work/q4ans/pt15`，log 是 `q4_pytest_1031b.log`（字數測試只改說明之後） | 0 | 17 passed |
@@ -70,7 +70,7 @@ with sync_playwright() as p:
 "; echo exit=$?
 ```
 
-#6、#7、#8 的輸出當時沒有另存成檔案，是從本 session 的工作紀錄（不在 repo 內）找回的，摘錄在 `<tmp>/work/q4/fix/transcript_excerpts.txt`。
+#6、#7、#8 的輸出當時沒有另存成檔案，是從當時的工作紀錄（不在 repo 內）找回的，摘錄在 `<tmp>/work/q4/fix/transcript_excerpts.txt`。
 
 ### 前一次被中斷的嘗試（07:46–07:57 UTC）
 
@@ -100,7 +100,7 @@ for dev in desktop mobile desktop-1440; do sleep 4; date -Is > run_browser_$dev.
 
 ### 程式版本
 
-#4、#5 跑完之後，程式檔在 12:43:57 又改過一次，所以光看檔案無法確定 commit 進去的就是當時跑的那一份。這次照工作紀錄的順序重放每一次編輯：Write、Edit 直接套用；Bash 裡的 python 取代只用 `ast` 解析出字串常數再做取代，不執行紀錄裡的程式。重放的最後結果和 commit `0ee6bf8` 的檔案逐位元組相同，所以下表就是各輪實際跑的版本：
+#4、#5 跑完之後，程式檔在 12:43:57 又改過一次，所以光看檔案無法確定 commit 進去的就是當時跑的那一份。這次照工作紀錄的順序重放每一次編輯：整檔寫入與逐段取代直接套用；shell 裡的 python 取代只用 `ast` 解析出字串常數再做取代，不執行紀錄裡的程式。重放的最後結果和 commit 進 repo 的檔案逐位元組相同，所以下表就是各輪實際跑的版本：
 
 | 版本（UTC） | 改了什麼 | sha256 | 跑了哪些 |
 |---|---|---|---|
@@ -109,7 +109,7 @@ for dev in desktop mobile desktop-1440; do sleep 4; date -Is > run_browser_$dev.
 | 07:54:02 | 視窗設定改成 `DEVICES` 表；捲動前把滑鼠移到畫面中間 | `80e5450be2a3940a0f7a40d207a39e0322b12216c4b5dab37b1d13adccf53806` | 07:54:12 的桌面、手機、桌面 1440 |
 | 12:29:03 | 第一份 HTML 改在 response 事件當下讀；加 `html_summary`、`url_shape`、捲動紀錄 | `58bc5edd58ad77b439d9bf1236b302789a5923152971aac035c141852663cb24` | #1–#3 |
 | 12:32:37 | 視窗捲不動時改捲內層捲動區；dialog 記前 60 字 | `4777578f8411b081d2bd7290528af1ecf4d6dc24e182bfe28a515ca8dfd2aedf` | #4、#5 |
-| 12:43:57 | 只改 `document_wire_bytes` 那一行註解 | `a1cdd2f4e749e3a6c429c16f8d379d2915575b32a273719dc807fa7c0cc9d0f2` | commit `0ee6bf8`；#8 |
+| 12:43:57 | 只改 `document_wire_bytes` 那一行註解 | `a1cdd2f4e749e3a6c429c16f8d379d2915575b32a273719dc807fa7c0cc9d0f2` | commit 進 repo 的版本；#8 |
 | 審查修正，中斷前（17:51 UTC 以前） | 見「程式修改」 | `ced4fb0d45a13d10309d16741db9f55df77a01bf1d8d111cd356bd6312b1d3e9` | 中斷前的 pytest；22:23 的 pytest 與 #13；沒有再連 Threads |
 | 審查修正，本次 | 只改註解與模組 docstring：`framenavigated` 記的是什麼；「畫面」改稱「渲染後 DOM 裡的貼文連結」 | `eeb94f64fc69e25bb0084591c0cbf8f7d89de29fb7effbef9e9d3c6a2cee3f51` | #9–#11；沒有再連 Threads |
 
@@ -135,10 +135,10 @@ for dev in desktop mobile desktop-1440; do sleep 4; date -Is > run_browser_$dev.
 cd <repo> && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider q4/code/tests
 ```
 
-16 passed，退出碼 0（#9，22:33:51–22:34:14 UTC，22.25 秒，log：`<tmp>/work/q4/fix2/pytest_final.log`）。這是程式與測試檔都改完之後跑的，當時的 sha256 是 `threads_q4_measure.py` `eeb94f64…`、`test_threads_smoke.py` `40548a4b…`（`<tmp>/work/q4/fix2/code_sha_at_pytest_final.txt`），之後只改文件；文件改完後（22:35:11–22:35:33）再跑一次，16 passed、退出碼 0，程式與測試檔的 sha256 和 #9 相同（`pytest_end.log`、`code_sha_at_pytest_end.txt`）。這次動手前先跑過一次（22:23:04–22:23:34，16 passed，`pytest_baseline.log`），22:28 改用詞前又跑過一次（16 passed，23.19 秒，log 已被覆蓋），中斷前的修正也跑過 3 次，都是 16 passed。這輪修改前的 commit `80adb29` 只有 2 個測試，上一版 commit `0ee6bf8` 是 11 個，10-30 這輪結束時是 16 個，都在 `test_threads_smoke.py`：
+16 passed，退出碼 0（#9，22:33:51–22:34:14 UTC，22.25 秒，log：`<tmp>/work/q4/fix2/pytest_final.log`）。這是程式與測試檔都改完之後跑的，當時的 sha256 是 `threads_q4_measure.py` `eeb94f64…`、`test_threads_smoke.py` `40548a4b…`（`<tmp>/work/q4/fix2/code_sha_at_pytest_final.txt`），之後只改文件；文件改完後（22:35:11–22:35:33）再跑一次，16 passed、退出碼 0，程式與測試檔的 sha256 和 #9 相同（`pytest_end.log`、`code_sha_at_pytest_end.txt`）。這次動手前先跑過一次（22:23:04–22:23:34，16 passed，`pytest_baseline.log`），22:28 改用詞前又跑過一次（16 passed，23.19 秒，log 已被覆蓋），中斷前的修正也跑過 3 次，都是 16 passed。10-30 重測前的版本只有 2 個測試，10-30 12:43 commit 的版本是 11 個，10-30 這輪結束時是 16 個，都在 `test_threads_smoke.py`：
 
 - 13 個是純離線測試：內嵌 JSON 解析、被引用貼文、GraphQL 摘要、壓縮後與解壓後大小、預排 query 與分頁資訊、`main()` 的參數與輸出目錄。
-- 3 個用本機 127.0.0.1 的假站跑真的 Chromium，不連外網：「302 轉址＋內層捲動＋捲到底送 GraphQL」的流程用桌面、手機兩種視窗設定各跑一次，並檢查 `navigations` 只有 2 筆（302 的中間網址不記）；另一個是沒有內層捲動區時退回 `window.scrollTo`，同一頁載入後用 `history.replaceState` 改一次網址，檢查 `navigations` 變 2 筆、文件仍是 1 份。找 Chromium 的順序是 `Q4_CHROMIUM`、Playwright 自己的預設執行檔、`PLAYWRIGHT_BROWSERS_PATH` 底下的 `chromium` 連結；都找不到就 skip。把 `PLAYWRIGHT_BROWSERS_PATH` 指到空目錄實測（#10）：13 passed、3 skipped，退出碼 0。
+- 3 個用本機 127.0.0.1 的假站跑 Chromium，不連外網：「302 轉址＋內層捲動＋捲到底送 GraphQL」的流程用桌面、手機兩種視窗設定各跑一次，並檢查 `navigations` 只有 2 筆（302 的中間網址不記）；另一個是沒有內層捲動區時退回 `window.scrollTo`，同一頁載入後用 `history.replaceState` 改一次網址，檢查 `navigations` 變 2 筆、文件仍是 1 份。找 Chromium 的順序是 `Q4_CHROMIUM`、Playwright 自己的預設執行檔、`PLAYWRIGHT_BROWSERS_PATH` 底下的 `chromium` 連結；都找不到就 skip。把 `PLAYWRIGHT_BROWSERS_PATH` 指到空目錄實測（#10）：13 passed、3 skipped，退出碼 0。
 
 2026-10-31 經確認在答案補 robots.txt 一句，同時加 `test_q4_answer_length.py`（1 項：答案段連空白與換行 ≤ 600 字、與標題行寫的兩個字數一致、含 robots.txt），現在共 17 個。有 log 的兩次都是 17 passed、退出碼 0（#14、#15，指令與 log 見指令表）；在 #14 之前，04:02:21–04:02:59 單跑 Q4（`--basetemp` 是 `pt_q4`，17 passed）、04:03:01–04:03:23 和 Q1 一起跑（`pt_both`，62 passed）各一次，沒有留 log；更早一次把新測試檔命名為 `test_answer_length.py`，和 Q1 的同名測試檔一起收集時衝突，因此改名；`threads_q4_measure.py` 與 `test_threads_smoke.py` 沒有改，sha256 仍是 `eeb94f64…`、`40548a4b…`。
 
@@ -196,7 +196,7 @@ natgeo 手機那次分頁 query 的內容：
 - 桌面版的視窗本身不能捲（`scrollHeight` 等於視窗高 720），主欄是內層捲動區。#5 把內層捲到底（nasa 1,638 px、zuck 2,876 px、natgeo 1,387 px）之後沒有新貼文。滾輪本身沒有讓主欄移動：#4、#5 共 6 次載入，第 1 步 JS 捲動前內層捲動區的位置都是 0。#3 與前一次嘗試的 12 次桌面載入只有滾輪（#3 另加 `window.scrollTo`），沒有證據顯示主欄有被捲動。
 - 畫面上有一個 `role=dialog`：桌面是「Say more with Threads」註冊提示，手機是「Thread on Threads」開 App 提示。
 - 三個欄位：HTML 內嵌 JSON 每一篇都有 URL、內文、時間；GraphQL 回應 17/17；DOM 裡每個貼文連結都有 `<time>`。
-- 程式的 `inline_*` 欄位（進 repo 的 JSON 裡是舊名 `posts_before_scroll`、`posts_after_scroll` 等）量的是 `page.content()` 裡的內嵌 JSON，不是渲染後的貼文連結：natgeo 手機那次 DOM 裡的連結由 5 個變 22 個，內嵌 JSON 仍是 5 篇。10-27 的舊 `results.json` 也是這樣算，而且當時的 `scroll_loaded_more` 是比內嵌 JSON 的篇數，就算網頁真的載入下一頁也看不出來。
+- 程式的 `inline_*` 欄位（進 repo 的 JSON 裡是舊名 `posts_before_scroll`、`posts_after_scroll` 等）量的是 `page.content()` 裡的內嵌 JSON，不是渲染後的貼文連結：natgeo 手機那次 DOM 裡的連結由 5 個變 22 個，內嵌 JSON 仍是 5 篇。10-27 的舊 `results.json` 也是這樣算，而且當時的 `scroll_loaded_more` 是比內嵌 JSON 的篇數，就算網頁確實載入下一頁也看不出來。
 - HTML 預排的 `BarcelonaProfilePageDirectQuery` 在 07:50–07:57 存下的 HTML 裡是 `39586378077644222`，12:30 變成 `28894437973498594`；`BarcelonaProfileThreadsTabDirectQuery` 兩個時段都是 `28967344372926951`（07:50 的值是用現行程式重讀 scratch 裡的 HTML 得到的，log：`<tmp>/work/q4/fix/preloaded.log`）。
 
 ## 輸出與 log 位置
@@ -215,18 +215,18 @@ natgeo 手機那次分頁 query 的內容：
 
 ## 程式修改（`threads_q4_measure.py`）
 
-上一版（commit `0ee6bf8`，相對 `80adb29`）：
+上一版（10-30 12:43 的 commit，相對 10-30 重測前的版本）：
 
 - `--sec-fetch`：HTTP 模式多帶 `Sec-Fetch-Mode: navigate`、`Sec-Fetch-Dest: document`。
-- `wire_bytes` 改成真正的壓縮後大小（`r.raw.read(decode_content=False)`），`html_bytes` 是解壓後大小。舊版兩個欄位都是解壓後。
+- `wire_bytes` 改成壓縮後的實際大小（`r.raw.read(decode_content=False)`），`html_bytes` 是解壓後大小。舊版兩個欄位都是解壓後。
 - `--device`（desktop、desktop-1440、mobile）與 `--chromium`／`Q4_CHROMIUM`。
 - 瀏覽器模式記錄網頁自己送的 `/graphql`：friendly name、doc_id、狀態、大小、串數、篇數，variables 只記鍵名、`first` 與 `after` 是否為空。
-- 第一份 HTML 改在 `response` 事件當下讀取，並記下每份主框架文件的狀態與網址形狀（`url_shape` 只留路徑與 query 鍵名）。`80adb29` 沒有手機模式，讀的是 `page.content()`；「轉址後才呼叫 `resp.text()`」這個錯是前一次被中斷的嘗試在 07:49 寫進去的，commit 前已經修好，沒有進過 repo。
+- 第一份 HTML 改在 `response` 事件當下讀取，並記下每份主框架文件的狀態與網址形狀（`url_shape` 只留路徑與 query 鍵名）。10-30 重測前的版本沒有手機模式，讀的是 `page.content()`；「轉址後才呼叫 `resp.text()`」這個錯是前一次被中斷的嘗試在 07:49 寫進去的，commit 前已經修好，沒有進過 repo。
 - 捲動時，視窗不動就改捲最大的內層捲動區，並逐步記下捲動位置、DOM 貼文連結數、GraphQL 累計數。
 - `html_summary`：HTML 的分頁資訊（`has_next_page`、cursor 長度）與預排 query（`preloaded_queries`），HTTP 與瀏覽器共用。
 - 畫面量測多記 `scroll_height`、視窗高度、dialog 的前 60 個字。
 
-這次審查修正（相對 `0ee6bf8`）：
+這次審查修正（相對上一版）：
 
 - 被引用的貼文：`posts_in_json` 把嵌在 `share_info` 底下的貼文標成 `quoted`（同一篇只要在別處出現過就不算），`post_stats` 與 GraphQL 摘要多記 `quoted_posts`。帳號自己的串與回覆是 `posts − quoted_posts`。
 - 瀏覽器的 `posts_before_scroll` 等四個欄位改名為 `inline_posts_before_scroll` 等，並註明量的是內嵌 JSON，不是渲染後的貼文連結。
@@ -237,14 +237,14 @@ natgeo 手機那次分頁 query 的內容：
 - `framenavigated` 那一行加註解：`navigations` 的筆數不是導覽次數（見「流量」）。
 - 註解與 docstring 把「畫面」改稱「渲染後 DOM 裡的貼文連結」：`RENDERED_JS` 數的是 DOM 裡的連結，被對話框蓋住或還沒捲進視窗的也算。
 
-測試（`q4/code/tests/test_threads_smoke.py`）相對 `80adb29` 從 2 個增加到 16 個。這次新增：被引用貼文的計數、瀏覽器流程的手機視窗版、沒有內層捲動區時退回 `window.scrollTo`、`main()` 把 `--chromium`／`Q4_CHROMIUM` 傳給 `browser_fetch` 並開新的輸出目錄、`main()` 拒絕覆蓋既有的 `results.json`、`navigations` 在轉址與 `history.replaceState` 時各記幾筆。瀏覽器測試不再寫死 `/opt/pw-browsers/chromium`。
+測試（`q4/code/tests/test_threads_smoke.py`）相對 10-30 重測前的版本從 2 個增加到 16 個。這次新增：被引用貼文的計數、瀏覽器流程的手機視窗版、沒有內層捲動區時退回 `window.scrollTo`、`main()` 把 `--chromium`／`Q4_CHROMIUM` 傳給 `browser_fetch` 並開新的輸出目錄、`main()` 拒絕覆蓋既有的 `results.json`、`navigations` 在轉址與 `history.replaceState` 時各記幾筆。瀏覽器測試不再寫死 `/opt/pw-browsers/chromium`。
 
 ## 與既有說法的差異／修正
 
 | 既有說法（出處） | 證據 | 處理 |
 |---|---|---|
 | `shared/docs/python.md` §四：純 HTTP 抓 @nasa 得 0 篇（SHELL），與 README「HTML 只內嵌 4 串」不一致 | 不帶 Sec-Fetch 3/3 SHELL；帶 Sec-Fetch 3/3 各 4 串；瀏覽器 6/6 各 4 串 | 兩者都對，條件不同。README 補上條件。python.md 不在本資料夾，沒有改 |
-| `q4/README.md`：@nasa HTML 只內嵌 4 串、畫面 5 篇 | 4 串、5 篇在 HTTP＋Sec-Fetch、桌面、手機三種都一致。但 `threads_profile_nasa.png` 的畫面被「Say more with Threads」對話框蓋住，只看得到置頂那 1 篇；5 篇是截圖腳本數 HTML 內嵌 JSON 得到的（`shared/capture/capture_threads.py` 第 80–84 行，截圖標註也寫「HTML 內嵌 4 串、5 篇」） | 4 串正確，補上條件；「畫面 5 篇」改成「畫面只看得到 1 篇，5 篇是 HTML 內嵌 JSON 的計數」（PR #3 稽核指出，看過截圖後更正） |
+| `q4/README.md`：@nasa HTML 只內嵌 4 串、畫面 5 篇 | 4 串、5 篇在 HTTP＋Sec-Fetch、桌面、手機三種都一致。但 `threads_profile_nasa.png` 的畫面被「Say more with Threads」對話框蓋住，只看得到置頂那 1 篇；5 篇是截圖腳本數 HTML 內嵌 JSON 得到的（`shared/capture/capture_threads.py` 第 80–84 行，截圖標註也寫「HTML 內嵌 4 串、5 篇」） | 4 串正確，補上條件；「畫面 5 篇」改成「畫面只看得到 1 篇，5 篇是 HTML 內嵌 JSON 的計數」（稽核指出，看過截圖後更正） |
 | `q4/README.md`：@zuck 4 串、畫面 10 篇（「畫面」部分 2026-10-30 稽核已更正） | 4 串、10 篇；10 篇是 4 串加上串內回覆，不是 10 串 | 正確，補上說明 |
 | `q4/README.md` 的 `threads_profile_zuck`：稽核更正寫「10 篇是 DOM 計數」 | 截圖腳本的 10 篇也是數 HTML 內嵌 JSON 得到的（同上），截圖標註寫「HTML 內嵌 4 串、10 篇」。10/30 重測畫面 DOM 裡的貼文連結也是 10 個，數字本身沒錯 | 改成「HTML 內嵌 JSON 的計數」，並註明原寫「DOM 計數」 |
 | `q4/README.md` 的 `threads_graphql_desktop`：「個人頁載入時網頁自己送 `BarcelonaProfileThreadsTabRefetchableDirectQuery`」（11 串、401 KB） | 那張截圖的觀察時間包含載入後 4.5 秒與 1 次 1,600 px 的滾輪（`shared/capture/capture_threads.py`）。桌面：截圖腳本 1/1，量測程式 0/15（只有 #5 的 3 次確定捲到主欄）。手機：截圖腳本 1/2（01:51–01:52 +08 第一版 `shared/capture/capture.py` 捲 5 次沒收到帶貼文的回應，`capture_log.txt` 第 11 行，沒記 query 名稱；01:56 第二版捲 4 次看到），量測程式 1/3 | 改寫：那次是載入加 1 次捲動後看到的，網頁不是每次開頁都會送 |
@@ -269,9 +269,9 @@ natgeo 手機那次分頁 query 的內容：
 | #6 列的指令沒有 `-w`，卻寫狀態 200 | 實際指令有 `-w "status=%{http_code} …"`，輸出 `status=200 bytes=8506`；表中已換成完整指令 | 工作紀錄 |
 | #7 指令寫成 `python -I -c "...p.chromium.launch()..."`、時間「12:37 前後」 | 完整指令見上，時間 12:39:10–12:39:12 | 工作紀錄 |
 | 前一次嘗試「完整指令沒有留存」 | 已找回並列出 | 工作紀錄 |
-| #4、#5 用的是「最終版程式」 | 程式在 12:43:57 又改了一行註解；各輪實際跑的版本與 sha256 見「程式版本」 | 重放結果與 `0ee6bf8` 逐位元組相同 |
-| 「測試從 6 個增加到 11 個」 | 相對 `80adb29` 是從 2 個增加；6 個是前一次嘗試沒有 commit 的中間狀態 | `git show 80adb29:q4/code/tests/test_threads_smoke.py` |
-| 「手機模式原本在頁面轉址後才呼叫 `resp.text()`」 | 這個錯是前一次嘗試寫進去、commit 前修好的，`80adb29` 沒有手機模式 | 同上 |
+| #4、#5 用的是「最終版程式」 | 程式在 12:43:57 又改了一行註解；各輪實際跑的版本與 sha256 見「程式版本」 | 重放結果與 commit 進 repo 的檔案逐位元組相同 |
+| 「測試從 6 個增加到 11 個」 | 相對 10-30 重測前的版本是從 2 個增加；6 個是前一次嘗試沒有 commit 的中間狀態 | 10-30 重測前版本的 `q4/code/tests/test_threads_smoke.py` |
+| 「手機模式原本在頁面轉址後才呼叫 `resp.text()`」 | 這個錯是前一次嘗試寫進去、commit 前修好的，10-30 重測前的版本沒有手機模式 | 同上 |
 | natgeo 分頁 query「在捲到底後送出」「第 1 次把主欄捲到底之後」 | 回應在 JS 捲到底之前就到了，觸發原因分不出來 | `browser_mobile.json` 的 `scroll_steps`：第 1 步 JS 捲動當下主欄已是 8,224 px |
 | 「after 接在 HTML 那 4 串的 cursor 後面」 | 改標為推論，程式只記 `after` 不是空的 | DOM 裡 5 個連結加 17 篇剛好 22 個 |
 | 「natgeo 的 5 篇裡有 1 篇不是本人發的（轉發 @natgeotv）」 | 是 natgeo 自己貼文裡引用的 @natgeotv 貼文，程式把被引用那篇也算成 1 篇 | HTML 路徑 `share_info.quoted_post`、`q4/evidence/threads-profile-natgeo.png` |
@@ -280,7 +280,7 @@ natgeo 手機那次分頁 query 的內容：
 
 ## 未完成與限制
 
-- 401／速率封鎖沒有重測（依指示）。verification §7 的數字仍是 10-29 的單次結果。
+- 401／速率封鎖沒有重測。verification §7 的數字仍是 10-29 的單次結果。
 - 沒有自己組 GraphQL 請求（`after=null`、`first=10`、帶 csrftoken／lsd），因為那需要取用 token；verification §3、§6 仍是 10-29 的證據。今天只看網頁自己送出的請求。
 - doc_id 要怎麼取得沒有驗證：存下的 HTML 沒有 doc_id 數字，JS bundle 沒有存，也沒有試著從裡面抽。
 - 只測 3 個帳號、一個時段、一個出口（容器代理）。手機分頁只在 natgeo 出現，原因（帳號、實驗分組或時間）分不出來；觸發它的是滾輪、滑鼠移動還是網頁計時，也分不出來。
@@ -290,5 +290,5 @@ natgeo 手機那次分頁 query 的內容：
 - Threads 頁面上 `navigations` 多出來的筆數（桌面 1 筆、手機 3 筆）推測是網站用 history API 改網址。本機假站證實 `framenavigated` 會這樣記，但 Threads 實際呼叫了哪個 API 沒有直接觀察。
 - `q4/evidence/src/capture.py` 沒有重跑，截圖也沒有重拍。它用預設的 `chromium.launch()`，在這台機器上會因為找不到 headless shell 1248 而失敗；這次沒有改它。
 - `shared/capture/capture_manifest.json` 的 `q4-threads-mobile-wall` 標題「捲動不再載入下一頁」和同一筆的 result「帶貼文的 GraphQL 回應 2 個」互相矛盾，`shared/capture/capture_threads.py` 開頭的說明也這樣寫。同一個檔案的 `q4-threads-graphql-observed` 標題仍是「個人頁載入時網頁用 GraphQL 分頁」，但那次的觀察包含 1 次滾輪捲動。這兩個檔案不在本資料夾，沒有改。
-- 瀏覽器測試要開真的 Chromium，3 個合計約 20 秒。
+- 瀏覽器測試要開 Chromium，3 個合計約 20 秒。
 - robots.txt 開頭註明未經 Threads 書面許可不得自動化蒐集資料，並要求列名的授權爬蟲遵守 Meta 的 Automated Data Collection Terms。第 4 題要設計 40 萬帳號的爬蟲，原本的答案沒有提到這一點。檔內 37 組規則：`User-agent: *` 與 GPTBot、Scrapy 等 14 組列名的爬蟲是 `Disallow: /`；Googlebot、Bingbot 等 22 組列名的爬蟲只擋部分路徑（`/accounts/`、`/query/` 等），所以「對所有 user agent 都是 `Disallow: /`」的說法不精確。2026-10-31 經確認，答案 (b) 末尾補「另 robots.txt 禁止未經書面許可自動蒐集。」（連空白 26 字，不含空白 24 字）。為了連空白與換行一起算仍在 600 字內，其他句子做了 8 處不改意思的縮短，兩種算法都合計少 12 字（照原文，含標點與空白）：「first=10，即一次回」→「first=10 即回」、「一次性快取」→「快取一次」、「，可跨帳號共用」→「、跨帳號共用」、「不需登入」→「免登入」、「請求須帶」→「須帶」、「缺任一」→「缺一」、「以 IP 為單位封鎖」→「按 IP 封鎖」、「IP 並退避」→「IP、退避」。除了新加的 robots.txt，數字與英文詞都沒有變。改後連空白與換行 600 字，不含空白 521 字（原本 586、509 字）；`tests/test_q4_answer_length.py` 檢查這兩個數字與檔內標示一致、而且不超過 600。

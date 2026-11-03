@@ -263,7 +263,7 @@ w2, _ = natural_css("ev_00_research_page_2.png", 1.5)
 page(
     "ev_00_research_page", "研究頁", "k-page",
     "研究頁：五個症狀對應到修法與閘門；斷詞實驗台的 v1／v2 是 jieba 的實際輸出（示意貼文為自寫）。",
-    [("來源", '研究頁 QSearch Q6 文字雲斷詞（claude.ai artifact，私人）<br><span class="url">https://claude.ai/artifact/BFHkeqUYvKUwzkkWDkMYUU</span>'),
+    [("來源", '研究頁 QSearch Q6 文字雲斷詞（線上版）<br><span class="url">https://claude.ai/artifact/BFHkeqUYvKUwzkkWDkMYUU</span>'),
      ("擷取", "同一份頁面原始檔（q6/answer/research-page.html）在沙盒 VM 以 Playwright 渲染後截圖，淺色主題、1280 寬")],
     f'<figure>{img_tag("ev_00_research_page_1.png", w1)}<figcaption>總覽：策略、四個關鍵數字、五個症狀對照表</figcaption></figure>'
     f'<figure>{img_tag("ev_00_research_page_2.png", w2)}<figcaption>實測：斷詞實驗台（第一則示意貼文）</figcaption></figure>',

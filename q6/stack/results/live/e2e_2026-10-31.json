@@ -1,0 +1,1076 @@
+{
+ "when": "2026-10-31T16:30:22+00:00",
+ "es": {
+  "ok": true,
+  "total": 46507,
+  "with_v1": 46507,
+  "with_v2": 46484,
+  "max_seg_ver_v1": 12026103001.0,
+  "max_seg_ver_v2": 22026110101.0,
+  "last_seg_at_v1": "2026-10-31T16:29:30.000Z",
+  "last_seg_at_v2": "2026-10-31T16:29:39.000Z",
+  "latest_published": "2026-10-31T15:49:20.000Z",
+  "latest_fetched": "2026-10-31T16:28:59.000Z",
+  "es_call_ms": 11.6,
+  "token": "46507:46507:46484:12026103001.0:22026110101.0:2026-10-31T16:29:30.000Z:2026-10-31T16:29:39.000Z:2026-10-31T16:28:59.000Z"
+ },
+ "dict": {
+  "current": "qsearch-q6-2026.11.01.1",
+  "versions": [
+   "qsearch-q6-2026.10.30.1",
+   "qsearch-q6-2026.10.30.2",
+   "qsearch-q6-2026.10.30.3",
+   "qsearch-q6-2026.10.30.4",
+   "qsearch-q6-2026.10.30.5",
+   "qsearch-q6-2026.10.30.6",
+   "qsearch-q6-2026.11.01.1"
+  ]
+ },
+ "services": [
+  {
+   "service": "v1@4148d1ff6f84",
+   "pipeline": "v1",
+   "dict_version": "qsearch-q6-2026.10.30.1",
+   "seg_ver": 12026103001,
+   "build": "37050d2-live",
+   "loaded_at": "2026-10-31T16:25:45.779564+00:00"
+  },
+  {
+   "service": "v2@49b124c330e2",
+   "pipeline": "v2",
+   "dict_version": "qsearch-q6-2026.11.01.1",
+   "seg_ver": 22026110101,
+   "build": "37050d2-live",
+   "loaded_at": "2026-10-31T16:29:38.667235+00:00"
+  }
+ ],
+ "release_runs": [
+  {
+   "id": 1,
+   "dict_version": "qsearch-q6-2026.11.01.1",
+   "seg_ver": 22026110101,
+   "words": [
+    "沈伯洋",
+    "藍白"
+   ],
+   "requested_by": "e2e-test",
+   "status": "done",
+   "worker": "v2@49b124c330e2",
+   "candidates": 516,
+   "scanned": 516,
+   "terms_changed": 140,
+   "written": 516,
+   "noop": 0,
+   "errors": 0,
+   "seconds": 0.37,
+   "examples": [
+    {
+     "id": "ptt-M.1792828328.A.D0D",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "沈伯洋助"
+     ]
+    },
+    {
+     "id": "ptt-M.1792796198.A.480",
+     "added": [
+      "藍白"
+     ],
+     "removed": [
+      "藍白合"
+     ]
+    },
+    {
+     "id": "ptt-M.1792722620.A.560",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": []
+    },
+    {
+     "id": "ptt-M.1792592091.A.7BF",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "投沈伯洋"
+     ]
+    },
+    {
+     "id": "ptt-M.1792557881.A.890",
+     "added": [
+      "人設",
+      "沈伯洋"
+     ],
+     "removed": [
+      "沈伯",
+      "洋人"
+     ]
+    },
+    {
+     "id": "ptt-M.1792551599.A.CBD",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "沈伯洋贏"
+     ]
+    },
+    {
+     "id": "ptt-M.1792550469.A.1D1",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "沈伯洋贏"
+     ]
+    },
+    {
+     "id": "ptt-M.1792515848.A.893",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "沈伯洋酸"
+     ]
+    },
+    {
+     "id": "ptt-M.1792507981.A.57B",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "沈伯洋酸"
+     ]
+    },
+    {
+     "id": "ptt-M.1792460377.A.687",
+     "added": [
+      "沈伯洋"
+     ],
+     "removed": [
+      "曝沈伯洋"
+     ]
+    }
+   ],
+   "queued_at": "2026-10-31T16:29:36.887033+00:00",
+   "started_at": "2026-10-31T16:29:36.951422+00:00",
+   "finished_at": "2026-10-31T16:29:39.099398+00:00"
+  }
+ ],
+ "ledger_by_status": {
+  "passed": 19,
+  "failed": 7
+ },
+ "ledger_failed": [
+  {
+   "partition_id": "ptt/2024-06",
+   "raw_count": 336,
+   "written": 336,
+   "gates": {
+    "G1": {
+     "raw": 336,
+     "pass": true,
+     "es_at_target": 336
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 1,
+     "hard_stopwords": 0,
+     "url_leak_terms": {
+      "https": 1
+     },
+     "must_keep_split": {},
+     "url_leak_examples": [
+      {
+       "term": "https",
+       "post_id": "pttpre-58bcea07ad369807"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      26.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 26.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  },
+  {
+   "partition_id": "ptt/2024-01",
+   "raw_count": 3800,
+   "written": 3800,
+   "gates": {
+    "G1": {
+     "raw": 3800,
+     "pass": true,
+     "es_at_target": 3800
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 0,
+     "hard_stopwords": 0,
+     "must_keep_split": {
+      "新北": 1,
+      "新北市": 1,
+      "賴清德": 1
+     },
+     "must_keep_examples": [
+      {
+       "word": "賴清德",
+       "post_id": "ptt-M.1704457389.A.14E"
+      },
+      {
+       "word": "新北",
+       "post_id": "ptt-M.1704750672.A.F18"
+      },
+      {
+       "word": "新北市",
+       "post_id": "ptt-M.1704750672.A.F18"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      33.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 33.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  },
+  {
+   "partition_id": "ptt/2023-11",
+   "raw_count": 267,
+   "written": 267,
+   "gates": {
+    "G1": {
+     "raw": 267,
+     "pass": true,
+     "es_at_target": 267
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 1,
+     "hard_stopwords": 0,
+     "url_leak_terms": {
+      "https": 1
+     },
+     "must_keep_split": {},
+     "url_leak_examples": [
+      {
+       "term": "https",
+       "post_id": "pttpre-f67d8754a3aa50b9"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      38.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 38.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  },
+  {
+   "partition_id": "ptt/2023-09",
+   "raw_count": 3589,
+   "written": 3589,
+   "gates": {
+    "G1": {
+     "raw": 3589,
+     "pass": true,
+     "es_at_target": 3589
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 1,
+     "hard_stopwords": 0,
+     "url_leak_terms": {
+      "https": 1
+     },
+     "must_keep_split": {},
+     "url_leak_examples": [
+      {
+       "term": "https",
+       "post_id": "pttpre-3a145dc83a42e2c8"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      182.0,
+      30.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 30.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  },
+  {
+   "partition_id": "ptt/2023-05",
+   "raw_count": 3899,
+   "written": 3899,
+   "gates": {
+    "G1": {
+     "raw": 3899,
+     "pass": true,
+     "es_at_target": 3899
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 1,
+     "hard_stopwords": 0,
+     "url_leak_terms": {
+      "https": 1
+     },
+     "must_keep_split": {},
+     "url_leak_examples": [
+      {
+       "term": "https",
+       "post_id": "pttpre-598416a559501283"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      64.0,
+      19.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 19.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  },
+  {
+   "partition_id": "ptt/2023-03",
+   "raw_count": 404,
+   "written": 404,
+   "gates": {
+    "G1": {
+     "raw": 404,
+     "pass": true,
+     "es_at_target": 404
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 0,
+     "hard_stopwords": 0,
+     "must_keep_split": {
+      "好市多": 1
+     },
+     "must_keep_examples": [
+      {
+       "word": "好市多",
+       "post_id": "pttpre-633032fd89adaa78"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      26.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 26.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  },
+  {
+   "partition_id": "ptt/2023-02",
+   "raw_count": 390,
+   "written": 390,
+   "gates": {
+    "G1": {
+     "raw": 390,
+     "pass": true,
+     "es_at_target": 390
+    },
+    "G2": {
+     "pass": false,
+     "phone_like": 0,
+     "pure_number": 0,
+     "url_fragment": 1,
+     "hard_stopwords": 0,
+     "url_leak_terms": {
+      "https": 1
+     },
+     "must_keep_split": {},
+     "url_leak_examples": [
+      {
+       "term": "https",
+       "post_id": "pttpre-e5b2bf699533702f"
+      }
+     ]
+    },
+    "G3": {
+     "pass": true,
+     "limit_ms": 59.0,
+     "write_rejected": 0,
+     "canary_tries_ms": [
+      39.0
+     ],
+     "canary_baseline_ms": 9.0,
+     "canary_p95_ms_after": 39.0
+    },
+    "G4": {
+     "pass": true,
+     "pm_spot_check_required": false
+    }
+   }
+  }
+ ],
+ "collector": [
+  {
+   "feed": "media/cna-local",
+   "channel": "media",
+   "source": "cna/local",
+   "url": "https://feeds.feedburner.com/rsscna/local",
+   "last_poll_at": "2026-10-31T16:28:58.774621+00:00",
+   "last_status": 200,
+   "items_seen": 20,
+   "last_new": 13,
+   "total_new": 13,
+   "etag": null,
+   "last_modified": "Sat, 31 Oct 2026 16:28:41 GMT",
+   "error": null,
+   "next_poll_at": null
+  },
+  {
+   "feed": "media/cna-politics",
+   "channel": "media",
+   "source": "cna/politics",
+   "url": "https://feeds.feedburner.com/rsscna/politics",
+   "last_poll_at": "2026-10-31T16:28:53.774171+00:00",
+   "last_status": 200,
+   "items_seen": 20,
+   "last_new": 20,
+   "total_new": 20,
+   "etag": null,
+   "last_modified": "Sat, 31 Oct 2026 16:11:31 GMT",
+   "error": null,
+   "next_poll_at": null
+  },
+  {
+   "feed": "media/cna-social",
+   "channel": "media",
+   "source": "cna/social",
+   "url": "https://feeds.feedburner.com/rsscna/social",
+   "last_poll_at": "2026-10-31T16:28:56.274388+00:00",
+   "last_status": 200,
+   "items_seen": 20,
+   "last_new": 20,
+   "total_new": 20,
+   "etag": null,
+   "last_modified": "Sat, 31 Oct 2026 13:56:40 GMT",
+   "error": null,
+   "next_poll_at": null
+  },
+  {
+   "feed": "media/pts",
+   "channel": "media",
+   "source": "pts/newsfeed",
+   "url": "https://news.pts.org.tw/xml/newsfeed.xml",
+   "last_poll_at": "2026-10-31T16:28:59.142474+00:00",
+   "last_status": 200,
+   "items_seen": 25,
+   "last_new": 25,
+   "total_new": 25,
+   "etag": null,
+   "last_modified": null,
+   "error": null,
+   "next_poll_at": null
+  },
+  {
+   "feed": "youtube/newsebc",
+   "channel": "youtube",
+   "source": "東森新聞 CH51",
+   "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCR3asjvr_WAaxwJYEDV_Bfw",
+   "last_poll_at": "2026-10-31T16:28:53.338416+00:00",
+   "last_status": 200,
+   "items_seen": 15,
+   "last_new": 15,
+   "total_new": 15,
+   "etag": null,
+   "last_modified": null,
+   "error": null,
+   "next_poll_at": null
+  },
+  {
+   "feed": "youtube/PNNPTS",
+   "channel": "youtube",
+   "source": "公視新聞網",
+   "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCexpzYDEnfmAvPSfG4xbcjA",
+   "last_poll_at": "2026-10-31T16:28:50.838263+00:00",
+   "last_status": 200,
+   "items_seen": 15,
+   "last_new": 15,
+   "total_new": 15,
+   "etag": null,
+   "last_modified": null,
+   "error": null,
+   "next_poll_at": null
+  },
+  {
+   "feed": "youtube/TVBSNEWS01",
+   "channel": "youtube",
+   "source": "TVBS NEWS",
+   "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC5nwNW4KdC0SzrhF9BXEYOQ",
+   "last_poll_at": "2026-10-31T16:28:48.338024+00:00",
+   "last_status": 200,
+   "items_seen": 15,
+   "last_new": 15,
+   "total_new": 15,
+   "etag": null,
+   "last_modified": null,
+   "error": null,
+   "next_poll_at": null
+  }
+ ],
+ "events": [
+  {
+   "id": 17,
+   "at": "2026-10-31T16:29:36.914426+00:00",
+   "kind": "release",
+   "actor": "e2e-test",
+   "detail": {
+    "note": "端對端驗證：PM 頁發版 → seg-v2 熱換字典 → 定向重跑",
+    "words": [
+     [
+      "沈伯洋",
+      20,
+      "n"
+     ],
+     [
+      "藍白",
+      20,
+      "n"
+     ]
+    ],
+    "run_id": 1,
+    "extends": "qsearch-q6-2026.10.30.6",
+    "dict_version": "qsearch-q6-2026.11.01.1"
+   }
+  },
+  {
+   "id": 16,
+   "at": "2026-10-31T16:29:30.065675+00:00",
+   "kind": "replay",
+   "actor": "e2e-test",
+   "detail": {
+    "channels": [
+     "facebook",
+     "instagram",
+     "youtube",
+     "ptt",
+     "media",
+     "threads"
+    ],
+    "published": 267,
+    "write_errors": 0,
+    "already_in_es": 15
+   }
+  },
+  {
+   "id": 15,
+   "at": "2026-10-31T16:28:59.926748+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 25,
+    "feed": "media/pts",
+    "items": 25,
+    "newest": "2026-10-31T19:58:44+08:00",
+    "status": 200,
+    "already": 0,
+    "channel": "media",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 14,
+   "at": "2026-10-31T16:28:59.139843+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 13,
+    "feed": "media/cna-local",
+    "items": 20,
+    "newest": "2026-10-31T23:46:44+08:00",
+    "status": 200,
+    "already": 7,
+    "channel": "media",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 13,
+   "at": "2026-10-31T16:28:56.754565+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 20,
+    "feed": "media/cna-social",
+    "items": 20,
+    "newest": "2026-10-31T21:39:12+08:00",
+    "status": 200,
+    "already": 0,
+    "channel": "media",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 12,
+   "at": "2026-10-31T16:28:54.699877+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 20,
+    "feed": "media/cna-politics",
+    "items": 20,
+    "newest": "2026-10-31T22:10:27+08:00",
+    "status": 200,
+    "already": 0,
+    "channel": "media",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 11,
+   "at": "2026-10-31T16:28:53.771555+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 15,
+    "feed": "youtube/newsebc",
+    "items": 15,
+    "newest": "2026-10-31T23:49:20+08:00",
+    "status": 200,
+    "already": 0,
+    "channel": "youtube",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 10,
+   "at": "2026-10-31T16:28:51.320424+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 15,
+    "feed": "youtube/PNNPTS",
+    "items": 15,
+    "newest": "2026-10-31T21:00:28+08:00",
+    "status": 200,
+    "already": 0,
+    "channel": "youtube",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 9,
+   "at": "2026-10-31T16:28:49.650492+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "new": 15,
+    "feed": "youtube/TVBSNEWS01",
+    "items": 15,
+    "newest": "2026-10-31T23:31:18+08:00",
+    "status": 200,
+    "already": 0,
+    "channel": "youtube",
+    "write_errors": 0
+   }
+  },
+  {
+   "id": 8,
+   "at": "2026-10-31T16:26:38.999495+00:00",
+   "kind": "approve",
+   "actor": "e2e-test",
+   "detail": {
+    "note": "A/B 頁抽查 2026-10：高雄市、新北、好市多都沒切錯",
+    "partition": "ptt/2026-10"
+   }
+  },
+  {
+   "id": 7,
+   "at": "2026-10-31T16:25:53.119798+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "media/pts",
+    "error": "HTTPSConnectionPool(host='news.pts.org.tw', port=443): Max retries exceeded with url: /xml/newsfeed.xml (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate ve",
+    "channel": "media",
+    "backoff_sec": 600
+   }
+  },
+  {
+   "id": 6,
+   "at": "2026-10-31T16:25:53.039680+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "media/cna-local",
+    "error": "HTTPSConnectionPool(host='feeds.feedburner.com', port=443): Max retries exceeded with url: /rsscna/local (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate v",
+    "channel": "media",
+    "backoff_sec": 600
+   }
+  },
+  {
+   "id": 5,
+   "at": "2026-10-31T16:25:50.542485+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "media/cna-social",
+    "error": "HTTPSConnectionPool(host='feeds.feedburner.com', port=443): Max retries exceeded with url: /rsscna/social (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate ",
+    "channel": "media",
+    "backoff_sec": 600
+   }
+  },
+  {
+   "id": 4,
+   "at": "2026-10-31T16:25:48.157930+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "media/cna-politics",
+    "error": "HTTPSConnectionPool(host='feeds.feedburner.com', port=443): Max retries exceeded with url: /rsscna/politics (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificat",
+    "channel": "media",
+    "backoff_sec": 600
+   }
+  },
+  {
+   "id": 3,
+   "at": "2026-10-31T16:25:48.004549+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "youtube/newsebc",
+    "error": "HTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded with url: /feeds/videos.xml?channel_id=UCR3asjvr_WAaxwJYEDV_Bfw (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTI",
+    "channel": "youtube",
+    "backoff_sec": 600
+   }
+  },
+  {
+   "id": 2,
+   "at": "2026-10-31T16:25:45.500686+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "youtube/PNNPTS",
+    "error": "HTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded with url: /feeds/videos.xml?channel_id=UCexpzYDEnfmAvPSfG4xbcjA (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTI",
+    "channel": "youtube",
+    "backoff_sec": 600
+   }
+  },
+  {
+   "id": 1,
+   "at": "2026-10-31T16:25:43.034500+00:00",
+   "kind": "collect",
+   "actor": "collector",
+   "detail": {
+    "feed": "youtube/TVBSNEWS01",
+    "error": "HTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded with url: /feeds/videos.xml?channel_id=UC5nwNW4KdC0SzrhF9BXEYOQ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTI",
+    "channel": "youtube",
+    "backoff_sec": 600
+   }
+  }
+ ],
+ "recent": [
+  {
+   "post_id": "https://news.pts.org.tw/article/833715",
+   "channel": "media",
+   "sub_type": "article",
+   "source": "pts/newsfeed",
+   "url": "https://news.pts.org.tw/article/833715",
+   "published_at": "2026-10-31T19:58:44+08:00",
+   "fetched_at": "2026-11-01T00:28:59+08:00",
+   "content": "蔣萬安與沈伯洋辯論市政議題 毒駕、都更、路樹列攻防\n九合一大選投票倒數，首場台北市長選舉辯論會今（31）日登場，台北市長蔣萬安跟民進黨台北市長候選人沈伯洋，會前都展現君子風度，互相握手致意、先禮後兵。而在交叉詰問階段，雙方火藥味十足，包含免費營養午餐、路樹等市政議題，甚至是毒品、毒駕的社會議題，都成為攻防焦點。",
+   "seg_at_v1": "2026-10-31T16:29:00+00:00",
+   "dict_version_v1": "qsearch-q6-2026.10.30.1",
+   "terms_v1": [
+    "蔣",
+    "萬安",
+    "與",
+    "沈",
+    "伯",
+    "洋",
+    "辯論",
+    "市政",
+    "議題",
+    "毒",
+    "駕",
+    "、",
+    "都",
+    "更"
+   ],
+   "seg_at_v2": "2026-10-31T16:29:38+00:00",
+   "dict_version_v2": "qsearch-q6-2026.11.01.1",
+   "seg_ver_v2": 22026110101,
+   "terms_v2": [
+    "蔣萬安",
+    "沈伯洋",
+    "辯論",
+    "市政",
+    "議題",
+    "毒駕",
+    "路樹列",
+    "攻防",
+    "合一",
+    "大選",
+    "投票",
+    "倒數",
+    "首場",
+    "台北"
+   ]
+  },
+  {
+   "post_id": "https://news.pts.org.tw/article/833716",
+   "channel": "media",
+   "sub_type": "article",
+   "source": "pts/newsfeed",
+   "url": "https://news.pts.org.tw/article/833716",
+   "published_at": "2026-10-31T19:58:00+08:00",
+   "fetched_at": "2026-11-01T00:28:59+08:00",
+   "content": "沈伯洋辯論過程提再一場 蔣萬安：若媒體邀約可協調\n台北市長選舉辯論會，國民黨蔣萬安、民進黨沈伯洋在媒體提問環節，各自拋出4年後的台北市藍圖，也對打造韌性城市提出看法。不過沈伯洋在辯論會過程中，直接向蔣萬安提出要加LINE，再約下一場辯論，蔣萬安回應，持開放態度，如果有媒體邀約，團隊可以再協調。沈伯洋則透露，休息時間有再",
+   "seg_at_v1": "2026-10-31T16:29:00+00:00",
+   "dict_version_v1": "qsearch-q6-2026.10.30.1",
+   "terms_v1": [
+    "沈",
+    "伯",
+    "洋",
+    "辯論",
+    "過程",
+    "提",
+    "再",
+    "一場",
+    "蔣",
+    "萬安",
+    "：",
+    "若",
+    "媒體",
+    "邀約"
+   ],
+   "seg_at_v2": "2026-10-31T16:29:38+00:00",
+   "dict_version_v2": "qsearch-q6-2026.11.01.1",
+   "seg_ver_v2": 22026110101,
+   "terms_v2": [
+    "沈伯洋",
+    "辯論",
+    "過程",
+    "提再",
+    "一場",
+    "蔣萬安",
+    "媒體",
+    "邀約",
+    "協調",
+    "台北",
+    "市長",
+    "選舉",
+    "辯論會",
+    "國民黨"
+   ]
+  },
+  {
+   "post_id": "https://news.pts.org.tw/article/833717",
+   "channel": "media",
+   "sub_type": "article",
+   "source": "pts/newsfeed",
+   "url": "https://news.pts.org.tw/article/833717",
+   "published_at": "2026-10-31T19:57:28+08:00",
+   "fetched_at": "2026-11-01T00:28:59+08:00",
+   "content": "柯志恩批辯論會迴避問題 賴瑞隆：已充分說明\n高雄市長辯論昨（30）晚落幕，賴瑞隆與柯志恩數度因議題激烈交鋒，這場辯論，有民眾認為柯志恩相當強勢，也有民眾質疑賴瑞隆頻頻看稿。面對外界的評論，柯志恩說是因為質疑對手的問題被迴避急於說清楚才比較激動，賴瑞隆則說柯志恩的提問，他都充分的說明，不明白為何柯志恩會說他迴避。",
+   "seg_at_v1": "2026-10-31T16:29:00+00:00",
+   "dict_version_v1": "qsearch-q6-2026.10.30.1",
+   "terms_v1": [
+    "柯",
+    "志",
+    "恩",
+    "批",
+    "辯論會",
+    "迴避",
+    "問題",
+    "賴",
+    "瑞隆",
+    "：",
+    "已",
+    "充分說明",
+    "高",
+    "雄"
+   ],
+   "seg_at_v2": "2026-10-31T16:29:00+00:00",
+   "dict_version_v2": "qsearch-q6-2026.10.30.6",
+   "seg_ver_v2": 22026103006,
+   "terms_v2": [
+    "柯志恩",
+    "辯論會",
+    "迴避",
+    "問題",
+    "瑞隆",
+    "充分說明",
+    "高雄",
+    "市長",
+    "辯論",
+    "落幕",
+    "數度",
+    "議題",
+    "激烈",
+    "交鋒"
+   ]
+  },
+  {
+   "post_id": "https://news.pts.org.tw/article/833730",
+   "channel": "media",
+   "sub_type": "article",
+   "source": "pts/newsfeed",
+   "url": "https://news.pts.org.tw/article/833730",
+   "published_at": "2026-10-31T19:57:02+08:00",
+   "fetched_at": "2026-11-01T00:28:59+08:00",
+   "content": "台灣同志遊行17萬人參與 倡議從「看見」邁向「傾聽」\n2026台灣同志遊行今（31）日下午盛大登場，共有17萬人參與，今年以「聲做伙聽，路做伙行」為主題，希望在社會輿論極化與國際反多元、反平等、反共融的浪潮下，鼓勵大家從「看見」邁向真正的「傾聽」。",
+   "seg_at_v1": "2026-10-31T16:29:00+00:00",
+   "dict_version_v1": "qsearch-q6-2026.10.30.1",
+   "terms_v1": [
+    "台",
+    "灣",
+    "同志",
+    "遊行",
+    "17",
+    "萬",
+    "人",
+    "參與",
+    "倡議",
+    "從",
+    "「",
+    "看見",
+    "」",
+    "邁向"
+   ],
+   "seg_at_v2": "2026-10-31T16:29:00+00:00",
+   "dict_version_v2": "qsearch-q6-2026.10.30.6",
+   "seg_ver_v2": 22026103006,
+   "terms_v2": [
+    "台灣",
+    "同志",
+    "遊行",
+    "萬人",
+    "參與",
+    "倡議",
+    "看見",
+    "邁向",
+    "傾聽",
+    "下午",
+    "盛大",
+    "登場",
+    "共有",
+    "今年"
+   ]
+  },
+  {
+   "post_id": "https://news.pts.org.tw/article/833729",
+   "channel": "media",
+   "sub_type": "article",
+   "source": "pts/newsfeed",
+   "url": "https://news.pts.org.tw/article/833729",
+   "published_at": "2026-10-31T19:56:34+08:00",
+   "fetched_at": "2026-11-01T00:28:59+08:00",
+   "content": "國衛院研究：高齡服務社工缺口 2034年恐達3成\n台灣邁入超高齡社會，社工需求攀升，但國衛院卻有研究指出，到了2034年，高齡服務社工缺口恐達3成。民團呼籲，應建立完善證照與工作分級制度，合理反映薪資待遇，並引入資深社工從旁督導新手，強化培訓與職場支持，才能留住人才，改善社工缺工困境。",
+   "seg_at_v1": "2026-10-31T16:29:00+00:00",
+   "dict_version_v1": "qsearch-q6-2026.10.30.1",
+   "terms_v1": [
+    "國",
+    "衛",
+    "院",
+    "研究",
+    "：",
+    "高齡",
+    "服務",
+    "社工",
+    "缺口",
+    "2034",
+    "年",
+    "恐",
+    "達",
+    "3"
+   ],
+   "seg_at_v2": "2026-10-31T16:29:00+00:00",
+   "dict_version_v2": "qsearch-q6-2026.10.30.6",
+   "seg_ver_v2": 22026103006,
+   "terms_v2": [
+    "國衛院",
+    "研究",
+    "高齡",
+    "服務",
+    "社工",
+    "缺口",
+    "恐達",
+    "台灣",
+    "邁入",
+    "社會",
+    "需求",
+    "攀升",
+    "但國衛院",
+    "指出"
+   ]
+  }
+ ],
+ "note": "雲端容器端對端（2026-10-31 UTC 16:2x）：操作人欄位一律填 e2e-test（測試腳本），不是 PM。PTT 三個 feed 在雲端容器不抓（robots.txt）；其餘 7 個 feed 因容器出口是攔 TLS 的代理，改由宿主機跑同一段 collector.poll_feed。"
+}

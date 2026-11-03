@@ -1,7 +1,7 @@
 # parser 本機實跑驗證紀錄（Pub/Sub 模擬器 + FastAPI parser）
 
-> 日期：2026-10-30。執行環境：雲端容器（Linux、Docker 29.9.2、Docker Compose v5.6.1）。
-> **沒有任何 GCP 憑證，也沒有呼叫任何真的 GCP API。** Pub/Sub 全部走本機模擬器，BigQuery、GCS、Cloud Run IAM 都沒有實測。
+> 日期：2026-10-30。執行環境：Linux 容器（Linux、Docker 29.9.2、Docker Compose v5.6.1）。
+> **沒有任何 GCP 憑證，也沒有呼叫任何 GCP API。** Pub/Sub 全部走本機模擬器，BigQuery、GCS、Cloud Run IAM 都沒有實測。
 > 第一、二次實跑時 `main.py`、`Dockerfile`、`requirements.txt` 都是原樣；最後一節列出的問題 1、3、4 之後已在 repo 修正，
 > 第三次實跑（下面「第三次：修正後重跑」）用修正後的映像重做一次，結論見該節。
 
@@ -167,7 +167,7 @@ parser log 片段（第一次）：
 
 邊界值比較（fastavro vs 目前的 Pydantic）：缺 `event_type`、缺 `schema_version`、`schema_version` 為字串 `"1"`、為 `true`，Avro 都判 INVALID，Pydantic 都**接受**並當成 v1。多一個未定義欄位兩邊都接受。
 
-BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受「Avro 必填 → BQ NULLABLE」沒有驗證（模擬器的 BigQuery 訂閱不會真的寫入）。
+BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受「Avro 必填 → BQ NULLABLE」沒有驗證（模擬器的 BigQuery 訂閱不會實際寫入）。
 
 ### 8. pytest（`../tests/test_push_endpoint.py`）
 

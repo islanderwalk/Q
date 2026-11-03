@@ -50,7 +50,7 @@ answer/6-spec-change/chart-refresh-marginal.png  雜湊不同  尺寸 (1440, 819
 answer/7-question/chart-text-share.png  雜湊不同  尺寸 (1440, 455) vs (1440, 459)
 architecture/architecture.png  雜湊不同  尺寸相同 (2400, 1590)  差異像素 5.77%
 
-## 6. 離線重播（不是實測，本輪）：三支程式的 main()，session 換成讀 shared/capture/html，真的時鐘，unshare -n 無網路
+## 6. 離線重播（不是實測，本輪）：三支程式的 main()，session 換成讀 shared/capture/html，系統時鐘，unshare -n 無網路
 程式               參數                                                      退出碼  請求  最短間隔   結束
 ptt_measure.py     --pages 2 --articles 3 --delay 1.5 --max-requests 4        0       4     1.518 秒   capped
 ptt_measure.py     --pages 1 --articles 1（預設間隔）                         0       2     1.610 秒   ok

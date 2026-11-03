@@ -1,0 +1,24 @@
+{
+  "dict_version": "qsearch-q6-legacy-2019.12.31.1",
+  "pipeline": "v0",
+  "note": "舊流程重現版 v0：國家辭典（2015）＋ jieba-tw 詞表（2016）＋ 凍結於 2019-12-31 的公司詞表 ＋ 舊行政區名；逆向最長匹配、不過濾。版本日期 2019.12.31 就是字典的凍結日，seg_ver 由它算出。",
+  "algo": {"name": "bmm", "maxlen": 8, "fallback": "single_char", "ascii_runs": "one_token_no_lowercase",
+           "normalize": "none", "stopwords": "none", "drop": "punctuation_symbols_whitespace"},
+  "layers": [
+    {"id": "moe_revised_2015", "arg": "moe",
+     "source": "教育部《重編國語辭典修訂本》2015 版（語言教育學習網 2026-09-29 匯出的 dict_revised_2015_20260929.zip，欄位「字詞名」）",
+     "url": "https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/download/dict_revised_2015_20260929.zip",
+     "license": "CC BY-ND 3.0 TW（教育部）", "frozen_at": "2015-12-31",
+     "extract": "python dict/legacy/extract_moe.py <zip 或 xlsx> > moe_revised_words.txt"},
+    {"id": "jieba_tw_2016", "arg": "jieba_tw",
+     "source": "jieba-zh_TW（ldkrsi）的 jieba/dict.txt，繁體詞表，取第一欄的詞、不用詞頻與詞性",
+     "url": "https://raw.githubusercontent.com/ldkrsi/jieba-zh_TW/master/jieba/dict.txt",
+     "license": "MIT", "frozen_at": "2016-12-31"},
+    {"id": "company_2019", "file": "legacy/company_2019.txt",
+     "source": "依題目線索推論的公司字典對應元件（PM 多年補進去的客戶、人名、地名、網路用語），凍結 2019-12-31",
+     "license": "repo", "frozen_at": "2019-12-31"},
+    {"id": "places_old", "file": "legacy/places_old.txt",
+     "source": "舊行政區名規則層（2010-12-25 五都改制前的名稱與臺字寫法）",
+     "license": "repo", "frozen_at": "2010-12-25"}
+  ]
+}

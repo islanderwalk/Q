@@ -8,7 +8,7 @@
         董事會報告第一頁的覆蓋範圍與排除說明（coverage_table）。
 
 輸入（--data 目錄，make_fixtures.py 產生的合成資料）：emails.jsonl、survey.csv。
-  有 emails_truth.jsonl 時另外輸出「規則 vs 答案」的評估（只有合成資料有答案，真實資料要靠 300 則人工標註），
+  有 emails_truth.jsonl 時另外輸出「規則 vs 答案」的評估（只有合成資料有答案，正式資料要靠 300 則人工標註），
   並用答案模擬一位完全正確的標註者，看 300 則抽樣能估到什麼程度。
 輸出（--out 目錄）：
   summary.json          全部數字（含模板相鄰對的 df 與共同出現率）
@@ -134,12 +134,12 @@ CUSTOMER_KINDS = ("customer", "customer_resend")
 def evaluate_against_truth(records, truth, table):
     """拿產生器的答案量規則的誤刪、漏刪與標籤準確度。
 
-    - 行層級：只看「應該納入、也真的納入」的顧客信，檢查描述問題的行有沒有被刪、有沒有殘留非顧客寫的行。
+    - 行層級：只看「應該納入、也實際納入」的顧客信，檢查描述問題的行有沒有被刪、有沒有殘留非顧客寫的行。
     - 標籤：納入的信都算（含不該納入卻納入的客服信，它們的標籤都是誤報）。
     - 難例：顧客信被排除算 wrongly_excluded，客服信被納入算 wrongly_included，納入的顧客信標籤不對算 tags_wrong，
       再拆成多標（tags_extra，規則多標了問題）與漏標（tags_missing），一封可以兩者都有。
     - oracle_share：清理完全正確（只拿顧客自己寫的行）時同一套分類規則會給的佔比。估計佔比和它的差距是清理造成的，
-      它和真實佔比的差距是分類規則（關鍵詞、否定）造成的。
+      它和實際佔比的差距是分類規則（關鍵詞、否定）造成的。
     """
     by_id = {t["email_id"]: t for t in truth}
     outcome = Counter()
@@ -244,8 +244,8 @@ def evaluate_against_truth(records, truth, table):
 
 
 def simulated_label_check(records, sample, truth):
-    """用答案模擬一位完全正確的標註者標完抽樣，走和真實標註同一條路（evaluate_labels、estimate_exclusion_errors），
-    再和全體的實際值比，看 300 則估得到什麼程度。真實標註者會犯錯，所以這是上限。"""
+    """用答案模擬一位完全正確的標註者標完抽樣，走和實際標註同一條路（evaluate_labels、estimate_exclusion_errors），
+    再和全體的實際值比，看 300 則估得到什麼程度。實際標註者會犯錯，所以這是上限。"""
     by_id = {t["email_id"]: t for t in truth}
     labels = {}
     for r in sample:
@@ -307,7 +307,7 @@ def render_report(s):
     kept, dropped = em["template_pairs"]["kept"], em["template_pairs"]["dropped"]
     conf_range = f"{min(p['conf'] for p in kept):.3f}～{max(p['conf'] for p in kept):.3f}" if kept else "—"
     lines = ["# Q1 原型實跑報告（合成資料）", "",
-             "> 合成資料：由 `make_fixtures.py` 以固定 seed 產生，不是真實顧客資料。"
+             "> 合成資料：由 `make_fixtures.py` 以固定 seed 產生，不是顧客資料。"
              "數字只用來驗證程式會動、示範每個步驟的效果，不能當成任何產品的結論。", "",
              f"- 參數：母體老客戶比例 base_old_share = {sv['base_old_share']:.0%}（假設，正式報告要換成 CRM 實際分布）；"
              f"抽樣 {s['sample']['size']:,} 則，seed {s['sample']['seed']}",
@@ -385,9 +385,9 @@ def render_report(s):
         cols = [(k, cb[k]) for k in KIND_ORDER if k in cb] + [(k, cb[k]) for k in cb if k not in KIND_ORDER]
         cols += [(f"其中 {h}", hb[h]) for h in ("pasted_reply", "no_signature") if h in hb]
         lines += ["## 4. 規則 vs 答案（只有合成資料做得到）", "",
-                  "規則與產生器是同一個人寫的，以下準確度是上限；真實資料要用 300 則人工標註（`evaluate_labels`）量。", "",
-                  md_table(["信件真實類型 → 處理結果", "封數"], [[k.replace("|", " → "), f"{n:,}"] for k, n in ev["outcome"].items()]), "",
-                  "判成罐頭回覆的封數，依信件真實類型（罐頭判定規則見第 1 節，每一步只改一個條件）。"
+                  "規則與產生器是同一個人寫的，以下準確度是上限；正式資料要用 300 則人工標註（`evaluate_labels`）量。", "",
+                  md_table(["信件實際類型 → 處理結果", "封數"], [[k.replace("|", " → "), f"{n:,}"] for k, n in ev["outcome"].items()]), "",
+                  "判成罐頭回覆的封數，依信件實際類型（罐頭判定規則見第 1 節，每一步只改一個條件）。"
                   "最後兩欄是難例，已包含在前面的類型裡：pasted_reply 是顧客把罐頭回覆貼進正文，"
                   "no_signature 是沒有簽名檔的客服回覆（簽名規則排除不了，只能靠罐頭判定）。", "",
                   md_table(["規則"] + [f"{k}（{c['total']:,}）" for k, c in cols],
@@ -413,19 +413,19 @@ def render_report(s):
                             for h, v in ev["hard_cases"].items()]), "",
                   "一封信可以同時多標和漏標，所以「其中多標」加「其中漏標」可能大於「標籤不同」。", "",
                   "清理完全正確時的佔比：只拿顧客自己寫的行跑同一套分類規則。估計佔比和它的差距是清理造成的，"
-                  "它和真實佔比的差距是分類規則（關鍵詞沒涵蓋的說法、否定）造成的。", "",
-                  md_table(["問題", "precision", "recall", "真實佔比（排名）", "清理完全正確時的佔比", "估計佔比（排名）"],
+                  "它和實際佔比的差距是分類規則（關鍵詞沒涵蓋的說法、否定）造成的。", "",
+                  md_table(["問題", "precision", "recall", "實際佔比（排名）", "清理完全正確時的佔比", "估計佔比（排名）"],
                            [[r["issue"], ratio(r["precision"]), ratio(r["recall"]),
                              f"{pct(r['true_share'])}（{r['true_rank']}）", pct(r["oracle_share"]),
                              f"{pct(r['est_share'])}（{r['est_rank']}）"] for r in ev["per_issue"]]), "",
-                  f"真實前三名：{'、'.join(ev['true_top3'])}；估計前三名：{'、'.join(r['issue'] for r in em['table'][:3])}。", ""]
+                  f"實際前三名：{'、'.join(ev['true_top3'])}；估計前三名：{'、'.join(r['issue'] for r in em['table'][:3])}。", ""]
     lc = s.get("label_check")
     if lc:
         actual = {r["issue"]: r for r in ev["per_issue"]}
         ex = lc["exclusion"]
         lines += [f"### {s['sample']['size']:,} 則抽樣標註能估到什麼程度（用答案模擬完全正確的標註者）", "",
-                  "走和真實標註同一條路：`evaluate_labels` 算加權 precision／recall（只用納入分析的層），"
-                  "`estimate_exclusion_errors` 用 human_is_agent 估計誤刪與誤收。真實標註者會犯錯，所以這是上限。", "",
+                  "走和實際標註同一條路：`evaluate_labels` 算加權 precision／recall（只用納入分析的層），"
+                  "`estimate_exclusion_errors` 用 human_is_agent 估計誤刪與誤收。實際標註者會犯錯，所以這是上限。", "",
                   md_table(["問題", "precision 估計（規則標的則數）", "precision 全體實際", "recall 估計（人工標的則數）",
                             "recall 全體實際"],
                            [[i, f"{ratio(v['precision'])}（{v['n_auto']}）", ratio(actual[i]["precision"]),
@@ -473,7 +473,7 @@ def run(data, out, base_old_share=0.5, sample_size=300, seed=20261030):
     sources = cov.source_rows(top_issues, table, stats["included"], w["ranking"], w["n_eff"])
     cov.write_csv(cov_rows, out / "coverage.csv")
     (out / "coverage.md").write_text(
-        "> 合成資料示範，不是真實數字。\n\n" + cov.render_markdown(cov_rows) + "\n" + cov.render_sources(sources),
+        "> 合成資料示範，不是實際數字。\n\n" + cov.render_markdown(cov_rows) + "\n" + cov.render_sources(sources),
         encoding="utf-8")
 
     write_rows(out / "email_mentions.csv", [dict(r, untagged=untagged) for r in table],

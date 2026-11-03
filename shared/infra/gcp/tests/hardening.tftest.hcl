@@ -19,12 +19,15 @@ variables {
   project_number = "123456789012"
 
   # 不用預設的 hello 示範映像，否則 checks.tf 的 no_placeholder_images 會讓每個 run 失敗。
-  image_api       = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker    = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser    = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill  = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
+  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
 }
 
 # 斷言會引用這些 computed 屬性；每個值都不同，指錯資源就會失敗。
@@ -79,6 +82,36 @@ override_resource {
   values = {
     email = "crawler-tasks-invoker@qsearch-test.iam.gserviceaccount.com"
     name  = "projects/qsearch-test/serviceAccounts/crawler-tasks-invoker@qsearch-test.iam.gserviceaccount.com"
+  }
+}
+
+# Q6：斷詞服務／文字雲 API／採集器也連 Cloud SQL（sql_iam_sas 的 key 要能算出 email）
+override_resource {
+  target          = google_service_account.seg
+  override_during = plan
+  values = {
+    email = "qsearch-seg@qsearch-test.iam.gserviceaccount.com"
+    name  = "projects/qsearch-test/serviceAccounts/qsearch-seg@qsearch-test.iam.gserviceaccount.com"
+  }
+}
+
+# Q6：斷詞服務／文字雲 API／採集器也連 Cloud SQL（sql_iam_sas 的 key 要能算出 email）
+override_resource {
+  target          = google_service_account.wordcloud_api
+  override_during = plan
+  values = {
+    email = "qsearch-wordcloud-api@qsearch-test.iam.gserviceaccount.com"
+    name  = "projects/qsearch-test/serviceAccounts/qsearch-wordcloud-api@qsearch-test.iam.gserviceaccount.com"
+  }
+}
+
+# Q6：斷詞服務／文字雲 API／採集器也連 Cloud SQL（sql_iam_sas 的 key 要能算出 email）
+override_resource {
+  target          = google_service_account.collector
+  override_during = plan
+  values = {
+    email = "qsearch-collector@qsearch-test.iam.gserviceaccount.com"
+    name  = "projects/qsearch-test/serviceAccounts/qsearch-collector@qsearch-test.iam.gserviceaccount.com"
   }
 }
 
@@ -195,7 +228,7 @@ run "cloud_sql_hardening" {
 
   assert {
     condition = (
-      toset(keys(google_sql_user.iam_sa)) == toset(["worker", "parser", "scheduler_app", "backfill"]) &&
+      toset(keys(google_sql_user.iam_sa)) == toset(["worker", "parser", "scheduler_app", "backfill", "seg", "wordcloud_api", "collector"]) &&
       alltrue([for u in google_sql_user.iam_sa : u.type == "CLOUD_IAM_SERVICE_ACCOUNT" && !endswith(u.name, ".gserviceaccount.com")]) &&
       google_sql_user.iam_sa["backfill"].name == "qsearch-backfill@qsearch-test.iam"
     )
@@ -204,7 +237,7 @@ run "cloud_sql_hardening" {
 
   assert {
     condition = alltrue([
-      for k in ["worker", "parser", "scheduler_app", "backfill"] :
+      for k in ["worker", "parser", "scheduler_app", "backfill", "seg", "wordcloud_api", "collector"] :
       google_project_iam_member.sql_client[k].role == "roles/cloudsql.client" &&
       google_project_iam_member.sql_instance_user[k].role == "roles/cloudsql.instanceUser" &&
       google_project_iam_member.sql_client[k].member == "serviceAccount:${google_sql_user.iam_sa[k].name}.gserviceaccount.com"
@@ -358,7 +391,7 @@ run "legacy_gce_hardening_when_enabled" {
   }
 }
 
-# Python 驗證 thread 實測：hello 示範映像對任何 POST 都回 200，Pub/Sub 會把事件全部 ack 掉。
+# Python 驗證實測：hello 示範映像對任何 POST 都回 200，Pub/Sub 會把事件全部 ack 掉。
 # 只要有一個 image_* 還是示範映像，check 就要報出來。
 run "placeholder_image_is_flagged" {
   command = plan

@@ -5,8 +5,8 @@ shared/capture/fixtures/threads_graphql_sample.json 是 @nasa 個人頁載入時
 extract_posts / graphql_summary 能抽出 URL、內文、發文時間三個欄位，且不把 token、cursor 留下來。
 HTTP 模式用假的 gzip 回應，檢查壓縮後與解壓後大小分開記。
 另外照 2026-10-30 實抓 HTML 的形狀（expectedPreloaders、mediaData.page_info、share_info.quoted_post）
-組假資料，檢查預排 query、分頁資訊與被引用貼文抽得出來，cursor、userID 的值不留。
-瀏覽器流程用本機 127.0.0.1 的假站跑真的 Chromium（找不到就 skip）；main() 的參數用假的
+組合成資料，檢查預排 query、分頁資訊與被引用貼文抽得出來，cursor、userID 的值不留。
+瀏覽器流程用本機 127.0.0.1 的假站跑Chromium（找不到就 skip）；main() 的參數用假的
 browser_fetch 檢查。都不連外網。
 """
 import contextlib
@@ -250,7 +250,7 @@ def test_url_shape_drops_query_values():
 
 @pytest.fixture(scope="module")
 def chromium():
-    """真的 Chromium：先看 Q4_CHROMIUM，再看 Playwright 自己的預設執行檔，最後看 PLAYWRIGHT_BROWSERS_PATH
+    """Chromium：先看 Q4_CHROMIUM，再看 Playwright 自己的預設執行檔，最後看 PLAYWRIGHT_BROWSERS_PATH
     底下的 chromium 連結（這台容器的 Playwright 1.64.1 找不到自己的版本，只有這個連結能用）。都沒有就 skip。"""
     pytest.importorskip("playwright.sync_api")
     cands = [os.environ.get("Q4_CHROMIUM")]

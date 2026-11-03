@@ -1,0 +1,32 @@
+# 字典發版收斂（計畫書 P0 第 7 項；指標由 seg/qseg/recon.py 從 service_state／rerun_runs／release_outbox 算出）。門檻都是提案值。
+groups:
+  - name: q6-release
+    rules:
+      # 1 分鐘內有心跳的 v2 執行個體載入的 dict_version 不只一個，持續 10 分鐘 → warn（每台輪詢 manifest 15 秒，正常幾十秒內收斂）
+      - alert: DictVersionDivergence
+        expr: qseg_service_dict_versions{pipeline="v2"} > 1
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "v2 斷詞服務有 {{ $value }} 個不同的字典版本在跑：部分執行個體沒換到新字典、新舊字典混寫" }
+      # 定向重跑跑超過 30 分鐘 → warn（計畫書「重跑超過預估 2 倍警告」：目前沒有預估值，先用固定門檻）
+      - alert: RerunStuck
+        expr: qseg_rerun_running_age_seconds > 1800
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "定向重跑已經跑超過 30 分鐘（{{ $value | humanizeDuration }}）：看 rerun_runs 的 scanned／candidates 有沒有在動" }
+      - alert: RerunFailed
+        expr: increase(qseg_rerun_runs{status="failed"}[1h]) > 0
+        for: 0m
+        labels: { severity: ticket }
+        annotations: { summary: "最近 1 小時有定向重跑失敗：PM 頁 runs 看錯誤訊息" }
+      # outbox 裡的控制訊息超過 5 分鐘沒送出去 → warn（字典已切 current、服務會輪詢收斂，但沒人做定向重跑）
+      - alert: ReleaseOutboxStuck
+        expr: qseg_release_outbox_pending > 0
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "有 {{ $value }} 則發版控制訊息發不出去（Pub/Sub 不通）：字典已切換但定向重跑沒人做" }
+      - alert: SegNoAliveInstances
+        expr: qseg_service_instances_alive{pipeline="v2"} == 0 and on () qseg_recon_last_success_timestamp_seconds > 0
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "沒有任何 v2 斷詞服務在 1 分鐘內寫過心跳（service_state）" }

@@ -4,24 +4,24 @@
 
 - 修正前的 `main.py` 對兩類事件回 204（ack），性質不同：
   - 少了 `schema_version` 或 `event_type`，或 `schema_version` 是 `"1"`、`1.0`、`true`：這些 Avro 不收。`qsearch-crawl-fetched` 主題綁了這份 Avro schema（JSON 編碼），官方文件寫「不符合 schema 的訊息不會被發佈」，所以照目前的部署，它們在發佈端就被擋，到不了 parser（依文件推論，沒有在 GCP 實測）。修正前的 204 只會影響繞過 schema 的訊息；這次修正是讓 parser 與 `.avsc` 契約一致，多一道防線，不是線上正在發生的 ack 漏洞。
-  - `raw_data_uri` 是 `gs://bucket`、`gs://`、`gs://bucket/`、`gs:///obj` 這類缺 bucket 或 object 的 URI：這些是合法的 Avro 字串，真的發佈得出去、也會推到 parser。修正前會被 ack 掉，是實際的 bug；修正後回 422。
+  - `raw_data_uri` 是 `gs://bucket`、`gs://`、`gs://bucket/`、`gs:///obj` 這類缺 bucket 或 object 的 URI：這些是合法的 Avro 字串，發佈得出去、也會推到 parser。修正前會被 ack 掉，是實際的 bug；修正後回 422。
   - 修正方式：`Event` 改成全部必填、`strict=True`，並檢查 URI 必須是 `gs://<bucket>/<object>`。
 - `Dockerfile` 的 CMD 原本沒有 `exec`：容器內 PID 1 是 `sh`（映像的 `/bin/sh` 是 dash），SIGTERM 被 sh 忽略、不會轉給 uvicorn，`docker stop -t 10` 要等到被 SIGKILL（三次實測 10.28 到 10.79 秒，退出碼 137）。加上 `exec` 後 PID 1 是 uvicorn，0.45 到 0.51 秒正常關機（退出碼 0）。
-- 測試在 repo 內：`tests/` 共 106 項，在 3 個環境都全數通過（Python 3.13 共用 venv、依 `requirements.txt` 新建的 Python 3.12 venv、直接依賴取下限的 Python 3.12 venv）。同一套測試套在修正前（commit 80adb29）的 `main.py`／`Dockerfile` 上有 17 項失敗。
+- 測試在 repo 內：`tests/` 共 106 項，在 3 個環境都全數通過（Python 3.13 共用 venv、依 `requirements.txt` 新建的 Python 3.12 venv、直接依賴取下限的 Python 3.12 venv）。同一套測試套在修正前的 `main.py`／`Dockerfile` 上有 17 項失敗。
 - `requirements.txt` 可以安裝（34 個套件，`pip check` 無衝突）；`docker build --no-cache` 成功（48.06 秒）。
-- main.py 與 Terraform 的路徑、port、逾時、push 格式、OIDC 身分都一致。最大的部署風險在 Terraform：`var.image_parser` 預設是 Cloud Run hello 映像，它對任何 POST 都回 200，Pub/Sub 會把所有事件 ack 掉（詳見下方一致性表）。本檔沒有改 `.tf`；Terraform 分支（PR #7）之後加了 plan 時的警告，見下一節。
+- main.py 與 Terraform 的路徑、port、逾時、push 格式、OIDC 身分都一致。最大的部署風險在 Terraform：`var.image_parser` 預設是 Cloud Run hello 映像，它對任何 POST 都回 200，Pub/Sub 會把所有事件 ack 掉（詳見下方一致性表）。本檔沒有改 `.tf`；Terraform 之後加了 plan 時的警告，見下一節。
 
-## 與 Terraform 分支（PR #7，67f0a79）合併後（2026-10-30 17:45 UTC）
+## 與 Terraform 整理合併後（2026-10-30 17:45 UTC）
 
-兩個分支都改了這個資料夾，在 d03e106 合併，兩邊的修改都保留：
+兩邊都改了這個資料夾，2026-10-30 合併，兩邊的修改都保留：
 
 | 檔案 | 合併後 | 來源 |
 |---|---|---|
-| `main.py` | `Event` 六欄全部必填、依 `.avsc` 順序、`strict=True`；URI 要是 `gs://<bucket>/<object>`；解析失敗記 `log.warning`（不印 traceback） | 必填與 strict 兩邊都有；URI 檢查來自本分支；`log.warning` 與「Seek 重播會繞過主題 schema」的註解來自 PR #7 |
-| `Dockerfile` | `USER 10001`（非 root）＋ CMD 用 `exec`，PID 1 是 uvicorn | USER 來自 PR #7；`exec` 來自本分支 |
-| `requirements.txt` | 拿掉沒用到的 `google-cloud-pubsub` | PR #7 |
-| `tests/` | 本分支 106 項＋PR #7 的 `test_push_endpoint.py` 13 項，`conftest.py` 合併兩邊的 fixture | 兩邊 |
-| `local/` | Pub/Sub 模擬器的端到端實測（`local/VERIFY.md`） | PR #7 |
+| `main.py` | `Event` 六欄全部必填、依 `.avsc` 順序、`strict=True`；URI 要是 `gs://<bucket>/<object>`；解析失敗記 `log.warning`（不印 traceback） | 必填與 strict 兩邊都有；URI 檢查來自 parser 這邊；`log.warning` 與「Seek 重播會繞過主題 schema」的註解來自 Terraform 整理 |
+| `Dockerfile` | `USER 10001`（非 root）＋ CMD 用 `exec`，PID 1 是 uvicorn | USER 來自 Terraform 整理；`exec` 來自 parser 這邊 |
+| `requirements.txt` | 拿掉沒用到的 `google-cloud-pubsub` | Terraform 整理 |
+| `tests/` | parser 這邊 106 項＋`test_push_endpoint.py` 13 項，`conftest.py` 合併兩邊的 fixture | 兩邊 |
+| `local/` | Pub/Sub 模擬器的端到端實測（`local/VERIFY.md`） | Terraform 整理 |
 
 | 合併後重驗 | 退出碼 | 結果 | log（`<tmp>/work/parser/`） |
 |---|---|---|---|
@@ -30,7 +30,7 @@
 | `tests/smoke.sh qsearch-parser:merged 18095` | 0 | 12 項比對全部相符；PID 1 是 uvicorn，`docker stop` 0.457 秒，退出碼 0 | `smoke_merged.log` |
 | `docker run --rm --network none --entrypoint sh qsearch-parser:merged -c 'id; …'` | 0 | `uid=10001(app)`；映像內沒有 `google.cloud.pubsub` | `image_merged_user.log` |
 
-PR #7 在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 的 `no_placeholder_images` 在任何 `image_*` 還是 Cloud Run 示範映像時於 plan 階段警告；push 訂閱的 `oidc_token` 明寫 `audience = 服務 URI`（不帶路徑），所以下方「OIDC audience」一列的預設值問題在合併後的 Terraform 不再適用。parser 映像的建置路徑仍未補（PR #7 寫進 `shared/infra/gcp/README.md` 的「未覆蓋」）。下方各節是合併前的紀錄，數字以合併前的檔案為準。
+後來在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 的 `no_placeholder_images` 在任何 `image_*` 還是 Cloud Run 示範映像時於 plan 階段警告；push 訂閱的 `oidc_token` 明寫 `audience = 服務 URI`（不帶路徑），所以下方「OIDC audience」一列的預設值問題在合併後的 Terraform 不再適用。parser 映像的建置路徑仍未補（整理時 寫進 `shared/infra/gcp/README.md` 的「未覆蓋」）。下方各節是合併前的紀錄，數字以合併前的檔案為準。
 
 ## 環境
 
@@ -42,7 +42,7 @@ PR #7 在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 
 | `venv-min`（新建） | Python 3.12.3；requirements 直接依賴的下限：fastapi 0.115.0、uvicorn 0.30.0、pydantic 2.1.1（宣告的下限是 2.0，但實際可裝的最低是 2.1.1）、google-cloud-pubsub 2.20.0；starlette 由 fastapi 決定為 0.38.6。間接依賴是當時最新版（anyio 4.15.1、h11 0.16.0、httpx 0.28.1） |
 | Docker | Docker Engine 29.9.2（client 與 server 同版，`dockerd --data-root` 放在 scratch）；映像內是 Debian 13（trixie）、Python 3.12.16、dash 0.5.12-12，`/bin/sh` 指向 dash（指令 #22，`image_env.log`） |
 
-`venv-min` 的 pytest 只走到 fastapi、pydantic、starlette：TestClient 不經過 uvicorn，main.py 也沒有匯入 google-cloud-pubsub。uvicorn 0.30.0 另外用真的 server 跑過一次（指令 #17）；google-cloud-pubsub 2.20.0 只驗證了可以安裝。
+`venv-min` 的 pytest 只走到 fastapi、pydantic、starlette：TestClient 不經過 uvicorn，main.py 也沒有匯入 google-cloud-pubsub。uvicorn 0.30.0 另外用實際的 server 跑過一次（指令 #17）；google-cloud-pubsub 2.20.0 只驗證了可以安裝。
 
 ## 指令與退出碼
 
@@ -50,7 +50,7 @@ PR #7 在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 
 
 | # | 指令（摘要） | 退出碼 | 結果 | log |
 |---|---|---|---|---|
-| 1 | 共用 venv：`python -m pytest -p no:cacheprovider -q shared/infra/gcp/services/parser/tests`（接手時的測試） | 1 | 96 passed、1 failed：`allUsers` 出現在 run.tf 的註解裡，測試誤判。已改成只比對 `member = "..."` | 沒有保留 log |
+| 1 | 共用 venv：`python -m pytest -p no:cacheprovider -q shared/infra/gcp/services/parser/tests`（原有的測試） | 1 | 96 passed、1 failed：`allUsers` 出現在 run.tf 的註解裡，測試誤判。已改成只比對 `member = "..."` | 沒有保留 log |
 | 2 | `dockerd --data-root <tmp>/work/parser/docker-data`（背景執行兩次：12:51 到 12:56、17:25 到 17:27 UTC，都以 SIGTERM 停止） | 0／0 | 兩次都是 `Daemon shutdown complete` | `dockerd3.log`、`dockerd4.log` |
 | 3 | `docker pull mirror.gcr.io/library/python:3.12-slim@sha256:aa943ce4…` | 0 | `Image is up to date`（第一次拉取見 `docker_pull_mirror.log`） | `docker_pull_mirror_rerun.log` |
 | 4 | `docker build -t python:3.12-slim <tmp>/work/parser/base-ca`（mirror 映像加 sandbox proxy 的 CA 與 `PIP_CERT`，在本機標成 `python:3.12-slim`） | 0 | 本機標籤 `python:3.12-slim` 指向這個包裝映像（第一次建置見 `docker_build_baseca.log`） | `docker_build_baseca_rerun.log` |
@@ -58,7 +58,7 @@ PR #7 在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 
 | 6 | 同上但沒有 `--no-cache`（#4 重建了基底，所以 pip 那層重跑） | 0 | 約 35 秒（pip 那層 27.4 秒），產生映像 `201066844cfc`；映像內 `pip freeze` 34 個套件。映像內 `/app/main.py`、`/app/requirements.txt` 與工作目錄相同：當時的 `diff -q` 沒有留 log，17:26 UTC 對同一個映像重做並記錄（#22） | `docker_build_rerun.log`、`image_current_freeze.txt` |
 | 7 | `docker images` | 0 | `qsearch-parser:current` 294 MB（content 70.3 MB） | `docker_images.log`、`docker_images_after_rebuild.log` |
 | 8 | `tests/smoke.sh qsearch-parser:current 18091`（12:54、17:26 UTC 各跑一次） | 0／0 | 兩次都是 12 項比對全部相符（`result: all ok`），停機 0.484 秒、0.505 秒 | `smoke_rerun.log`、`smoke_rev2.log` |
-| 9 | `tests/smoke.sh qsearch-parser:orig 18092`（用 80adb29 的 `main.py` 與 `Dockerfile` 建的映像，見 #22） | 1／1 | 兩次都是同樣 6 項不符：PID 1、三個事件回 204、停機超過 5 秒（10.290 秒、10.279 秒）、退出碼 137 | `smoke_rerun.log`、`smoke_rev2.log` |
+| 9 | `tests/smoke.sh qsearch-parser:orig 18092`（用 修正前的 `main.py` 與 `Dockerfile` 建的映像，見 #22） | 1／1 | 兩次都是同樣 6 項不符：PID 1、三個事件回 204、停機超過 5 秒（10.290 秒、10.279 秒）、退出碼 137 | `smoke_rerun.log`、`smoke_rev2.log` |
 | 10 | `docker run -e PORT=9090 -p 127.0.0.1:18083:9090 qsearch-parser:current`，再 `curl /health` | 0 | PID 1 是 `uvicorn … --port 9090`，`/health` 200 | `hello_and_port.log` |
 | 11 | `docker pull us-docker.pkg.dev/cloudrun/container/hello` | 0 | digest `sha256:d5dbac4a…` | `docker_pull_hello.log` |
 | 12 | 以 digest 啟動 hello，再 POST 缺欄位的事件、亂碼 body、空 body 到 `/events/crawl-fetched` | 0 | 三個都回 200 | `hello_and_port.log` |
@@ -69,11 +69,11 @@ PR #7 在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 
 | 17 | `venv-min`：`python -m uvicorn main:app --app-dir … --port 18097`，curl 後送 SIGTERM | 143 | uvicorn 0.30.0 可啟動：`/health` 200、合法事件 204、`gs://bucket` 422；收到 SIGTERM 後 log 有 `Shutting down`、`Finished server process`。143 是 uvicorn 正常收尾後以 `signal.raise_signal` 把 SIGTERM 再送給自己的結果（`uvicorn/server.py` 第 328 行；這裡不是 PID 1，所以以訊號結束）。容器裡的 uvicorn 0.54.0 也會這樣做（同一個呼叫在第 349 行），但它是 PID 1，核心不會用預設動作結束 PID 1，所以退出碼是 0（#8） | `uvicorn_min.log` |
 | 18 | `venv-req`、`venv-min` 各跑 `python -m pip check` | 0／0 | `No broken requirements found.` | `pip_check.log` |
 | 19 | `venv-req` 遮掉 fastavro（`sys.modules['fastavro'] = None`）再跑 pytest（12:55、17:30 UTC 各一次） | 0／0 | 兩次都是 91 passed、15 skipped（fastavro 檢查自動略過） | `pytest_rev_nofastavro.log`、`pytest_r3_nofastavro.log` |
-| 20 | 同一套測試套在修正前的 `main.py`、`Dockerfile` 上（`git show 80adb29:…` 放到 scratch 複本 `orig-tree/`，`.tf`、`.avsc`、`requirements.txt` 與工作目錄相同；80adb29 是修正進 git（1531eb4）之前最後一個動到 parser 的 commit） | 1／1 | 兩次都是 89 passed、17 failed，失敗的 17 項相同 | `pytest_rev_against_head.log`、`pytest_r3_against_80adb29.log` |
+| 20 | 同一套測試套在修正前的 `main.py`、`Dockerfile` 上（修正前的版本放到 scratch 複本 `orig-tree/`，`.tf`、`.avsc`、`requirements.txt` 與工作目錄相同） | 1／1 | 兩次都是 89 passed、17 failed，失敗的 17 項相同 | `pytest_rev_against_head.log`、`pytest_r3_against_80adb29.log` |
 | 21 | 最終 pytest：共用 venv／`venv-req`／`venv-min`（12:55、17:30 UTC 各一輪；17:35 UTC 改完本檔後，共用 venv 再跑一次，`pytest_end_venv.log`） | 0／0／0 | 兩輪都是各 106 passed，17:35 那次也是 106 passed | `pytest_rev_venv.log`、`pytest_rev_venv-req.log`、`pytest_rev_venv-min.log`；`pytest_r3_venv.log`、`pytest_r3_venv-req.log`、`pytest_r3_venv-min.log` |
 | 22 | （17:26 UTC）兩個映像各跑 `docker run --rm --network none … sh -c '. /etc/os-release; python -V; dpkg-query -W dash; readlink -f /bin/sh'`，再用 `docker inspect` 看 CMD、用 `diff` 比對映像內的 `/app/main.py` | 0 | 兩個映像都是 Debian 13（trixie）、Python 3.12.16、dash 0.5.12-12。current 的 CMD 有 `exec`，orig 沒有。current 的 `/app/main.py`、`/app/requirements.txt` 與工作目錄相同，orig 的 `/app/main.py` 與 80adb29 相同（`diff` 都退出 0） | `image_env.log` |
 | 23 | `curl -sS -L` 下載 Pub/Sub 的 push 文件與 push 驗證文件，各一次（17:26、17:27 UTC） | 0／0 | 都是 HTTP 200，各轉址 1 次到 docs.cloud.google.com；sha256 見下方文件來源表 | `docs-dl-push/push.html`、`docs-dl-auth/auth_push.html` |
-| 24 | 共用 venv 與 `venv-min` 各跑一段 `python -I -c`（17:33 UTC）：用 80adb29 的 `Event` 寫法（`schema_version: int = 1`，非 strict）解 `"1"`、`1.0`、`true` 與缺欄位 | 0／0 | pydantic 2.14.2 與 2.1.1 都把四種輸入解成 int 1 | `pydantic_lax.log` |
+| 24 | 共用 venv 與 `venv-min` 各跑一段 `python -I -c`（17:33 UTC）：用 修正前的 `Event` 寫法（`schema_version: int = 1`，非 strict）解 `"1"`、`1.0`、`true` 與缺欄位 | 0／0 | pydantic 2.14.2 與 2.1.1 都把四種輸入解成 int 1 | `pydantic_lax.log` |
 
 關於 `smoke.sh` 的退出碼：更早的 scratch 腳本（`scripts/smoke.sh`）沒有任何比對，退出碼只是最後一個 `docker rm` 的結果，所以審查前草稿記的「0」只代表腳本跑完，結果要看印出的狀態碼。現在的 `tests/smoke.sh` 會逐項和修正後的預期比對，有不符就退出 1，所以 #8 的 0 與 #9 的 1 都是比對結果。
 
@@ -167,32 +167,31 @@ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -p no:cacheprovider -q
 
 ## 與既有說法的差異／修正
 
-repo 裡既有的說法與程式（含本檔進 git 的 1531eb4 版）：
+repo 裡既有的說法與程式（含本檔較早的版本）：
 
 | 原本的說法 | 現在 | 依據 |
 |---|---|---|
 | `shared/docs/python.md`：「lab parser：`S\py\tests` 6 passed」 | 那 6 項測試不在 git 裡，無法重跑；現在 repo 內有 106 項測試 | 本檔 pytest 結果 |
-| `.avsc` 的 doc：「欄位與 services/parser 的 Pydantic model 與 lab 的 publish 範例一致」；`shared/infra/gcp/README.md` 第 20 行：「欄位與 lab／parser 一致」 | 欄位名稱與型別在修正前就一致。真正的差別是預設值與寬鬆轉型：`schema_version`、`event_type` 有預設值（Avro 沒有），而且會把 `"1"`、`1.0`、`true` 轉成 1（pydantic 2.14.2 與 2.1.1 都實測過，指令 #24）。欄位順序也不同，但只是外觀，不影響 JSON 解析。main.py 修正後兩邊一致（這兩份檔案不在本次範圍，沒有改） | 修正前 17 項測試失敗（指令 #20）；容器實測 orig 欄 |
-| 80adb29 的 main.py 註解：「Non-2xx -> Pub/Sub redelivery」 | 改成「Push acks only 102/200/201/202/204」。102 不是 2xx 卻算 ack，203、205 等 2xx 則算 nack | push 文件（`docs-dl-push/push.html`） |
-| 80adb29 的 Dockerfile CMD 沒有 `exec` | 加上 `exec` | 容器實測：10.279 到 10.79 秒、137，對 0.45 到 0.505 秒、0 |
-| 本檔 1531eb4 版的指令 #20：「`git show HEAD:…`」 | 改成 `git show 80adb29:…`。修正已在 1531eb4 進 git，現在的 HEAD 是修正後的版本，照原寫法會拿到修正後的檔案 | `git log -- shared/infra/gcp/services/parser/`；`orig-tree/` 的 `main.py`、`Dockerfile` 與 80adb29 `diff` 退出 0 |
-| 本檔 1531eb4 版的環境列：映像是 Debian 13、Python 3.12.16、dash 0.5.12-12（沒有 log） | 數字不變，補了 log | 指令 #22，`image_env.log` |
-| 本檔 1531eb4 版的 #5：退出碼 0 | 數字不變，註明 log 裡沒有 `exit=` 行、0 是依 BuildKit 輸出判斷 | `docker_build_current_nocache.log` |
-| 本檔 1531eb4 版與 `tests/parser_cases.py`：ack 狀態碼引用「push 文件，2026-10-30 查閱」（沒有存檔） | 內容不變，存了頁面並記 sha256 | 指令 #23，文件來源表 |
-| 本檔 1531eb4 版：Cloud Run 是否接受帶路徑的 audience「未實測」 | 仍未實測；補上 push 驗證文件的說法：Cloud Run 只需要 IAM 角色 | `docs-dl-auth/auth_push.html` |
+| `.avsc` 的 doc：「欄位與 services/parser 的 Pydantic model 與 lab 的 publish 範例一致」；`shared/infra/gcp/README.md` 第 20 行：「欄位與 lab／parser 一致」 | 欄位名稱與型別在修正前就一致。實際的差別是預設值與寬鬆轉型：`schema_version`、`event_type` 有預設值（Avro 沒有），而且會把 `"1"`、`1.0`、`true` 轉成 1（pydantic 2.14.2 與 2.1.1 都實測過，指令 #24）。欄位順序也不同，但只是外觀，不影響 JSON 解析。main.py 修正後兩邊一致（這兩份檔案不在本次範圍，沒有改） | 修正前 17 項測試失敗（指令 #20）；容器實測 orig 欄 |
+| 修正前的 main.py 註解：「Non-2xx -> Pub/Sub redelivery」 | 改成「Push acks only 102/200/201/202/204」。102 不是 2xx 卻算 ack，203、205 等 2xx 則算 nack | push 文件（`docs-dl-push/push.html`） |
+| 修正前的 Dockerfile CMD 沒有 `exec` | 加上 `exec` | 容器實測：10.279 到 10.79 秒、137，對 0.45 到 0.505 秒、0 |
+| 本檔較早版本的環境列：映像是 Debian 13、Python 3.12.16、dash 0.5.12-12（沒有 log） | 數字不變，補了 log | 指令 #22，`image_env.log` |
+| 本檔較早版本的 #5：退出碼 0 | 數字不變，註明 log 裡沒有 `exit=` 行、0 是依 BuildKit 輸出判斷 | `docker_build_current_nocache.log` |
+| 本檔較早版本與 `tests/parser_cases.py`：ack 狀態碼引用「push 文件，2026-10-30 查閱」（沒有存檔） | 內容不變，存了頁面並記 sha256 | 指令 #23，文件來源表 |
+| 本檔較早版本：Cloud Run 是否接受帶路徑的 audience「未實測」 | 仍未實測；補上 push 驗證文件的說法：Cloud Run 只需要 IAM 角色 | `docs-dl-auth/auth_push.html` |
 
-審查前的草稿與接手時的測試（都沒有進 git，列出來是交代審查意見怎麼處理）：
+審查前的草稿與原有的測試（都沒有進 git，列出來是交代審查意見怎麼處理）：
 
 | 原本的說法 | 現在 | 依據 |
 |---|---|---|
-| 草稿的結論：「Avro schema 不接受的事件原本會被 ack」，並把 `gs://bucket` 算在裡面 | 分成兩類：Avro 不收的事件在發佈端就會被主題擋掉，修正是契約一致與防線；`gs://bucket` 這類 URI 是合法 Avro、真的會送到 parser，修正前被 ack 是實際的 bug | `.avsc`、fastavro 驗證、schema 文件 |
+| 草稿的結論：「Avro schema 不接受的事件原本會被 ack」，並把 `gs://bucket` 算在裡面 | 分成兩類：Avro 不收的事件在發佈端就會被主題擋掉，修正是契約一致與防線；`gs://bucket` 這類 URI 是合法 Avro、會送到 parser，修正前被 ack 是實際的 bug | `.avsc`、fastavro 驗證、schema 文件 |
 | 草稿：「重送 5 次（`max_delivery_attempts`）後進 DLQ」 | 共投遞約 5 次（首次加重送 4 次，best effort）後轉 DLQ | REST reference `DeadLetterPolicy.maxDeliveryAttempts` |
 | 草稿：「查的兩頁官方文件沒有寫預設 audience」 | REST reference 有寫：未指定時用 push endpoint URL。只剩 Cloud Run 是否接受帶路徑的 audience 未實測 | REST reference `OidcToken.audience` |
 | 草稿把 `venv-min` 稱為「各套件最低版本」「requirements 的下限」 | 只有直接依賴取下限，pydantic 是實際可裝的最低 2.1.1，間接依賴是最新版；pytest 只走到 fastapi、pydantic、starlette | `venv_min_freeze.txt` |
 | 草稿 smoke 列的退出碼 0 | 舊腳本沒有比對，0 只代表腳本跑完；現在 `tests/smoke.sh` 有比對，current 0、orig 1 | `smoke_rerun.log`、`smoke_rev2.log` |
 | 草稿的測試鎖住了要修的缺點：FROM 只接受 `python:3.12-slim`、requirements 一定要有 google-cloud-pubsub | FROM 也接受 `@sha256:<64 位 hex>`；不再要求 google-cloud-pubsub，只檢查 main.py 沒有匯入 `google` | `test_from_pattern_allows_digest_pin`、`test_requirements_cover_imports` |
-| 接手時的 `test_push_is_wrapped_and_authenticated` 直接找字串 `allUsers` | 改為只比對 `member = "..."`，因為 run.tf 的註解寫了「不開 allUsers」 | 指令 #1 |
-| 接手時的 `test_parser_contract.py` 用 `from conftest import …` | 改成獨立的 `tests/parser_cases.py`，避免其他題目也有 `conftest.py` 時抓錯模組 | — |
+| 原有的 `test_push_is_wrapped_and_authenticated` 直接找字串 `allUsers` | 改為只比對 `member = "..."`，因為 run.tf 的註解寫了「不開 allUsers」 | 指令 #1 |
+| 原有的 `test_parser_contract.py` 用 `from conftest import …` | 改成獨立的 `tests/parser_cases.py`，避免其他題目也有 `conftest.py` 時抓錯模組 | — |
 
 ## 版本範圍的問題
 
@@ -211,9 +210,9 @@ repo 裡既有的說法與程式（含本檔進 git 的 1531eb4 版）：
 
 ## 未完成與限制
 
-- 沒有部署到 GCP，也沒有用真的 Pub/Sub 推送；ack、重送與「主題在發佈端擋掉 Avro 不收的訊息」都是依官方文件加上本機 HTTP 狀態碼判斷。
-- OIDC：合併 PR #7 後 audience 明寫為服務 URI（不帶路徑），避開了「帶路徑的預設 audience」的問題；但 Cloud Run 實際驗證 token 的行為仍要在真的專案上確認。
+- 沒有部署到 GCP，也沒有用 GCP 的 Pub/Sub 推送；ack、重送與「主題在發佈端擋掉 Avro 不收的訊息」都是依官方文件加上本機 HTTP 狀態碼判斷。
+- OIDC：後續修正後 audience 明寫為服務 URI（不帶路徑），避開了「帶路徑的預設 audience」的問題；但 Cloud Run 實際驗證 token 的行為仍要在正式專案上確認。
 - 服務仍是 dry-run：不讀 GCS、不解析 HTML、不寫 DB、沒有去重。冪等測試只證明重複投遞時兩次都 ack，不代表正式版的去重已完成。
-- Terraform 的兩個問題本檔只記錄，沒有改 `.tf`。合併 PR #7 後，hello 映像預設值會在 plan 時警告（仍是預設值，不是錯誤）；parser 仍沒有建置 trigger。
-- `google-cloud-pubsub` 已由 PR #7 從 `requirements.txt` 拿掉；之後若 parser 要發佈後續事件，要再加回來並補測試。
+- Terraform 的兩個問題本檔只記錄，沒有改 `.tf`。後續修正後，hello 映像預設值會在 plan 時警告（仍是預設值，不是錯誤）；parser 仍沒有建置 trigger。
+- `google-cloud-pubsub` 已從 `requirements.txt` 拿掉；之後若 parser 要發佈後續事件，要再加回來並補測試。
 - Docker 建置用了 sandbox 專用的基底（mirror 加 CA），和 Cloud Build 的環境不同。`tests/smoke.sh` 用了 GNU `base64 -w0` 與 `date +%s%N`，只在 Linux 上驗證過。

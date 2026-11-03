@@ -1,4 +1,4 @@
-// QSearch 第二輪補證據（雲端容器，Playwright 無頭 Chromium，未登入）。
+// QSearch 第二輪補證據（Linux 容器，Playwright 無頭 Chromium，未登入）。
 //
 //   node capture_round2_cloud.js cloud    Q4(b)/Q2/Q5：同一個雲端出口 IP 依序開 Threads、Facebook、Instagram，記錄狀態碼與最終網址
 //                                          ＋ Q5(d)：同一則 Threads 貼文與 10/30 01:56 的互動數對照（指標會一直變）
@@ -120,7 +120,7 @@ const OVERLAY = (cfg) => {
 const overlay = (page, items, card, extra = {}) => page.evaluate(OVERLAY, { items, card, ...extra, stamp: nowTW() }).catch(e => { log('  overlay error', e.message); return []; });
 
 async function launch() {
-  // 雲端容器的對外連線一律經過環境預設的出口代理（不是輪替代理，也不是住宅 IP）
+  // Linux 容器的對外連線一律經過環境預設的出口代理（不是輪替代理，也不是住宅 IP）
   return chromium.launch(process.env.HTTPS_PROXY ? { proxy: { server: process.env.HTTPS_PROXY } } : {});
 }
 
@@ -165,7 +165,7 @@ async function threadsJson(page) {
 const THREADS_POST = 'https://www.threads.com/@nasa/post/DfFP4pEET5Y';
 const EARLIER = { at: '2026-10-30T01:56:24+08:00', like: '148', reply: '—', repost: '16', share: '1', views: '5.5K views',
                   image: 'q5/evidence/playwright/threads_post_repost.png' };
-// 第 2 次（10/30 15:31，雲端容器，同一支腳本）：畫面 讚 266｜轉發 22｜分享 1｜9.1K views；JSON repost 18＋quote 4、reshare 1、reply 14
+// 第 2 次（10/30 15:31，Linux 容器，同一支腳本）：畫面 讚 266｜轉發 22｜分享 1｜9.1K views；JSON repost 18＋quote 4、reshare 1、reply 14
 const SECOND = { at: '2026-10-30T15:31:17+08:00', like: '266', repost: '22', share: '1', views: '9.1K views', repost_count: 18, quote_count: 4 };
 const THREADS_MASKS = ['a[href^="/@"]:not([href^="/@nasa"])', 'img[alt*="profile picture" i]:not([alt^="nasa" i])'];
 
@@ -206,7 +206,7 @@ async function runCloud(browser) {
         claim: 'repost_count 等互動數在發文後持續變動；Q5 的 1 小時 SLA 只保證第一筆，之後要排程重抓、每筆值附抓取時間，回補也要記「抓到當下」的時間',
         result: `第 1 次 ${EARLIER.at}：讚 ${EARLIER.like}、轉發 ${EARLIER.repost}、分享 ${EARLIER.share}、${EARLIER.views}；第 2 次 ${SECOND.at}：讚 ${SECOND.like}、轉發 ${SECOND.repost}（${SECOND.repost_count}＋${SECOND.quote_count}）、${SECOND.views}；第 3 次：讚 ${acts.like || '—'}、轉發 ${acts.repost || '—'}、分享 ${acts.share || '—'}、${acts.views || '—'}` + (js ? `；JSON repost_count ${js.repost_count}、quote_count ${js.quote_count}、reshare_count ${js.reshare_count}` : ''),
         image: rel, compare_with: EARLIER.image, json: js,
-        source: `Playwright 實抓（未登入、雲端容器）${THREADS_POST}；標註為截圖時加上` });
+        source: `Playwright 實抓（未登入、Linux 容器）${THREADS_POST}；標註為截圖時加上` });
 
   }
 
@@ -215,7 +215,7 @@ async function runCloud(browser) {
   r = await goto(page, 'fb', 'https://www.facebook.com/NASA', 5000);
   wall.fb = { hops: r.hops, final: r.final, err: r.err, login: await page.evaluate(() => !!document.querySelector('input[name=email], input[name=pass]')) };
   log('  fb', JSON.stringify(wall.fb));
-  await overlay(page, [{ sel: 'form', label: '登入表單（不是粉專內容）' }], { title: 'Facebook 粉專頁：雲端容器出口 IP、未登入', width: 470, left: true, lines: [
+  await overlay(page, [{ sel: 'form', label: '登入表單（不是粉專內容）' }], { title: 'Facebook 粉專頁：Linux 容器出口 IP、未登入', width: 470, left: true, lines: [
     '要求：https://www.facebook.com/NASA',
     ...r.hops.map(h => `HTTP ${h.status}  ${h.url.length > 90 ? h.url.slice(0, 90) + '…' : h.url}`),
     `最後停在：${r.final.length > 90 ? r.final.slice(0, 90) + '…' : r.final}`,
@@ -228,7 +228,7 @@ async function runCloud(browser) {
         claim: '從雲端機房 IP 未登入開粉專頁，拿不到任何貼文欄位；Q2 的 100 萬則貼文不能靠雲端爬網頁，要走 Graph API 或有授權的資料來源',
         result: `${r.hops.map(h => h.status).join(' → ')}；最後網址 ${r.final.split('?')[0]}；登入表單 ${wall.fb.login ? '有' : '無'}`,
         image: rel, compare_with: 'q2/evidence/playwright/fb_page_nasa.png',
-        source: 'Playwright 實抓（未登入、雲端容器）https://www.facebook.com/NASA；標註為截圖時加上' });
+        source: 'Playwright 實抓（未登入、Linux 容器）https://www.facebook.com/NASA；標註為截圖時加上' });
 
   }
 
@@ -237,7 +237,7 @@ async function runCloud(browser) {
   r = await goto(page, 'ig', 'https://www.instagram.com/nasa/reels/', 6000);
   wall.ig = { hops: r.hops, final: r.final, err: r.err, login: await page.evaluate(() => !!document.querySelector('input[name=username], input[name=password], input[name=email], input[name=pass]')) };
   log('  ig', JSON.stringify(wall.ig));
-  await overlay(page, [{ sel: 'form', label: '登入表單（不是 Reels 縮圖）' }], { title: 'Instagram Reels 分頁：雲端容器出口 IP、未登入', width: 470, lines: [
+  await overlay(page, [{ sel: 'form', label: '登入表單（不是 Reels 縮圖）' }], { title: 'Instagram Reels 分頁：Linux 容器出口 IP、未登入', width: 470, lines: [
     '要求：https://www.instagram.com/nasa/reels/',
     ...r.hops.map(h => `HTTP ${h.status}  ${h.url.length > 90 ? h.url.slice(0, 90) + '…' : h.url}`),
     `最後停在：${r.final.length > 90 ? r.final.slice(0, 90) + '…' : r.final}`,
@@ -252,7 +252,7 @@ async function runCloud(browser) {
         claim: 'IG Reels 的 play_count 只有住宅 IP 未登入看得到；雲端機房 IP 會被導去登入頁，所以 Reels 爬蟲要走住宅代理（同 Q4 的代理池），不能直接跑在 Cloud Run 出口',
         result: `${r.hops.map(h => h.status).join(' → ')}；最後網址 ${r.final.split('?')[0]}；登入表單 ${wall.ig.login ? '有' : '無'}`,
         image: rel, compare_with: 'q5/evidence/playwright/ig_reels_grid.png',
-        source: 'Playwright 實抓（未登入、雲端容器）https://www.instagram.com/nasa/reels/；標註為截圖時加上' });
+        source: 'Playwright 實抓（未登入、Linux 容器）https://www.instagram.com/nasa/reels/；標註為截圖時加上' });
 
   }
 
@@ -366,7 +366,7 @@ async function runPtt(browser) {
     add({ q: '6', id: `q6-ptt-noise-${String(n).padStart(2, '0')}`, node: 'tokenizer', title: `PTT 省錢板：短網址 ${domains.join('、')}`,
           claim: '社群／論壇內文的短網址不只 reurl.cc 一種；前處理要用網域白名單＋路徑規則整段移除，不能交給字典斷詞',
           result: `短網址網域 ${domains.join('、')}；紅框 ${labelled} 處；電話 ${top.filter(h => h.cat === '電話').length} 則（已遮）`,
-          image: rel, source: `Playwright 實抓（未登入、雲端容器）${aurl}；紅框、黑框為截圖時加上` });
+          image: rel, source: `Playwright 實抓（未登入、Linux 容器）${aurl}；紅框、黑框為截圖時加上` });
   }
   // 斷詞報告頁要用的原文片段：只留含雜訊的那幾行，電話數字另外遮
   const samples = [];
@@ -441,7 +441,7 @@ async function runQ3fix(browser) {
         claim: '每則留言都有推噓、帳號、內容、IP 與時間，parser 依這些欄位拆成資料列',
         result: `留言 ${stats.n} 則：推 ${t['推'] || 0}、噓 ${t['噓'] || 0}、→ ${t['→'] || 0}；帳號 ${masked.ids} 個與 IP ${masked.ips} 處已遮`,
         image: rel, replaces: '2026-10-30T01:51:38+08:00 版（帳號與 IP 未遮）',
-        source: `Playwright 實抓（未登入、雲端容器）${Q3_URL}；黑框、彩框為截圖時加上` });
+        source: `Playwright 實抓（未登入、Linux 容器）${Q3_URL}；黑框、彩框為截圖時加上` });
   await ctx.close();
 }
 

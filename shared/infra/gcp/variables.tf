@@ -148,3 +148,32 @@ variable "cloudbuild_service_account_id" {
   description = "2nd gen trigger 使用的 SA，格式 projects/<project>/serviceAccounts/<email>（新專案必填）。"
   default     = ""
 }
+
+# --- Q6 文字雲（q6.tf）---
+variable "image_seg" {
+  type        = string
+  description = "Q6 斷詞服務映像（q6/stack/seg/Dockerfile；v0／v1／v2 同一個映像，PIPELINE 環境變數不同）。預設 hello 映像讓 plan 成立。"
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+}
+
+variable "image_wordcloud_api" {
+  type        = string
+  description = "Q6 文字雲 API ＋ PM A/B 頁映像（q6/stack/api/Dockerfile）。"
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+}
+
+variable "image_collector" {
+  type        = string
+  description = "Q6 公開 feed 採集器映像（與文字雲 API 同一個映像，command 不同）。"
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+}
+
+variable "elasticsearch_url" {
+  type        = string
+  description = "Elasticsearch 位址：Compute Engine VM 在 crawler-subnet 的私有 IP（VM 不在這個模組裡建）；本機是 docker compose 的 http://es:9200。"
+  default     = "http://10.10.0.10:9200"
+  validation {
+    condition     = startswith(var.elasticsearch_url, "http://10.") || startswith(var.elasticsearch_url, "https://")
+    error_message = "elasticsearch_url 只能是 VPC 私有位址（http://10.…）或 https://。"
+  }
+}

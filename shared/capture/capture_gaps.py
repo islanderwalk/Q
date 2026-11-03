@@ -483,7 +483,7 @@ def run_ptt(browser):
         page.evaluate("() => document.querySelectorAll('.__gap_box').forEach(e => e.remove())")
     for s in shots:
         add(q="6", id="q6-ptt-noise-" + s["rel"][-6:-4], node="tokenizer", title="PTT 文章內的斷詞雜訊字串",
-            claim=f"真實貼文含 {s['cats']}；短網址後綴、電話、地名這類字串會被斷詞器切成雜訊或拆散",
+            claim=f"線上貼文含 {s['cats']}；短網址後綴、電話、地名這類字串會被斷詞器切成雜訊或拆散",
             result=f"{s['title'][:40]}；標出 {s['n_hits']} 種雜訊字串，{s['labelled']} 處命中（紅框）",
             image=s["rel"], source=f"Playwright 實抓（未登入）{s['url']}；紅框與黑框為截圖時加上")
     if not shots:

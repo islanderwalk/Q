@@ -1,8 +1,8 @@
 # Q5 回補原型與工時重算：驗證結果
 
-驗證日期 2026-10-30，Linux 雲端環境。本檔涵蓋 `q5/code/backfill/` 與 `q5/code/schedule/`，原本放在 `q5/code/backfill/RESULTS.md`，依 repo 版面移到 `q5/code/RESULTS.md`，log 移到 `q5/code/logs/`。
+驗證日期 2026-10-30，Linux 容器。本檔涵蓋 `q5/code/backfill/` 與 `q5/code/schedule/`，原本放在 `q5/code/backfill/RESULTS.md`，依 repo 版面移到 `q5/code/RESULTS.md`，log 移到 `q5/code/logs/`。
 
-版本名稱：**原型**＝`fc0b075^`（python.md 在 Windows 驗證的那一版），**上一輪**＝`fc0b075`，**本輪**＝目前工作樹。舊版程式由 `demo_cli.sh` 用 `git show` 取到 scratch 執行，不動工作樹。
+版本名稱：**原型**＝`demo_cli.sh` 的 V0（python.md 在 Windows 驗證的那一版），**上一輪**＝V1（本輪修正前的 commit），**本輪**＝目前工作樹。舊版程式由 `demo_cli.sh` 從 git 歷史取到 scratch 執行，不動工作樹。
 
 ## 結論
 
@@ -11,7 +11,7 @@
 - **較舊的值不會再蓋掉較新的值**：線上 T2 已有轉發數 20，回補輸入只有 T1（三欄）與 T3（缺轉發 key）。上一輪整篇只有一個時間戳，T3 讓 T1 的舊值 10 蓋掉了 20；本輪每欄各有時間戳 `counts_at.<欄位>`，轉發數保留 20，另兩欄寫入 T3 的值。前提是爬蟲寫入也帶同一個時間戳，已寫進 b-c-d.md (b) 第 1、2 項與風險表。
 - **IG 兩個 key 值不同時不寫入**：`play_count` 與 `video_view_count` 同時出現且值不同，當成不知道並記 `alias_conflict`，不再默默寫入 `play_count`。
 - **端到端結果不變**：2,000 篇、3,521 筆抓取的合成資料，寫入 1,979 篇、略過 21 篇；重跑兩次 7 個輸出檔 sha256 相同；與獨立算出的正確答案 0 筆不符。送出端 5 個情境（本機假 ES）中，有比對內容的 S1、S3、S5 都是 0 筆不符（S2 沒送請求、S4 是中斷），包括 20 篇「爬蟲只寫過轉發數」的文件。
-- **painless 腳本在真的 Elasticsearch 上跑過**：本機 Docker 的官方映像 8.19.23 與 9.5.5（單節點），`demo_real_es.sh` 的 21 項檢查兩個版本都通過。舊 mapping（`dynamic: strict`）時回補被擋（400 `strict_dynamic_mapping_exception`）；用 update mapping API 加新欄位（不 reindex）後首次送出 ok 1,940、noop 20、not_in_index 19，`_mget` 讀回的計數值與正確答案 0 筆不符，每欄的 `counts_at` 與 bulk 檔送出的時間戳（爬蟲較新的欄位則是爬蟲的時間戳）0 筆不符；整批重送 1,960 筆全部 noop。時間戳寫成 ISO 字串時，寫入就被 `epoch_millis` mapping 擋下（400）；寫成數字字串時寫得進去，但腳本丟錯（400 `illegal_argument_exception` ← `script_exception`），退出碼 4，文件沒有被改動。IG 寫入 193 篇，0 筆不符。HTTP 429、500 與單筆 429 仍只在假 ES 上模擬。
+- **painless 腳本在官方 Elasticsearch 映像上跑過**：本機 Docker 的 8.19.23 與 9.5.5（單節點），`demo_real_es.sh` 的 21 項檢查兩個版本都通過。舊 mapping（`dynamic: strict`）時回補被擋（400 `strict_dynamic_mapping_exception`）；用 update mapping API 加新欄位（不 reindex）後首次送出 ok 1,940、noop 20、not_in_index 19，`_mget` 讀回的計數值與正確答案 0 筆不符，每欄的 `counts_at` 與 bulk 檔送出的時間戳（爬蟲較新的欄位則是爬蟲的時間戳）0 筆不符；整批重送 1,960 筆全部 noop。時間戳寫成 ISO 字串時，寫入就被 `epoch_millis` mapping 擋下（400）；寫成數字字串時寫得進去，但腳本丟錯（400 `illegal_argument_exception` ← `script_exception`），退出碼 4，文件沒有被改動。IG 寫入 193 篇，0 筆不符。HTTP 429、500 與單筆 429 仍只在假 ES 上模擬。
 - **交卷用的 600 字答案**：`q5/answer/answer_600.txt`，Python `len()` 為 599 字元（含換行），去掉空白 530 字元。
 - **工時不變**：關鍵路徑 46 小時，9 工作天，週一開工約 11 個日曆天。
 - **示範可以從 repo 重跑**：`demo_cli.sh` 與 `demo_checks.py` 進 repo，`logs/demo_cli.log` 是它的完整輸出。
@@ -26,7 +26,7 @@
 | requests | 2.34.2（`--send` 與 `demo_real_es.py` 連 ES 時用到） |
 | Docker | 29.9.2（`demo_real_es.sh` 起 ES 用） |
 | Elasticsearch | 官方映像 `mirror.gcr.io/library/elasticsearch`：8.19.23（`sha256:ef5cafd961d7e273f13fed8def82e63c5ae0491106b5eecb5a69aa12d64f089b`，Lucene 9.12.2）、9.5.5（`sha256:52ffd9f66c98b7826a25da2ef7cac6186ecec158d8fb371bff325ad00b6eca93`，Lucene 10.5.1）；單節點、只綁 127.0.0.1 |
-| bash／git／GNU coreutils | 5.2.21／2.43.0／9.4（`demo_cli.sh` 用到 `git show`、`sha256sum`、`stat`、`cut`） |
+| bash／git／GNU coreutils | 5.2.21／2.43.0／9.4（`demo_cli.sh` 用 git 取舊版程式，另用到 `sha256sum`、`stat`、`cut`） |
 | beautifulsoup4／lxml、curl | 4.15.0／6.1.3、8.5.0（上一輪下載與抽取 ES 文件用，本輪沒有重新下載） |
 
 所有 Python 指令都設 `PYTHONDONTWRITEBYTECODE=1`，pytest 加 `-p no:cacheprovider`；repo 內沒有 `__pycache__`、`.pytest_cache`。
@@ -109,7 +109,7 @@ Threads 執行結果（`run1/quality.json` 節錄）：
 | `threads/2026-05-25` | 1,543 | 2.85% | 2.33% | 6.42% |
 | `threads/2026-05-11` 改名後（K） | 652 | 100% | 100% | 100% |
 
-門檻怎麼訂的：合成資料每筆抓取有 4% 缺 reshare key、2% 缺整個容器，所以 reshare 在大分區約 6%–9%；測試用的 300 篇樣本（種子 7）有一個分區只有 36 筆，reshare 6/36＝16.7%。改名的分區是 100%，但攤到全體只有 652/3,521＝18.5%，所以只看全體比例、門檻 20% 會擋不下來，必須逐分區看。20% 是讓合成資料的雜訊能通過的值；實抓證據顯示沒有分享數時 `reshare_count` 是 null 而不是缺 key，真實資料的缺 key 比例應該低很多，盤點後要依真實資料調低。小分區一兩筆缺漏就會超過門檻，確認後用 `--max-unknown-rate` 放行。
+門檻怎麼訂的：合成資料每筆抓取有 4% 缺 reshare key、2% 缺整個容器，所以 reshare 在大分區約 6%–9%；測試用的 300 篇樣本（種子 7）有一個分區只有 36 筆，reshare 6/36＝16.7%。改名的分區是 100%，但攤到全體只有 652/3,521＝18.5%，所以只看全體比例、門檻 20% 會擋不下來，必須逐分區看。20% 是讓合成資料的雜訊能通過的值；實抓證據顯示沒有分享數時 `reshare_count` 是 null 而不是缺 key，實際資料的缺 key 比例應該低很多，盤點後要依實際資料調低。小分區一兩筆缺漏就會超過門檻，確認後用 `--max-unknown-rate` 放行。
 
 IG 執行結果：200 支，195 支寫入 `video_view_count`，其中 18 支來自假設的舊名，5 支兩個 key 都沒有（不寫入）。合成資料沒有兩個 key 同時出現的情況，值衝突只由單元測試涵蓋。
 
@@ -127,9 +127,9 @@ IG 執行結果：200 支，195 支寫入 `video_view_count`，其中 18 支來�
 
 noop 20 是「三欄線上都比較新」的那 20 篇。「只寫過轉發數」的 20 篇算在 ok 裡：另兩欄寫入，轉發數維持爬蟲的 999，比對時逐欄檢查。not_in_index 19 是 20 篇不在 ES 的貼文扣掉 1 篇三個計數都不知道、本來就沒產生動作的。
 
-## 送出端（真的 Elasticsearch，本機 Docker）
+## 送出端（官方 Elasticsearch 映像，本機 Docker）
 
-假 ES 只用 Python 模擬腳本邏輯，所以另外用官方映像起單節點 ES，讓 `GUARD_SCRIPT` 真的執行。在 repo 根目錄執行：
+假 ES 只用 Python 模擬腳本邏輯，所以另外用官方映像起單節點 ES，讓 `GUARD_SCRIPT` 實際執行。在 repo 根目錄執行：
 
 ```bash
 PY=<tmp>/venv/bin/python bash q5/code/backfill/demo_real_es.sh <tmp>/work/q5es/sh8 mirror.gcr.io/library/elasticsearch:8.19.23 19200 > q5/code/logs/demo_real_es_8.19.23.log 2>&1   # exit 0
@@ -147,9 +147,9 @@ PY=<tmp>/venv/bin/python bash q5/code/backfill/demo_real_es.sh <tmp>/work/q5es/s
 | R4 線上時間戳型別錯誤（S5T000003） | 4 | 寫 ISO 字串 `2026-05-01T00:00:00Z`：400 `document_parsing_exception`，寫入時就擋下。寫數字字串 `"1900000000000"`：200，讀回的 `_source` 是字串。整批重送：failed 1、noop 1,959；`send_errors.jsonl` 有 19 筆 404（不在 ES 的貼文），其餘只有這篇（400 `illegal_argument_exception`，原因是 `script_exception: counts_at.repost_count is not epoch_millis`），文件沒變 |
 | R5 IG：`ig-posts` 放 198 篇（2 篇不在 ES） | 0 | ok 193、not_in_index 2；0 筆不符，`play_count` 與 `video_view_count` 都沒有的 5 篇沒有寫入 |
 
-這一段補上假 ES 證明不了的部分：腳本裡的 `instanceof`、`throw`、for 迴圈、Map 存取與 `ctx.op = 'noop'` 在兩個版本都能執行；mapping 的 `strict` 與 `epoch_millis` 確實會擋；文件不存在時 ES 回單筆 404 `document_missing_exception`，不會建立殘缺文件。沒有涵蓋的部分：HTTP 429／500 與單筆 429（真的 ES 不好故意觸發，仍只有假 ES 的 S1、S4）、連線逾時、多節點與副本、正式 index 的實際 mapping 與 ES 版本、負載下的吞吐。
+這一段補上假 ES 證明不了的部分：腳本裡的 `instanceof`、`throw`、for 迴圈、Map 存取與 `ctx.op = 'noop'` 在兩個版本都能執行；mapping 的 `strict` 與 `epoch_millis` 確實會擋；文件不存在時 ES 回單筆 404 `document_missing_exception`，不會建立殘缺文件。沒有涵蓋的部分：HTTP 429／500 與單筆 429（官方映像的 ES 不好故意觸發，仍只有假 ES 的 S1、S4）、連線逾時、多節點與副本、正式 index 的實際 mapping 與 ES 版本、負載下的吞吐。
 
-雲端容器的磁碟回報為 252 GB 用了 96%（實際可寫的是每個 session 的額度），ES 依磁碟水位拒絕配置 shard，第一次建 index 後一直是 red、bulk 逾時；所以 `demo_real_es.sh` 起容器時設 `cluster.routing.allocation.disk.threshold_enabled=false`。這是本機示範的設定，正式環境不要關。
+Linux 容器的磁碟回報為 252 GB 用了 96%（容器實際可寫的空間是另外的額度），ES 依磁碟水位拒絕配置 shard，第一次建 index 後一直是 red、bulk 逾時；所以 `demo_real_es.sh` 起容器時設 `cluster.routing.allocation.disk.threshold_enabled=false`。這是本機示範的設定，正式環境不要關。
 
 ## 工時重算（`q5/code/schedule/schedule.py`）
 
@@ -202,14 +202,14 @@ PY=<tmp>/venv/bin/python bash q5/code/backfill/demo_real_es.sh <tmp>/work/q5es/s
 - 「調大 refresh、副本設 0」是給大量初次載入新 index 用的。回補走線上 index 的部分更新時不能這樣做，否則爬蟲新寫入的文件查不到，直接違反 1 小時 SLA；b-c-d.md 已寫明，並把 refresh 設定加進 (d) 的監控。
 - update 會整份重新索引文件，所以部分更新對線上 index 不是零成本，限速與離峰仍然必要。
 - update 寫法每篇約 952 B（大部分是重複的腳本原文），500 篇一檔約 0.48 MB，`--max-bytes 5MB` 在這種寫法下不會先觸發；批次大小應依文件建議用 100、200、400 倍增實測。
-- 逐欄時間戳的腳本（`GUARD_SCRIPT`）只用到上表的 `ctx.op = 'noop'` 與一般的 Map 存取；painless 的 `instanceof`、`throw` 與 for 迴圈沒有另外查文件，但已在 ES 8.19.23 與 9.5.5 上實際執行過（見「送出端（真的 Elasticsearch，本機 Docker）」）。
+- 逐欄時間戳的腳本（`GUARD_SCRIPT`）只用到上表的 `ctx.op = 'noop'` 與一般的 Map 存取；painless 的 `instanceof`、`throw` 與 for 迴圈沒有另外查文件，但已在 ES 8.19.23 與 9.5.5 上實際執行過（見「送出端（官方 Elasticsearch 映像，本機 Docker）」）。
 
 ## 輸出與 log 位置
 
 | 內容 | 位置 |
 |---|---|
 | 命令列示範 log（樣本、原型與上一輪對照、冪等、壞資料、分區關卡、單筆 429、逐欄時間戳） | `q5/code/logs/demo_cli.log`（`demo_cli.sh` 的完整輸出，逐字） |
-| 送出端示範 log | `q5/code/logs/demo_send.log`（假 ES）；`q5/code/logs/demo_real_es_8.19.23.log`、`demo_real_es_9.5.5.log`（真的 ES，`demo_real_es.sh` 的完整輸出） |
+| 送出端示範 log | `q5/code/logs/demo_send.log`（假 ES）；`q5/code/logs/demo_real_es_8.19.23.log`、`demo_real_es_9.5.5.log`（官方 ES 映像，`demo_real_es.sh` 的完整輸出） |
 | 工時重算輸出（兩種依賴讀法、甘特圖） | `q5/code/logs/schedule.log` |
 | pytest 最後一次執行 | `q5/code/logs/pytest.log` |
 | 示範程式 | `q5/code/backfill/demo_cli.sh`、`demo_checks.py`、`demo_send.py`、`demo_real_es.sh`、`demo_real_es.py`、`make_sample.py` |
@@ -228,7 +228,7 @@ PY=<tmp>/venv/bin/python bash q5/code/backfill/demo_real_es.sh <tmp>/work/q5es/s
 | 「舊版程式只讀 `*.json`、2,000 篇只處理到 745 篇」被當成舊版的問題（上一輪本檔） | 原型寫明的輸入就是 `src/**/*.json`，`.jsonl` 分區是上一輪自己做的樣本格式；這是把輸入擴大到 `.jsonl`，不是原型的缺陷。GCS 實際格式要在盤點時確認 | 指令表 #3、#12；原型 docstring |
 | 「b-c-d.md 現在約 10,700 字元（原本約 6,800）」（上一輪本檔） | 那是位元組數（`wc -c` 10,896／6,776）。Python `len()` 的字元數是 5,927（原本 3,947）；本輪後 7,038 字元（13,259 B）。題目上限 600 字，交卷用 `answer_600.txt`（599 字元） | Python `len()` |
 | IG 兩個 key 都有且值不同時，寫入 `play_count`、只記旗標（上一輪 normalize.py） | 當成不知道、不寫入，記 `alias_conflict` | `test_ig_conflicting_keys_are_unknown_until_pm_decides` |
-| 示範 log 由 scratch 裡的腳本產生；指令表的「HEAD 單筆 429」沒有進 repo 的 log（上一輪 #17） | `demo_cli.sh`、`demo_checks.py` 進 repo，單筆 429 是 log 的 L 段 | `logs/demo_cli.log` |
+| 示範 log 由 scratch 裡的腳本產生；指令表的單筆 429 那一列沒有進 repo 的 log（上一輪 #17） | `demo_cli.sh`、`demo_checks.py` 進 repo，單筆 429 是 log 的 L 段 | `logs/demo_cli.log` |
 | update 寫法每篇約 647 B、每檔約 0.3 MB | 腳本變長，每篇約 952 B、每檔約 0.46–0.48 MB；5 MB 上限仍不會先觸發 | `run1/manifest.json` |
 | RESULTS.md 在 `q5/code/backfill/`、`schedule.log` 放在 `backfill/logs/` | `q5/code/RESULTS.md`、`q5/code/logs/` | repo 版面規定 `qN/code/RESULTS.md` |
 
@@ -240,23 +240,22 @@ PY=<tmp>/venv/bin/python bash q5/code/backfill/demo_real_es.sh <tmp>/work/q5es/s
 | DE 關鍵路徑 42 h，約 8 工作天 ≈ 10 日曆天（b-c-d.md、python.md） | 關鍵路徑 46 h，9 工作天，週一開工約 11 日曆天 | 工時重算表、`schedule.py` |
 | BE、FE 工時未核對（python.md 五） | BE 24 h、FE 10 h，與表格一致 | `test_role_hours_match_table` |
 | 回補寫進新 index（`index`＋external version）再切 alias（原型的 b-c-d.md (c)） | 預設改為線上 index 部分更新；新 index 要先 reindex 才能用 | 回補資料只有計數與少數欄位，整份 `index` 會把 ES 文件的其他欄位蓋掉；put mapping 文件說加新欄位不需 reindex |
-| 同一篇只留 crawled_at 最大的一筆（原型的 `dedupe_latest`） | 每個計數欄位取「有值」的最新一次；JSON null 算有值 | 最新一次缺 key 時，原型會把較舊的真實值丟掉；樣本中 reshare 有 58 篇屬於這種 |
+| 同一篇只留 crawled_at 最大的一筆（原型的 `dedupe_latest`） | 每個計數欄位取「有值」的最新一次；JSON null 算有值 | 最新一次缺 key 時，原型會把較舊的有效值丟掉；樣本中 reshare 有 58 篇屬於這種 |
 | 429 時「退避重送同一檔」（原型的 b-c-d.md (c)） | 只重送被拒的那幾筆；單筆 429 也會重送；送出失敗時退出碼 4 | 指令表 #18、#19 |
 | `video_view_count` 印在 Reels 縮圖上（q5/README.md） | 縮圖的數字對應 JSON 的 `play_count` | `shared/capture/capture_manifest.json` 10/30 更正 |
 | 測試資料「畫面 60（35＋25，reshare=null）」（原型的 test_backfill.py） | 35＋25 那篇分享是 15；reshare 為 null 的是 4＋0 那篇 | `threads-evidence-panel.png` ①② |
-| 任務說明提到「GraphQL fixture 裡的 repost_count／reshare_count／quote_count」 | fixture 沒有任何計數欄位 | `test_fixture_has_no_count_fields` |
+| 先前的說明提到「GraphQL fixture 裡的 repost_count／reshare_count／quote_count」 | fixture 沒有任何計數欄位 | `test_fixture_has_no_count_fields` |
 | ES 寫入錯誤率「排除 409」（原型的 b-c-d.md (d)） | noop 與 index 寫法的 409 不算失敗；update 寫法的 409 會重送 | 程式 `send_bulk_files` |
 
-不在本資料夾、當時沒有改的（行號是 HEAD `b9da1cb` 的）。2026-10-31 整理 PR #3 時逐項確認都已改好：根目錄 README、`shared/docs/python.md`、`shared/docs/HANDOFF.md` 都寫 9 工作天、關鍵路徑 46 小時、Q5 39 項；`build_arch.py` 已由 `shared/architecture/build/build_arch_v2.py` 取代；`capture_manifest.json` 已寫 12 筆。下表留作紀錄：
+不在本資料夾、當時沒有改的（行號是 2026-10-30 當時的）。2026-10-31 整理時逐項確認都已改好：根目錄 README、`shared/docs/python.md` 都寫 9 工作天、關鍵路徑 46 小時、Q5 39 項；`build_arch.py` 已由 `shared/architecture/build/build_arch_v2.py` 取代；`capture_manifest.json` 已寫 12 筆。下表留作紀錄：
 
 | 檔案與行號 | 現在寫的 | 應改成 |
 |---|---|---|
-| `README.md` 第 59 行（Q1–Q6 索引；審查時在 `fc0b075` 的第 48 行） | 約 8 工作天（約 10 日曆天） | 9 工作天（週一開工約 11 日曆天） |
+| `README.md` 第 59 行（Q1–Q6 索引；審查時在第 48 行） | 約 8 工作天（約 10 日曆天） | 9 工作天（週一開工約 11 日曆天） |
 | `README.md` 第 799 行（審查時在第 58 行） | 35 項全過：…Q5 11… | Q5 39（backfill 34＋schedule 5），合計依各題最新數字重算 |
 | `README.md` 第 735、739、767 行 | 資料工程師合計 42 小時就是關鍵路徑；42 ÷ 8＝5.25，約 8 工作天、約 10 日曆天；測試共 11 項 | 關鍵路徑 46 小時（DE 42＋全員驗收 4），9 工作天，週一開工約 11 日曆天；測試 39 項 |
 | `README.md` 第 720 行 | (c) 先寫新 index，以 `crawled_at` 當 external version，再用 alias 切換 | 預設對線上 index 部分更新，逐欄時間戳 `counts_at`；新 index 是替代做法 |
 | `shared/docs/python.md` 第 15、57–59、83 行 | 11 passed；42 h；8 工作天 ≈ 10 日曆天 | 39 passed（34＋5）；46 h；9 工作天、約 11 日曆天 |
-| `shared/docs/HANDOFF.md` 第 39 行 | 工時約 8 工作天／10 日曆天 | 9 工作天／約 11 日曆天 |
 | `shared/architecture/build_arch.py` 第 39 行 | crawled_at 當 external version；約 8 工作天、10 個日曆天 | 逐欄時間戳部分更新；9 工作天、約 11 個日曆天 |
 | `shared/capture/capture_manifest.json` 第 239 行 | Reels 分頁 8 支的 play_count | `ig_reel_fields.json` 有 12 筆（畫面看得到 8 支，JSON 有 12 個 edge） |
 
@@ -264,7 +263,7 @@ PY=<tmp>/venv/bin/python bash q5/code/backfill/demo_real_es.sh <tmp>/work/q5es/s
 
 - painless 腳本（`GUARD_SCRIPT`）只在本機 Docker 的單節點 ES 8.19.23 與 9.5.5、用合成樣本跑過。QSearch 正式的 ES 版本、index 的實際 mapping（是否 `strict`、計數欄位現在的型別）都不知道，上線前仍要在 staging 對正式 mapping 跑一次 `demo_real_es.py` 的情境。HTTP 429／500、單筆 429 與連線逾時只在假 ES 上測過；吞吐沒有量。
 - 逐欄保護要靠爬蟲配合：爬蟲每次寫計數也寫 `counts_at.<欄位>`（epoch 毫秒），最好走同一支腳本。爬蟲端的程式不在 q5，本輪只寫進答案的 (b) 第 1、2 項與風險表。
-- 分區關卡的門檻 20% 是依合成資料訂的；真實資料的缺 key 比例要盤點後才知道。key 清單只列 post 物件兩層內的名稱，第三層以下改名看不到名稱，但仍會被不知道的比例擋下。
+- 分區關卡的門檻 20% 是依合成資料訂的；實際資料的缺 key 比例要盤點後才知道。key 清單只列 post 物件兩層內的名稱，第三層以下改名看不到名稱，但仍會被不知道的比例擋下。
 - 舊欄位名全部是假設；沒有 GCS 原始檔可以盤點。GCS 檔案格式（`.json` 或 `.jsonl`）也待確認。
 - IG `play_count` 與題目的 `video_view_count` 是否同一個定義（例如播放次數與觀看次數的算法）沒有查證；兩個 key 值不同的那一筆目前不寫入。
 - 送出時的連線錯誤（逾時、連線中斷）沒有攔截，程式會中止；帳本會讓重跑只送沒送完的檔。

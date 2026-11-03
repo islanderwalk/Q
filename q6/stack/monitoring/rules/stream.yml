@@ -1,0 +1,28 @@
+# 串流斷詞服務：Pub/Sub 積壓年齡、nack 比例、服務掛掉保護。
+groups:
+  - name: q6-stream
+    rules:
+      # 積壓年齡是服務自己在程序內算的（qseg_oldest_unacked_publish_ts）：服務掛了就沒有序列，下面兩條不會響，所以先要這條。
+      # 雲端改看 Pub/Sub 的 subscription/oldest_unacked_message_age（不靠服務自己回報）。
+      - alert: SegServiceDown
+        expr: up{job="seg-service"} == 0 or absent(up{job="seg-service"})
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "串流斷詞服務抓不到 /metrics 超過 2 分鐘（{{ $labels.instance }}）；積壓告警這段時間不會響" }
+      # 積壓年齡（最舊未 ack 訊息）＞ 10 分鐘持續 5 分鐘 → 開單；＞ 45 分鐘 → 呼叫（提案值：計畫書 P0 第 5 項；初版為 5／15 分鐘）
+      - alert: SegBacklogAgeTicket
+        expr: (time() - min by (pipeline) (qseg_oldest_unacked_publish_ts)) > 600
+        for: 5m
+        labels: { severity: ticket }
+        annotations: { summary: "串流積壓超過 10 分鐘（{{ $labels.pipeline }}）" }
+      - alert: SegBacklogAgePage
+        expr: (time() - min by (pipeline) (qseg_oldest_unacked_publish_ts)) > 2700
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "串流積壓超過 45 分鐘（{{ $labels.pipeline }}）" }
+      # nack 比例 > 1% 持續 2 分鐘 → warn（提案值）
+      - alert: SegNackRatioHigh
+        expr: sum by (pipeline) (rate(qseg_messages_total{result="nack"}[5m])) / sum by (pipeline) (rate(qseg_messages_total{result=~"ack|nack"}[5m])) > 0.01
+        for: 2m
+        labels: { severity: warn }
+        annotations: { summary: "串流 nack 比例超過 1%（{{ $labels.pipeline }}）" }

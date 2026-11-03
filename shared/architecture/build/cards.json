@@ -16,7 +16,7 @@
    "社群貼文在這題被放棄，crawler-worker 只代表 200 則定性樣本，不進計數。",
    "題目只要 400 字的文字答案，不要求程式。q1/code/ 的原型是額外補的，示範答案第 3 點每一步做得到。",
    "原型是獨立的 Python 腳本，只用標準函式庫，在 Linux 容器離線跑。沒有接上 parser 或任何 GCP 服務，路徑裡的 parser 只是對應位置。",
-   "題目沒附資料。信件與問卷由 q1/code/make_fixtures.py 以固定 seed 產生，公司、姓名、信箱都是虛構，沒有真實顧客資料。",
+   "題目沒附資料。信件與問卷由 q1/code/make_fixtures.py 以固定 seed 產生，公司、姓名、信箱都是虛構，沒有用到顧客資料。",
    "規則和產生器是同一人寫的，合成資料上的準確度只是上限。",
    "原型的 300 則抽樣要等問題分類建好才能分層，和答案排在第一天不同；實務上第一天先用草擬的關鍵詞分層。",
    "答案在 repo 的 q1/README.md。"
@@ -33,7 +33,7 @@
    "terraform plan 不適用：shared/infra/gcp/README.md 註明 Q1 是取捨題，沒有對應資源。",
    "Playwright 沒有拍 Q1：shared/capture/capture_manifest.json 共 30 筆，沒有一筆屬於 Q1。"
   ],
-  "todo": "全部是合成資料：真實準確度要等 300 則人工標註，關鍵詞也要用標註結果校正。社群 200 則定性檢視沒有做。三天分配沒有真實資料可驗證。",
+  "todo": "全部是合成資料：正式資料的準確度要等 300 則人工標註，關鍵詞也要用標註結果校正。社群 200 則定性檢視沒有做。三天分配沒有正式資料可驗證。",
   "evidence": [],
   "evidence_all": [],
   "src": "來源：q1/README.md（題目與答案）、q1/code/RESULTS.md（原型實跑）、q1/data/（合成資料與輸出）、shared/docs/python.md。"
@@ -41,47 +41,47 @@
  "2": {
   "title": "Q2　估算與選型：100 萬則 FB 貼文",
   "ask": "2. [估算與選型] 有 100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言，另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。\n這是一個內部工具：約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。由你一個人維運，每月基礎設施預算 3,000 元。\n1. 請估算：(a) 原始資料總量；(b) 粉絲頁 ID 索引；(c) 貼文中文全文索引。寫出算式與你假設的每一個參數，數量級對即可。\n2. 承上，你選哪一套方案？請說明是估算結果的哪一個數字決定了你的選擇。\n3. 你選的中文斷詞策略是什麼？它會漏掉哪一類查詢？\n4. 資料量或查詢量成長到多少，你會換掉現在的選擇？換成什麼？\n5. 題目中缺了哪一個數字，會讓你的估算差距最大？\n上限 600 字（不含算式）。",
-  "factsTitle": "估算與實測（PostgreSQL 16.15，100 萬則；Linux 雲端容器與 Docker；真實中文用 PTT 與維基）",
+  "factsTitle": "估算與實測（PostgreSQL 16.15，100 萬則；Linux 容器與 Docker；中文語料用 PTT 與維基）",
   "facts": [
-   "表：頁面（WSL，合成資料）1,024,000,000 B，一則 918 B、一頁 8 則，Linux 雲端容器重跑完全相同；PTT 與維基的真實中文含標點與英數字，表是 902,643,712 到 910,172,160 B，一頁 9 則",
-   "粉專 ID 索引：頁面實測 5,000 個粉專 6,889,472 B（顯示 6.6 MB），每則不同粉專顯示 21 MB；Linux 雲端容器重跑 1 萬個粉專 6,873,088 B",
-   "兩字詞索引（GIN 模擬 pg_bigm）：頁面的 406,396,928 B 約是表的 40%，只在 1,000 段合成內文重複使用時成立；Linux 雲端容器量 PTT 與維基各 100 萬則是 946,946,048 到 1,165,492,224 B，是頁面的 2.3 到 2.9 倍、同語料表的 1.04 到 1.29 倍",
-   "真的 pg_bigm 1.2（Docker）：頁面的合成資料做法 409,567,232 B，比頁面多 0.78%；PTT 100 萬則 953,729,024 B，比 GIN 模擬多 0.72%，所以真實中文約 1 GB 不變",
-   "pg_trgm 更大：PTT 與維基是 1,371,783,168 到 1,551,712,256 B，GIN 模擬的兩字詞索引比它小 25% 到 31%；PTT 上真的 pg_bigm 比它小 30%",
+   "表：頁面（WSL，合成資料）1,024,000,000 B，一則 918 B、一頁 8 則，Linux 容器重跑完全相同；PTT 與維基的中文語料含標點與英數字，表是 902,643,712 到 910,172,160 B，一頁 9 則",
+   "粉專 ID 索引：頁面實測 5,000 個粉專 6,889,472 B（顯示 6.6 MB），每則不同粉專顯示 21 MB；Linux 容器重跑 1 萬個粉專 6,873,088 B",
+   "兩字詞索引（GIN 模擬 pg_bigm）：頁面的 406,396,928 B 約是表的 40%，只在 1,000 段合成內文重複使用時成立；Linux 容器量 PTT 與維基各 100 萬則是 946,946,048 到 1,165,492,224 B，是頁面的 2.3 到 2.9 倍、同語料表的 1.04 到 1.29 倍",
+   "pg_bigm 1.2 本體（Docker）：頁面的合成資料做法 409,567,232 B，比頁面多 0.78%；PTT 100 萬則 953,729,024 B，比 GIN 模擬多 0.72%，所以中文語料約 1 GB 不變",
+   "pg_trgm 更大：PTT 與維基是 1,371,783,168 到 1,551,712,256 B，GIN 模擬的兩字詞索引比它小 25% 到 31%；PTT 上pg_bigm 本體 比它小 30%",
    "2 字詞查詢（PTT 100 萬則，Docker）：高雄、颱風、政府用 pg_bigm 走索引 119 到 147 毫秒，pg_trgm 全表掃描 0.54 到 0.66 秒，pg_bigm 快 3.7 到 4.9 倍",
    "「台灣」出現在 54% 的列：pg_bigm 與 pg_trgm 都選全表掃描，約 0.6 秒；高頻詞要靠快取或限制回傳筆數",
-   "GIN 模擬那次（Linux 雲端容器，PTT 與維基）：2 字詞 pg_trgm 全表掃描 0.46 到 0.68 秒；模擬的兩字詞索引走索引 9 到 278 毫秒（PTT「台灣」除外）",
+   "GIN 模擬那次（Linux 容器，PTT 與維基）：2 字詞 pg_trgm 全表掃描 0.46 到 0.68 秒；模擬的兩字詞索引走索引 9 到 278 毫秒（PTT「台灣」除外）",
    "服務若用 prepared statement（psycopg 預設同一句執行到第 6 次就會），pg_trgm 的 2 字詞 LIKE 會改用 generic plan，PTT 100 萬則實測 9.7 到 10.6 秒（Docker）；要設 plan_cache_mode = force_custom_plan 或不 prepare",
-   "會漏的查詢：GIN 模擬的兩字詞索引用不到 1 字查詢（例如「台」），真的 pg_bigm 對 1 字查詢沒有實測；異體字（台／臺）與同義詞要另外處理，pg_trgm 也一樣"
+   "會漏的查詢：GIN 模擬的兩字詞索引用不到 1 字查詢（例如「台」），pg_bigm 本體 對 1 字查詢沒有實測；異體字（台／臺）與同義詞要另外處理，pg_trgm 也一樣"
   ],
   "path": "Cloud Scheduler → crawler-api → Cloud Tasks（crawl-fb）→ crawler-worker（FB adapter）→ Cloud Storage → Pub/Sub fetched → parser → pg_bigm 搜尋庫",
   "notes": [
-   "數字來源：q2/answer/fb_q2_posts_table.html（Q2 頁面的 const D 與頁面文字）；q2/code/RESULTS.md 與 q2/data/ 的 JSON（PR #6；Windows、Linux 雲端容器與 Docker 的 pg_bigm 都在）。",
+   "數字來源：q2/answer/fb_q2_posts_table.html（Q2 頁面的 const D 與頁面文字）；q2/code/RESULTS.md 與 q2/data/ 的 JSON（Windows、Linux 容器與 Docker 的 pg_bigm 都在）。",
    "單位：嵌入的 Q2 頁面以 1,048,576 B 當 1 MB，所以 406,396,928 B 顯示成 388 MB；RESULTS.md 說的「原頁 406 MB」就是同一個數字。這裡引用頁面與 VERIFY.md 的顯示值時寫 MB，其餘寫 bytes 或倍數。",
-   "嵌入的 Q2 頁面寫的「388 MB ≈ 原始資料的 40%」、每筆位址 1.63 B、「兩者合計 1.33 GB」與「兩字詞和 pg_trgm 都差不多是原始資料的 40%」，都只在 1,000 段內文重複使用時成立。頁面照原樣嵌入沒有改；計算機的每筆位址調成 3.80 到 4.68 B（不重複詞比例維持 100%），全文索引那格就會對上真實中文，表那格仍照全中文算，會比實測大。",
+   "嵌入的 Q2 頁面寫的「388 MB ≈ 原始資料的 40%」、每筆位址 1.63 B、「兩者合計 1.33 GB」與「兩字詞和 pg_trgm 都差不多是原始資料的 40%」，都只在 1,000 段內文重複使用時成立。頁面照原樣嵌入沒有改；計算機的每筆位址調成 3.80 到 4.68 B（不重複詞比例維持 100%），全文索引那格就會對上中文語料，表那格仍照全中文算，會比實測大。",
    "Q2 頁面在 WSL Ubuntu 上用 PostgreSQL 16.15 量。Linux 重跑時，表與 simple 和頁面逐位元組相同；兩字詞差 −0.03%，pg_trgm 差 +0.13%（頁面的資料是另一次產生的）。Windows 的 simple 多 43%，推論是 Windows 把 U+9FC4 到 U+9FFF 的 60 個字當成非字母。",
-   "頁面的兩字詞索引有 248,925 個 entry，和 GIN 模擬的 248,926 個幾乎一樣；真的 pg_bigm 是 250,885 個，因為它在每個詞頭尾各補一個空白（每則 251 個兩字詞，模擬是 249 個）。所以頁面量的大概是陣列模擬，不是 pg_bigm 本身（RESULTS.md 的推論，頁面沒寫用哪一種）。",
-   "真實語料不是粉專貼文：PTT 問答偏口語、維基偏書面。PTT 100 萬則是抽句重組，在 5 萬則上量到重組讓兩字詞索引少估約 8%、pg_trgm 少估約 17%。",
+   "頁面的兩字詞索引有 248,925 個 entry，和 GIN 模擬的 248,926 個幾乎一樣；pg_bigm 本體 是 250,885 個，因為它在每個詞頭尾各補一個空白（每則 251 個兩字詞，模擬是 249 個）。所以頁面量的大概是陣列模擬，不是 pg_bigm 本身（RESULTS.md 的推論，頁面沒寫用哪一種）。",
+   "語料不是粉專貼文：PTT 問答偏口語、維基偏書面。PTT 100 萬則是抽句重組，在 5 萬則上量到重組讓兩字詞索引少估約 8%、pg_trgm 少估約 17%。",
    "每則體積不是常數：同一份 PTT 語料 5 萬則時兩字詞索引每則 1,799 B，100 萬則時 947 B，不能用小樣本線性外推；100 萬則時每句平均重用約 20 次，下降有一部分可能來自重組。",
-   "查詢時間是 Linux 雲端容器（4 核心、16 GB RAM）單機、無並發的 3 次中位數；真的 pg_bigm 跑在同一台機器的 Docker 容器裡。只用來比同級差異，不能直接套到小 Cloud SQL。",
-   "GIN 模擬的兩字詞索引查 PTT「台灣」要 42.6 秒，是用 SQL 函式對 54 萬列逐列重算兩字詞的代價（RESULTS.md 的解釋）；真的 pg_bigm 對這個詞直接選全表掃描，0.61 秒，沒有這個問題。",
+   "查詢時間是 Linux 容器（4 核心、16 GB RAM）單機、無並發的 3 次中位數；pg_bigm 本體 跑在同一台機器的 Docker 容器裡。只用來比同級差異，不能直接套到小 Cloud SQL。",
+   "GIN 模擬的兩字詞索引查 PTT「台灣」要 42.6 秒，是用 SQL 函式對 54 萬列逐列重算兩字詞的代價（RESULTS.md 的解釋）；pg_bigm 本體 對這個詞直接選全表掃描，0.61 秒，沒有這個問題。",
    "GIN 模擬那次的查詢表上，pg_trgm 有 4 格是 9.2 到 10 秒，那不是全表掃描：psycopg 同一句 SQL 執行到第 6 次就改用 prepared statement，PostgreSQL 改用不看參數的 generic plan，走 pg_trgm 索引卻抽不出三字詞。已在 PTT 100 萬則上重現（9.7、10.6 秒），量測程式改成一律不 prepare。",
-   "真的 pg_bigm 1.2 也在地端 stack 跑過（docker compose，PostgreSQL 15.19，Linux 雲端容器）：PTT 標題複製成 201,720 列，索引 17 MB、表 21 MB，LIKE「蔡康永」走索引 0.43 ms，強制全表掃描 38.3 ms（shared/infra/onprem/VERIFY.md）。"
+   "pg_bigm 1.2 本體 也在地端 stack 跑過（docker compose，PostgreSQL 15.19，Linux 容器）：PTT 標題複製成 201,720 列，索引 17 MB、表 21 MB，LIKE「蔡康永」走索引 0.43 ms，強制全表掃描 38.3 ms（shared/infra/onprem/VERIFY.md）。"
   ],
   "verify": [
-   "pytest q2/code/tests：25 passed（退出碼 0，Linux 雲端容器），原 9 項加語料模式與探針 12 項、pg_bigm 2 項、查詢不讓 psycopg 自動 prepare 1 項、答案字數 1 項（RESULTS.md 的 pytest 表）。",
-   "run_q2.py 最後一次實跑退出碼都是 0：100 萬列 repeat 在 Windows（q2_run_1000000_repeat.json）與 Linux（q2_run_1000000_repeat_linux.json）各一次；PTT、維基各 100 萬則；PTT 5 萬則 concat 與 recombine 各一次；Docker 的真的 pg_bigm 兩次（q2_run_1000000_repeat_pg_bigm_linux.json、q2_run_1000000_corpus-ptt_recombine_250_pg_bigm.json）。",
-   "1M 對照頁面：表 1,024,000,000 B／125,000 頁與 simple 3,268,608 B／399 頁，Linux 完全相同；兩字詞 −0.03%；pg_trgm Linux +0.13%、Windows +0.07%；simple Windows +43%；真的 pg_bigm（Docker）409,567,232 B，+0.78%（RESULTS.md 表一）。",
+   "pytest q2/code/tests：25 passed（退出碼 0，Linux 容器），原 9 項加語料模式與探針 12 項、pg_bigm 2 項、查詢不讓 psycopg 自動 prepare 1 項、答案字數 1 項（RESULTS.md 的 pytest 表）。",
+   "run_q2.py 最後一次實跑退出碼都是 0：100 萬列 repeat 在 Windows（q2_run_1000000_repeat.json）與 Linux（q2_run_1000000_repeat_linux.json）各一次；PTT、維基各 100 萬則；PTT 5 萬則 concat 與 recombine 各一次；Docker 的pg_bigm 本體 兩次（q2_run_1000000_repeat_pg_bigm_linux.json、q2_run_1000000_corpus-ptt_recombine_250_pg_bigm.json）。",
+   "1M 對照頁面：表 1,024,000,000 B／125,000 頁與 simple 3,268,608 B／399 頁，Linux 完全相同；兩字詞 −0.03%；pg_trgm Linux +0.13%、Windows +0.07%；simple Windows +43%；pg_bigm 本體（Docker）409,567,232 B，+0.78%（RESULTS.md 表一）。",
    "probe_simple_gin.py 退出碼 0：Linux 把 U+9FC4 到 U+9FFF 的 60 字換成空白後，simple 4,677,632 B、pg_trgm 409,526,272 B 與 Windows 逐位元組相同，改從 U+9FBC 或 U+9FCC 起都對不上；simple 在 maintenance_work_mem 64MB 與 1GB 都是 3,268,608 B。",
-   "query_bench.py：7 個詞在 PTT、維基共 14 組，兩字詞索引與 pg_trgm 的結果數全部相同（q2_query_bench_ptt.json、q2_query_bench_wiki.json）；Docker 上真的 pg_bigm 與 pg_trgm 在 PTT 的 7 組也全部相同（q2_query_bench_ptt_pg_bigm.json）。",
+   "query_bench.py：7 個詞在 PTT、維基共 14 組，兩字詞索引與 pg_trgm 的結果數全部相同（q2_query_bench_ptt.json、q2_query_bench_wiki.json）；Docker 上pg_bigm 本體 與 pg_trgm 在 PTT 的 7 組也全部相同（q2_query_bench_ptt_pg_bigm.json）。",
    "generic_plan_check.py 退出碼 0（PTT 100 萬則，Docker）：psycopg 預設時 pg_trgm 查颱風、政府 9,721、10,582 毫秒，prepare=False 是 547、666 毫秒；EXPLAIN ANALYZE EXECUTE 的 generic plan 走 fb_posts_trgm_gin 9,708、9,601 毫秒，custom plan 是 Seq Scan 579、645 毫秒（q2_generic_plan_check_ptt.json）。",
-   "真的 pg_bigm 1.2 用 repo 的 shared/infra/onprem/postgres-bigm/Dockerfile 在官方 postgres:16.15-bookworm 映像上編（PostgreSQL 16.15-1.pgdg12+2），原始碼 tarball 的 sha256 建置時再驗一次，主機的 PostgreSQL 沒裝外部套件；容器與主機量到的表、simple、pg_trgm 逐位元組相同；q2/code/run_pg_bigm.sh 可從 repo 重跑，1 萬列 smoke 退出碼 0。",
-   "Terraform：第一輪對真實 project plan 70 to add；第二輪離線 plan 102 to add、terraform test 30 passed，已開 cloudsql.enable_pg_bigm flag，CREATE EXTENSION 還沒在真實專案驗證；未 apply（shared/infra/gcp/README.md）。",
-   "沒驗證的部分：中文維基沒有用真的 pg_bigm 重跑（GIN 模擬 1,165,492,224 B）；pg_bigm 跑在 Docker，不是原生安裝，也不是 Cloud SQL；pg_bigm 在 generic plan 下沒有量（generic_plan_check.py 只量 pg_trgm）；GIN 模擬那次維基颱風、政府兩格的 pg_trgm 時間是 generic plan 量到的，資料庫已刪，沒有重量；Windows 把那 60 字當非字母是推論，沒有在 Windows 上直接查。",
+   "pg_bigm 1.2 本體 用 repo 的 shared/infra/onprem/postgres-bigm/Dockerfile 在官方 postgres:16.15-bookworm 映像上編（PostgreSQL 16.15-1.pgdg12+2），原始碼 tarball 的 sha256 建置時再驗一次，主機的 PostgreSQL 沒裝外部套件；容器與主機量到的表、simple、pg_trgm 逐位元組相同；q2/code/run_pg_bigm.sh 可從 repo 重跑，1 萬列 smoke 退出碼 0。",
+   "Terraform：第一輪對正式專案 plan 70 to add；第二輪離線 plan 102 to add、terraform test 30 passed，已開 cloudsql.enable_pg_bigm flag，CREATE EXTENSION 還沒在正式專案驗證；未 apply（shared/infra/gcp/README.md）。",
+   "沒驗證的部分：中文維基沒有用pg_bigm 本體 重跑（GIN 模擬 1,165,492,224 B）；pg_bigm 跑在 Docker，不是原生安裝，也不是 Cloud SQL；pg_bigm 在 generic plan 下沒有量（generic_plan_check.py 只量 pg_trgm）；GIN 模擬那次維基颱風、政府兩格的 pg_trgm 時間是 generic plan 量到的，資料庫已刪，沒有重量；Windows 把那 60 字當非字母是推論，沒有在 Windows 上直接查。",
    "Playwright 未登入實抓 FB 粉專頁與單則貼文各 1 張，manifest 標 status real；補抓單則貼文那一輪 FB 載入 9 次，含探測腳本（shared/docs/playwright.md）。",
    "Playwright 第二輪（10/30）：住宅 IP 實抓到發文絕對時間（creation_time）與 Page ID 54971236771；雲端 IP 開 FB 直接 302 到登入頁，所以 100 萬則要走 Graph API 或授權資料源。"
   ],
-  "todo": "真的 pg_bigm 已在 Docker（PostgreSQL 16.15）量過頁面做法與 PTT。還沒做：在部署的 Cloud SQL（PG15）上 CREATE EXTENSION pg_bigm 並量一次；中文維基用 pg_bigm 重跑；量真實粉專貼文。編 pg_bigm 的 Dockerfile 把 server-dev 套件釘在映像的 PostgreSQL 版本，PGDG 出下一個 16.x 後要加 apt-archive 來源才建得起來。GCP 閒置約 US$104／月（約 NT$3,382），其中 Cloud SQL db-custom-2-7680 佔 US$100，超過 3,000 元，Cloud SQL 改 db-custom-1-3840 約 US$51。",
+  "todo": "pg_bigm 本體 已在 Docker（PostgreSQL 16.15）量過頁面做法與 PTT。還沒做：在部署的 Cloud SQL（PG15）上 CREATE EXTENSION pg_bigm 並量一次；中文維基用 pg_bigm 重跑；量粉專貼文。編 pg_bigm 的 Dockerfile 把 server-dev 套件釘在映像的 PostgreSQL 版本，PGDG 出下一個 16.x 後要加 apt-archive 來源才建得起來。GCP 閒置約 US$104／月（約 NT$3,382），其中 Cloud SQL db-custom-2-7680 佔 US$100，超過 3,000 元，Cloud SQL 改 db-custom-1-3840 約 US$51。",
   "evidence": [
    {
     "path": "q2/evidence/playwright/fb_post_time_and_ids.png",
@@ -133,7 +133,7 @@
     "priority": 1
    }
   ],
-  "src": "數字取自 Q2 頁面（q2/answer/fb_q2_posts_table.html）、PR #6 的 q2/code/RESULTS.md 與 q2/data/（含 Docker 的 pg_bigm 與 generic plan 重現），另有 shared/infra/onprem/VERIFY.md、shared/infra/gcp/README.md、shared/docs/playwright.md 與 shared/docs/playwright-round2.md。"
+  "src": "數字取自 Q2 頁面（q2/answer/fb_q2_posts_table.html）、q2/code/RESULTS.md 與 q2/data/（含 Docker 的 pg_bigm 與 generic plan 重現），另有 shared/infra/onprem/VERIFY.md、shared/infra/gcp/README.md、shared/docs/playwright.md 與 shared/docs/playwright-round2.md。"
  },
  "3": {
   "title": "Q3　PTT 八卦板全文搜尋",
@@ -157,19 +157,19 @@
    "Q3 答案選 BigQuery 不選 pg_bigm：7 天純文字只有 22.9 MB，全掃不用建索引，也沒有資料庫主機要維護；代價是查詢延遲沒有實測（1 到 3 秒是預估）。「一張圖」裡的 pg_bigm 搜尋庫是 Q2 FB 貼文搜尋用的，Q3 對應的是旁邊的 BigQuery 節點。這條線不用 Elasticsearch、Kafka 和代理池。"
   ],
   "verify": [
-   "pytest q3/code/tests：21 passed（退出碼 0，含答案字數 1 項），雲端 Linux 容器（Ubuntu 24.04.5、Python 3.13.17）；加答案字數測試之前，斷網（unshare -n）再跑 20 項也全部通過。測試讀 shared/capture/html 存下的 PTT 頁面（2026/10/30 實抓），不連網。",
+   "pytest q3/code/tests：21 passed（退出碼 0，含答案字數 1 項），Linux 容器（Ubuntu 24.04.5、Python 3.13.17）；加答案字數測試之前，斷網（unshare -n）再跑 20 項也全部通過。測試讀 shared/capture/html 存下的 PTT 頁面（2026/10/30 實抓），不連網。",
    "這輪沒有重抓 PTT：robots.txt 只對幾個 AI 爬蟲的 user agent 寫 Disallow: /，這輪驗證環境屬於其中之一，所以沒有重抓。只抓了 robots.txt 3 次（每次 3,259 bytes，內容相同），沒抓列表頁或文章頁。",
-   "ptt_q3_recheck.py 在雲端 Linux 容器離線重算，退出碼 0：用 repo 內 10/26 列表（6,685 列）與 10/27 普查（6,237 篇），890、744–1,109、334/334、0 倒序、234,577、960／5,340 全部重現（q3/data/runs/2026-10-30_recheck.json）。",
+   "ptt_q3_recheck.py 在Linux 容器離線重算，退出碼 0：用 repo 內 10/26 列表（6,685 列）與 10/27 普查（6,237 篇），890、744–1,109、334/334、0 倒序、234,577、960／5,340 全部重現（q3/data/runs/2026-10-30_recheck.json）。",
    "ptt_q3_census.py --report 在 scratch 複本重產，退出碼 0：result_A.txt 逐位元組相同；result_B.txt 只改第 7 行，重試改成推測語氣，已寫回 repo。",
    "README 第 5 小題已更正：6,237 是篇數，不是請求數，改成「6,237 篇最後狀態都是 200／404（0 篇失敗）」；P95 由 0.46 秒改成 0.45 秒。chart-crawl-stats 與 result_B.txt 也改用「篇」。",
    "三支抓取程式預設間隔改成 1.5 秒（原本 0.5／0.8／0.8 秒），加 --max-requests 上限；每次執行都記一行請求數（run_summary.jsonl，ptt_measure.py 是 <CSV 檔名>_summary.jsonl），Ctrl-C 或出錯也會寫。",
    "防呆：ptt_q3_measure.py 不給 --out、ptt_q3_census.py 換視窗不給 --out，都會停下（退出碼 1），不會覆蓋 q3/data。",
-   "離線重播 13 次（雲端 Linux 容器、斷網、假 session 讀存下的頁面，不是 PTT 實測）：請求上限、間隔（最短 1.513 秒）與紀錄都和預期相同；送 SIGINT 退出碼 130，也有紀錄。",
-   "Terraform 第一輪：本機電腦對真實 GCP project 跑 terraform plan，退出碼 0：70 to add、0 change、0 destroy；未 apply。記在 shared/infra/gcp/README.md（commit 4e7f428，2026-10-30）。",
+   "離線重播 13 次（Linux 容器、斷網、讀存下的頁面模擬登入狀態，不是 PTT 實測）：請求上限、間隔（最短 1.513 秒）與紀錄都和預期相同；送 SIGINT 退出碼 130，也有紀錄。",
+   "Terraform 第一輪：本機電腦對正式 GCP 專案 跑 terraform plan，退出碼 0：70 to add、0 change、0 destroy；未 apply。記在 shared/infra/gcp/README.md（commit 4e7f428，2026-10-30）。",
    "fmt 第一次檢查退出碼 3，格式化後複查 0；validate 退出碼 0（shared/infra/gcp/README.md）。",
-   "第一輪的 70 項涵蓋 Scheduler、crawler-api、worker、GCS、事件、parser、crawler-db。第二輪在雲端容器（沒有 GCP 憑證）補上 crawl-ptt 佇列（每秒 1 次）與每小時的 ptt-crawl Job：離線 plan 102 to add、terraform test 30 passed，還沒對真實 project plan（shared/infra/gcp/README.md）。",
+   "第一輪的 70 項涵蓋 Scheduler、crawler-api、worker、GCS、事件、parser、crawler-db。第二輪在Linux 容器（沒有 GCP 憑證）補上 crawl-ptt 佇列（每秒 1 次）與每小時的 ptt-crawl Job：離線 plan 102 to add、terraform test 30 passed，還沒對正式專案 plan（shared/infra/gcp/README.md）。",
    "Playwright：PTT 實頁 6 張（2026-10-30 拍攝），主張與結果記在 shared/capture/capture_manifest.json；9 張圖表加架構圖共 10 張 PNG 由實測資料重產（shared/docs/playwright.md）。",
-   "chart-crawl-stats.png 因圖說改字，10/30 在雲端 Linux 容器用 Playwright 重轉（Chrome for Testing 153、WenQuanYi Zen Hei）：只差副標一行（1.26% 像素），字型和其他 9 張不同。其他 9 張 HTML 沒變，PNG 沒動。"
+   "chart-crawl-stats.png 因圖說改字，10/30 在Linux 容器用 Playwright 重轉（Chrome for Testing 153、WenQuanYi Zen Hei）：只差副標一行（1.26% 像素），字型和其他 9 張不同。其他 9 張 HTML 沒變，PNG 沒動。"
   ],
   "todo": "這輪沒有重抓 PTT（robots.txt 只對幾個 AI 爬蟲的 user agent 寫 Disallow: /，這輪驗證環境屬於其中之一，所以沒有重抓）；q3/code/RESULTS.md 有補跑指令（列表最多 120 個、普查最多 1,080 個請求，間隔 1.5 秒），結果只是一天的數字。BigQuery 表與查詢 API 沒有 Terraform，BigQuery 查詢延遲沒有實測；crawl-ptt 佇列與 ptt-crawl Job 只跑過離線 plan。",
   "evidence": [
@@ -344,7 +344,7 @@
     "platform": "chart"
    }
   ],
-  "factsTitle": "實測與結論（10/26–10/27 實抓的 PTT 八卦板資料；10/30 雲端 Linux 容器離線重算）"
+  "factsTitle": "實測與結論（10/26–10/27 實抓的 PTT 八卦板資料；10/30 Linux 容器離線重算）"
  },
  "4": {
   "title": "Q4　Threads 爬蟲",
@@ -370,12 +370,12 @@
    "對 threads.com 的瀏覽器開頁共 21 次，在每站 30 次的上限內。若把手機視窗網站自己轉址多出的文件也算，約 33 份（9 份是推估），超過 30。"
   ],
   "verify": [
-   "pytest q4/code/tests：17 passed（退出碼 0），Linux 容器。13 項離線，3 項用本機 127.0.0.1 假站跑真的 Chromium，不連外網；另 1 項（10/31 加）檢查答案段 D 是 600 字。紀錄：q4/code/RESULTS.md。",
+   "pytest q4/code/tests：17 passed（退出碼 0），Linux 容器。13 項離線，3 項用本機 127.0.0.1 測試站跑 Chromium，不連外網；另 1 項（10/31 加）檢查答案段 D 是 600 字。紀錄：q4/code/RESULTS.md。",
    "HTTP 模式（threads_q4_measure.py，Linux 容器，10/30，不登入，經容器代理，出口 IP 沒記錄）：不帶 Sec-Fetch，nasa、zuck、natgeo 都是空殼，解壓後 258,238–258,277 B、0 串。帶 Sec-Fetch，3 個各 4 串（nasa 5、zuck 10、natgeo 5 篇），每篇都有 URL、內文、時間。全部 HTTP 200，退出碼 0。紀錄：q4/code/RESULTS.md、q4/data/threads_q4_out/rerun_2026-10-30_linux/。",
    "瀏覽器模式（Playwright 無頭 Chromium，Linux 容器，10/30）：每次 HTML 都是 4 串。網頁自己送分頁 query，桌面 15 次載入 0 次（只有 3 次確定捲到底），手機 3 次有 1 次（natgeo）。那次 doc_id 39825889313693314、first: 11，HTTP 200，回 11 串 17 篇，壓縮後 24,623 B。退出碼 0。紀錄：q4/code/RESULTS.md。",
    "GraphQL 實測（10/29，未用代理）：只打第 1 頁，zuck、nba、nytimes 都回 10 串。個人網路 IP 壓測 102 次，82 次成功，之後全部 401。紀錄：q4/answer/threads_q4_verification.md §6、§7。",
    "Playwright 10/30 未登入實抓 Q4 截圖 5 張，manifest 狀態都是 real；桌面個人頁網頁自己送的 GraphQL 回 HTTP 200、11 串。第一輪沒觀察到這個回應（pending），第二輪才成功。紀錄：shared/capture/capture_manifest.json、capture_log.txt。",
-   "Terraform：第一輪在 本機電腦對真實 GCP project 跑 terraform plan，退出碼 0：70 to add、0 change、0 destroy；fmt、validate 退出碼 0；未 apply。那次 plan 沒有 crawl-threads。第二輪在雲端 Linux 容器（沒有 GCP 憑證）離線 plan 102 to add，加了 crawl-threads 佇列（20 rps、並行 50），還沒對真實 project plan。token 池、token-refresher、Elasticsearch 仍沒有 Terraform。紀錄：shared/infra/gcp/README.md、scheduler_tasks.tf。",
+   "Terraform：第一輪在 本機電腦對正式 GCP 專案 跑 terraform plan，退出碼 0：70 to add、0 change、0 destroy；fmt、validate 退出碼 0；未 apply。那次 plan 沒有 crawl-threads。第二輪在Linux 容器（沒有 GCP 憑證）離線 plan 102 to add，加了 crawl-threads 佇列（20 rps、並行 50），還沒對正式專案 plan。token 池、token-refresher、Elasticsearch 仍沒有 Terraform。紀錄：shared/infra/gcp/README.md、scheduler_tasks.tf。",
    "沒有跑過：經住宅代理的實際請求。雲端 IP 只從 GitHub Actions（Azure）打過 1 次，回 200、10 篇，看不出會不會被封。紀錄：verification §8。",
    "Playwright 第二輪（10/30）：同一個雲端 IP 開 FB、IG 都被導去登入頁（IG 登入頁回 HTTP 429），開 Threads 單頁仍回 200；只測了這一個出口 IP。"
   ],
@@ -495,10 +495,10 @@
    "監控 SLA：首次可見延遲＝ES 寫入時間減 published_at，每篇記在文件裡。P95 超過 45 分鐘警告、超過 60 分鐘呼叫；1 小時內首次抓取率低於 95% 警告。"
   ],
   "verify": [
-   "pytest：q5/code/backfill/tests 34 項、q5/code/schedule/tests 5 項，共 39 passed（退出碼 0），Linux 雲端容器、Python 3.13.17、pytest 9.2.0。記在 q5/code/RESULTS.md。",
-   "painless 腳本在真的 Elasticsearch 跑過：本機 Docker 官方映像 8.19.23 與 9.5.5（單節點），demo_real_es.sh 的 21 項檢查兩個版本都通過；舊 mapping（dynamic: strict）時回補被擋，加欄位後首次送出 ok 1,940、noop 20、not_in_index 19（q5/code/RESULTS.md）。",
+   "pytest：q5/code/backfill/tests 34 項、q5/code/schedule/tests 5 項，共 39 passed（退出碼 0），Linux 容器、Python 3.13.17、pytest 9.2.0。記在 q5/code/RESULTS.md。",
+   "painless 腳本在 Elasticsearch 跑過：本機 Docker 官方映像 8.19.23 與 9.5.5（單節點），demo_real_es.sh 的 21 項檢查兩個版本都通過；舊 mapping（dynamic: strict）時回補被擋，加欄位後首次送出 ok 1,940、noop 20、not_in_index 19（q5/code/RESULTS.md）。",
    "端到端示範（合成資料 2,000 篇、3,521 筆抓取）：寫入 1,979 篇、略過 21 篇，重跑兩次 7 個輸出檔 sha256 相同，與獨立算出的正確答案 0 筆不符；demo_cli.sh 可從 repo 重跑，完整輸出在 q5/code/logs/demo_cli.log。",
-   "Terraform：shared/infra/gcp 第一輪對真實 GCP project 跑 terraform plan：70 to add、0 change、0 destroy；第二輪離線 plan 102 to add、terraform test 30 passed；未 apply（shared/infra/gcp/README.md）。",
+   "Terraform：shared/infra/gcp 第一輪對正式 GCP 專案 跑 terraform plan：70 to add、0 change、0 destroy；第二輪離線 plan 102 to add、terraform test 30 passed；未 apply（shared/infra/gcp/README.md）。",
    "plan 涵蓋 Q5 用到的 GCS、Pub/Sub fetched、parser、qsearch-backfill；映像都是 hello 範例，services/parser 只 log 並 ACK。ES、Data Layer、Analytics、Export 不在 Terraform 內（shared/docs/gcp.md）。",
    "Playwright 未登入實抓（2026-10-30）：IG 3 張、Threads 1 張，另存 play_count JSON 12 筆；前 6 支捨去後與縮圖一致（capture_manifest.json）。",
    "threads_verify.js（2026-10-29）：@threads 16/16 篇畫面轉發＝repost＋quote，加 2 篇 Use media 共 18 篇（q5/README.md）。",
@@ -650,7 +650,7 @@
    "串流和回補用同一個映像、同一份字典，啟動時比對 sha256；每篇記 seg_ver，只能往前，亂序、重送、晚到都不會倒退。沙盤三個字典版本各抽 1,000 篇用同一份程式重算，0 篇不一致；串流只送了 267 篇，沒有和回補逐篇對照。",
    "PM 在 A/B 頁驗收：同一範圍左右並排 terms_v1 和 terms_v2。設計上每個渠道第一個月要 PM 簽核，其他月份才開跑；沙盤只有 PTT，簽核用指令模擬。六渠道小樣本（FB 4 篇，其餘 45–61 篇）前 30 詞雜訊從 21–29 個降到 0 個（FB 剩 1 個「78th」）；舊版是用 jieba 模擬的舊流程。",
    "1 位工程師估 45 工作天，含字典整併 10 天、緩衝 7 天。斷詞與搜尋共用一份詞庫；分開維護要再多 20 天以上。沙盤沒有改這個估算。",
-   "「沙盤」數字來自本機 Docker：PTT 八卦板 424,887 篇＝問答 418,202 組（時間是合成的，平均分到 2023/01–2026/09）＋Q3 實抓標題 6,685 篇（2026/10，真實時間），共 46 個月分區，平均每篇 29 字；另有六渠道真實樣本 267 篇。不是 QSearch 的 ES；GCP 只對共用模組跑過 terraform plan，沒有 apply。"
+   "「沙盤」數字來自本機 Docker：PTT 八卦板 424,887 篇＝問答 418,202 組（時間是合成的，平均分到 2023/01–2026/09）＋Q3 實抓標題 6,685 篇（2026/10，原始發文時間），共 46 個月分區，平均每篇 29 字；另有六渠道樣本 267 篇。不是 QSearch 的 ES；GCP 對共用模組與 q6.tf 只跑過 terraform plan（離線 147 個資源），沒有 apply。"
   ],
   "path": "Pub/Sub fetched → parser（只寫本體欄位）→ Pub/Sub parsed-posts → 斷詞服務 v1／v2（Cloud Run，與回補同一映像）→ Elasticsearch（terms_v1、terms_v2 並存，seg_ver 只能往前）→ 文字雲 API → 前端 PM A/B 頁；原文（Cloud Storage／BigQuery 匯出）→ Cloud Run Jobs 回補（渠道 × 月約 270 批，從 Cloud SQL 帳本領批、過 G1–G4）→ Elasticsearch；字典 artifact（Cloud Storage）→ 斷詞服務、回補 Job、ES 的 IK 遠端字典",
   "notes": [
@@ -658,45 +658,86 @@
    "檢查規則本身會錯：沙盤第 1 輪 46 批全被「網址殘片」擋，查原文才知道 PTT 的 www 是笑、NET 是服飾品牌。改成「詞在原文網址裡、網址外沒有這個字串」才算，第 2 輪網址殘片誤擋 0。",
    "共用詞庫的代價：停用詞放顯示層，改清單後 API 21.2 秒套用、ES 寫入 0 次。但加詞會動到搜尋欄位：IK 每分鐘檢查一次遠端字典，兩次實測 8 秒與 58 秒後生效；之後舊文件的「肥宅」片語搜尋從 22,088 掉到 0，要對含該字串的 22,271 篇 update_by_query（1.93 秒）才回來。",
    "回補 task 被砍：checkpoint 存在 PostgreSQL，心跳過期後從第 3,000 行接續；心跳還新時，別的 task 領到 0 個分區。",
-   "機器時間：答案假設每秒 3,000 篇、每篇 300 字，5 億筆約 46 小時、離峰約 6 晚。沙盤每篇只有 29 字，1 個 task 被限速卡在每秒約 2,900 篇，不能拿來證明這個假設；G3 在這台 4 核心機器上把限速壓到 750，若真實叢集也是 750，約 185 小時、每晚離峰 8 小時約 23 晚（本次換算）。",
+   "機器時間：答案假設每秒 3,000 篇、每篇 300 字，5 億筆約 46 小時、離峰約 6 晚。沙盤每篇只有 29 字，1 個 task 被限速卡在每秒約 2,900 篇，不能拿來證明這個假設；G3 在這台 4 核心機器上把限速壓到 750，若正式叢集也是 750，約 185 小時、每晚離峰 8 小時約 23 晚（本次換算）。",
    "沙盤抓到並修掉的實作問題：PM 首月還沒簽就讓其他 45 個分區跑完；字典版本不符時同一分區被重領 130,281 次；seg_ver 直接串數字會讓 2026.10.30.10 大過 2026.11.01.1，補零後 update_by_query 遷移 424,887 篇花 22.3 秒；API 把軟停用詞清單當 Latin-1 解碼，之前其實沒生效。",
    "沙盤這份資料 ES 和 PostgreSQL 的前 50 詞完全一樣，全期 ES 74 ms、PostgreSQL 1,579 ms，文字雲聚合放 ES；ES 的 terms 聚合有分片誤差（預設上限 9,497），5 億筆時要調 shard_size 再驗。",
    "沙盤限制：ES 單節點、0 副本，和斷詞程式擠同一台 4 核心，延遲只能當相對比較；每篇平均 29 字，比答案假設的 300 字短很多；問答的時間是合成的，只用來切月份；Pub/Sub 是官方模擬器；PM 簽核和字典豁免都用指令模擬；回補只有 PTT，其他五渠道各 4–61 篇。",
-   "監控：Prometheus 加 Grafana（4 列 14 個面板）；告警規則只有一條 WordcloudOver180s（5 分鐘內超過 180 秒的查詢數 > 0），串流延遲只收指標、沒有門檻，也沒有通知管道。",
-   "GCP 的 terraform plan（共用模組，PR #7）涵蓋回補 Job、GCS、Pub/Sub 與 Cloud SQL，不含 ES 叢集、斷詞服務、parsed-posts、字典 bucket 與 WordcloudOver180s 告警；這些只用本機替身跑過。沙盤圖第 10 列引用的就是這個 plan，不是在沙盤觸發的。",
+   "監控（2026-11-02 照監控計畫書做完，並在同一個 Docker 環境從頭端對端跑過）：Prometheus 96 條規則（66 條告警加 30 條記錄規則）、Grafana 主看板 9 層 69 面板與採集看板 6 列 21 面板、Alertmanager 以 webhook 送到 PM A/B 頁頂部橫幅。十項 P0：3 分鐘 SLO 燃燒率（Sloth 多視窗：28 天 99% 的查詢成功且在 180 秒內，1 小時 14.4 倍或 6 小時 6 倍呼叫，1 天 3 倍或 3 天 1 倍開單）、完整性對帳（原文湖、ES、有 v2、最新 v2、已刪、帳本逐月，每小時）、採集產出率與軟封鎖（登入牆 1 次就 page、產出率比 7 天前同時段掉一半）、首抓延遲（p95 45 分鐘警告、60 分鐘 page）、積壓與 DLQ、影子比對與版本覆蓋、字典發版收斂、回補燃盡、品質日報（金標召回、整詞召回、RBO）、ES 健康；門檻都是提案值，要用第一週實測校正。端對端跑才抓到並修掉 14 個離線測試看不到的問題（例如 ES 對空陣列 exists 為 false、沒流量時 SLI 0/0 讓錯誤預算變 NaN、沒金鑰的 feed 被判死），結束時仍在響的 4 組告警都查過原因（q6/stack/MONITORING.md）。爬蟲端另有一面看板：Loki 收每個請求的狀態碼與延遲，Pushgateway→Prometheus 出每分鐘請求數、2xx／4xx／5xx／失敗、API p95（依平台）；2026-11-02 六渠道本機實跑時延遲一有尖峰就自動拉長間隔，沒有硬停。一張圖最下面的「7 觀測」帶把這些對到 Cloud Logging 與 Cloud Monitoring。",
+   "GCP 的 terraform plan：共用模組涵蓋回補 Job、GCS、Pub/Sub 與 Cloud SQL；2026-11-02 再補 q6.tf：斷詞服務 v0／v1／v2、文字雲 API、採集器的 Cloud Run 與 service account、parsed-posts 與 dict-releases 主題與訂閱、字典 bucket、YouTube 金鑰 secret、第二個 NAT 固定 IP、Cloud SQL 逾時旗標，離線 plan 147 to add、terraform test 37 passed；ES VM 與監控的告警政策仍不在 Terraform；沒有 apply。沙盤圖第 10 列引用的是共用模組的 plan，不是在沙盤觸發的。",
    "舊字典檔不在 repo。6,685 標題對照和沙盤的 v1 都是用 jieba 模擬舊流程，正式對照要用公司那份字典。6,685 標題已用 dict.txt.big 重跑：前 50 詞停用詞 14 降到 0；但「蔣萬安」被切成「蔣」「萬安」，換主字典要配人名詞條。",
    "「高雄市」整詞 6 次沒變，因為模擬的舊流程本來就沒拆。被拆的是不帶「市」的「高雄」：125 篇標題舊流程拆 115 篇，新流程 0 篇（內建字典）與 1 篇（dict.txt.big），但仍有 33／19 篇黏成「高雄為」這類非字典詞。單字「高」222 降到 0（內建字典；dict.txt.big 是 172 降到 0），是因為 segmenter.py 丟掉長度小於 2 的詞。",
-   "Playwright 實抓短網址 3 種網域（reurl.cc、tinyurl.com、bit.ly）與 1 例電話；地名被拆要靠斷詞器輸出證明，不能靠截圖。沙盤的原始公開頁截圖有 FB、IG、YouTube、Threads、媒體五個渠道（q6/evidence/realenv/channels/），PTT 的在 q6/evidence/playwright/。"
+   "Playwright 實抓短網址 3 種網域（reurl.cc、tinyurl.com、bit.ly）與 1 例電話；地名被拆要靠斷詞器輸出證明，不能靠截圖。沙盤的原始公開頁截圖有 FB、IG、YouTube、Threads、媒體五個渠道（q6/evidence/stack/channels/），PTT 的在 q6/evidence/playwright/。"
   ],
   "verify": [
    "pytest q6/code/tests：28 passed、退出碼 0（10/31 依審查加 5 項，原本 23；q6/code/RESULTS.md、shared/docs/python.md）；第一輪在 Windows 是 9 passed。",
    "run_compare.py、affected_demo.py 皆退出碼 0，記錄在 q6/code/RESULTS.md「指令與退出碼」表。RESULTS.md 與 top50.json 都由 run_compare.py 寫出，兩份的 10、12、222 三個數字一致。",
    "wordcloud_q6_verify.py 在沙盒 VM 重跑（Python 3.13.17、jieba 0.42.1）：262,611 字/秒，誤變 52 篇降到 0 篇。記錄在 q6/data/jieba_experiments/verify.log；log 結尾為「完成」，沒有記退出碼。",
    "以 sha256sum 核對 results.json、results2.json、results3.json，三份都與 results.sha256 一致。",
-   "以 git ls-tree 核對 PR #8（2f2e648）：q6/ 有 11 張架構圖、21 張佐證、30 張沙盤截圖，卡片引用的圖都在。",
-   "沙盤數字直接讀 q6/realenv/results/ 原始檔核對：latency_probe.jsonl 3,727 筆、最慢 396.9 ms、超過 180 秒 0 筆；final_ledger.json 46 個分區全部 passed（第 2 輪 34、第 3 輪 12，其中 2 個帶 G2 豁免）；41_targeted_rerun_r5.log 22,271 篇 8.56 秒；redelivery_and_dlq.json 兩條訂閱的 DLQ 各 1 則、投遞 5 次。核對時沒有重跑 Docker。",
-   "terraform（shared/infra/gcp）：第一輪對真實 project plan 70 to add；第二輪離線 plan 102 to add、terraform test 30 passed；未 apply。ES 叢集、斷詞服務、parsed-posts topic 不在 Terraform。",
+   "以 git ls-tree 核對（2f2e648）：q6/ 有 11 張架構圖、21 張佐證、30 張沙盤截圖，卡片引用的圖都在。",
+   "沙盤數字直接讀 q6/stack/results/ 原始檔核對：latency_probe.jsonl 3,727 筆、最慢 396.9 ms、超過 180 秒 0 筆；final_ledger.json 46 個分區全部 passed（第 2 輪 34、第 3 輪 12，其中 2 個帶 G2 豁免）；41_targeted_rerun_r5.log 22,271 篇 8.56 秒；redelivery_and_dlq.json 兩條訂閱的 DLQ 各 1 則、投遞 5 次。核對時沒有重跑 Docker。",
+   "監控端對端驗證（2026-11-02，同一台 Linux 容器的 Docker）：seed→回補→live→六渠道串流→公開 feed 採集（PTT、中央社、公視）→告警鏈→SLM 快照從頭跑一次；Prometheus 96 條規則全部健康、11 個 job 全部 up；告警經 Alertmanager webhook 進 PM 頁橫幅（firing 與 resolved 都收到）；pytest q6/stack/tests 與 q6/code/tests 共 168 passed（退出碼 0）。結束時仍在響的 4 組告警都查過原因：整台容器磁碟 94%、Instagram 樣本沒有 published_at、整詞召回 0.925 低於提案門檻 0.99、SLM 首次排程還沒到。",
+   "terraform（shared/infra/gcp）：第一輪對正式專案 plan 70 to add；第二輪離線 plan 102 to add、terraform test 30 passed；第三輪（2026-11-02，q6.tf）離線 plan 147 to add、terraform test 37 passed；未 apply。ES VM 與監控告警政策不在 Terraform。",
    "Playwright 實抓 PTT Kaohsiung 板 4 張、3 篇文章（03 與 04 同篇），未登入。記錄在 shared/capture/capture_manifest.json 與 shared/docs/playwright.md。",
    "Playwright 第二輪（10/30）：PTT 省錢板補拍 tinyurl.com、bit.ly 短網址與被換行切斷的網址；加上既有 reurl.cc，短網址至少 3 種網域。",
-   "未執行：QSearch 真實 ES 的寫入與查詢、真 PM 驗收、GCP apply；沙盤回補只跑 PTT 一個渠道。"
+   "未執行：QSearch 正式 ES 的寫入與查詢、PM 驗收、GCP apply；沙盤回補只跑 PTT 一個渠道。"
   ],
-  "todo": "沙盤只證明流程跑得通：QSearch 真實 ES（約 5 億筆）的寫入速度與 3 分鐘查詢還沒量；回補只跑 PTT，其他五渠道各只有 4–61 篇；PM 簽核與字典豁免用指令模擬，還沒有真 PM 驗收；正式對照要用公司的舊字典；ES 叢集、斷詞服務、parsed-posts、字典 bucket 與告警不在 Terraform，GCP 沒有 apply；45 工作天仍是估算。",
+  "todo": "沙盤只證明流程跑得通：QSearch 正式 ES（約 5 億筆）的寫入速度與 3 分鐘查詢還沒量；回補只跑 PTT，其他五渠道各只有 4–61 篇；PM 簽核與字典豁免用指令模擬，還沒有PM 驗收；正式對照要用公司的舊字典；告警門檻都是提案值，要用第一週實測校正，影子比對只有表沒有排程；ES VM 與監控告警政策不在 Terraform（斷詞服務、文字雲 API、採集器、parsed-posts、字典 bucket 已在 q6.tf，只做離線 plan），GCP 沒有 apply；45 工作天仍是估算。",
+  "figures": [
+   {
+    "path": "q6/evidence/stack/grafana/01_dashboard_main.png",
+    "cap": "Q6 主看板（台灣時間 2026-11-03 05:56–06:14，Prometheus 重建後的 19 分鐘）：9 層依資料流排：① 客戶 SLO（3 分鐘燃燒率、28 天錯誤預算）② PM 頁 RUM ③ 完整性對帳（原文湖 vs ES，逐月）④ 串流積壓 ⑤ 字典發版收斂 ⑥ 回補燃盡 ⑦ 品質日報 ⑧ ES 健康 ⑨ PostgreSQL、日誌與監控自身。「No data」是這段時間沒發生的事（沒有回補、沒有發版）"
+   },
+   {
+    "path": "q6/evidence/stack/grafana/02_dashboard_collect.png",
+    "cap": "Q6 採集看板（同一時段）：結果分類（11 種 outcome）、產出率與欄位填充、首抓延遲與逾期目標、帳號預算與退避、延遲分段、監控自身；表格是每個來源最後一次請求，以及逾期沒抓的來源（三個 YouTube feed 因沒有金鑰而 skipped，不算死）"
+   },
+   {
+    "path": "q6/evidence/stack/pm/30_alerts_strip.png",
+    "cap": "PM A/B 頁頂部的告警橫幅：Alertmanager webhook 送進來的 firing 告警，顯示嚴重度、摘要與時間；超過兩小時沒再收到的告警自動視為過期"
+   },
+   {
+    "path": "q6/evidence/stack/grafana/01_dashboard_backfill_window.png",
+    "cap": "回補看板（本機沙盤，台灣時間 10/31 06:31–07:13）：文字雲查詢 p95、ES 寫入、回補吞吐、串流延遲放在同一條時間軸；超過 180 秒的查詢 0 筆，46 個分區全部通過。OTel→Prometheus→Grafana，GCP 對應 Cloud Monitoring"
+   },
+   {
+    "path": "q6/evidence/crawl/grafana/crawler_monitor_3h_panels.png",
+    "cap": "爬蟲看板（本機實跑六渠道，台灣時間 2026-11-02 19:00–21:40）：每分鐘請求數依平台、狀態 2xx／4xx／5xx／失敗、API p95 依平台與 Pushgateway。每個請求的紀錄進 Loki，指標經 Pushgateway→Prometheus→Grafana；GCP 對應 Cloud Logging 與 Cloud Monitoring"
+   }
+  ],
   "evidence": [
    {
-    "path": "q6/architecture/realenv/diagram-sandbox-scenarios.png",
-    "cap": "本機沙盤 10 種情境：怎麼觸發、系統怎麼反應、實測數字；第 10 列的 terraform plan 是共用 GCP 模組（PR #7），不含 Q6 的斷詞服務、parsed-posts、ES 與字典 bucket",
+    "path": "q6/evidence/stack/grafana/01_dashboard_main.png",
+    "cap": "Q6 主看板（2026-11-02）：客戶 SLO 燃燒率、PM 頁 RUM、完整性對帳、串流積壓、發版收斂、回補燃盡、品質日報、ES 健康、平台，9 層 69 面板",
+    "priority": 1,
+    "platform": "other"
+   },
+   {
+    "path": "q6/evidence/stack/grafana/02_dashboard_collect.png",
+    "cap": "Q6 採集看板（2026-11-02）：結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身，6 列 21 面板",
+    "priority": 1,
+    "platform": "other"
+   },
+   {
+    "path": "q6/architecture/stack/diagram-sandbox-scenarios.png",
+    "cap": "本機沙盤 10 種情境：怎麼觸發、系統怎麼反應、實測數字；第 10 列的 terraform plan 是共用 GCP 模組，不含 Q6 的斷詞服務、parsed-posts、ES 與字典 bucket",
     "priority": 1,
     "platform": "diagram"
    },
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_backfill_window.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_backfill_window.png",
     "cap": "沙盤回補時段（台灣時間 10/31 06:31–07:13）：查詢 p95、ES 寫入在同一條時間軸，回補吞吐只看得到第 3 輪；超過 180 秒的查詢 0 筆，46 個分區全部通過",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/pm/01_all_channels_all_time.png",
-    "cap": "沙盤 PM A/B 頁（42.5 萬篇）：舊版（jieba 模擬舊流程）標出停用詞 18、標點 4、單字 28；新版查詢時排除 48 個軟停用詞後，前 60 詞沒有標點、單字與停用詞",
+    "path": "q6/evidence/crawl/grafana/crawler_monitor_3h_panels.png",
+    "cap": "六渠道爬蟲監測看板（2026-11-02 本機實跑，台灣時間 19:00–21:40；Loki＋Pushgateway→Prometheus→Grafana）：每分鐘請求數依平台、狀態 2xx／4xx／5xx／失敗、API p95 依平台與 Pushgateway",
+    "priority": 1,
+    "platform": "other"
+   },
+   {
+    "path": "q6/evidence/stack/pm/01_all_channels_all_time.png",
+    "cap": "PM A/B 頁（即時湖 6,666 篇，2026-11-03 重拍）：左 v0 舊系統重現（依題目線索推論的重現，非公司原碼：凍結於 2019-12-31 的字典＋逆向最長匹配，不清洗不過濾）標出停用詞 17、數字／電話 3、網址殘片 1、單字 20；右 terms_v2（渠道清洗 → jieba＋使用者字典 → 過濾，48 個軟停用詞在查詢時排除）前 60 詞沒有雜訊",
     "priority": 1,
     "platform": "other"
    },
@@ -715,31 +756,55 @@
   ],
   "evidence_all": [
    {
-    "path": "q6/architecture/realenv/diagram-sandbox-scenarios.png",
-    "cap": "本機沙盤 10 種情境：怎麼觸發、系統怎麼反應、實測數字；第 10 列的 terraform plan 是共用 GCP 模組（PR #7），不含 Q6 的斷詞服務、parsed-posts、ES 與字典 bucket",
+    "path": "q6/evidence/stack/grafana/01_dashboard_main.png",
+    "cap": "Q6 主看板（2026-11-02）：客戶 SLO 燃燒率、PM 頁 RUM、完整性對帳、串流積壓、發版收斂、回補燃盡、品質日報、ES 健康、平台，9 層 69 面板",
+    "priority": 1,
+    "platform": "other"
+   },
+   {
+    "path": "q6/evidence/stack/grafana/02_dashboard_collect.png",
+    "cap": "Q6 採集看板（2026-11-02）：結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身，6 列 21 面板",
+    "priority": 1,
+    "platform": "other"
+   },
+   {
+    "path": "q6/evidence/stack/pm/30_alerts_strip.png",
+    "cap": "PM A/B 頁的告警橫幅：Alertmanager webhook 送進來的 firing 告警（嚴重度、摘要、時間）",
+    "priority": 2,
+    "platform": "other"
+   },
+   {
+    "path": "q6/architecture/stack/diagram-sandbox-scenarios.png",
+    "cap": "本機沙盤 10 種情境：怎麼觸發、系統怎麼反應、實測數字；第 10 列的 terraform plan 是共用 GCP 模組，不含 Q6 的斷詞服務、parsed-posts、ES 與字典 bucket",
     "priority": 1,
     "platform": "diagram"
    },
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_backfill_window.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_backfill_window.png",
     "cap": "沙盤回補時段（台灣時間 10/31 06:31–07:13）：查詢 p95、ES 寫入在同一條時間軸，回補吞吐只看得到第 3 輪；超過 180 秒的查詢 0 筆，46 個分區全部通過",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/pm/01_all_channels_all_time.png",
-    "cap": "沙盤 PM A/B 頁（42.5 萬篇）：舊版（jieba 模擬舊流程）標出停用詞 18、標點 4、單字 28；新版查詢時排除 48 個軟停用詞後，前 60 詞沒有標點、單字與停用詞",
+    "path": "q6/evidence/crawl/grafana/crawler_monitor_3h_panels.png",
+    "cap": "六渠道爬蟲監測看板（2026-11-02 本機實跑，台灣時間 19:00–21:40；Loki＋Pushgateway→Prometheus→Grafana）：每分鐘請求數依平台、狀態 2xx／4xx／5xx／失敗、API p95 依平台與 Pushgateway",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/architecture/realenv/diagram-realenv-stack.png",
-    "cap": "本機沙盤架構：每層對應的 GCP 元件與本機替身、實測數字；圖上 Q6 元件都沒有 Terraform，GCP 沒有 apply、0 元",
+    "path": "q6/evidence/stack/pm/01_all_channels_all_time.png",
+    "cap": "PM A/B 頁（即時湖 6,666 篇，2026-11-03 重拍）：左 v0 舊系統重現（依題目線索推論的重現，非公司原碼：凍結於 2019-12-31 的字典＋逆向最長匹配，不清洗不過濾）標出停用詞 17、數字／電話 3、網址殘片 1、單字 20；右 terms_v2（渠道清洗 → jieba＋使用者字典 → 過濾，48 個軟停用詞在查詢時排除）前 60 詞沒有雜訊",
+    "priority": 1,
+    "platform": "other"
+   },
+   {
+    "path": "q6/architecture/stack/diagram-stack.png",
+    "cap": "本機沙盤架構：每層對應的 GCP 元件與本機對應元件、實測數字；圖上 Q6 元件都沒有 Terraform，GCP 沒有 apply、0 元",
     "priority": 2,
     "platform": "diagram"
    },
    {
-    "path": "q6/evidence/realenv/kibana/01_discover_v1_v2_terms.png",
+    "path": "q6/evidence/stack/kibana/01_discover_v1_v2_terms.png",
     "cap": "沙盤 Kibana：同一篇同時有 terms_v1（肥／宅）和 terms_v2（肥宅），seg_ver_v2 是 22026103005",
     "priority": 2,
     "platform": "other"
@@ -954,6 +1019,6 @@
     "priority": 1
    }
   ],
-  "src": "來源：q6/README.md、q6/code/RESULTS.md、q6/realenv/RESULTS.md 與 results/（PR #8）、shared/infra/gcp/README.md、shared/capture/capture_manifest.json。"
+  "src": "來源：q6/README.md、q6/code/RESULTS.md、q6/stack/RESULTS.md 與 results/、shared/infra/gcp/README.md、shared/capture/capture_manifest.json。"
  }
 }

@@ -24,7 +24,7 @@
 
 ## 程式
 
-答案第 3 點的每一步都有可以實跑的原型，放在 [`code/`](code/)（只用 Python 標準函式庫）。題目沒有附資料，所以用 [`code/make_fixtures.py`](code/make_fixtures.py) 以固定 seed 產生**合成資料**（40,000 封信、2,000 份問卷），不是真實顧客資料。實跑結果見 [`code/RESULTS.md`](code/RESULTS.md)，輸出見 [`data/`](data/README.md)。RESULTS 裡沒有直接寫在輸出檔的數字，由 [`code/checks/`](code/checks/) 的 8 支檢查腳本核對，輸出在 `data/logs/claim_checks.log`；合成資料樣本在 `data/synthetic_fixtures/`，每個檔案的說明見 [`data/README.md`](data/README.md)。
+答案第 3 點的每一步都有可以實跑的原型，放在 [`code/`](code/)（只用 Python 標準函式庫）。題目沒有附資料，所以用 [`code/make_fixtures.py`](code/make_fixtures.py) 以固定 seed 產生**合成資料**（40,000 封信、2,000 份問卷），沒有用到任何顧客資料。實跑結果見 [`code/RESULTS.md`](code/RESULTS.md)，輸出見 [`data/`](data/README.md)。RESULTS 裡沒有直接寫在輸出檔的數字，由 [`code/checks/`](code/checks/) 的 8 支檢查腳本核對，輸出在 `data/logs/claim_checks.log`；合成資料樣本在 `data/synthetic_fixtures/`，每個檔案的說明見 [`data/README.md`](data/README.md)。
 
 | 答案裡的步驟 | 程式 | 合成資料實跑結果 |
 |---|---|---|

@@ -6,7 +6,7 @@
 DROP TABLE IF EXISTS fb_posts;
 
 CREATE TABLE fb_posts (
-    post_id          text        NOT NULL,  -- "{page_id}_{貼文序號}"，約 31 字元
+    post_id          text        NOT NULL,  -- "{page_id}_{15 位隨機數}"，31 字元（見 02_generate_*.sql）
     page_id          bigint      NOT NULL,  -- 粉絲頁 ID（btree 索引的對象）
     page_name        text        NOT NULL,  -- 粉絲頁名稱
     created_time     timestamptz NOT NULL,  -- 發文時間

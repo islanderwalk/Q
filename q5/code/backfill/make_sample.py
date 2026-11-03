@@ -6,7 +6,7 @@
   畫面轉發數 = repost_count + quote_count；分享旁沒有數字時 reshare_count 是 null（不是 0）。
 - IG Reels 觀看數的 JSON key 是 play_count（縮圖 4.2M = 4,298,087 無條件捨去）。
 - 舊欄位名（textPostAppInfo、repostCount、repost_cnt、IG 的 video_view_count）是假設，
-  這裡故意混進去，用來測別名表；不代表 GCS 上真的有這些名稱。
+  這裡故意混進去，用來測別名表；不代表 GCS 上確實有這些名稱。
 
 目錄（每週一個分區，各週用不同時期的欄位名）：
   threads/2026-05-04/batch_0001.json   舊名 A：textPostAppInfo + repostCount／quoteCount／reshareCount（假設）

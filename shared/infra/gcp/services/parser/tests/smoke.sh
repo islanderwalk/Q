@@ -24,7 +24,7 @@ check "valid (dup)" "$(push "$GOOD" m1)" 204
 # 這兩項 Avro 不收，經過有 schema 的主題時在發佈端就被擋；parser 拒收是與 .avsc 對齊的防線。
 check "no schema_version (Avro rejects)" "$(push "${GOOD/\"schema_version\":1,/}" m2)" 422
 check "schema_version \"1\" (Avro rejects)" "$(push "${GOOD/\"schema_version\":1/\"schema_version\":\"1\"}" m3)" 422
-# 這項 Avro 合法，真的會送到 parser。
+# 這項 Avro 合法，會送到 parser。
 check "uri gs://bucket (Avro accepts)" "$(push "${GOOD/gs:\/\/demo-raw-scraped\/ptt\/a.html/gs://bucket}" m4)" 422
 check "bad base64" "$(post '{"message":{"data":"!!!","messageId":"m5"}}' /events/crawl-fetched)" 422
 check "unwrapped body" "$(post "$GOOD" /events/crawl-fetched)" 422

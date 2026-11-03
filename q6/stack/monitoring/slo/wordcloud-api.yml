@@ -1,0 +1,47 @@
+# 文字雲 API 的 SLO（Sloth 規格，prometheus/v1）。產生規則：./run.sh slo（docker run ghcr.io/slok/sloth:v0.11.0 generate …）→ monitoring/rules/slo.yml
+# 多視窗燃燒率照 SRE Workbook 第 5 章：呼叫＝1h＋5m 燒掉 2% 預算（14.4 倍）或 6h＋30m 燒掉 5%（6 倍）；開單＝1d＋2h（3 倍）或 3d＋6h（1 倍）。
+# 目標值都是提案值：題目只說「單次查詢不超過 3 分鐘，初期可放寬」，沒有給百分比。
+version: "prometheus/v1"
+service: "wordcloud-api"
+labels:
+  owner: backend
+slos:
+  - name: "query-within-180s"
+    objective: 99
+    description: "SLO-1：文字雲查詢成功且 ≤ 180 秒（題目 SLA 3 分鐘）。28 天 ≥ 99%（提案值；POC 期可放寬到 95%，改 objective 即可）。壞查詢＝失敗（逾時、ES 部分結果、ES 回錯）＋成功但超過 180 秒；分母是成功與失敗的總次數。"
+    sli:
+      events:
+        error_query: sum(rate(wordcloud_duration_seconds_count[{{.window}}])) - sum(rate(wordcloud_duration_seconds_bucket{le="180.0",status="ok"}[{{.window}}]))
+        # 分母加 > 0：沒流量時 0/0 是 NaN，NaN 樣本會讓 Sloth 的 4 週 sum_over_time／count_over_time 整段變 NaN（端對端驗證抓到）；
+        # 改成沒流量就沒有樣本，28 天錯誤預算只算有查詢的時段
+        total_query: (sum(rate(wordcloud_duration_seconds_count[{{.window}}])) > 0)
+    alerting:
+      name: WordcloudSlo180sBurn
+      labels:
+        slo: query-within-180s
+      annotations:
+        summary: "文字雲 3 分鐘 SLO 的錯誤預算燒太快：壞查詢比例持續高於門檻（含逾時、ES 部分結果、ES 回錯、成功但超過 180 秒）"
+      page_alert:
+        labels:
+          severity: page
+      ticket_alert:
+        labels:
+          severity: ticket
+  - name: "cache-miss-within-10s"
+    objective: 95
+    description: "SLO-2：體感：未命中快取的查詢成功且 ≤ 10 秒，28 天 ≥ 95%（提案值）。只開單不呼叫。"
+    sli:
+      events:
+        error_query: sum(rate(wordcloud_duration_seconds_count{cache="miss"}[{{.window}}])) - sum(rate(wordcloud_duration_seconds_bucket{le="10.0",cache="miss",status="ok"}[{{.window}}]))
+        total_query: (sum(rate(wordcloud_duration_seconds_count{cache="miss"}[{{.window}}])) > 0)
+    alerting:
+      name: WordcloudSlo10sBurn
+      labels:
+        slo: cache-miss-within-10s
+      annotations:
+        summary: "文字雲體感 SLO（未命中快取 ≤ 10 秒）的錯誤預算燒太快"
+      page_alert:
+        disable: true
+      ticket_alert:
+        labels:
+          severity: ticket

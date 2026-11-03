@@ -1,0 +1,50 @@
+# 文字雲品質日報（計畫書 P0 第 9 項；指標由 seg-quality 服務每天算一次，seg/qseg/quality.py）。門檻都是提案值。
+# 抽樣 300 篇／渠道：一篇洩漏就是 0.33%，所以「洩漏率 > 0」等於「抽樣裡有任何一篇」，照計畫書用 > 0。
+groups:
+  - name: q6-quality
+    rules:
+      - alert: SegQualityDown
+        expr: up{job="seg-quality"} == 0 or absent(up{job="seg-quality"})
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "品質日報服務抓不到 /metrics（seg-quality）" }
+      - alert: QualityStale
+        expr: (time() - (max(qseg_quality_last_success_timestamp_seconds) or vector(0))) > 26 * 3600
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "文字雲品質日報超過 26 小時沒有成功（或尚未啟動）" }
+      # 洩漏率 > 0 → warn（計畫書）：網址殘片、電話狀、純數字、硬停用詞、必不可拆詞被切開
+      - alert: QualityLeak
+        expr: qseg_quality_leak_ratio > 0
+        for: 1h
+        labels: { severity: warn }
+        annotations: { summary: "{{ $labels.channel }} 抽樣有 {{ $value | humanizePercentage }} 的文章詞表洩漏（{{ $labels.kind }}）：過濾規則失效或字典回歸" }
+      - alert: QualityPlaceSplit
+        expr: qseg_quality_place_split_ratio > 0
+        for: 1h
+        labels: { severity: warn }
+        annotations: { summary: "{{ $labels.channel }} 含地名的抽樣文章有 {{ $value | humanizePercentage }} 地名被切開（例如 鳳山區 → 鳳山／區）" }
+      # 整詞召回 < 99% → warn（計畫書）
+      - alert: QualityWholeWordRecallLow
+        expr: qseg_quality_whole_word_recall < 0.99 and on () qseg_quality_whole_word_words > 0
+        for: 1h
+        labels: { severity: warn }
+        annotations: { summary: "查詢詞整詞召回 {{ $value | humanizePercentage }} < 99%：有查詢詞在部分文章被切碎（quality_daily.whole_word_worst 看是哪些詞）" }
+      # 150 題金標召回：10/31 版 75.6%（95% CI 71.3–79.8）；掉到 CI 下界以下 → ticket
+      - alert: QualityGoldRecallDrop
+        expr: qseg_quality_gold_recall{pipeline="v2"} < 0.71 and on () qseg_quality_gold_recall{pipeline="v2"} > 0
+        for: 1h
+        labels: { severity: ticket }
+        annotations: { summary: "v2 金標詞召回 {{ $value | humanizePercentage }} 低於 71%（10/31 版 75.6% 的 95% CI 下界）：字典或規則回歸" }
+      # 新詞暴增且整詞率 < 50% → ticket：新詞被切碎，該進字典（PM 加詞）
+      - alert: QualityNewWordFragment
+        expr: qseg_quality_new_word_surges{kind="fragment"} > 0
+        for: 0m
+        labels: { severity: ticket }
+        annotations: { summary: "今天有 {{ $value }} 個暴增詞（z > 3）整詞率 < 50%：新詞被切碎，看 quality_daily.surges 決定要不要加進字典" }
+      # 前 50 詞對昨天的 RBO < 0.5 → ticket：排名大變（字典回歸、回補改寫了大量文章，或資料本身的事件）
+      - alert: QualityTopShift
+        expr: qseg_quality_rbo{pair="prev_day"} < 0.5
+        for: 1h
+        labels: { severity: ticket }
+        annotations: { summary: "{{ $labels.channel }} 前 50 詞對昨天的 RBO 只有 {{ $value }}：文字雲排名大變，對照 live_events 的發版與回補" }

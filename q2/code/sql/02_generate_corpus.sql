@@ -1,4 +1,4 @@
--- 造資料（真實中文）：內文來自 q2_corpus（run_q2.py 以 COPY 從 prepare_corpus.py 的輸出載入，一行一則）。
+-- 造資料（中文語料）：內文來自 q2_corpus（run_q2.py 以 COPY 從 prepare_corpus.py 的輸出載入，一行一則）。
 -- 其餘欄位與 repeat／distinct 相同。列數多於語料則數時循環使用（RESULTS.md 會註明）。
 -- 佔位符 __ROWS__、__CORPUS_ROWS__ 由 run_q2.py 代入。
 

@@ -52,6 +52,21 @@ Backend 回傳新指標
 顯示觀看數、轉發數
 Export Service
 匯出加兩欄
+7 觀測
+Cloud Logging
+每個請求一行 · 本機 Loki＋Alloy
+Cloud Monitoring
+爬蟲與採集指標 · Prometheus
+Cloud Monitoring
+服務指標 · OTel→Prometheus
+Cloud Monitoring
+ES 健康 · exporter→Prometheus
+Cloud Monitoring
+完整性對帳 · 原文湖 vs ES 四層
+Cloud Monitoring
+品質日報 · 金標召回／RBO
+Grafana＋Alertmanager
+2 張看板 90 面板 · 告警 66 條 → PM 頁
 沿用 PoC
 這次新增
 題目透露的 QSearch 元件

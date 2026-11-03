@@ -1,8 +1,8 @@
 #!/bin/bash
-# Q5 回補對真的 Elasticsearch：用官方映像在本機起單節點 ES，跑 make_sample.py 與 demo_real_es.py，最後刪掉容器。
+# Q5 回補對官方 Elasticsearch：用官方映像在本機起單節點 ES，跑 make_sample.py 與 demo_real_es.py，最後刪掉容器。
 # 用法：PY=<python> bash q5/code/backfill/demo_real_es.sh <scratch 目錄> [ES 映像，預設 elasticsearch:8.19.23] [本機埠，預設 19200]
 #   需要 Docker；ES 只綁 127.0.0.1，關掉安全性與 ML（本機示範用）。
-#   disk.threshold_enabled=false：雲端容器的磁碟回報為 252 GB 用了 96%（實際可寫的是每個 session 的額度），
+#   disk.threshold_enabled=false：Linux 容器的磁碟回報為 252 GB 用了 96%（實際可寫的是另外配給的固定額度），
 #   不關掉的話 ES 依磁碟水位拒絕配置 shard，建 index 後一直是 red。
 # 每個指令後面記退出碼（echo "exit=$?"，不經過管線）。
 set -u

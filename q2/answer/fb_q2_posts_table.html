@@ -368,7 +368,7 @@ footer { font-size: 13px; color: var(--muted); }
       <li>請估算：(a) 原始資料總量；(b) 粉絲頁 ID 索引；(c) 貼文中文全文索引。寫出算式與你假設的每一個參數，數量級對即可。
         <ul class="sub">
           <li><span>(a) 原始資料總量</span><span class="tag done">本頁實測</span></li>
-          <li><span>(b) 粉絲頁 ID 索引：21 MB（每則不同粉絲頁）／6.6 MB（5,000 個粉絲頁）</span><span class="tag done">本頁實測</span></li>
+          <li><span>(b) 粉絲頁 ID 索引：21 MB（每則不同粉絲頁，公式上限）／6.6 MB（5,000 個粉絲頁，實測）</span><span class="tag done">本頁實測</span></li>
           <li><span>(c) 貼文中文全文索引</span><span class="tag done">本頁實測</span></li>
         </ul>
       </li>
@@ -446,7 +446,7 @@ footer { font-size: 13px; color: var(--muted); }
           </div>
           <div class="cv-card">
             <h3>網址、JSON、資料庫裡為什麼變成一串怪碼？</h3>
-            <div class="sub">同一串 UTF-8 bytes 的三種寫法。框起來的是你點選的字。</div>
+            <div class="sub">同一串 UTF-8 bytes 的三種寫法。框起來的是點選的字。</div>
             <div id="cv-enc" style="display:grid;gap:10px"></div>
           </div>
           <div class="cv-card">
@@ -509,7 +509,7 @@ footer { font-size: 13px; color: var(--muted); }
 
   <section id="lv2">
     <div class="level"><span class="zoom">②</span><h2>一頁：8,192 bytes 裡放了 8 則貼文</h2></div>
-    <p>第 0 頁的真實內容，用 <code>pageinspect</code> 讀出。滑鼠移到格子上，會標出指標和貼文的對應。</p>
+    <p>第 0 頁的實際內容，用 <code>pageinspect</code> 讀出。滑鼠移到格子上，會標出指標和貼文的對應。</p>
     <div class="figure">
       <div class="scroll"><svg id="page-svg" viewBox="0 0 1000 268" width="100%" style="min-width:640px" role="img" aria-label="第 0 頁的位元組配置圖"></svg></div>
       <div class="scroll">
@@ -528,7 +528,7 @@ footer { font-size: 13px; color: var(--muted); }
     <div class="figure">
       <div class="scroll"><svg id="row-svg" viewBox="0 0 1000 170" width="100%" style="min-width:640px" role="img" aria-label="一列 918 bytes 的欄位配置"></svg></div>
       <div class="legend" id="row-legend"></div>
-      <p class="note heap">內文前面剛好是 164 bytes。你一開始估「內文以外的欄位約 164 bytes」，和實際位置一模一樣，只是組成不同：實際上列標頭只有 24 bytes，另外多了 3 個長度標頭和 3 bytes 補齊。</p>
+      <p class="note heap">內文前面剛好是 164 bytes。一開始估的「內文以外的欄位約 164 bytes」和實際位置一模一樣，只是組成不同：實際上列標頭只有 24 bytes，另外多了 3 個長度標頭和 3 bytes 補齊。</p>
     </div>
     <div class="toast">
       <h3>TOAST 是什麼：太長的貼文怎麼辦</h3>
@@ -541,7 +541,7 @@ footer { font-size: 13px; color: var(--muted); }
         <div class="tf-row"><span class="tf-k">頁裡的那一列</span><span class="tf-cell num">數字欄位</span><span class="tf-cell num">粉絲頁名稱</span><span class="tf-cell ptr">內文 → 18 B 指標</span></div>
         <div class="tf-row"><span class="tf-k">TOAST 副表</span><span class="tf-cell chunk">第 1 段 ~2 KB</span><span class="tf-cell chunk">第 2 段 ~2 KB</span><span class="tf-cell chunk">…</span></div>
       </div>
-      <p><b>對這題的影響：</b>中文 UTF-8 每字 3 bytes，大約 <b class="mono">680 字</b>以上才會觸發 TOAST。實測的每則貼文是 918 B，遠低於 2 KB，所以內文完整留在頁裡，量到的 977 MB 就是全部。真實資料裡的長文會被壓縮，實際佔的空間比「字數 × 3 B」小。全文索引記的位置仍然是頁裡那一列，所以 TOAST 不影響索引找得到哪則貼文。</p>
+      <p><b>對這題的影響：</b>中文 UTF-8 每字 3 bytes，大約 <b class="mono">680 字</b>以上才會觸發 TOAST。實測的每則貼文是 918 B，遠低於 2 KB，所以內文完整留在頁裡，量到的 977 MB 就是全部。實際資料裡的長文會被壓縮，實際佔的空間比「字數 × 3 B」小。全文索引記的位置仍然是頁裡那一列，所以 TOAST 不影響索引找得到哪則貼文。</p>
     </div>
   </section>
 
@@ -570,7 +570,7 @@ footer { font-size: 13px; color: var(--muted); }
 
   <section>
     <div class="level idx"><span class="zoom">公式</span><h2>估算公式和小計算機</h2></div>
-    <p>索引大小 ≈ 貼文數 × 每則的不重複詞數 × 每筆位址的平均 bytes。「每筆位址 bytes」用這次實測反推，換成真實資料時可以再調整。</p>
+    <p>索引大小 ≈ 貼文數 × 每則的不重複詞數 × 每筆位址的平均 bytes。「每筆位址 bytes」用這次實測反推，換成實際資料時可以再調整。</p>
     <div class="formula" id="formula"></div>
     <div class="figure">
       <div class="calc">
@@ -584,7 +584,7 @@ footer { font-size: 13px; color: var(--muted); }
         <div><span class="k">全文索引</span><span class="v" id="o-idx"></span></div>
         <div><span class="k">合計</span><span class="v" id="o-sum"></span></div>
       </div>
-      <p class="muted" style="font-size:13.5px">表的部分用和實測相同的規則算：內文前 164 bytes、內文長度標頭 4 bytes、每列對齊到 8 的倍數再加 4 bytes 指標，每頁可用 8,168 bytes。真實中文貼文常有重複的詞，所以「不重複詞比例」通常低於 100%。</p>
+      <p class="muted" style="font-size:13.5px">表的部分用和實測相同的規則算：內文前 164 bytes、內文長度標頭 4 bytes、每列對齊到 8 的倍數再加 4 bytes 指標，每頁可用 8,168 bytes。實際的中文貼文常有重複的詞，所以「不重複詞比例」通常低於 100%。</p>
     </div>
   </section>
 
@@ -641,6 +641,7 @@ const D = {
       { lp: 8, lp_off: 832, lp_len: 918, post_id: "278674452292008_947371017107743" },
     ].map(l => ({ ...l, head: "栢潎难颢靼崿鯸鏖" })),
   },
+  /* 以下 idx／sample 是原頁（WSL Ubuntu）那次量的數字；Linux／Windows 重跑的差異（兩字詞 GIN −0.03%、pg_trgm +0.13%）見 q2/code/RESULTS.md 第三節 */
   idx: {
     bigram: { bytes: 406396928, pages: 49609, meta: { n_entries: 248925, n_total_pages: 49609, n_entry_pages: 49608, n_data_pages: 0 } },
     trgm: { bytes: 409247744, pages: 49957 },
@@ -649,6 +650,7 @@ const D = {
   tpp: 249,
   postings1m: 249000000,
   bpp: 406396928 / 249000000,
+  /* 原頁樣本查詢：單筆 0.202 ms 是原頁那次量的，Linux 重跑沒有重現這一筆 */
   sample: {
     term: "栢潎", head: "栢潎难颢靼崿鯸鏖", count: 1000, ms: 0.202, idxPages: 5, heapPages: 125,
     tids: ["(0,1)", "(0,2)", "(0,3)", "(0,4)", "(0,5)", "(0,6)", "(0,7)", "(0,8)", "(1,1)", "(1,2)"],
@@ -1096,7 +1098,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
   const tids = $("tids");
   D.sample.tids.forEach(t => { const s = document.createElement("span"); s.textContent = t; tids.appendChild(s); });
   const more = document.createElement("span"); more.className = "more"; more.textContent = `… 共 ${fmt(D.sample.count)} 個`; tids.appendChild(more);
-  $("gin-note").textContent = `這 1,000 個位址從 ${D.sample.tids[0]} 連到 ${D.sample.last}，剛好佔滿 125 頁：測試資料只有 1,000 段內文，用同一段內文的 1,000 則在建表時被排在一起。GIN 存位址時只記「和上一個差多少」，連續的位址只差 1，用 1 B 就能記。所以這次平均每個位址（連同詞的目錄）只用 ${D.bpp.toFixed(2)} B。真實資料裡同一個詞散落在各處，位址差距大，每個大概要 2–4 B，索引會比這次大。這次查詢只讀了索引 ${D.sample.idxPages} 頁、表 ${D.sample.heapPages} 頁。`;
+  $("gin-note").textContent = `這 1,000 個位址從 ${D.sample.tids[0]} 連到 ${D.sample.last}，剛好佔滿 125 頁：測試資料只有 1,000 段內文，用同一段內文的 1,000 則在建表時被排在一起。GIN 存位址時只記「和上一個差多少」，連續的位址只差 1，用 1 B 就能記。所以這次平均每個位址（連同詞的目錄）只用 ${D.bpp.toFixed(2)} B。實際資料裡同一個詞散落在各處，位址差距大，每個大概要 2–4 B，索引會比這次大。這次查詢只讀了索引 ${D.sample.idxPages} 頁、表 ${D.sample.heapPages} 頁。`;
 })();
 
 /* comparison */
@@ -1116,7 +1118,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
     d.innerHTML = `<div class="lab">${n}<small>${s}</small></div><div class="track"><div class="fill ${c === "heap" ? "heap" : ""}" style="width:${Math.max(pct, 0.6)}%"></div><span class="val" style="${pct > 62 ? `right:calc(${100 - pct}% + 8px);color:var(--panel)` : `left:calc(${pct}% + 8px)`}">${mb(b)}</span></div>`;
     box.appendChild(d);
   });
-  $("bars-note").textContent = `to_tsvector('simple') 最小，但對中文沒用：它把整段 250 字當成一個詞，只有輸入一模一樣的整段文字才查得到。真正能用的中文全文搜尋，兩種能用的索引（兩字詞和 pg_trgm）都差不多是原始資料的 ${(D.idx.bigram.bytes / D.table.bytes * 100).toFixed(0)}%。`;
+  $("bars-note").textContent = `to_tsvector('simple') 最小，但對中文沒用：它把整段 250 字當成一個詞，只有輸入一模一樣的整段文字才查得到。中文全文搜尋能用的兩種索引（兩字詞和 pg_trgm），都差不多是原始資料的 ${(D.idx.bigram.bytes / D.table.bytes * 100).toFixed(0)}%。`;
 })();
 
 /* calculator */
@@ -1166,7 +1168,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
     { lo: 128, hi: 2047, who: "é、希臘、俄文、阿拉伯" },
     { lo: 2048, hi: 65535, who: "中日韓、泰文、全形符號" },
     { lo: 65536, hi: 1114111, who: "emoji、罕用漢字" }];
-  /* 一列 918 B 的組成（posts_size.sql 的欄位；PostgreSQL 16 實測） */
+  /* 一列 918 B 的組成（欄位依 q2/code/sql/01_schema.sql；PostgreSQL 16 pageinspect 實測） */
   const ROW = [
     ["列頭", "PostgreSQL 每列固定 23 B，補到 24", "24"],
     ["粉絲頁 ID", "bigint 整數", "8"],
@@ -1586,7 +1588,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
   sym.addEventListener("change", () => { const c = [...sym.value][0]; sym.value = c || ""; });
 })();
 
-$("foot").textContent =`量測環境：PostgreSQL ${D.version}（WSL Ubuntu），合成資料：1,000 段隨機中文輪流使用，每段 250 字。建索引時間：兩字詞 ${D.build.bigram}、pg_trgm ${D.build.trgm}、simple ${D.build.simple}。`;
+$("foot").textContent =`量測環境：PostgreSQL ${D.version}（WSL Ubuntu，原頁那次；Linux 重跑兩字詞 GIN −0.03%、pg_trgm +0.13%，見 q2/code/RESULTS.md），合成資料：1,000 段隨機中文輪流使用，每段 250 字。建索引時間：兩字詞 ${D.build.bigram}、pg_trgm ${D.build.trgm}、simple ${D.build.simple}。`;
 </script>
 
 </body></html>

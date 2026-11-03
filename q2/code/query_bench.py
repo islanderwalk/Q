@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """QSearch 第 2 題：在已建好索引的 fb_posts 上，用指定的中文詞比較兩字詞索引與 pg_trgm 的查詢。
 
-run_q2.py 只用第 1 列內文的前 4 字當查詢詞；這支腳本補上真實查詢最常見的 2 字、3 字詞，
+run_q2.py 只用第 1 列內文的前 4 字當查詢詞；這支腳本補上線上查詢最常見的 2 字、3 字詞，
 看兩種索引的結果數是否一致、查詢時間差多少（中文 2 字詞湊不出完整三字詞，是 pg_trgm 的弱點）。
 
 用法：
@@ -18,7 +18,7 @@ import psycopg
 import run_q2
 
 QUERIES = ("bigram_contains", "trgm_like")
-OPTIONAL = ("pg_bigm_like",)  # 真的 pg_bigm（sql/06_pg_bigm.sql；run_q2.py --pg-bigm 建的資料庫）
+OPTIONAL = ("pg_bigm_like",)  # pg_bigm 擴充套件（sql/06_pg_bigm.sql；run_q2.py --pg-bigm 建的資料庫）
 
 
 def main():

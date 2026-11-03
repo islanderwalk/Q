@@ -1,0 +1,24 @@
+# 文字雲 API（Cloud Run 服務）：3 分鐘 SLA 的告警。Prometheus 讀 /etc/prometheus/rules/*.yml。
+# SLO 燃燒率（呼叫／開單）在 rules/slo.yml（Sloth 由 monitoring/slo/wordcloud-api.yml 產生）；這裡只留單次事件與「服務掛掉」保護。
+groups:
+  - name: q6-api
+    rules:
+      # 對應 Cloud Logging 日誌型指標 wordcloud_over_180s：單次超過 3 分鐘（成功或失敗都算）就開單；要不要呼叫由燃燒率決定，不再每次 page。
+      # for 只能比 5 分鐘短：increase(...[5m]) 讓單次事件在窗內維持 > 0 約 5 分鐘。
+      - alert: WordcloudOver180s
+        expr: sum by (seg) (increase(wordcloud_over_180s_total[5m])) > 0
+        for: 1m
+        labels: { severity: ticket }
+        annotations: { summary: "有文字雲查詢超過 3 分鐘（seg={{ $labels.seg }}）" }
+      # 服務掛掉保護：API 的 /metrics 抓不到時，上面與 slo.yml 的規則都是空向量、不會響；這條要先響。
+      - alert: WordcloudApiDown
+        expr: up{job="wordcloud-api"} == 0 or absent(up{job="wordcloud-api"})
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "文字雲 API 抓不到 /metrics 超過 2 分鐘（服務掛了或 scrape 設定掉了）；SLO 燃燒率這段時間不會響" }
+      # ES 查詢自己的 timeout 到了（只回部分結果）：文字雲會少算，每一次都該知道。
+      - alert: WordcloudPartialResults
+        expr: sum by (seg) (increase(wordcloud_errors_total{reason="partial"}[10m])) > 0
+        for: 1m
+        labels: { severity: warn }
+        annotations: { summary: "ES 在 170 秒內沒跑完文字雲查詢、只回部分結果（seg={{ $labels.seg }}）" }

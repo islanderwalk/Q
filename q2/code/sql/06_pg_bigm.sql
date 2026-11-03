@@ -1,4 +1,4 @@
--- 真的 pg_bigm（只在 run_q2.py --pg-bigm 時使用）。需要裝了 pg_bigm 的伺服器，
+-- pg_bigm 擴充套件（只在 run_q2.py --pg-bigm 時使用）。需要裝了 pg_bigm 的伺服器，
 -- 例如 shared/infra/onprem/postgres-bigm/Dockerfile 以 PG_BASE=postgres:16.15-bookworm 建的映像。
 -- run_q2.py 以 "-- @pg_bigm <名稱>" 切段：index 建索引、like 是查詢（參數同 05_queries.sql）、meta 量 GIN metapage。
 

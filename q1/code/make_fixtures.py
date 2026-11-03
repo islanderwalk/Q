@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Q1 合成資料產生器（固定 seed，只用標準函式庫）。
 
-※ 這是合成資料，不是真實顧客資料。repo 裡沒有任何真實客服信件或問卷；公司「範例雲」、姓名、信箱（example.com）
-  都是虛構的。電話不產生看起來像真實門號的號碼：顧客手機全部寫同一個佔位號碼 0900-000-000；
+※ 這是合成資料，不是顧客資料。repo 裡沒有任何客服信件或問卷原文；公司「範例雲」、姓名、信箱（example.com）
+  都是虛構的。電話不產生看起來像實際門號的號碼：顧客手機全部寫同一個佔位號碼 0900-000-000；
   客服市話 (02) 0000-xxxx 的用戶號碼以 0 開頭，不是可撥通的號碼。
 
 用途：讓清理、分類、加權的程式有東西可以實跑，並且有「答案」（truth）可以量規則的誤刪、漏刪。
-規則和產生器是同一個人寫的，所以合成資料上的準確度只是上限；真實準確度要用 300 則人工標註量。
+規則和產生器是同一個人寫的，所以合成資料上的準確度只是上限；實際準確度要用 300 則人工標註量。
 產生器刻意放了規則抓不到的難例（hard_case），讓 RESULTS 看得到規則的失誤：
   pasted_reply    顧客把上次的罐頭回覆直接貼進正文，沒有引文標頭也沒有「>」
   unkeyed_wording 顧客用規則關鍵詞沒涵蓋的說法描述問題（例如「會自己跳掉」，機率 P_UNKEYED）
@@ -46,7 +46,7 @@ P_NEGATED = 0.06
 P_AGENT_NO_SIG = 0.05
 P_UNKEYED = 0.12
 
-# 顧客描述：每句由「前綴＋主詞＋症狀＋結尾」組合，同一句很少逐字重複（真實信件也是），
+# 顧客描述：每句由「前綴＋主詞＋症狀＋結尾」組合，同一句很少逐字重複（正式信件也是），
 # 只有問候、結尾語、背景句（CONTEXT）這類常見句會大量重複，用來測罐頭偵測會不會誤判顧客信。
 # 症狀分「規則關鍵詞涵蓋」與「沒涵蓋」（unkeyed_wording 難例，機率 P_UNKEYED）。
 PREFIXES = ["", "我", "最近", "{when}", "從{when}開始", "這幾天", "不知道為什麼"]
@@ -380,7 +380,7 @@ def write_fixtures(out, n_emails=40000, n_surveys=2000, seed=20261030, preview=3
 
 
 def main():
-    ap = argparse.ArgumentParser(description="產生 Q1 合成資料（非真實顧客資料）")
+    ap = argparse.ArgumentParser(description="產生 Q1 合成資料（非顧客資料）")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--emails", type=int, default=40000)
     ap.add_argument("--surveys", type=int, default=2000)

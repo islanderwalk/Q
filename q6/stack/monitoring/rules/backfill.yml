@@ -1,0 +1,38 @@
+# 回補燃盡與卡住分區（計畫書 P0 第 8 項；指標由 seg/qseg/recon.py 從 PostgreSQL 帳本算出）。門檻都是提案值。
+groups:
+  - name: q6-backfill
+    rules:
+      - alert: ReconDown
+        expr: up{job="seg-recon"} == 0 or absent(up{job="seg-recon"})
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "對帳／燃盡服務抓不到 /metrics（seg-recon）；下面的規則與完整性對帳這段時間都不會響" }
+      # attempts ≥ 3 仍未 passed 的分區 > 0（OOM 後反覆被重領；Job 已不再自動重領，要人看）
+      - alert: BackfillAttemptsExhausted
+        expr: qseg_ledger_attempts_exhausted > 0
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "有分區被領超過 3 次仍沒做完（{{ $value }} 個）：看 gates.attempts_exhausted 與該分區的日誌" }
+      # 最老的 awaiting_pm 等超過 4 小時 → 提醒 PM 簽核（計畫書：「awaiting_pm > 4 個工作小時提醒」；這裡用牆上時間，提案值）
+      - alert: BackfillAwaitingPmTooLong
+        expr: qseg_ledger_oldest_awaiting_pm_age_seconds > 4 * 3600
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "首月分區等 PM 抽查簽核超過 4 小時：到 PM 頁「回補帳本」簽核" }
+      # 平均每秒 < 1,450 篇超過一晚（8 小時平均）而且還有分區在跑 → warn（12 晚 × 8 小時做完 5 億篇的下限：5e8 ÷ (12×8×3600) ≈ 1,447）
+      - alert: BackfillThroughputLow
+        expr: avg_over_time(qseg_backfill_docs_per_sec_15m[8h]) < 1450 and qseg_ledger_partitions{status="running"} > 0 and qseg_backfill_paused == 0
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "回補 8 小時平均速率低於每秒 1,450 篇（{{ $value | printf \"%.0f\" }}）：45 工作天內做不完 5 億篇" }
+      # ETA ＝ 剩餘篇數 ÷ 近 15 分鐘速率；超過一個 8 小時離峰窗 → warn（提案值；實際的離峰窗依客戶流量定）
+      - alert: BackfillEtaBeyondWindow
+        expr: (qseg_backfill_remaining_docs / (qseg_backfill_docs_per_sec_15m > 0)) > 8 * 3600 and qseg_ledger_partitions{status="running"} > 0
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "依近 15 分鐘速率，剩餘回補要 {{ $value | humanizeDuration }}，超過今晚的 8 小時離峰窗" }
+      - alert: BackfillPausedLong
+        expr: qseg_backfill_paused == 1 and qseg_ledger_partitions{status="running"} + qseg_ledger_partitions{status="pending"} > 0
+        for: 2h
+        labels: { severity: ticket }
+        annotations: { summary: "回補暫停超過 2 小時而且還有分區沒做：是忘了恢復還是在等什麼" }

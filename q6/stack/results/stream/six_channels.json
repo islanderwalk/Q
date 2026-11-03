@@ -1,0 +1,47 @@
+{
+  "posts": 267,
+  "published_seconds": 2.69,
+  "all_segmented_seconds_after_publish": 1.87,
+  "complete": true,
+  "by_channel": {
+    "facebook": {
+      "docs": 4,
+      "with_content": 4,
+      "with_v1": 4,
+      "with_v2": 4
+    },
+    "instagram": {
+      "docs": 48,
+      "with_content": 48,
+      "with_v1": 48,
+      "with_v2": 48
+    },
+    "youtube": {
+      "docs": 45,
+      "with_content": 45,
+      "with_v1": 45,
+      "with_v2": 45
+    },
+    "ptt": {
+      "docs": 48,
+      "with_content": 48,
+      "with_v1": 48,
+      "with_v2": 48
+    },
+    "media": {
+      "docs": 61,
+      "with_content": 61,
+      "with_v1": 61,
+      "with_v2": 61
+    },
+    "threads": {
+      "docs": 61,
+      "with_content": 61,
+      "with_v1": 61,
+      "with_v2": 61
+    }
+  },
+  "dict_versions_v2": [
+    "qsearch-q6-2026.10.30.6"
+  ]
+}

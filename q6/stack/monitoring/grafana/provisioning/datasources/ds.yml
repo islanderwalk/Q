@@ -1,0 +1,12 @@
+apiVersion: 1
+datasources:
+  - { name: Prometheus, uid: prom, type: prometheus, url: http://prometheus:9090, isDefault: true, access: proxy }
+  - { name: Loki, uid: loki, type: loki, url: http://loki:3100, access: proxy }
+  - { name: Alertmanager, uid: am, type: alertmanager, url: http://alertmanager:9093, access: proxy, jsonData: { implementation: prometheus, handleGrafanaManagedAlerts: false } }
+  - name: PostgreSQL
+    uid: pg
+    type: grafana-postgresql-datasource
+    url: pg:5432
+    user: qsearch
+    jsonData: { database: qsearch, sslmode: disable, postgresVersion: 1600 }
+    secureJsonData: { password: qsearch }

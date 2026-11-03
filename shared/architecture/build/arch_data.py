@@ -1,7 +1,7 @@
 # Content for the four added tabs and the node deploy rows.
 # Every number here comes from a file in the repo; the source is named next to it.
 
-TF_PLAN = "terraform（shared/infra/gcp）：第一輪對真實 GCP project plan 70 to add、0 change、0 destroy；第二輪（2026-10-30，離線）plan 102 to add、terraform test 30 passed、fmt／validate 退出碼 0，新增的 32 項尚未對真實專案 plan；未 apply、未啟用 API。"
+TF_PLAN = "terraform（shared/infra/gcp）：第一輪對正式 GCP 專案 plan 70 to add、0 change、0 destroy；第二輪（2026-10-30，離線）plan 102 to add、terraform test 30 passed、fmt／validate 退出碼 0，新增的 32 項尚未對正式專案 plan；未 apply、未啟用 API。"
 
 # status → (tone, label). Tones reuse the shell's evidence colours.
 STATUS = {
@@ -23,7 +23,7 @@ DEPLOY = {
     "jobdb":     {"gcp": ["google_sql_database_instance.crawler_db"], "st": "planned",
                   "onprem": "PostgreSQL", "diff": "備份與還原要自己演練。第二輪在 Cloud SQL 加了每日備份＋PITR 7 天、ENCRYPTED_ONLY 與 IAM 資料庫登入（離線 plan）。"},
     "dispatch":  {"gcp": ["google_cloud_tasks_queue.crawl[...]"], "st": "planned",
-                  "onprem": "RabbitMQ（每來源一條 queue）", "diff": "每條佇列的速率要自己用 consumer 數量加令牌桶做（地端用 Redis 每秒計數器、固定視窗，已實作，限速效果未實測）。第二輪補上每站限速的 crawl-ptt（1 rps）與 crawl-threads（20 rps），以及 Cloud Tasks 以 OIDC 呼叫 worker 的權限鏈（離線 plan，尚未對真實專案驗證）；原本的 crawl-fb／yt／news 保留。"},
+                  "onprem": "RabbitMQ（每來源一條 queue）", "diff": "每條佇列的速率要自己用 consumer 數量加令牌桶做（地端用 Redis 每秒計數器、固定視窗，已實作，限速效果未實測）。第二輪補上每站限速的 crawl-ptt（1 rps）與 crawl-threads（20 rps），以及 Cloud Tasks 以 OIDC 呼叫 worker 的權限鏈（離線 plan，尚未對正式專案驗證）；原本的 crawl-fb／yt／news 保留。"},
     "crawl":     {"gcp": ["google_cloud_run_v2_service.crawler_worker", "google_compute_router_nat.crawler"], "st": "planned",
                   "onprem": "Docker／K8s worker 加出口閘道", "diff": "出口 IP 是最大差異：雲端 IP 段常被目標站封鎖，地端 IP 也可能被封，兩邊都要代理池備案。Cloud NAT 的固定出口 IP 本身也是雲端 IP 段，不能繞過 Threads 封鎖，用途是給住宅代理商做 IP 白名單。"},
     "tokenpool": {"gcp": ["Firestore"], "st": "gap",
@@ -41,7 +41,7 @@ DEPLOY = {
     "replay":    {"gcp": ["google_cloud_run_v2_job.qsearch_backfill"], "st": "planned",
                   "onprem": "K8s Job 或 CronJob", "diff": "Pub/Sub Seek 的替代：crawl_jobs 表＋MinIO 原始檔重新產生事件（地端已實測，清空衍生資料後 2.1 秒重建）。"},
     "searchdb":  {"gcp": ["google_sql_database_instance.crawler_db"], "st": "partial",
-                  "onprem": "PostgreSQL 加 pg_bigm", "diff": "第二輪已開 cloudsql.enable_pg_bigm flag（離線 plan），CREATE EXTENSION 要在真實專案驗證。地端用 shared/infra/onprem/postgres-bigm/Dockerfile 自建 pg_bigm 1.2：地端 stack（PostgreSQL 15.19）實測走索引；Q2 用同一個 Dockerfile 換成 PostgreSQL 16.15 映像，在 Docker 量了 100 萬則（PTT 索引 953,729,024 B）。EDB 的 Windows 版沒有附 pg_bigm（q2/code/RESULTS.md，PR #6）。"},
+                  "onprem": "PostgreSQL 加 pg_bigm", "diff": "第二輪已開 cloudsql.enable_pg_bigm flag（離線 plan），CREATE EXTENSION 要在正式專案驗證。地端用 shared/infra/onprem/postgres-bigm/Dockerfile 自建 pg_bigm 1.2：地端 stack（PostgreSQL 15.19）實測走索引；Q2 用同一個 Dockerfile 換成 PostgreSQL 16.15 映像，在 Docker 量了 100 萬則（PTT 索引 953,729,024 B）。EDB 的 Windows 版沒有附 pg_bigm（q2/code/RESULTS.md）。"},
     "searchapi": {"gcp": ["BigQuery 資料表（依發文日分區）", "Cloud Run · 查詢 API"], "st": "gap", "onprem": "PostgreSQL 全表掃描加 FastAPI（推論）",
                   "diff": "BigQuery 表與查詢 API 都沒有 Terraform。地端沒有 BigQuery；7 天只有 22.9 MB，用 PostgreSQL 全表掃描應該夠（推論，未實測）。"},
     "es":        {"gcp": ["Elasticsearch", "google_secret_manager_secret.es_api_key"], "st": "gap", "onprem": "OpenSearch", "diff": "授權與版本相容性要測。叢集本體沒有 Terraform；第二輪只在 Terraform 寫了 API key 的 Secret（離線 plan）。"},
@@ -58,7 +58,7 @@ DEPLOY_ROWS = [
     (0, "Cloud SQL PG15（私有 IP）", "google_sql_database_instance.crawler_db", "planned", "PostgreSQL 加 pg_bigm", "備份與還原要自己演練", ["2", "3"], "jobdb"),
     (0, "Scheduler ptt-crawl-hourly → Cloud Run Job ptt-crawl", "google_cloud_scheduler_job.ptt_crawl_hourly、google_cloud_run_v2_job.ptt_crawl", "offline", "cron 加 K8s CronJob", "Q3 每小時抓一次，經 Cloud NAT 出去", ["3"], "trigger"),
     (1, "Cloud Tasks ×3", 'google_cloud_tasks_queue.crawl["crawl-fb" / "crawl-yt" / "crawl-news"]', "planned", "RabbitMQ queue", "每條佇列的速率要自己控制", ["3", "4"], "dispatch"),
-    (1, "Cloud Tasks 每站限速 ×2（PTT 1 rps、Threads 20 rps）", 'google_cloud_tasks_queue.crawl_site["crawl-ptt" / "crawl-threads"]', "offline", "RabbitMQ 加 Redis 每秒計數器（已實作，未實測限速）", "OIDC 呼叫 worker 的權限鏈要在真實專案驗證", ["3", "4"], "dispatch"),
+    (1, "Cloud Tasks 每站限速 ×2（PTT 1 rps、Threads 20 rps）", 'google_cloud_tasks_queue.crawl_site["crawl-ptt" / "crawl-threads"]', "offline", "RabbitMQ 加 Redis 每秒計數器（已實作，未實測限速）", "OIDC 呼叫 worker 的權限鏈要在正式專案驗證", ["3", "4"], "dispatch"),
     (1, "Pub/Sub crawler-tasks 加 DLQ", "google_pubsub_topic.crawler_tasks、google_pubsub_topic.crawler_tasks_dlq", "planned", "RabbitMQ 加 DLX", "DLX 對應 DLQ，但沒有 Seek", ["3"], None),
     (2, "Cloud Run crawler-worker", "google_cloud_run_v2_service.crawler_worker", "planned", "K8s／Docker worker", "IP 來源不同（Q4）", ["3", "4"], "crawl"),
     (2, "Cloud NAT 固定出口 IP", "google_compute_router_nat.crawler、google_compute_address.egress", "planned", "出口閘道加固定 IP 或代理池", "固定出口 IP 本身是雲端 IP 段，不能繞過 Threads 封鎖；用途是給住宅代理商做 IP 白名單", ["4"], "crawl"),
@@ -93,22 +93,22 @@ DEPLOY_SWITCH = [
 
 DEPLOY_GAPS = [
     "沒有 Terraform：Elasticsearch 叢集本體、Firestore token 池與 session refresher、Redis／Memorystore、Vector DB、監控、crawler-api 以外的映像建置（parser、worker、scheduler、backfill、ptt-crawl）、Data Layer／Analytics／Export API。",
-    "第二輪新增的 32 項（102 − 70）只跑過離線 plan 與 terraform test；Cloud Tasks 以 OIDC 實際派送、Cloud SQL CREATE EXTENSION pg_bigm、IAM 資料庫登入、BigQuery 訂閱寫入、Secret Manager 讀取都要真實專案才能驗，並要對真實專案重跑 plan（預期 102 to add）。",
+    "第二輪新增的 32 項（102 − 70）只跑過離線 plan 與 terraform test；Cloud Tasks 以 OIDC 實際派送、Cloud SQL CREATE EXTENSION pg_bigm、IAM 資料庫登入、BigQuery 訂閱寫入、Secret Manager 讀取都要正式專案才能驗，並要對正式專案重跑 plan（預期 102 to add）。",
     "GKE（optional/gke）只有 validate 與替代 plan（8 to add）；Deployment 本體與 backfill CronJob 沒寫。",
-    "地端 docker compose 只讀 repo 內 fixture：沒有真實抓取、高可用、規模、TLS 與監控的實測（shared/infra/onprem/VERIFY.md）。",
+    "地端 docker compose 只讀 repo 內 fixture：沒有對外抓取、高可用、規模、TLS 與監控的實測（shared/infra/onprem/VERIFY.md）。",
 ]
 
 # diagram node text that newer results replace (source named in the text)
 NODE_NOTE = {
     "searchdb": "Q2 的 FB 貼文搜尋用這台：pg_bigm 兩字一切，「台北」這種兩個字的查詢也用得到索引；只支援 LIKE，沒有相關度排序。"
-                "真的 pg_bigm 1.2 在 Docker 裡量 PTT 100 萬則，索引 953,729,024 B，和表（910,172,160 B）差不多大；"
+                "pg_bigm 1.2 本體 在 Docker 裡量 PTT 100 萬則，索引 953,729,024 B，和表（910,172,160 B）差不多大；"
                 "2 字詞查詢 pg_bigm 走索引 119 到 147 毫秒，pg_trgm 全表掃描 0.54 到 0.66 秒。「台灣」這種出現在一半列的詞，兩者都全表掃描，約 0.6 秒"
-                "（q2/code/RESULTS.md，PR #6）。Q3 的 PTT 搜尋不用這台，存在右邊的 BigQuery。",
+                "（q2/code/RESULTS.md）。Q3 的 PTT 搜尋不用這台，存在右邊的 BigQuery。",
     "platforms": "PTT 沒有 API，八卦板要帶 over18=1 cookie；repo 以 0.8 秒間隔打了約 6,800 次，沒被擋過，抓取程式現在預設每次停 1.5 秒。"
                  "PTT 的 robots.txt 對一般爬蟲是 Allow: /，只對幾個 AI 爬蟲的 user agent 是 Disallow: /。"
                  "Threads 每帳號每輪一次 GraphQL POST（first=10），回最新 10 串的 code、全文、taken_at；doc_id 兩天出現 3 個值，會換，不能寫死。"
                  "FB 用 Graph API，要通過 Page Public Content Access 審核。",
-    # Q6 sandbox (q6/realenv/RESULTS.md, PR #8): local Docker, 42.5 萬 PTT posts
+    # Q6 sandbox (q6/stack/RESULTS.md): local Docker, 42.5 萬 PTT posts
     "es": "QSearch 產品實際存貼文的地方：Q5、Q6 題目都寫到 ES，Q6 說約 5 億筆。Q4 的 Threads 貼文寫進這裡。"
           "Q5 要先改 mapping，新增 video_view_count 和 repost_count（long）。mapping 可以加欄位、不能改型別，型別錯了只能 reindex。"
           "Q6 新舊詞表並存：每篇同時有 terms_v1、terms_v2 與各自的 seg_ver，寫入一律經 Painless 腳本，版本只能往前。"
@@ -130,8 +130,8 @@ NODE_NOTE = {
               "沙盤用 42.5 萬篇 PTT、46 個月分區跑了三輪。",
     "gcs": "PoC 的 lifecycle 是 30 天就刪，但 Q5 要回補 2026/5/1 起的 IG 觀看數，這些原始檔早就被刪了。改成 30 天轉 Archive、不刪除。"
            "量：PTT 每天約 100 MB（含留言回抓）；Threads 每天約 45 GB，要存壓縮後的 bytes（以 zuck 第 2 頁實測，解壓後約 9 倍大）。"
-           "Q6 回朔也從原文讀、不從 ES 撈；2023/01 起的原文若已被 30 天規則刪掉，要改從 BigQuery 或其他匯出讀（沙盤用本機檔案當替身）。"
-           "Q6 的字典 artifact 規劃放 Cloud Storage：每版一個資料夾、逐檔 sha256。沙盤用 nginx 替身驗證了 current 原子切換，以及 IK 靠 Last-Modified／ETag 重載；"
+           "Q6 回朔也從原文讀、不從 ES 撈；2023/01 起的原文若已被 30 天規則刪掉，要改從 BigQuery 或其他匯出讀（沙盤用本機檔案代替）。"
+           "Q6 的字典 artifact 規劃放 Cloud Storage：每版一個資料夾、逐檔 sha256。沙盤用 nginx 驗證了 current 原子切換，以及 IK 靠 Last-Modified／ETag 重載；"
            "搬到 Cloud Storage 後怎麼原子切版、IK 怎麼讀私有 bucket，還沒驗證。",
     "frontend": "Q5 要改的第 6 層。SLA 是發文 1 小時後查得到。前端和 Export 都只吃 Analytics API，兩邊可以平行開發（推論）。"
                 "Q6 給 PM 的 A/B 頁：同一範圍左右並排舊版 terms_v1 和新版 terms_v2 文字雲，下面列只在一邊出現的詞，點詞可看原文。"

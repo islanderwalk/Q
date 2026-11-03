@@ -1,0 +1,11 @@
+# 公司代理或Linux 容器會攔 TLS（自簽 CA）時，採集器對外抓 PTT／中央社／公視／YouTube 會報 CERTIFICATE_VERIFY_FAILED。
+# 把宿主機的 CA 檔掛進採集器並讓 requests 信任它（與 run.sh build 的 CA= 同一個檔）：
+#   CA=/path/to/ca-bundle.crt docker compose -f docker-compose.yml -f docker-compose.ca.yml up -d --no-deps collector
+# 不加這個檔就是原本的行為（只信任系統 CA）。
+services:
+  collector:
+    environment:
+      REQUESTS_CA_BUNDLE: /run/ca/ca-bundle.crt
+      SSL_CERT_FILE: /run/ca/ca-bundle.crt
+    volumes:
+      - "${CA:?需要 CA=宿主機的 CA 檔路徑}:/run/ca/ca-bundle.crt:ro"

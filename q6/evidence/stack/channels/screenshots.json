@@ -1,0 +1,45 @@
+[
+ {
+  "name": "youtube_watch_429_recaptcha",
+  "url": "https://www.youtube.com/watch?v=9qqyUi2Npmc",
+  "status": 429,
+  "final_url": "https://www.google.com/sorry/index?continue=https://www.youtube.com/watch%3Fv%3D9qqyUi2Npmc&q=EhD9o-ciCsPMAAIRdFD-_sYIGOisk9cGIjCe-xOLGIj6B6to4aRg3_k7dqRYIYG4Julf-E21Ue5q5wgDGc6jqRqFAEIkrH6NYDIyAnJSWgFDYMbN0KmHjP-4CA",
+  "file": "q6/evidence/stack/channels/youtube_watch_429_recaptcha.png",
+  "captured_at": "2026-10-31T01:39:59+08:00",
+  "note": "headless Chromium 開影片頁被導到 google.com/sorry（reCAPTCHA），HTTP 429；不繞過"
+ },
+ {
+  "name": "media_cna_article",
+  "url": "https://www.cna.com.tw/news/aloc/202610300316.aspx",
+  "status": 200,
+  "final_url": "https://www.cna.com.tw/news/aloc/202610300316.aspx",
+  "file": "q6/evidence/stack/channels/media_cna_article.png",
+  "captured_at": "2026-10-31T01:40:10+08:00"
+ },
+ {
+  "name": "threads_pts_news",
+  "url": "https://www.threads.com/@pts.news",
+  "status": 200,
+  "final_url": "https://www.threads.com/@pts.news",
+  "file": "q6/evidence/stack/channels/threads_pts_news.png",
+  "captured_at": "2026-10-31T01:40:21+08:00",
+  "note": "第一次：未登入登入邀請框蓋住畫面，已被下一筆（按 Esc 關掉後重拍）覆寫",
+  "superseded": true
+ },
+ {
+  "name": "youtube_pnnpts_channel",
+  "url": "https://www.youtube.com/@PNNPTS/videos",
+  "status": 200,
+  "final_url": "https://www.youtube.com/c/PNNPTS/videos",
+  "file": "q6/evidence/stack/channels/youtube_pnnpts_channel.png",
+  "captured_at": "2026-10-31T01:41:01+08:00"
+ },
+ {
+  "name": "threads_pts_news",
+  "url": "https://www.threads.com/@pts.news",
+  "status": 200,
+  "final_url": "https://www.threads.com/@pts.news",
+  "file": "q6/evidence/stack/channels/threads_pts_news.png",
+  "captured_at": "2026-10-31T01:41:12+08:00"
+ }
+]

@@ -40,11 +40,11 @@
 | 9 | `$PY q6/code/run_compare.py --base-dict $W/dl_dict/dict.txt.big --tag dict_big --segmented-out $W/out/segmented_ab_dict_big.jsonl` | 0 | 產生 `dict_big` 區塊與 `q6/data/top50_dict_big.json` |
 | 10 | `$PY q6/code/kaohsiung_trace.py` | 0 | `q6/data/kaohsiung_trace.json` |
 | 11 | `$PY q6/code/kaohsiung_trace.py --base-dict $W/dl_dict/dict.txt.big --tag dict_big` | 0 | `q6/data/kaohsiung_trace_dict_big.json` |
-| 12 | `$PY q6/code/affected_demo.py` | 0 | 與 HEAD 版本的輸出逐字相同 |
+| 12 | `$PY q6/code/affected_demo.py` | 0 | 與舊版程式的輸出逐字相同 |
 | 13 | `$PY -m pytest -q -p no:cacheprovider q6/code/tests` | 0 | 見下節 |
 | 14 | `curl -sSL` 抓 13 份文件頁（見「外部依據」） | 0 | 沒有另存 HTTP 狀態碼（`curl` 沒加 `-f`，4xx 也會退出 0）；13 份內容都是正常的文件頁，不是錯誤頁 |
 
-07:46Z 那一輪（第 3–6 列）是本工作前一次被中斷的嘗試用 scratch 的 `run_exps.sh` 跑的，log 在 `$W/logs/`；12:32Z 那一輪用 `$W/rerun2/run.sh` 與 `run_b.sh`，log 在 `$W/rerun2/logs/`。
+07:46Z 那一輪（第 3–6 列）是前一次被中斷的嘗試用 scratch 的 `run_exps.sh` 跑的，log 在 `$W/logs/`；12:32Z 那一輪用 `$W/rerun2/run.sh` 與 `run_b.sh`，log 在 `$W/rerun2/logs/`。
 
 ## pytest 結果
 
@@ -135,7 +135,7 @@ repo 版本是 2026-10-29 在 VM 上跑的（`q6/data/jieba_experiments/verify.l
 | （抓了但本檔沒有引用）指定 analyzer 的優先順序 | https://www.elastic.co/docs/manage-data/data-store/text-analysis/specify-an-analyzer | `feced1c5599b52f5` |
 | jieba `load_userdict` 只跳過空行（第 408 行），註解行也會被當成詞；`add_word` 直接覆寫 `FREQ[word]` 並把新詞頻加到 `total`（第 428–429 行），舊詞頻不扣；切詞分數用 `log(total)`（第 175 行） | https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/__init__.py （與本機 jieba 0.42.1 的檔案逐位元組相同） | `b47cefcfd0bf683b` |
 
-`q6/realenv` 實測（ES 9.5.5 單節點，`q6/realenv/results/es/ik_hot_reload.json`）：IK 重載後 `_analyze` 立刻切成新詞，但舊文件的片語搜尋從 22,088 掉到 0；`_update_by_query` 重分析後回到 22,271。已寫入的 tokens 不會跟著字典變。本設計在 ES 外用 jieba 斷詞後寫入 `terms_v2`，字典更新靠 (c) 的定向重跑，不依賴 IK 熱更新。
+`q6/stack` 實測（ES 9.5.5 單節點，`q6/stack/results/es/ik_hot_reload.json`）：IK 重載後 `_analyze` 立刻切成新詞，但舊文件的片語搜尋從 22,088 掉到 0；`_update_by_query` 重分析後回到 22,271。已寫入的 tokens 不會跟著字典變。本設計在 ES 外用 jieba 斷詞後寫入 `terms_v2`，字典更新靠 (c) 的定向重跑，不依賴 IK 熱更新。
 
 ## 輸出與 log 位置
 
@@ -156,8 +156,8 @@ repo 版本是 2026-10-29 在 VM 上跑的（`q6/data/jieba_experiments/verify.l
 | 「jieba 內建字典是簡體…正式對照要用同一份繁體字典」「dict.txt.big 本次未下載」 | 舊版本檔、舊版 `PLAN.md` | 已下載（sha256 與 `verify.log` 相同），用 `--base-dict` 在同一份標題上對照 | `dict_big` 區塊 |
 | 工作天 26–28、每核 1,000 則/秒（假設）、120 字、276 批 | 舊版 `PLAN.md` | 與答案稿對齊：45 工作天、每核每秒約 28 萬字（實測）、300 字（假設）、270 批（Threads 2023/07 起） | `q6/code/PLAN.md`、`q6/answer/answer_600.txt`、`q6/architecture/src/arch_a1_partition_grid.html` |
 | 「外部依據未上網查證」 | 舊版 `PLAN.md`、`shared/docs/python.md` 十之 4 | 已查證，來源見上 | 「外部依據」一節 |
-| HEAD 的 `segmenter` 直接 `load_userdict(檔案路徑)` | HEAD `q6/code/segmenter.py` | jieba 不跳過 `#` 註解，`# dict_version: …` 和 `# 格式：…` 兩行被當成詞載入。現在先濾掉註解行再載入。這 6,685 篇的切分結果不受影響：重跑後 `segmented_ab.jsonl` 與 HEAD 逐位元組相同 | jieba `__init__.py` 第 408 行；測試 `test_user_dict_comment_lines_are_not_loaded_as_words` |
-| HEAD 的 `run_compare.py` 每次覆寫整份 RESULTS.md | HEAD `q6/code/run_compare.py` | 只改寫 `AUTO` 標記之間的區塊，手寫段落保留 | 測試 `test_upsert_block_keeps_handwritten_text` |
+| 舊版 `segmenter` 直接 `load_userdict(檔案路徑)` | 舊版 `q6/code/segmenter.py` | jieba 不跳過 `#` 註解，`# dict_version: …` 和 `# 格式：…` 兩行被當成詞載入。現在先濾掉註解行再載入。這 6,685 篇的切分結果不受影響：重跑後 `segmented_ab.jsonl` 與舊版輸出逐位元組相同 | jieba `__init__.py` 第 408 行；測試 `test_user_dict_comment_lines_are_not_loaded_as_words` |
+| 舊版 `run_compare.py` 每次覆寫整份 RESULTS.md | 舊版 `q6/code/run_compare.py` | 只改寫 `AUTO` 標記之間的區塊，手寫段落保留 | 測試 `test_upsert_block_keeps_handwritten_text` |
 | pytest 9 passed | `shared/docs/python.md` 六 | 10/30 增加為 23 項，10/31 依審查再加 5 項，共 28 項，全部通過 | 「pytest 結果」一節 |
 
 `shared/docs/python.md` 不在本資料夾，這裡只記錄差異，沒有改它。
@@ -180,7 +180,7 @@ repo 版本是 2026-10-29 在 VM 上跑的（`q6/data/jieba_experiments/verify.l
 - 沒有改 `user_dict.txt`。建議下一版字典加「高雄」並把「高雄市」等詞頻調到不低於主字典（例如 31），同時遞增 `dict_version`；本次只用 `kaohsiung_trace.py` 試算。
 - 語料只有 6,685 個標題（平均很短），不是貼文內文；`articles.jsonl` 沒有內文。
 - 吞吐是單一行程、容器同時有其他工作時量的，只能當量級參考。
-- 本檔的 ES 依據是官方文件與原始碼；IK 熱更新與 smartcn／ICU 切詞後來在 `q6/realenv` 單節點實測（`q6/realenv/results/es/ik_hot_reload.json`、`analyzers.json`），沒有在多節點叢集上測。
+- 本檔的 ES 依據是官方文件與原始碼；IK 熱更新與 smartcn／ICU 切詞後來在 `q6/stack` 單節點實測（`q6/stack/results/es/ik_hot_reload.json`、`analyzers.json`），沒有在多節點叢集上測。
 - `q6/architecture/` 與 `q6/evidence/` 的圖片沒有重新產生。
 
 ## 自動產生的對照
@@ -396,7 +396,7 @@ repo 版本是 2026-10-29 在 VM 上跑的（`q6/data/jieba_experiments/verify.l
 
 改了什麼：方括號只有 `dict/ptt_tags.txt` 白名單裡的標籤與純英數帳號才去掉，其他文字保留；單字只保留 `dict/keep_single.txt` 列的詞；使用者字典加「颱風假」並升到 `qsearch-q6-2026.10.31.1`。
 
-還沒解決的：剩下約 24% 漏掉的金標詞多半是字典沒有的人名與新詞（蔣萬安、黃暐瀚、敖幼祥、0元購、白黨團），以及標註者當成一個詞、jieba 切成兩個的複合詞（改變世界、護樹團體）。這要靠 (b) 的新詞發現進字典，不是過濾規則能修的。單字保留名單只收了 2 個，金標裡的「跌」「樹」仍會被刪。保留名單與字典改動只參考了審查的例子，沒有看 B 半，所以 B 半是沒看過的對照；A、B 兩半的提升幅度相近。樣本只有 150 個標題，三位標註者是獨立的 AI 子代理，不是 PM。
+還沒解決的：剩下約 24% 漏掉的金標詞多半是字典沒有的人名與新詞（蔣萬安、黃暐瀚、敖幼祥、0元購、白黨團），以及標註者當成一個詞、jieba 切成兩個的複合詞（改變世界、護樹團體）。這要靠 (b) 的新詞發現進字典，不是過濾規則能修的。單字保留名單只收了 2 個，金標裡的「跌」「樹」仍會被刪。保留名單與字典改動只參考了審查的例子，沒有看 B 半，所以 B 半是沒看過的對照；A、B 兩半的提升幅度相近。樣本只有 150 個標題，三位標註者是互相獨立的 LLM，不是 PM。
 
 ### 2. 三分鐘查詢路徑（`es_terms_scale.py`，結果 `q6/data/es_terms_scale/`）
 
@@ -421,14 +421,14 @@ repo 版本是 2026-10-29 在 VM 上跑的（`q6/data/jieba_experiments/verify.l
 - `seg_build`：`<dict_version>@<seg_fingerprint>`。指紋是下列輸入的 sha256：jieba 版本、HMM 設定、主字典、使用者字典、停用詞、標籤白名單、單字保留名單、固定的 total、`segmenter.py` 本身（`segmenter.fingerprint_inputs`）。
 - `content_sha`：原文的 sha256，與字典無關。
 
-PLAN 舊稿把 `dict_version` 當 ES external version，這是錯的：內容修正與字典更新是兩條獨立的版本線，混用時內容更新會被字典版本擋掉，字典回滾也寫不回去。實作用的是 `q6/realenv/es` 的 `seg_ver`：只能前進的數字，寫入時由 Painless 腳本 `seg_guard`（`q6/realenv/seg/qseg/es.py`）比較，舊版不能覆寫新版。測試 `test_fingerprint_covers_stopwords_base_dict_and_code`、`test_content_sha_is_independent_of_dictionary`。
+PLAN 舊稿把 `dict_version` 當 ES external version，這是錯的：內容修正與字典更新是兩條獨立的版本線，混用時內容更新會被字典版本擋掉，字典回滾也寫不回去。實作用的是 `q6/stack/es` 的 `seg_ver`：只能前進的數字，寫入時由 Painless 腳本 `seg_guard`（`q6/stack/seg/qseg/es.py`）比較，舊版不能覆寫新版。測試 `test_fingerprint_covers_stopwords_base_dict_and_code`、`test_content_sha_is_independent_of_dictionary`。
 
 ### 4. 增量重跑
 
-`segmenter.BigramIndex` 是記憶體裡的示範，只能給小語料用。5 億篇的做法在 `q6/realenv`：ES 的 `content.bigram` 欄位用 `match_phrase` 找出原文含新詞字串的文件，以 PIT 分頁取回後重新斷詞寫回。實測 42.5 萬篇加「肥宅」：含這個字串 22,271 篇，8.6 秒重跑完，不含這個字串的文件 0 篇改變（`q6/realenv/RESULTS.md`）。
+`segmenter.BigramIndex` 是記憶體裡的示範，只能給小語料用。5 億篇的做法在 `q6/stack`：ES 的 `content.bigram` 欄位用 `match_phrase` 找出原文含新詞字串的文件，以 PIT 分頁取回後重新斷詞寫回。實測 42.5 萬篇加「肥宅」：含這個字串 22,271 篇，8.6 秒重跑完，不含這個字串的文件 0 篇改變（`q6/stack/RESULTS.md`）。
 
 「只影響含新詞的文件」只在固定 jieba total 時成立：不固定時，20 萬篇有 52 篇不含新詞也變了。現在 `Segmenters.build` 預設固定 total，程式註解也改了。
 
 全量重跑的工時：答案寫「ES 限速每秒 3,000 篇、離峰約 6 晚」，這是假設的寫入上限，沒有在正式叢集驗證。本次單節點灌入 `keyword` 欄位是每秒約 6.4 萬篇，但那是沒有其他負載、文件很小的情況，不能直接當正式叢集的上限。
 
-pytest（2026-10-31，Linux 雲端容器、Python 3.13.17、pytest 9.2.0、jieba 0.42.1）：`PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider q6/code/tests`，28 passed，退出碼 0。`test_segmenter.py` 21 項、`test_kaohsiung_trace.py` 5 項、`test_answer_length.py` 2 項；比 10/30 多的 5 項是答案 600 字內、答案涵蓋審查四點、審查舉的三個例子都留住、指紋涵蓋停用詞與主字典與程式、`content_sha` 不受字典影響。
+pytest（2026-10-31，Linux 容器、Python 3.13.17、pytest 9.2.0、jieba 0.42.1）：`PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider q6/code/tests`，28 passed，退出碼 0。`test_segmenter.py` 21 項、`test_kaohsiung_trace.py` 5 項、`test_answer_length.py` 2 項；比 10/30 多的 5 項是答案 600 字內、答案涵蓋審查四點、審查舉的三個例子都留住、指紋涵蓋停用詞與主字典與程式、`content_sha` 不受字典影響。

@@ -1,0 +1,16 @@
+{
+  "_note": "公開來源（都是站方提供給閱讀器的公開 feed，不登入、不帶 cookie；Gossiping 看板只多一個 over18=1 同意標頭）。預設每 5 分鐘輪詢一次，同一主機兩次請求至少隔 2.5 秒，帶 ETag／If-Modified-Since；429／5xx 就退避。",
+  "poll_sec": 300,
+  "feeds": [
+    {"name": "ptt/Gossiping", "channel": "ptt", "source": "Gossiping", "url": "https://www.ptt.cc/atom/Gossiping.xml", "headers": {"Cookie": "over18=1"}},
+    {"name": "ptt/Kaohsiung", "channel": "ptt", "source": "Kaohsiung", "url": "https://www.ptt.cc/atom/Kaohsiung.xml"},
+    {"name": "ptt/Lifeismoney", "channel": "ptt", "source": "Lifeismoney", "url": "https://www.ptt.cc/atom/Lifeismoney.xml"},
+    {"name": "youtube/TVBSNEWS01", "channel": "youtube", "source": "TVBS NEWS", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC5nwNW4KdC0SzrhF9BXEYOQ"},
+    {"name": "youtube/PNNPTS", "channel": "youtube", "source": "公視新聞網", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCexpzYDEnfmAvPSfG4xbcjA"},
+    {"name": "youtube/newsebc", "channel": "youtube", "source": "東森新聞 CH51", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCR3asjvr_WAaxwJYEDV_Bfw"},
+    {"name": "media/cna-politics", "channel": "media", "source": "cna/politics", "url": "https://feeds.feedburner.com/rsscna/politics"},
+    {"name": "media/cna-social", "channel": "media", "source": "cna/social", "url": "https://feeds.feedburner.com/rsscna/social"},
+    {"name": "media/cna-local", "channel": "media", "source": "cna/local", "url": "https://feeds.feedburner.com/rsscna/local"},
+    {"name": "media/pts", "channel": "media", "source": "pts/newsfeed", "url": "https://news.pts.org.tw/xml/newsfeed.xml"}
+  ]
+}

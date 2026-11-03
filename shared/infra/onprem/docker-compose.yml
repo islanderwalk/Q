@@ -48,7 +48,7 @@ x-app: &app
     context: ./app
   environment: *app-env
   volumes:
-    # 「抓」只讀 repo 內的 fixture，不連外（不爬真實網站）。
+    # 「抓」只讀 repo 內的 fixture，不連外（不爬線上網站）。
     - ../../capture/html:/fixtures/capture:ro
     - ../../../q6/data/ptt_titles_7d.jsonl:/fixtures/q6/ptt_titles_7d.jsonl:ro
     # 事件格式與 GCP 共用同一份 Avro schema。

@@ -1,0 +1,37 @@
+# Loki 3.5（單機、檔案儲存；GCP 上對應 Cloud Logging）。ruler：從日誌算指標 remote_write 到 Prometheus、告警直接送 Alertmanager。
+auth_enabled: false
+server:
+  http_listen_port: 3100
+  log_level: warn
+common:
+  path_prefix: /loki
+  storage: { filesystem: { chunks_directory: /loki/chunks, rules_directory: /loki/rules-temp } }
+  replication_factor: 1
+  ring: { kvstore: { store: inmemory } }
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index: { prefix: index_, period: 24h }
+limits_config:
+  retention_period: 168h           # 本機留 7 天；GCP Cloud Logging 預設 30 天
+  allow_structured_metadata: true
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+ruler:
+  storage: { type: local, local: { directory: /etc/loki/rules } }   # /etc/loki/rules/fake/*.yml（auth 關閉時租戶叫 fake）
+  rule_path: /loki/rules-scratch
+  wal: { dir: /loki/ruler-wal }          # remote_write 的 WAL；預設是相對路徑，容器的工作目錄唯讀
+  alertmanager_url: http://alertmanager:9093
+  enable_alertmanager_v2: true
+  remote_write:
+    enabled: true
+    clients:
+      prom: { url: http://prometheus:9090/api/v1/write }
+  ring: { kvstore: { store: inmemory } }
+  enable_api: true
+analytics: { reporting_enabled: false }

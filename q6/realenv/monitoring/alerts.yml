@@ -1,7 +1,0 @@
-groups:
-  - name: qsearch-q6
-    rules:
-      - alert: WordcloudOver180s       # 對應 Cloud Logging 日誌型指標 wordcloud_over_180s ＞ 0 的告警
-        expr: increase(wordcloud_over_180s_total[5m]) > 0
-        labels: { severity: page }
-        annotations: { summary: "有文字雲查詢超過 3 分鐘" }

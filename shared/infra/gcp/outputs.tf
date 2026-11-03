@@ -47,6 +47,23 @@ output "egress_static_ip" {
   value       = google_compute_address.egress.address
 }
 
+output "egress_static_ips" {
+  description = "Cloud NAT 全部固定出口 IP（兩個都要給目標站白名單）。"
+  value       = [google_compute_address.egress.address, google_compute_address.egress_2.address]
+}
+
+output "q6" {
+  description = "Q6 文字雲：Cloud Run 服務 URL、Pub/Sub 主題／訂閱、字典 bucket。"
+  value = {
+    seg_urls          = { for k, s in google_cloud_run_v2_service.seg : k => s.uri }
+    wordcloud_api_url = google_cloud_run_v2_service.wordcloud_api.uri
+    collector_url     = google_cloud_run_v2_service.collector.uri
+    topics            = { parsed_posts = google_pubsub_topic.parsed_posts.id, parsed_posts_dlq = google_pubsub_topic.parsed_posts_dlq.id, dict_releases = google_pubsub_topic.dict_releases.id }
+    subscriptions     = merge({ for k, s in google_pubsub_subscription.parsed_posts_seg : "parsed_posts_seg_${k}" => s.id }, { dict_releases_seg_v2 = google_pubsub_subscription.dict_releases_seg_v2.id, parsed_posts_dlq_inspect = google_pubsub_subscription.parsed_posts_dlq_inspect.id })
+    dict_bucket       = google_storage_bucket.dict_artifacts.url
+  }
+}
+
 output "cloud_sql_private_ip" {
   value = google_sql_database_instance.crawler_db.private_ip_address
 }

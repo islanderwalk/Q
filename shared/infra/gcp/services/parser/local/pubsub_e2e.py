@@ -1,4 +1,4 @@
-"""本機 Pub/Sub 模擬器端到端驗證腳本（不連真的 GCP）。
+"""本機 Pub/Sub 模擬器端到端驗證腳本（不連 GCP）。
 
 需先設定 PUBSUB_EMULATOR_HOST（例如 127.0.0.1:18285），google-cloud-pubsub 才會改連模擬器、
 不需要任何憑證。資源名稱取自 shared/infra/gcp/pubsub.tf。
@@ -201,7 +201,7 @@ def count() -> None:
 
 if __name__ == "__main__":
     if "PUBSUB_EMULATOR_HOST" not in os.environ and sys.argv[1:2] != ["count"]:
-        sys.exit("請先設定 PUBSUB_EMULATOR_HOST，避免連到真的 GCP")
+        sys.exit("請先設定 PUBSUB_EMULATOR_HOST，避免連到 GCP")
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     if cmd == "setup":
         setup()

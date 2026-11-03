@@ -1,6 +1,6 @@
 """Q3 PTT 量測程式的離線煙霧測試。
 
-用 shared/capture/html 內的真實 PTT 頁面（2026/10/30 實抓），不連網。
+用 shared/capture/html 內的實抓的 PTT 頁面（2026/10/30 實抓），不連網。
 斷言的數字取自 q3 README 與 ptt_live_invariants.json 記載的實測值。
 抓取流程（請求計數、--max-requests、輸出資料夾、中斷時的紀錄）用假的 session 與假時鐘測，不會送出任何請求。
 """
@@ -48,7 +48,7 @@ def census():
 
 
 class FakeClock:
-    """取代模組裡的 time：sleep 只把時鐘往前推，不真的等。"""
+    """取代模組裡的 time：sleep 只把時鐘往前推，不實際等。"""
 
     def __init__(self, now):
         self.now = float(now)
@@ -120,7 +120,7 @@ def _mtimes(folder):
     return {p.name: p.stat().st_mtime_ns for p in folder.iterdir()}
 
 
-# ── 解析：用真實頁面 ─────────────────────────────────────────────────────
+# ── 解析：用實抓頁面 ─────────────────────────────────────────────────────
 
 
 def test_full_list_page_has_20_slots(q3, measure):

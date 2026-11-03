@@ -7,11 +7,11 @@
     python run_q2.py --rows 100000 --mode repeat
     python run_q2.py --rows 1000000 --mode repeat --bigram-timeout-min 30
     python run_q2.py --rows 100000 --mode distinct          # 敏感度：每列內文都不同
-    python run_q2.py --rows 1000000 --mode corpus --corpus wiki_250.txt   # 真實中文（prepare_corpus.py 產生）
+    python run_q2.py --rows 1000000 --mode corpus --corpus wiki_250.txt   # 中文語料（prepare_corpus.py 產生）
 
 --mode repeat   重現頁面的造資料方式（1,000 段內文，每段連續重複）
 --mode distinct 每列獨立隨機內文（均勻字頻，是體積的上限）
---mode corpus   內文取自真實中文語料檔，一行一則（齊夫字頻，最接近真實貼文）
+--mode corpus   內文取自中文語料檔，一行一則（齊夫字頻，最接近線上貼文）
 
 輸出：--out（預設 q2/data/q2_run_<rows>_<mode>[-<語料檔名>].json）與 stdout 的摘要。
 本腳本會 DROP/重建 fb_posts，只能在本機測試叢集上跑。
@@ -192,7 +192,7 @@ def main():
                     help="bigram GIN 建立超過幾分鐘就取消（記為超時）")
     ap.add_argument("--skip-bigram", action="store_true")
     ap.add_argument("--pg-bigm", action="store_true",
-                    help="另外建真的 pg_bigm 索引並查詢（sql/06_pg_bigm.sql；伺服器要裝 pg_bigm）")
+                    help="另外建pg_bigm 擴充套件 索引並查詢（sql/06_pg_bigm.sql；伺服器要裝 pg_bigm）")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 

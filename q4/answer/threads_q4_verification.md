@@ -4,7 +4,7 @@
 
 共同條件：
 
-- 全程不登入、不帶 cookie。不用代理（10-30 重測經雲端容器的對外代理，非輪替代理），也不用 stealth 或指紋偽裝套件。瀏覽器一律無頭。
+- 全程不登入、不帶 cookie。不用代理（10-30 重測經 Linux 容器的對外代理，非輪替代理），也不用 stealth 或指紋偽裝套件。瀏覽器一律無頭。
 - 對 threads.com 的請求，10-28 約 950 次，10-29 約 130 次。10-30 重測：HTTP 20 次（含 robots.txt 2 次）；瀏覽器開頁 21 次，加上手機視窗網站自己的轉址，共 27 次主框架導覽；主框架文件有紀錄的 24 份，加上前一次嘗試手機 3 次沒有紀錄的推估 9 份，約 33 份。
 - 沒有記錄或公開任何 token（csrftoken、lsd 等）或 cursor 值，只記名稱與長度。
 - 抽樣的小帳號不列帳號名稱。表中的大帳號都是公開名人或機構帳號。
@@ -50,7 +50,7 @@
 
 必要的 x-header 有 4 個：`x-csrftoken`、`x-fb-lsd`、`x-ig-app-id`、`x-logged-out-threads-migrated-request`。
 
-- token 要從無頭瀏覽器 session 取得。
+- token 要先用無頭瀏覽器開頁取得。
 - 同一組 token 可以跨帳號共用，放 361 秒以上仍然有效；實際能用多久沒有測到底。
 
 ## 4. 傳輸量
@@ -122,7 +122,7 @@ token 只取一次，三個帳號共用：
 ## 8. 雲端 IP
 
 - 從 GitHub Actions（Azure AS8075）打 1 次：200，有 10 篇。
-- 只打了一次，看不出雲端 IP 是否會被直接封鎖；臨時分支和那次執行紀錄都已刪除。
+- 只打了一次，看不出雲端 IP 是否會被直接封鎖；那次的執行紀錄沒有保留。
 
 ## 9. 代理牌價（各家官網，2026-10-28）
 
@@ -152,7 +152,7 @@ token 只取一次，三個帳號共用：
 
 細節、指令與退出碼見 `q4/code/RESULTS.md`，摘要 JSON 在 `q4/data/threads_q4_out/rerun_2026-10-30_linux/`。
 
-條件：雲端容器（Linux）經代理連線，帳號 nasa、zuck、natgeo，不登入、每個帳號開新的 browser context、不存 cookie。時間 07:50–07:57 與 12:29–12:37 UTC；下面的大小與篇數取自 12:29–12:36 那一輪。
+條件：Linux 容器經代理連線，帳號 nasa、zuck、natgeo，不登入、每個帳號開新的 browser context、不存 cookie。時間 07:50–07:57 與 12:29–12:37 UTC；下面的大小與篇數取自 12:29–12:36 那一輪。
 
 **HTML（requests，gzip）**
 
@@ -204,4 +204,4 @@ natgeo 的分頁 query：`BarcelonaProfileThreadsTabRefetchableDirectQuery`、do
 - 網頁自己送分頁 query 今天不穩定：量測程式桌面 0/15、手機 1/3。實作不能依賴「開頁就會看到分頁 query」，要監控每次回傳的串數。doc_id 要另外取得：10-30 兩個時段存下的 36 份 HTML（含 9 份空殼）都找不到上面三個分頁 query 的 doc_id，有內容的 HTML 只有模組名 `BarcelonaProfileThreadsTabRefetchableDirectQuery.threads.graphql`。推測要從網頁的 JS 取得，但這個做法沒有驗證。
 - 手機視窗每次載入都會經過網站自己的轉址：先拿到 `/@帳號` 的 200，網頁接著自己導到 `/aymh/?next`，該網址回 302 轉回 `/@帳號?hpir&http_ref`。
 - 沒有重測：§3 的最小請求、§6 的 `after=null` 直接呼叫（都需要取用 token），以及 §7 的 401 封鎖。
-- robots.txt（10-30 抓取，sha256 `3230a25a…0e44`）對 `User-agent: *` 是 `Disallow: /`，並註明未經 Threads 書面許可不得以自動化方式蒐集資料（GPTBot 等 14 組列名的爬蟲也是 `Disallow: /`，Googlebot 等 22 組列名的爬蟲只擋部分路徑）。10-31 經確認，這點已補進答案 (b)。
+- robots.txt（10-30 抓取，sha256 `3230a25a…0e44`）對 `User-agent: *` 是 `Disallow: /`，並註明未經 Threads 書面許可不得以自動化方式蒐集資料（GPTBot 等 14 組列名的爬蟲也是 `Disallow: /`，Googlebot 等 22 組列名的爬蟲只擋部分路徑）。這點 10-31 已補進答案 (b)。

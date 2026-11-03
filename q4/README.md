@@ -1,6 +1,6 @@
 # QSearch 筆試第 4 題：Threads 公開貼文爬蟲｜圖片素材
 
-依類型分資料夾。`q4/architecture/` 是用 HTML+SVG 畫、再以 Playwright 渲染的架構圖；`q4/evidence/` 是用 Playwright 打開 Threads 公開頁的真實截圖（未登入）。修正後的答案與逐條驗證見 `q4/answer/` 的 [`threads_q4_result.txt`](answer/threads_q4_result.txt) 與 [`threads_q4_verification.md`](answer/threads_q4_verification.md)。
+依類型分資料夾。`q4/architecture/` 是用 HTML+SVG 畫、再以 Playwright 渲染的架構圖；`q4/evidence/` 是用 Playwright 打開 Threads 公開頁的截圖（未登入）。修正後的答案與逐條驗證見 `q4/answer/` 的 [`threads_q4_result.txt`](answer/threads_q4_result.txt) 與 [`threads_q4_verification.md`](answer/threads_q4_verification.md)。
 
 > **題目（摘自本題設定）：** 要從 40 萬個公開 Threads 帳號收集貼文，每個帳號每輪至少擷取 10 篇貼文，每天執行 4 輪；每篇需要貼文 URL、全文、發佈時間三個欄位；以不登入的方式存取。
 >
@@ -12,7 +12,7 @@
 
 資料來源：
 - 架構圖：本資料夾 `q4/architecture/src/` 的自包含 HTML（任何瀏覽器可直接開），以 `render.py` 渲染成 2x PNG
-- Threads 截圖：2026/10/30 在雲端容器用 Playwright 無頭 Chromium、手機視窗拍攝；全程未登入、不帶 cookie、單頁載入，三帳號皆回 HTTP 200、貼文正常渲染
+- Threads 截圖：2026/10/30 在 Linux 容器用 Playwright 無頭 Chromium、手機視窗拍攝；全程未登入、不帶 cookie、單頁載入，三帳號皆回 HTTP 200、貼文正常渲染
 - 數字與請求結構的實測依據見 `q4/answer/threads_q4_verification.md`
 - 量測程式 `q4/code/threads_q4_measure.py` 在 2026/10/30（UTC 07:50–12:37）於 Linux 重測 nasa、zuck、natgeo，HTTP 與瀏覽器兩種模式都跑了，結果見 [`q4/code/RESULTS.md`](code/RESULTS.md)，摘要 JSON（12:29–12:36 那一輪）在 `q4/data/threads_q4_out/rerun_2026-10-30_linux/`
 - 測試在 [`q4/code/tests/`](code/tests)：`test_threads_smoke.py` 16 項不連外網（瀏覽器流程用本機假站跑 Chromium，找不到就略過），`test_q4_answer_length.py` 1 項檢查答案連空白與換行不超過 600 字，共 17 passed（見 [`q4/code/RESULTS.md`](code/RESULTS.md)）
@@ -32,7 +32,7 @@
 python3 q4/architecture/src/render.py
 ```
 
-## Threads 真實畫面佐證 — [`q4/evidence/`](evidence)
+## Threads 畫面佐證 — [`q4/evidence/`](evidence)
 
 未登入手機視窗；每張都可見頂端「Log in / Get app」，印證是匿名存取公開頁。
 
@@ -42,7 +42,7 @@ python3 q4/architecture/src/render.py
 | [`threads-profile-nasa.png`](evidence/threads-profile-nasa.png) | @nasa（12.7M followers）Spacewalk 貼文，含圖片、youtube 連結卡與互動數（235 讚），時間「10h」 |
 | [`threads-profile-natgeo.png`](evidence/threads-profile-natgeo.png) | @natgeo（18.4M followers）第二篇是 natgeo 自己的貼文，裡面引用了 @natgeotv 的貼文（不是轉發）；時間「12h／1d」，被引用的那篇是 4d |
 
-> 這三張是手機視窗的乾淨截圖（載入後以前端隱藏登入軟牆，等同 devtools 操作自己的瀏覽器）。使用者本機另抓的 Q4 桌面版截圖（含 `threads_mobile_wall`、`threads_graphql_desktop`、`threads_post_url`）在下方「Playwright 實抓證據」一節，兩者互補。
+> 這三張是手機視窗的乾淨截圖（載入後以前端隱藏登入軟牆，等同 devtools 操作自己的瀏覽器）。本機另抓的 Q4 桌面版截圖（含 `threads_mobile_wall`、`threads_graphql_desktop`、`threads_post_url`）在下方「Playwright 實抓證據」一節，兩者互補。
 
 重跑（遵守 `shared/capture` 的規則：只抓未登入公開頁、不存 cookie/token、不用代理、不偽裝指紋）：
 

@@ -1,9 +1,0 @@
-global: { scrape_interval: 5s, evaluation_interval: 5s }
-scrape_configs:
-  - job_name: otelcol          # ES 與 PostgreSQL（經 OTel receiver）
-    static_configs: [ { targets: ["otelcol:8889"] } ]
-  - job_name: wordcloud-api    # API：耗時分布、超過 180 秒次數
-    static_configs: [ { targets: ["api:8080"] } ]
-  - job_name: seg-service      # 串流斷詞服務 v1／v2
-    static_configs: [ { targets: ["seg-v2:9108", "seg-v1:9108"] } ]
-rule_files: [ /etc/prometheus/alerts.yml ]

@@ -13,7 +13,7 @@
 # 為什麼要 override_resource：
 #   mock provider 在 plan 階段不會產生 computed 屬性（id、email、uri、self_link 都是 unknown），
 #   斷言若引用 unknown 值會報 "Unknown condition value"。下面對每個被引用的資源
-#   各給一個「互不相同、格式接近真實」的值，並設 override_during = plan。
+#   各給一個「互不相同、格式接近實際」的值，並設 override_during = plan。
 #   因為每個資源的值都不同，「A 指向 B」這類引用比對才有意義（指錯資源就會失敗）。
 
 mock_provider "google" {}
@@ -24,12 +24,15 @@ variables {
   project_number = "123456789012"
 
   # 不用預設的 hello 示範映像，否則 checks.tf 的 no_placeholder_images 會讓每個 run 失敗。
-  image_api       = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker    = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser    = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill  = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
+  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
 }
 
 # --- 網路 ---
@@ -58,6 +61,17 @@ override_resource {
     id        = "projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip"
     self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip"
     address   = "203.0.113.10"
+  }
+}
+
+# 第二個固定出口 IP（Q6 第三輪加的：埠數與封鎖退路）
+override_resource {
+  target          = google_compute_address.egress_2
+  override_during = plan
+  values = {
+    id        = "projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip-2"
+    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip-2"
+    address   = "203.0.113.11"
   }
 }
 
@@ -787,10 +801,11 @@ run "cloud_nat_static_egress" {
 
   assert {
     condition = (
-      length(google_compute_router_nat.crawler.nat_ips) == 1 &&
-      contains(google_compute_router_nat.crawler.nat_ips, google_compute_address.egress.self_link)
+      length(google_compute_router_nat.crawler.nat_ips) == 2 &&
+      contains(google_compute_router_nat.crawler.nat_ips, google_compute_address.egress.self_link) &&
+      contains(google_compute_router_nat.crawler.nat_ips, google_compute_address.egress_2.self_link)
     )
-    error_message = "Cloud NAT nat_ips 必須正好是 crawler-egress-ip 這個保留位址。"
+    error_message = "Cloud NAT nat_ips 必須正好是 crawler-egress-ip 與 crawler-egress-ip-2 這兩個保留位址（第三輪加第二個 IP：埠數與封鎖退路）。"
   }
 
   assert {
