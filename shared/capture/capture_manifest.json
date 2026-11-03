@@ -76,7 +76,7 @@
   "result": "留言 261 則：推 150、噓 10、→ 101；帳號 261 個與 IP 262 處已遮",
   "image": "q3/evidence/playwright/ptt_article_comments.png",
   "replaces": "2026-10-30T01:51:38+08:00 版（帳號與 IP 未遮）",
-  "source": "Playwright 實抓（未登入、雲端容器）https://www.ptt.cc/bbs/Gossiping/M.1793282644.A.B5B.html；黑框、彩框為截圖時加上",
+  "source": "Playwright 實抓（未登入、Linux 容器）https://www.ptt.cc/bbs/Gossiping/M.1793282644.A.B5B.html；黑框、彩框為截圖時加上",
   "round": "round2-2026-10-30"
  },
  {
@@ -305,7 +305,7 @@
   "result": "302 → 200；最後網址 https://www.facebook.com/login/；登入表單 有",
   "image": "q2/evidence/playwright/fb_cloud_ip_login_redirect.png",
   "compare_with": "q2/evidence/playwright/fb_page_nasa.png",
-  "source": "Playwright 實抓（未登入、雲端容器）https://www.facebook.com/NASA；標註為截圖時加上",
+  "source": "Playwright 實抓（未登入、Linux 容器）https://www.facebook.com/NASA；標註為截圖時加上",
   "round": "round2-2026-10-30",
   "note": "本容器當天對 facebook.com 的第 4 次請求（前 3 次：curl 2 次、第一次截圖 1 次）"
  },
@@ -376,7 +376,7 @@
   "result": "302 → 429；最後網址 https://www.instagram.com/accounts/login/；登入表單 無",
   "image": "q5/evidence/playwright/ig_reels_cloud_ip_login_redirect.png",
   "compare_with": "q5/evidence/playwright/ig_reels_grid.png",
-  "source": "Playwright 實抓（未登入、雲端容器）https://www.instagram.com/nasa/reels/；標註為截圖時加上",
+  "source": "Playwright 實抓（未登入、Linux 容器）https://www.instagram.com/nasa/reels/；標註為截圖時加上",
   "round": "round2-2026-10-30",
   "note": "本容器當天對 instagram.com 的第 5 次請求；前 4 次（curl 2 次、截圖 2 次）同樣是 302 → 429"
  },
@@ -416,7 +416,7 @@
    "quote_count": 4,
    "reshare_count": 1
   },
-  "source": "Playwright 實抓（未登入、雲端容器）https://www.threads.com/@nasa/post/DfFP4pEET5Y；標註為截圖時加上",
+  "source": "Playwright 實抓（未登入、Linux 容器）https://www.threads.com/@nasa/post/DfFP4pEET5Y；標註為截圖時加上",
   "round": "round2-2026-10-30",
   "note": "三次：01:56（本機）讚 148／轉發 16；15:31（雲端）讚 266／轉發 22＝18＋4；20:29（雲端）讚 288／轉發 22＝18＋4、10.1K views。一般使用者帳號與頭像已遮"
  },
@@ -431,7 +431,7 @@
   "claim": "社群／論壇內文的短網址不只 reurl.cc 一種；前處理要用網域白名單＋路徑規則整段移除，不能交給字典斷詞；另見推文換行把網址切成「http」＋「s://i.mopix.cc/…」兩段，前處理要先把同一人連續推文接回再比對網址",
   "result": "短網址網域 reurl.cc、tinyurl.com；紅框 5 處；電話 0 則（已遮）",
   "image": "q6/evidence/playwright/ptt_noise_05.png",
-  "source": "Playwright 實抓（未登入、雲端容器）https://www.ptt.cc/bbs/Lifeismoney/M.1767366026.A.B74.html；紅框、黑框為截圖時加上",
+  "source": "Playwright 實抓（未登入、Linux 容器）https://www.ptt.cc/bbs/Lifeismoney/M.1767366026.A.B74.html；紅框、黑框為截圖時加上",
   "round": "round2-2026-10-30"
  },
  {
@@ -445,7 +445,7 @@
   "claim": "社群／論壇內文的短網址不只 reurl.cc 一種；前處理要用網域白名單＋路徑規則整段移除，不能交給字典斷詞",
   "result": "短網址網域 bit.ly；紅框 1 處；電話 0 則（已遮）",
   "image": "q6/evidence/playwright/ptt_noise_06.png",
-  "source": "Playwright 實抓（未登入、雲端容器）https://www.ptt.cc/bbs/Lifeismoney/M.1793182709.A.DC3.html；紅框、黑框為截圖時加上",
+  "source": "Playwright 實抓（未登入、Linux 容器）https://www.ptt.cc/bbs/Lifeismoney/M.1793182709.A.DC3.html；紅框、黑框為截圖時加上",
   "round": "round2-2026-10-30"
  }
 ]

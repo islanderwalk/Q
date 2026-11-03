@@ -118,7 +118,7 @@ def test_make_post_and_base_doc():
         ops.make_post("ptt", "x", published_at="昨天")
 
 
-# ---------- 原文湖：只收真實時間 ----------
+# ---------- 原文湖：只收原始發文時間 ----------
 def test_prepare_raw_parses_ptt_pretrain_header_and_skips_bad_time():
     text = "作者: someone (暱稱)\n看板: Gossiping\n標題: [問卦] 有沒有八卦\n時間: Fri Aug 31 00:23:47 2007\n內文: 第一行\n第二行"
     p = prepare_raw.parse_pretrain(text)

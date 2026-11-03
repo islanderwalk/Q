@@ -12,7 +12,7 @@ slos:
     sli:
       events:
         error_query: sum(rate(wordcloud_duration_seconds_count[{{.window}}])) - sum(rate(wordcloud_duration_seconds_bucket{le="180.0",status="ok"}[{{.window}}]))
-        # 分母加 > 0：沒流量時 0/0 是 NaN，NaN 樣本會讓 Sloth 的 4 週 sum_over_time／count_over_time 整段變 NaN（真實環境驗證抓到）；
+        # 分母加 > 0：沒流量時 0/0 是 NaN，NaN 樣本會讓 Sloth 的 4 週 sum_over_time／count_over_time 整段變 NaN（端對端驗證抓到）；
         # 改成沒流量就沒有樣本，28 天錯誤預算只算有查詢的時段
         total_query: (sum(rate(wordcloud_duration_seconds_count[{{.window}}])) > 0)
     alerting:

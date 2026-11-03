@@ -391,7 +391,7 @@ run "legacy_gce_hardening_when_enabled" {
   }
 }
 
-# Python 驗證 thread 實測：hello 示範映像對任何 POST 都回 200，Pub/Sub 會把事件全部 ack 掉。
+# Python 驗證實測：hello 示範映像對任何 POST 都回 200，Pub/Sub 會把事件全部 ack 掉。
 # 只要有一個 image_* 還是示範映像，check 就要報出來。
 run "placeholder_image_is_flagged" {
   command = plan

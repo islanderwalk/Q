@@ -51,7 +51,7 @@ def max_body() -> dict:
 def recon_body(latest_seg_ver) -> dict:
     """一次 _search：渠道 → 月份 bucket，底下三個 filter 子聚合；latest 用全索引最大 seg_ver_v2（沒有就不算）。"""
     sub = {
-        # 「有 v2」看 seg_ver_v2 而不是 terms_v2：ES 的 exists 對空陣列算「沒有值」（真實環境驗證：8 篇標題只剩符號的文章
+        # 「有 v2」看 seg_ver_v2 而不是 terms_v2：ES 的 exists 對空陣列算「沒有值」（端對端驗證：8 篇標題只剩符號的文章
         # terms_v2 是 []、seg_ver_v2 有值），用 terms_v2 會把它們算成漏斷詞、ReconV2CoverageGap 誤響
         "with_v2": {"filter": {"exists": {"field": "seg_ver_v2"}}},
         "deleted": {"filter": {"exists": {"field": "deleted_at"}}},
@@ -246,7 +246,7 @@ HEARTBEAT_TICK = 60.0   # 心跳類 gauge（qseg_service_instances_alive／dict_
 
 def idle(interval: float, tick: float, refresh) -> int:
     """等下一次全量對帳的這段時間，每 tick 秒呼叫一次 refresh（心跳類 gauge）。回傳呼叫次數。
-    真實環境驗證抓到的問題：alive 只在每小時的全量對帳算一次，服務剛起來那一刻算到 0，SegNoAliveInstances（page）就響了一小時。
+    端對端驗證抓到的問題：alive 只在每小時的全量對帳算一次，服務剛起來那一刻算到 0，SegNoAliveInstances（page）就響了一小時。
     refresh 失敗只記 log，不中斷等待。"""
     deadline, n = time.monotonic() + interval, 0
     while True:

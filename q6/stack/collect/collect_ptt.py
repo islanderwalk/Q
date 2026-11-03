@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Q6 論壇渠道（PTT）真實樣本。
+"""Q6 論壇渠道（PTT）公開頁樣本。
 
 順序：
 1. 先抓 6 張雜訊截圖背後的文章（shared/capture/capture_manifest.json 裡 id 開頭 q6-ptt-noise-；

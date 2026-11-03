@@ -1,7 +1,7 @@
 {
   "dict_version": "qsearch-q6-legacy-2019.12.31.1",
   "pipeline": "v0",
-  "note": "舊系統替身 v0：國家辭典（2015）＋ jieba-tw 詞表（2016）＋ 凍結於 2019-12-31 的公司詞表 ＋ 舊行政區名；逆向最長匹配、不過濾。版本日期 2019.12.31 就是字典的凍結日，seg_ver 由它算出。",
+  "note": "舊流程重現版 v0：國家辭典（2015）＋ jieba-tw 詞表（2016）＋ 凍結於 2019-12-31 的公司詞表 ＋ 舊行政區名；逆向最長匹配、不過濾。版本日期 2019.12.31 就是字典的凍結日，seg_ver 由它算出。",
   "algo": {"name": "bmm", "maxlen": 8, "fallback": "single_char", "ascii_runs": "one_token_no_lowercase",
            "normalize": "none", "stopwords": "none", "drop": "punctuation_symbols_whitespace"},
   "layers": [
@@ -15,7 +15,7 @@
      "url": "https://raw.githubusercontent.com/ldkrsi/jieba-zh_TW/master/jieba/dict.txt",
      "license": "MIT", "frozen_at": "2016-12-31"},
     {"id": "company_2019", "file": "legacy/company_2019.txt",
-     "source": "依題目線索推論的公司字典替身（PM 多年補進去的客戶、人名、地名、網路用語），凍結 2019-12-31",
+     "source": "依題目線索推論的公司字典對應元件（PM 多年補進去的客戶、人名、地名、網路用語），凍結 2019-12-31",
      "license": "repo", "frozen_at": "2019-12-31"},
     {"id": "places_old", "file": "legacy/places_old.txt",
      "source": "舊行政區名規則層（2010-12-25 五都改制前的名稱與臺字寫法）",

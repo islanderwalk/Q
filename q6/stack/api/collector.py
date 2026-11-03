@@ -1,4 +1,4 @@
-"""真實來源採集器：PTT 看板 Atom、YouTube 頻道（Data API；RSS 只限 POC）、中央社／公視 RSS → 當成 parser 的輸出：文章本體寫 ES、
+"""公開 feed 採集器：PTT 看板 Atom、YouTube 頻道（Data API；RSS 只限 POC）、中央社／公視 RSS → 當成 parser 的輸出：文章本體寫 ES、
 訊息發到 Pub/Sub 主題 parsed-posts，串流斷詞服務 v0／v1／v2 各自斷詞寫回同一篇（與 scripts/publish_channels.py 同一條路，
 差別只是來源是現在正在發生的貼文，不是重播樣本）。
 
@@ -49,7 +49,7 @@ FEEDS_PATH = Path(os.environ.get("FEEDS", str(Path(__file__).resolve().parent / 
 LIVE_SQL = Path(os.environ.get("LIVE_SQL", str(Path(__file__).resolve().parent / "live.sql")))
 SKIP = [s.strip() for s in os.environ.get("COLLECT_SKIP", "").split(",") if s.strip()]
 GAP = float(os.environ.get("COLLECT_GAP_SEC", "2.5"))
-UA = os.environ.get("COLLECT_UA", "qsearch-q6-collector/1.0 (+https://github.com/islanderwalk/claude-code; feed reader; polite)")
+UA = os.environ.get("COLLECT_UA", "qsearch-q6-collector/1.0 (+https://github.com/islanderwalk/Q; feed reader; polite)")
 METRICS_PORT = int(os.environ.get("COLLECTOR_METRICS_PORT", "9111"))
 YT_FEED_POC = os.environ.get("YOUTUBE_FEED_POC", "") == "1"
 YT_API = "https://www.googleapis.com/youtube/v3/playlistItems"
@@ -300,13 +300,13 @@ def skipped(feed: dict) -> bool:
 
 
 def enabled(feed: dict) -> bool:
-    """會真的去抓的 feed。YouTube 沒有 API key（也沒開 RSS POC）就只記 skipped，不算 dead／stale。"""
+    """會去抓的 feed。YouTube 沒有 API key（也沒開 RSS POC）就只記 skipped，不算 dead／stale。"""
     return not (feed["channel"] == "youtube" and not YT_KEY and not YT_FEED_POC)
 
 
 def precreate_labels(feeds: list):
     """帶 label 的 counter 啟動時先建成 0，第一次 login_wall／429 才不會被 increase() 算成 0。
-    停用的 feed 不建 last_ok／backoff 序列：真實環境驗證時三個 YouTube feed 因為沒有 key、last_ok 永遠是 0，
+    停用的 feed 不建 last_ok／backoff 序列：端對端驗證時三個 YouTube feed 因為沒有 key、last_ok 永遠是 0，
     CollectorFeedDead（page）啟動一小時後就響。"""
     for f in feeds:
         for o in OUTCOMES:
@@ -531,7 +531,7 @@ def poll_feed(feed: dict, state: dict, pubsub: ops.PubSub, poll_sec: int) -> dic
             backfill_sha = [p for p in posts if p["post_id"] in have and not have[p["post_id"]]]   # 舊文件還沒有 content_sha：只補欄位、不重發
             errors = parser_write(new + changed + backfill_sha) if (new or changed or backfill_sha) else 0
             # 首抓延遲只在「上次成功抓過之後」的新文章上量：feed 第一次成功（從沒抓過、或 collector_state 被清掉）抓到的是整個 feed 的歷史，
-            # 不是我們慢，不算（真實環境驗證：冷啟動第一輪把 24 小時內的舊文全算成延遲，CollectorFirstSeenLagCritical 直接 page）
+            # 不是我們慢，不算（端對端驗證：冷啟動第一輪把 24 小時內的舊文全算成延遲，CollectorFirstSeenLagCritical 直接 page）
             first_success = state.get("last_ok") is None
             lag_skipped = 0
             for p in new:

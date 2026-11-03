@@ -30,8 +30,8 @@
   + q6-ptt-noise-01..04 | 4 張：短網址＋地名、地名、地名＋電話、電話（同篇聚焦電話）
   loads（含探測腳本）: fb 9、ig 9、ptt 30（已達 30 上限，不再載入）；單一腳本內每站兩次導覽間隔 ≥2 秒
   Q3 chart PNG: node q3/tools/capture.js charts 重產 10 張（來源說明已更新）
-== round2 (2026-10-30)：雲端容器 capture_round2_cloud.js ＋ 本機 capture_round2_residential.py ==
--- 雲端容器（含重拍；最後採用的版本見 capture_manifest.json 的 round2 條目）
+== round2 (2026-10-30)：Linux 容器 capture_round2_cloud.js ＋ 本機 capture_round2_residential.py ==
+-- Linux 容器（含重拍；最後採用的版本見 capture_manifest.json 的 round2 條目）
 == round2 cloud 2026-10-30T15:30:04+08:00 ==
   threads {"hops":[{"status":200,"url":"https://www.threads.com/@nasa/post/DfFP4pEET5Y"}],"final":"https://www.threads.com/@nasa/post/DfFP4pEET5Y","err":null,"served":true} {"like":"266","repost":"22","share":"1","views":"9.1K views"} {"code":"DfFP4pEET5Y","taken_at":1793284975,"like_count":266,"direct_reply_count":14,"repost_count":18,"quote_count":4,"reshare_count":1}
   + q5-threads-repost-drift | 第 1 次 2026-10-30T01:56:24+08:00：讚 148、轉發 16、分享 1、5.5K views；第 2 次：讚 266、轉發 22、分享 1、9.1K views；JSON repost_count 18、quote_count 4、reshare_count 1

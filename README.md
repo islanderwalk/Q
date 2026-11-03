@@ -47,6 +47,7 @@ Q6 另有 [`q6/stack/`](q6/stack/)：整套系統的 Docker 組態與實跑紀�
 | Q3 | [`q3/evidence/playwright/`](q3/evidence/playwright/)、[`q3/answer/`](q3/answer/) | PTT 看板索引、文章與推文、over18 關卡；各小題的量測圖表 |
 | Q4 | [`q4/evidence/`](q4/evidence/) | Threads 個人頁、桌機與手機版、GraphQL 回應、貼文網址 |
 | Q5 | [`q5/evidence/`](q5/evidence/) | IG Reels 的 `play_count` 與單支頁、Threads 轉發數漂移；回補資料流 |
-| Q6 | [`q6/evidence/`](q6/evidence/) | PTT 斷詞雜訊、回補／字典／一致性各子題；[`stack/`](q6/evidence/stack/) 是整套系統的 PM A/B 頁、Grafana／Prometheus／Alertmanager／Kibana 與六渠道公開頁截圖 |
+| Q6 | [`q6/evidence/`](q6/evidence/) | PTT 斷詞雜訊、回補／字典／一致性各子題；[`stack/`](q6/evidence/stack/) 是整套系統的 PM A/B 頁、Grafana／Prometheus／Alertmanager／Kibana 與六渠道公開頁截圖；[`crawl/`](q6/evidence/crawl/) 是六渠道爬蟲監測看板 |
+| 登入帳號重爬（Facebook、Instagram、Threads） | [`q6/evidence/meta-login/`](q6/evidence/meta-login/) | 同一批目標頁用登入帳號再爬一次：Facebook 4 → 65、Instagram 48 → 1,134、Threads 59 → 588 篇，登入牆 0 次；每個目標頁有頁面與 F12 Network 截圖各 2 張，共 60 張，加上 cookie → API → JSON → 欄位的證據鏈（Q2、Q4、Q5、Q6） |
 
-每張截圖的主張、來源網址與截取時間列在 [`shared/capture/capture_manifest.json`](shared/capture/capture_manifest.json) 與各題 README。
+全部證據依題目與平台整理在 [`shared/docs/evidence.md`](shared/docs/evidence.md)：實際網站截圖、F12／API／JSON 證據、登入 session、壓測與監控過程、實跑數字。每張截圖的主張、來源網址與截取時間列在 [`shared/capture/capture_manifest.json`](shared/capture/capture_manifest.json) 與各題 README。

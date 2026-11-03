@@ -117,7 +117,7 @@ def main() -> int:
             mismatches.append(f"{n}: 必填 avro={'required' if a['required'] else 'optional'} "
                               f"pydantic={'required' if p['required'] else 'default=' + repr(p['default'])}")
         if a["required"] and b["mode"] != "REQUIRED":
-            mismatches.append(f"{n}: 必填 avro=required bq={b['mode']}（放寬方向；Pub/Sub BigQuery 訂閱是否接受未驗證，模擬器不會真的寫 BQ）")
+            mismatches.append(f"{n}: 必填 avro=required bq={b['mode']}（放寬方向；Pub/Sub BigQuery 訂閱是否接受未驗證，模擬器不會實際寫 BQ）")
     print(f"欄位名稱集合相同：{set(av) == set(py) == set(bq)}；順序 avro={list(av)} pydantic={list(py)}")
     print("--- 不一致 ---")
     for m in mismatches:

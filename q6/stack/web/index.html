@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><b>QSearch 文字雲</b><span class="muted">PM A/B 驗收 · 第 6 題真實環境</span></div>
+  <div class="brand"><b>QSearch 文字雲</b><span class="muted">PM A/B 驗收 · 第 6 題</span></div>
   <div class="live" id="live"><i class="dot"></i><span id="live-text">連線中…</span>
     <label class="tog"><input id="auto" type="checkbox" checked>資料一變就重畫</label></div>
   <div class="env" id="env"></div>
@@ -74,8 +74,8 @@
       <h4>新進資料 <span class="muted">parser 寫本體 → Pub/Sub → seg-v1／seg-v2 各自斷詞</span></h4>
       <div class="row wrap" id="replay-ch"></div>
       <div class="row"><label>篇數上限<input id="replay-limit" type="number" min="0" value="0" title="0 = 全部"></label>
-        <button id="replay" class="sm">重播六渠道真實樣本</button><span class="muted" id="replay-msg"></span></div>
-      <h5>真實來源採集器 <span class="muted" id="coll-ctl"></span></h5>
+        <button id="replay" class="sm">重播六渠道公開頁樣本</button><span class="muted" id="replay-msg"></span></div>
+      <h5>公開 feed 採集器 <span class="muted" id="coll-ctl"></span></h5>
       <div class="row"><button id="collect-now" class="sm">立刻抓一次</button><button id="collect-pause" class="sm ghost">暫停</button><button id="collect-resume" class="sm ghost">恢復</button><span class="muted" id="coll-msg"></span></div>
       <table class="tight" id="feeds"><thead><tr><th>來源</th><th>上次抓</th><th>HTTP</th><th>新／累計</th><th>狀態</th></tr></thead><tbody></tbody></table>
     </article>

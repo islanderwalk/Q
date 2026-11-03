@@ -1,5 +1,5 @@
 """文字雲品質日報（計畫書 P0 第 9 項）：RBO／JS／McNemar 純函式、金標召回嚴格比對、洩漏旗標與渠道統計、
-新詞暴增 z 分數、整詞召回解析、ES 查詢形狀、設定與資料表一致。全部用替身，不連 ES／PG。"""
+新詞暴增 z 分數、整詞召回解析、ES 查詢形狀、設定與資料表一致。全部用對應元件，不連 ES／PG。"""
 import json
 import sys
 
@@ -63,7 +63,7 @@ def test_leak_flags_and_channel_stats():
     assert f == {"url": True, "phone": True, "number": True, "stopword": True}
     assert quality.leak_flags("颱風假", ["颱風假"], Dic.stopwords, url_leaks) == {"url": False, "phone": False, "number": False, "stopword": False}
 
-    def segment_checked(dic, channel, text):          # 替身：鳳山區 被切開；其他沒事
+    def segment_checked(dic, channel, text):          # 對應元件：鳳山區 被切開；其他沒事
         return [], (["鳳山區"] if "鳳山區" in text else [])
     docs = [{"channel": "ptt", "content": "鳳山區 今天下雨", "terms_v2": ["鳳山", "區", "今天", "下雨"]},
             {"channel": "ptt", "content": "高雄市 肥宅", "terms_v2": ["高雄市", "肥宅"]},

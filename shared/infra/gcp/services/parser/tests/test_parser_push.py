@@ -95,7 +95,7 @@ def test_bad_data_is_nacked(client, envelope, data):
 # 標 * 的情況在修正前會被 ack（204），分兩類：
 # - 少 schema_version／event_type、schema_version 是 True、"1"、1.0：Avro 不收，經過有 schema 的主題時在發佈端就被擋，
 #   parser 拒收是與 .avsc 對齊的防線（只對繞過 schema 的訊息有差）。
-# - "gs://" 開頭但沒有 bucket 或 object 的 URI：Avro 合法、真的發佈得出去，修正前會被 ack 掉，是實際的 bug。
+# - "gs://" 開頭但沒有 bucket 或 object 的 URI：Avro 合法、發佈得出去，修正前會被 ack 掉，是實際的 bug。
 @pytest.mark.parametrize("mutate", [
     lambda e: {**e, "event_type": "crawl.failed"},
     lambda e: {**e, "schema_version": 2},

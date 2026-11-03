@@ -692,7 +692,7 @@
   {
    "type": "timeseries",
    "title": "查詢量與快取（每秒）",
-   "description": "hit＝快取命中；coalesced＝同一鍵的查詢合併等第一筆（single-flight）；miss＝真的打 ES。已結束日期範圍的快取 24 小時、含今天的 300 秒",
+   "description": "hit＝快取命中；coalesced＝同一鍵的查詢合併等第一筆（single-flight）；miss＝打 ES。已結束日期範圍的快取 24 小時、含今天的 300 秒",
    "datasource": {
     "type": "prometheus",
     "uid": "prom"

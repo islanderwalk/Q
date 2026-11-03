@@ -1,5 +1,5 @@
 """QSearch 文字雲 API：讀 ES 的 terms 聚合，seg=v1|v2 切換新舊詞表，給 PM 並排比對與客戶文字雲；
-加上 PM 頁「資料工程端」的真實操作（字典發版、回補簽核、重播樣本、限速、採集器），全部打到同一套 ES／PostgreSQL／Pub/Sub。
+加上 PM 頁「資料工程端」的實際操作（字典發版、回補簽核、重播樣本、限速、採集器），全部打到同一套 ES／PostgreSQL／Pub/Sub。
 
 - 一次請求一個 ES 搜尋：query 決定文章範圍，terms 聚合算「範圍內有幾篇文章提到這個詞」
 - 軟停用詞（問卦、有沒有…）在查詢時用 terms 聚合的 exclude 處理，改清單不必重跑歷史
@@ -66,8 +66,8 @@ HARD_STOP = set("的 了 在 是 和 與 及 或 也 都 就 而 等 啊 吧 呢
 NUM_RE = re.compile(r"^[\d\W_]*\d[\d\W_]*$")
 SYMBOL_RE = re.compile(r"^[\W_]+$")
 ASCII_MIX_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{4,}$|^(?:http|https|www|com|cc|tw|ly|html|php)$", re.I)
-V1_NOTE = "舊流程 v1 = jieba 預設主字典、HMM 關、不清洗、不過濾。公司現行字典拿不到，這是替身；v1 的詞表是真的算出來的，但不是公司現在線上的詞表。"
-V0_NOTE = "舊系統重現 v0 = 凍結於 2019-12-31 的字典（教育部 2015＋jieba-tw 2016＋公司詞表 2019＋舊行政區名）＋逆向最長匹配，不清洗、不過濾。依題目線索推論的替身，非公司原碼；重現「維護多年、停在某一年」的舊文字雲。"
+V1_NOTE = "舊流程 v1 = jieba 預設主字典、HMM 關、不清洗、不過濾。公司現行字典拿不到，這是對應元件；v1 的詞表是實際算出來的，但不是公司現在線上的詞表。"
+V0_NOTE = "舊系統重現 v0 = 凍結於 2019-12-31 的字典（教育部 2015＋jieba-tw 2016＋公司詞表 2019＋舊行政區名）＋逆向最長匹配，不清洗、不過濾。依題目線索推論的對應元件，非公司原碼；重現「維護多年、停在某一年」的舊文字雲。"
 
 DUR = Histogram("wordcloud_duration_seconds", "API 總耗時；status=ok 成功、error 失敗（失敗也記耗時）。SLI 分母用 _count，分子用 le=180 且 status=ok 的桶",
                 ["seg", "cache", "status"], buckets=(0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 120, 180, 300))
@@ -271,7 +271,7 @@ async def lifespan(_app):
     yield
 
 
-app = FastAPI(title="QSearch 文字雲 API（Q6 真實環境）", lifespan=lifespan)
+app = FastAPI(title="QSearch 文字雲 API（Q6）", lifespan=lifespan)
 
 
 # ---------- 字典 overlay 與 ES 狀態 token ----------
@@ -748,7 +748,7 @@ def _parser_write(posts):
 
 @app.post("/api/ops/replay")
 def api_replay(body: dict = Body(...)):
-    """重播 data/channels 的真實六渠道樣本（267 篇，2026-10-31 未登入公開頁抓的）：parser 寫本體 + 發 parsed-posts，
+    """重播 data/channels 的六渠道樣本（267 篇，2026-10-31 未登入公開頁抓的）：parser 寫本體 + 發 parsed-posts，
     seg-v1／seg-v2 各自斷詞。已經在 ES 裡且同版本的，斷詞服務會 noop（冪等）；回傳有幾篇是新的。"""
     by = _actor(body)
     chans = [c for c in (body.get("channels") or CHANNELS) if c in CHANNELS]
@@ -888,7 +888,7 @@ async def api_rum(request: Request):
 
 SEVERITY_ORDER = {"page": 0, "warn": 1, "ticket": 2}
 # Alertmanager 還在響的告警每 repeat_interval（pm-page 路由 1 小時）會再送一次 firing；Alertmanager 重啟會遺失記憶體裡的告警，
-# resolved 永遠不會送來（真實環境驗證：重啟後 SegServiceDown 在 PM 頁掛了一小時）。超過兩個週期加緩衝沒再收到就當已失聯、不再顯示。
+# resolved 永遠不會送來（端對端驗證：重啟後 SegServiceDown 在 PM 頁掛了一小時）。超過兩個週期加緩衝沒再收到就當已失聯、不再顯示。
 ALERT_STALE_SECONDS = int(os.environ.get("ALERT_STALE_SECONDS", str(2 * 3600 + 10 * 60)))
 
 

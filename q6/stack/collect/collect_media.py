@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Q6 媒體渠道真實樣本（台灣新聞網站公開 RSS）。
+"""Q6 媒體渠道公開頁樣本（台灣新聞網站公開 RSS）。
 
 text＝標題＋"\\n"＋description；只對 description 去 HTML 標籤（並把 HTML 實體還原成字），其餘原樣。
 每個 feed 最多取 PER_FEED 則，總數不超過 TOTAL_MAX。

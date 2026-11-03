@@ -1,8 +1,8 @@
-# Q6 整套系統實跑結果
+# Q6 實測結果（Docker 環境）
 
-2026-10-30 在 Linux 容器（4 核心、15 GB RAM）用 [`README.md`](README.md) 的環境實際跑出來的數字。每個數字後面都附原始檔，日誌與 JSON 在 [`results/`](results)，截圖在 [`../evidence/stack/`](../evidence/stack)。全部在本機 Docker 跑，沒有開任何 GCP 計費資源。
+2026-10-30 在Linux 容器（4 核心、15 GB RAM）用 [`README.md`](README.md) 的環境實際跑出來的數字。每個數字後面都附原始檔，日誌與 JSON 在 [`results/`](results)，截圖在 [`../evidence/stack/`](../evidence/stack)。全部在本機 Docker 跑，沒有開任何 GCP 計費資源。
 
-圖：[實跑環境架構圖](../architecture/stack/diagram-stack.png)、[沙盤推演 10 種情境](../architecture/stack/diagram-sandbox-scenarios.png)。
+圖：[整套系統架構圖](../architecture/stack/diagram-stack.png)、[沙盤推演 10 種情境](../architecture/stack/diagram-sandbox-scenarios.png)。
 
 ## 一眼看完
 
@@ -20,7 +20,7 @@
 ## 1. 環境與資料
 
 - **ES**：官方 `elasticsearch:9.5.5` 單節點，外掛 `analysis-smartcn`、`analysis-icu`（官方）與 IK 9.5.5（遠端字典 `http://dictsrv/current/ik_ext.dic`）。索引 `posts` 結束時 425,154 篇、227.5 MB。
-- **資料**（第 1–14 節的實測，2026-10-30 到 10-31 白天）：PTT 共 424,887 篇。八卦板問答 418,202 組（`Gossiping-QA-Dataset`，約 41.8 萬組）依編號雜湊平均分到 2023-01 到 2026-09 的 45 個月；另加 [`../data/ptt_titles_7d.jsonl`](../data/ptt_titles_7d.jsonl) 的 6,685 個八卦板標題，放在 2026-10，合計 46 個月分區。另有六渠道公開頁樣本 267 篇（未登入，抓法見 [`data/channels/COLLECTION.md`](data/channels/COLLECTION.md)）。問答的時間是合成的（`time_basis: synthetic`），只用來切分區，不代表原始發文時間；2026-10 的標題用文章代碼 `M.<unix 秒>` 裡的原始發文時間，其中 425 篇已刪除文章沒有代碼，沿用前一篇的時間。**2026-10-31 晚上起原文湖改版**（第 16 節）：只收有原始發文時間的文章（兩個公開 PTT 語料＋標題），不再有合成時間、不再補時間；上面各節的數字仍是當時那份語料跑出來的。
+- **資料**（第 1–14 節的實測，2026-10-30 到 10-31 白天）：PTT 共 424,887 篇。八卦板問答 418,202 組（`Gossiping-QA-Dataset`，約 41.8 萬組）依編號雜湊平均分到 2023-01 到 2026-09 的 45 個月；另加 [`../data/ptt_titles_7d.jsonl`](../data/ptt_titles_7d.jsonl) 的 6,685 個八卦板標題，放在 2026-10，合計 46 個月分區。另有六渠道樣本 267 篇（未登入公開頁，抓法見 [`data/channels/COLLECTION.md`](data/channels/COLLECTION.md)）。問答的時間是合成的（`time_basis: synthetic`），只用來切分區，不代表原始發文時間；2026-10 的標題用文章代碼 `M.<unix 秒>` 裡的原始發文時間，其中 425 篇已刪除文章沒有代碼，沿用前一篇的時間。**2026-10-31 晚上起原文湖改版**（第 16 節）：只收有原始發文時間的文章（兩個公開 PTT 語料＋標題），不再有合成時間、不再補時間；上面各節的數字仍是當時那份語料跑出來的。
 - **字典**：r1（舊流程）到 r6，主字典 `dict.txt.big`，`total_pinned` 固定為 87,043,992。
 
 | 版本 | 內容 | 為什麼發 | 重算範圍 |
@@ -41,7 +41,7 @@
 | 輪 | 字典 | 分區 | 結果 | 抓到什麼 |
 |---|---|---|---|---|
 | 1 | r2 | 46 | **46 個全部沒過**（G2） | 46 個都被「網址殘片」擋，其中 10 個另有必不可拆詞被切開。查原文發現是**檢查規則本身錯**：PTT 的 `www` 是笑、`NET` 是服飾品牌、`PHP` 是話題。另外 PM 首月關卡有洞，首月還沒簽就讓其他 45 個分區跑完了 |
-| 2 | r3 | 46 | 34 過、12 沒過 | 7 個 G2（「全新／北」「出新／北」「問新／北投」這類確實切錯）、5 個 G3（3 個 task 同時寫，探針 p95 超過上限） |
+| 2 | r3 | 46 | 34 過、12 沒過 | 7 個 G2（「全新／北」「出新／北」「問新／北投」這類切錯）、5 個 G3（3 個 task 同時寫，探針 p95 超過上限） |
 | 3 | r4 | 只重跑那 12 個 | 10 過、2 人工豁免 | G3 自動降速 3,000 → 1,500 → 750 後全部通過；剩 2 篇「2018換新北放半天」「夜市痛電新北耶誕城」詞頻拉到 3,000 仍切錯，字典負責人用 `approve --waive G2 --note …` 豁免，理由寫進帳本 |
 
 最後帳本：r3 通過 34 個、r4 通過 12 個（`results/backfill/final_ledger.json`）。限速表最後停在每秒 750，原因欄寫著「G3 自動降速：ptt 探針 p95 127 ms > 上限 124 ms」（`final_control.json`）。
@@ -55,13 +55,13 @@
 | G3 線上負載 | 寫入拒絕數 0；PM 查詢探針 p95 ≤ min(max(基準×1.5, 基準+50 ms), 180 秒)；基準是發版前、沒有回補時量的 74 ms，上限 124 ms；超過就把全域限速砍半、等 15 秒再量，最多 3 次 | `job.py` `canary_after` |
 | G4 PM | 每個渠道第一個月要 PM 在 A/B 頁抽查簽核，簽之前同渠道其他分區不能開跑 | `approve` 指令 |
 
-### 2.3 被砍、接續、重跑
+### 2.3 被砍、接手、重跑
 
 | 情境 | 日誌 | 結果 |
 |---|---|---|
 | 處理到第 3,000 篇時把 task 砍掉（exit 137） | `01_first_partition_killed.log` | checkpoint 停在第 3,000 行 |
 | 心跳還新時另一個 task 來領 | `02_claim_while_heartbeat_fresh.log` | 領到 0 個分區 |
-| 心跳過期後由另一個 task 接續 | `03_resume_after_stale_heartbeat.log` | 從第 3,000 行接續 |
+| 心跳過期後接手 | `03_resume_after_stale_heartbeat.log` | 從第 3,000 行接續 |
 | 修程式後同版重跑 | `04_first_partition_force_rerun.log` | `--force` 從頭跑，同版也覆寫 |
 | 首月關卡 | `10_*`、`11_*`、`12_*` | 首月 → `awaiting_pm`；簽之前另一個 task 領到 0 個；PM 簽完才放行 |
 | 映像的字典版本和帳本不一致 | `06_dict_mismatch_loop.log` | 修之前重複領取同一分區 130,281 次；修完直接以 exit 2 結束 |
@@ -225,15 +225,15 @@ PG 也有倒排索引，找文章不慢；慢在把每篇的詞展開再分組�
 | 告警 | `monitoring/rules/*.yml` 66 條：3 分鐘 SLO 燃燒率 `WordcloudSlo180sBurn`（Sloth 多視窗）、`WordcloudOver180s`、完整性、採集、積壓、發版收斂、回補燃盡、品質、ES、PM 頁；Alertmanager → `POST /api/ops/alert` → PM 頁橫幅（門檻都是提案值；對照表 `MONITORING.md`） | Prometheus rules ＋ Alertmanager | Cloud Monitoring 告警政策 |
 | 自動降速 | G3 量探針、改 `backfill_control.max_docs_per_sec`，所有 task 每批重讀 | 回補程式 | 同一支程式，表在 Cloud SQL |
 
-告警只通知人；讓回補慢下來的是回補程式自己讀限速表。
+告警只通知人；實際讓回補慢下來的是回補程式自己讀限速表。
 
-2026-11-02 在同一個容器把告警鏈實跑過：Prometheus 96 條規則（66 告警＋30 記錄）全部健康，告警經 Alertmanager webhook 進 PM 頁橫幅（firing 與 resolved 都收到），SLM 快照、Loki 日誌、品質日報與四層對帳的指標都由實跑資料算出。實跑抓到並修掉的 14 個問題、結束時仍在響的 4 組告警，列在 [`MONITORING.md`](MONITORING.md)「整套系統實跑」。
+2026-11-02 在同一個容器把告警鏈實跑過：Prometheus 96 條規則（66 告警＋30 記錄）全部健康，告警經 Alertmanager webhook 進 PM 頁橫幅（firing 與 resolved 都收到），SLM 快照、Loki 日誌、品質日報與四層對帳的指標都來自這次實跑。端對端跑才抓到並修掉的 14 個問題、結束時仍在響的 4 組告警，列在 [`MONITORING.md`](MONITORING.md)「端對端驗證」。
 
 ## 12. 截圖
 
 | 檔案 | 內容 |
 |---|---|
-| `pm/01_all_channels_all_time.png` | PM A/B 頁（2026-11-02 重拍，即時湖 6,662 篇）：全渠道全期，左 v0 舊系統重現、右 terms_v2，下面依序是差異清單與排名對照、資料工程端（字典 artifact、發版、新進資料）、剛流來的文章、回補帳本、事件流 |
+| `pm/01_all_channels_all_time.png` | PM A/B 頁（2026-11-03 重拍，即時湖 6,666 篇）：全渠道全期，左 v0 舊系統重現、右 terms_v2，下面依序是差異清單與排名對照、資料工程端（字典 artifact、發版、新進資料）、剛流來的文章、回補帳本、事件流 |
 | `pm/02_ptt_2026-10_pm_spot_check.png` | PTT 2026-10（首月抽查用） |
 | `pm/03_keyword_kaohsiung.png` | 關鍵字「高雄」 |
 | `pm/10_channel_{facebook,instagram,youtube,ptt,media,threads}.png` | 六渠道各一張 |
@@ -282,7 +282,7 @@ PG 也有倒排索引，找文章不慢；慢在把每篇的詞展開再分組�
 
 ## 14. 沙盤推演
 
-前 9 種情境在這個環境都實際觸發過一次，第 10 種（GCP 部署）沒有在這裡觸發，引用的是 `shared/infra/gcp` 的 Terraform 離線結果；10 種情境整理在 [`../architecture/stack/diagram-sandbox-scenarios.png`](../architecture/stack/diagram-sandbox-scenarios.png)：
+前 9 種情境在這個環境都實際觸發過一次，第 10 種（GCP 部署）沒有在這裡觸發，引用的是 Terraform 結果；10 種情境整理在 [`../architecture/stack/diagram-sandbox-scenarios.png`](../architecture/stack/diagram-sandbox-scenarios.png)：
 
 1. 新詞爆紅（加「肥宅」）→ §3、§7
 2. 字典切錯被閘門擋 → §2.1 第 2、3 輪
@@ -293,22 +293,22 @@ PG 也有倒排索引，找文章不慢；慢在把每篇的詞展開再分組�
 7. 停用詞要加 → §6.3
 8. 六種渠道格式不同 → §6.1
 9. 版本號排序（2026.10.30.10 對上 2026.11.01.1）→ §2.4
-10. GCP 部署不花錢 → `shared/infra/gcp` 先做過 `terraform plan`（102 個資源）與 `terraform test`（30 項通過），涵蓋回補 Job、GCS、Pub/Sub 與 Cloud SQL；Elasticsearch 叢集、斷詞服務、文字雲 API 與監控告警還沒有 Terraform。這裡不 apply。
+10. GCP 部署不花錢 → `shared/infra/gcp` 做過 `terraform plan`（102 個資源）與 `terraform test`（30 項通過），涵蓋回補 Job、GCS、Pub/Sub 與 Cloud SQL；Elasticsearch 叢集、斷詞服務、文字雲 API 與監控告警還沒有 Terraform。這裡不 apply。
 
 ## 15. 限制
 
 - 單節點、0 副本、4 核心同時跑 ES 與斷詞；絕對延遲只能當相對比較，GCP 上要重量。
 - PTT 以外的五個渠道只有 4–61 篇，FB 未登入只拿到 4 篇；回補只有 PTT 一個渠道。
 - 第 1–14 節用的 PTT 問答時間是合成的，只用來切月份分區；第 16 節起的原文湖只收原始發文時間（見 README「怎麼重跑」）。
-- Pub/Sub 模擬器沒有配額、排序鍵與跨區行為；DLQ 與重送行為和 GCP 上的 Pub/Sub 一樣。
-- 第 1–14 節的 PM 簽核與字典負責人豁免是用指令做的；第 16 節起 PM 頁有簽核／豁免／發版按鈕，走同一段 SQL 與同一條 Pub/Sub 路。
-- 舊流程 v1 是用 jieba 預設主字典算的重現版（公司現行字典拿不到）；v1 詞表是實際算出來的，但不是公司現在線上的詞表。
+- Pub/Sub 模擬器沒有配額、排序鍵與跨區行為；DLQ 與重送行為和正式環境一樣。
+- 第 1–14 節的 PM 簽核與字典負責人豁免是用指令做的；第 16 節起 PM 頁有實際的簽核／豁免／發版按鈕，走同一段 SQL 與同一條 Pub/Sub 路。
+- 舊流程 v1 是用 jieba 預設主字典算的對應元件（公司現行字典拿不到）；v1 詞表是用這個重現版算出來的，但不是公司現在線上的詞表。
 
 ## 16. 2026-10-31 晚：原文湖只收原始發文時間、PM 頁即時操作（Linux 容器端對端）
 
-這一節是改版後在 Linux 容器（4 核心、ES heap 2 GB）從零再跑一次的數字；操作人欄位一律是測試腳本 `e2e-test`，不是 PM。原始輸出在 [`results/live/e2e_2026-10-31.json`](results/live/e2e_2026-10-31.json)，頁面截圖在 [`../evidence/stack/pm_live/`](../evidence/stack/pm_live)。
+這一節是改版後在Linux 容器（4 核心、ES heap 2 GB）從零再跑一次的數字；操作人欄位一律是測試腳本 `e2e-test`，不是 PM。原始輸出在 [`results/live/e2e_2026-10-31.json`](results/live/e2e_2026-10-31.json)，頁面截圖在 [`../evidence/stack/pm_live/`](../evidence/stack/pm_live)。
 
-| 步驟 | 實際發生什麼 | 數字 |
+| 步驟 | 系統做什麼 | 數字 |
 |---|---|---|
 | 原文湖 `prepare_raw.py --since 2023-01 --max-per-source 30000` | 只收有原始發文時間的文章 | 46,132 篇、26 個月份分區（2023-01～2026-10）。標題 6,260（略過 425 篇已刪除、沒有代碼）；Gossiping 100K 取前 30,000（同 id 重複 1,625）；PTT-pretrain 2023 年起 9,872（時間解析不出 19,845、檔頭格式不符 1,528、2023 以前 476,307 不收） |
 | 灌資料 v1（3 個 task） | 舊流程寫 `terms_v1` | 每個 task 15,090～15,567 篇、17～20 秒 |
@@ -316,23 +316,23 @@ PG 也有倒排索引，找文章不慢；慢在把每篇的詞展開再分組�
 | PM 頁「簽核通過」 | `backfill_ledger` → `passed`，簽核人、時間、備註寫進 `gates.G4`，事件流一筆 | 按下去 3 秒內頁面的狀態列從「等 PM 簽核 1」變「通過 1」 |
 | `backfill-tasks`（3 個 task） | 其餘 25 個分區 | 約 1 分鐘；19 個通過、7 個 G2 沒過：5 個是網址殘片 `https` 各 1 篇、2 個是必不可拆詞被切各 1 次（新北／新北市／賴清德、好市多）。頁面對每個沒過的分區顯示「豁免 G2」（一定要寫說明） |
 | `live` | seg-v1 載 r1、seg-v2 載 current（r6）、API、採集器 | 兩個服務的 `service_state` 心跳 15 秒一次，頁面顯示載入版本 |
-| PM 頁重播六渠道樣本 | parser 寫本體 → `parsed-posts` → 兩個服務各自斷詞 | 267 篇送出，252 篇新、15 篇原本就在（採集器剛抓到的中央社新聞）；同版本的重送是 noop |
-| 來源採集 7 個 feed（YouTube 3、中央社 3、公視 1） | `collector.poll_feed`：抓 → 解析 → `_mget` 去重 → 寫本體 → 發訊息 | 11.6 秒抓完、123 篇新文章（跨 feed 重複 7 篇只收一次），最新一篇發文 2026-10-31 23:49（+08:00）；每篇從寫入到兩版詞表可查 1 秒（頁面「剛進來的文章」的延遲欄） |
-| PM 頁發版加「沈伯洋、藍白」 | 建 `qsearch-q6-2026.11.01.1`（seg_ver 22026110101）、切 current、`rerun_runs` 一列、控制訊息 | 建版＋切 current 0.3 秒；seg-v2 收到後 1.4 秒載入新版並換掉服務用的字典；定向重跑候選 516 篇（原文含「沈伯洋」或「藍白」且 seg_ver 比新版舊）、516 篇全部重寫、詞表實際變了 140 篇、0.37 秒；完成後 2 秒內 A/B 頁自動重查並標出「沈伯洋 286→326」。重跑例子：沈伯洋助→沈伯洋、藍白合→藍白、沈伯／洋人→人設／沈伯洋 |
+| PM 頁「重播六渠道樣本」 | parser 寫本體 → `parsed-posts` → 兩個服務各自斷詞 | 267 篇送出，252 篇新、15 篇原本就在（採集器剛抓到的中央社新聞）；同版本的重送是 noop |
+| 公開 feed 採集 7 個（YouTube 3、中央社 3、公視 1） | `collector.poll_feed`：抓 → 解析 → `_mget` 去重 → 寫本體 → 發訊息 | 11.6 秒抓完、123 篇新文章（跨 feed 重複 7 篇只收一次），最新一篇發文 2026-10-31 23:49（+08:00）；每篇從寫入到兩版詞表可查 1 秒（頁面「剛進來的文章」的延遲欄） |
+| PM 頁發版加「沈伯洋、藍白」 | 建 `qsearch-q6-2026.11.01.1`（seg_ver 22026110101）、切 current、`rerun_runs` 一列、控制訊息 | 建版＋切 current 0.3 秒；seg-v2 收到後 1.4 秒載入新版並換掉服務用的字典；定向重跑候選 516 篇（原文含「沈伯洋」或「藍白」且 seg_ver 比新版舊）、516 篇全部重寫、詞表變了 140 篇、0.37 秒；完成後 2 秒內 A/B 頁自動重查並標出「沈伯洋 286→326」。重跑例子：沈伯洋助→沈伯洋、藍白合→藍白、沈伯／洋人→人設／沈伯洋 |
 
-限制：PTT 的三個 feed 在這個 Linux 容器不抓（robots.txt 規則），要在本機電腦上才會動；容器的出口是攔 TLS 的代理，容器內的採集器對外 TLS 驗證失敗（頁面上看得到錯誤與退避時間），這一輪改由宿主機執行同一支 `collector.poll_feed`。舊流程 v1 仍是 jieba 預設主字典的重現版（頁面上寫明）。單元測試 `tests/test_live_ops.py` 23 項。
+限制：PTT 的三個 feed 在Linux 容器不抓（robots.txt 規則），要在一般住宅網路的機器上才會動；Linux 容器的出口是攔 TLS 的代理，容器內的採集器對外 TLS 驗證失敗（頁面上看得到錯誤與退避時間），這一輪改由宿主機執行同一支 `collector.poll_feed`。舊流程 v1 仍是 jieba 預設主字典的對應元件（頁面上寫明）。單元測試 `tests/test_live_ops.py` 23 項。
 
-## 17. 舊系統「維護多年的文字雲」重現 v0（在 4.6 萬篇 PTT 原文上量到的五病徵）
+## 17. 舊系統「維護多年的文字雲」重現 v0（在 4.6 萬篇真文上量到的五病徵）
 
-第 6 題描述的是一套**維護多年、字典檔多年沒大改**的舊文字雲系統，症狀有五個：短網址後綴成詞、電話成詞、助詞沒過濾、地名變體被拆散、搜尋高頻詞反而不在文字雲。先前 PM 頁左欄的 `v1`（jieba 預設主字典、HMM 關）只是「沒有使用者字典」的重現版，還不夠像「凍結多年的字典」。這一節把舊系統**重現**成 `v0`，和新流程 `v2` 並排，A/B 才站得住腳。
+第 6 題描述的是一套**維護多年、字典檔多年沒大改**的舊文字雲系統，症狀有五個：短網址後綴成詞、電話成詞、助詞沒過濾、地名變體被拆散、搜尋高頻詞反而不在文字雲。先前 PM 頁左欄的 `v1`（jieba 預設主字典、HMM 關）只是「沒有使用者字典」的對應元件，還不夠像「凍結多年的字典」。這一節把舊系統**重現**成 `v0`，和新流程 `v2` 並排，A/B 才站得住腳。
 
-**v0 不是公司原始碼**，是依題目線索重現的舊流程（頁面與 `api/app.py` 的 `V0_NOTE` 都寫明）。組成（`dict/build_legacy.py` 建出 `dict/releases/qsearch-q6-legacy-2019.12.31.1.json`，每層記 sha256）：
+**v0 不是公司原始碼**，是依題目線索推論出來的對應元件（頁面與 `api/app.py` 的 `V0_NOTE` 都寫明）。組成（`dict/build_legacy.py` 建出 `dict/releases/qsearch-q6-legacy-2019.12.31.1.json`，每層記 sha256）：
 
 | 層 | 來源 | 凍結日 | 收錄詞數 |
 |---|---|---|---|
 | `moe_revised_2015` | 教育部《重編國語辭典修訂本》2015（CC BY-ND 3.0 TW，`extract_moe.py` 抽「字詞名」欄） | 2015-12-31 | 148,714 |
 | `jieba_tw_2016` | jieba-zh_TW 繁體詞表（MIT，只取第一欄的詞） | 2016-12-31 | +253,667 |
-| `company_2019` | 依題目線索推論的「公司字典」（客戶、政治人物、地名、網路用語），凍結 2019-12-31 | 2019-12-31 | +16 |
+| `company_2019` | 依題目線索推論的「公司字典」對應元件（客戶、政治人物、地名、網路用語），凍結 2019-12-31 | 2019-12-31 | +16 |
 | `places_old` | 舊行政區名（五都改制前、「臺」字寫法） | 2010-12-25 | +67 |
 | **合計** | | **2019-12-31** | **402,464** |
 

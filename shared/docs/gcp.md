@@ -1,4 +1,4 @@
-# terraform_GCP 交接：給 UIUX 大師
+# GCP Terraform 驗證紀錄（第一輪）
 
 ## 摘要
 
@@ -8,11 +8,11 @@
 - **沒有 apply，沒有啟用 API，沒有建立任何資源。**
 - 完整驗證紀錄與 NOTES 未驗證項逐條結果：`shared/infra/gcp/README.md`（第二輪結果見同檔「第二輪驗證」）。
 - 地端對照：`shared/infra/onprem/README.md`、`shared/architecture/gcp-vs-onprem.md`。第一輪的 `docker-compose.example.yml` 當時沒有啟動（本機沒有 docker）；第二輪改成可實際啟動的 `shared/infra/onprem/docker-compose.yml`，實跑紀錄見 `shared/infra/onprem/VERIFY.md`。
-- plan 檔：`S\tf\tfplan`（repo 外）；plan 日誌：`S\tf\logs\plan_1.log`。
+- plan 檔與 plan 日誌留在 repo 外。
 
 ## 1. 架構節點 → Terraform 位址（JSON）
 
-節點 id 取自 `S\src\archify\diagrams\{poc,a,b,c}.json`。diagrams 的節點沒有明確的 snippet id 欄位，這份對照是依節點 label 對應到 resource 的，請以此為準。
+節點 id 取自原架構圖的 `diagrams/{poc,a,b,c}.json`。diagrams 的節點沒有明確的 snippet id 欄位，這份對照是依節點 label 對應到 resource 的，請以此為準。
 
 `terraform` 內的位址是 root（`shared/infra/gcp`）的，除非標註 `optional/gke`。`status` 欄位：`planned` = 在 plan 的 70 個新增中；`optional-validated` = 在 `optional/gke`，有 validate 沒有 plan；`external` = 不在 Terraform 內；`gap` = 架構節點沒有 Terraform。
 
@@ -102,7 +102,7 @@
 | Cloud Build trigger | 通過 | 未建立（github_owner 預設空） | 需先在 GCP 完成 GitHub 連線 |
 | GKE Autopilot／Standard＋node pool＋HPA | 通過（有 deprecation warning） | **未 plan**（獨立 root） | 需先 apply 主模組；`ip_allocation_policy {}` 未驗證 |
 
-## 3. 地端對照（給 UIUX 切換用）
+## 3. 地端對照
 
 | 段 | GCP | 地端 |
 |---|---|---|

@@ -26,7 +26,7 @@ def coverage_body() -> dict:
                 "aggs": {
                     "unsegmented_recent": {"filter": {"bool": {"filter": [RECENT], "must_not": [{"exists": {"field": "seg_ver_v2"}}]}}},
                     "missing_published_at": {"filter": {"bool": {"must_not": [{"exists": {"field": "published_at"}}]}}},
-                    # 真實 ES 驗證過：exists 對空陣列是 false（標題只剩符號的文章 terms_v2 = []），所以「有 v2」看 seg_ver_v2
+                    # 在 ES 上驗證過：exists 對空陣列是 false（標題只剩符號的文章 terms_v2 = []），所以「有 v2」看 seg_ver_v2
                     "with_terms_v2": {"filter": {"exists": {"field": "seg_ver_v2"}}},
                 },
             }

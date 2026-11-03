@@ -20,66 +20,6 @@
     "at": "2026-10-30T23:16:03.067Z"
   },
   {
-    "file": "pm/01_all_channels_all_time.png",
-    "url": "http://localhost:8080/",
-    "at": "2026-11-02T21:44:25.948Z"
-  },
-  {
-    "file": "pm/02_ptt_2026-10_pm_spot_check.png",
-    "url": "http://localhost:8080/?from=2026-10-01",
-    "at": "2026-11-02T21:44:28.890Z"
-  },
-  {
-    "file": "pm/03_keyword_kaohsiung.png",
-    "url": "http://localhost:8080/?q=%E9%AB%98%E9%9B%84",
-    "at": "2026-11-02T21:44:31.696Z"
-  },
-  {
-    "file": "pm/10_channel_facebook.png",
-    "url": "http://localhost:8080/?channels=facebook",
-    "at": "2026-11-02T21:44:34.557Z"
-  },
-  {
-    "file": "pm/10_channel_instagram.png",
-    "url": "http://localhost:8080/?channels=instagram",
-    "at": "2026-11-02T21:44:37.333Z"
-  },
-  {
-    "file": "pm/10_channel_youtube.png",
-    "url": "http://localhost:8080/?channels=youtube",
-    "at": "2026-11-02T21:44:40.046Z"
-  },
-  {
-    "file": "pm/10_channel_ptt.png",
-    "url": "http://localhost:8080/?channels=ptt&from=2026-10-01",
-    "at": "2026-11-02T21:44:42.780Z"
-  },
-  {
-    "file": "pm/10_channel_media.png",
-    "url": "http://localhost:8080/?channels=media",
-    "at": "2026-11-02T21:44:45.373Z"
-  },
-  {
-    "file": "pm/10_channel_threads.png",
-    "url": "http://localhost:8080/?channels=threads",
-    "at": "2026-11-02T21:44:48.013Z"
-  },
-  {
-    "file": "pm/20_posts_drawer_typhoon.png",
-    "url": "http://localhost:8080/?from=2026-10-01&term=%E9%A2%B1%E9%A2%A8&seg=v2",
-    "at": "2026-11-02T21:44:51.745Z"
-  },
-  {
-    "file": "pm/21_posts_drawer_new_word.png",
-    "url": "http://localhost:8080/?term=%E8%82%A5%E5%AE%85&seg=v2",
-    "at": "2026-11-02T21:44:55.417Z"
-  },
-  {
-    "file": "pm/30_alerts_strip.png",
-    "url": "http://localhost:8080/",
-    "at": "2026-11-02T21:44:58.197Z"
-  },
-  {
     "file": "grafana/01_dashboard_main.png",
     "url": "http://localhost:3000/d/qsearch-q6/?orgId=1&from=1793656560000&to=1793657688119&kiosk",
     "at": "2026-11-02T22:15:07.631Z"
@@ -113,5 +53,65 @@
     "file": "prometheus/03_es_index_rate.png",
     "url": "http://localhost:9090/query?g0.expr=rate(elasticsearch_node_operations_completed_total%7Boperation%3D%22index%22%7D%5B1m%5D)&g0.tab=graph&g0.range_input=1h",
     "at": "2026-11-02T22:15:46.746Z"
+  },
+  {
+    "file": "pm/01_all_channels_all_time.png",
+    "url": "http://localhost:8080/",
+    "at": "2026-11-03T06:21:58.382Z"
+  },
+  {
+    "file": "pm/02_ptt_2026-10_pm_spot_check.png",
+    "url": "http://localhost:8080/?from=2026-10-01",
+    "at": "2026-11-03T06:22:01.913Z"
+  },
+  {
+    "file": "pm/03_keyword_kaohsiung.png",
+    "url": "http://localhost:8080/?q=%E9%AB%98%E9%9B%84",
+    "at": "2026-11-03T06:22:05.318Z"
+  },
+  {
+    "file": "pm/10_channel_facebook.png",
+    "url": "http://localhost:8080/?channels=facebook",
+    "at": "2026-11-03T06:22:08.342Z"
+  },
+  {
+    "file": "pm/10_channel_instagram.png",
+    "url": "http://localhost:8080/?channels=instagram",
+    "at": "2026-11-03T06:22:11.309Z"
+  },
+  {
+    "file": "pm/10_channel_youtube.png",
+    "url": "http://localhost:8080/?channels=youtube",
+    "at": "2026-11-03T06:22:14.170Z"
+  },
+  {
+    "file": "pm/10_channel_ptt.png",
+    "url": "http://localhost:8080/?channels=ptt&from=2026-10-01",
+    "at": "2026-11-03T06:22:17.195Z"
+  },
+  {
+    "file": "pm/10_channel_media.png",
+    "url": "http://localhost:8080/?channels=media",
+    "at": "2026-11-03T06:22:20.420Z"
+  },
+  {
+    "file": "pm/10_channel_threads.png",
+    "url": "http://localhost:8080/?channels=threads",
+    "at": "2026-11-03T06:22:23.354Z"
+  },
+  {
+    "file": "pm/20_posts_drawer_typhoon.png",
+    "url": "http://localhost:8080/?from=2026-10-01&term=%E9%A2%B1%E9%A2%A8&seg=v2",
+    "at": "2026-11-03T06:22:27.465Z"
+  },
+  {
+    "file": "pm/21_posts_drawer_new_word.png",
+    "url": "http://localhost:8080/?term=%E8%82%A5%E5%AE%85&seg=v2",
+    "at": "2026-11-03T06:22:31.262Z"
+  },
+  {
+    "file": "pm/30_alerts_strip.png",
+    "url": "http://localhost:8080/",
+    "at": "2026-11-03T06:22:34.097Z"
   }
 ]

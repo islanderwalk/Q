@@ -1,4 +1,4 @@
-"""P0 監控設定的一致性：告警與儀表板引用的指標，必須真的在程式裡定義；告警 YAML 能解析；
+"""P0 監控設定的一致性：告警與儀表板引用的指標，必須實際在程式裡定義；告警 YAML 能解析；
 儀表板 SQL 用到的資料表與視圖，必須在 pg/init.sql 裡建立。只讀檔案，不連任何服務。
 注意：_defined 是子字串比對（指標字串有出現在程式碼裡就算定義），不是完整的 PromQL 解析。"""
 import json
@@ -153,7 +153,7 @@ def test_every_scraped_job_has_a_down_guard():
     for job in ("wordcloud-api", "seg-service"):
         assert f'up{{job="{job}"}} == 0' in exprs and f'absent(up{{job="{job}"}})' in exprs, job
     assert "max(qseg_coverage_last_success_timestamp_seconds) or vector(0)" in exprs   # coverage 服務：從未成功也算 stale
-    # 「有標籤的指標 or vector(0)」會同時留下有標籤的序列和無標籤的 0，多出一條永遠在響的 {} 告警（真實環境驗證抓到）：先 max() 去標籤
+    # 「有標籤的指標 or vector(0)」會同時留下有標籤的序列和無標籤的 0，多出一條永遠在響的 {} 告警（端對端驗證抓到）：先 max() 去標籤
     import re as _re
     assert not _re.search(r"\((?:qseg|collector|wordcloud)_\w+(?:\{[^}]*\})? or vector\(0\)\)", exprs), "raw metric or vector(0)"
 

@@ -1,5 +1,5 @@
-"""P0 監控測試共用的替身。本機沒有 prometheus_client 時才安裝最小替身（只支援 Counter／Gauge／Histogram 的 labels、inc、set、observe），
-有裝真的就用真的。讀數一律走 metric.labels(...)._value.get()，兩種實作都成立。
+"""P0 監控測試共用的對應元件。本機沒有 prometheus_client 時才安裝最小對應元件（只支援 Counter／Gauge／Histogram 的 labels、inc、set、observe），
+有裝 prometheus_client 就用它。讀數一律走 metric.labels(...)._value.get()，兩種實作都成立。
 不碰網路、不碰 GCP、不碰 ES；ES 用測試內的假物件。"""
 import sys
 import types
@@ -89,7 +89,7 @@ def read_value(metric, *labels):
 
 
 def has_series(metric, *labels) -> bool:
-    """某個 label 組合是否還存在（fake 看 _children；真的 prometheus_client 看 _metrics）。"""
+    """某個 label 組合是否還存在（fake 看 _children；prometheus_client 本體 看 _metrics）。"""
     key = tuple(str(a) for a in labels)
     if hasattr(metric, "_children"):
         return key in metric._children

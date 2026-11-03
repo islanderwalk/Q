@@ -7,7 +7,7 @@ groups:
         for: 5m
         labels: { severity: warn }
         annotations: { summary: "覆蓋檢查服務抓不到 /metrics（seg-coverage）" }
-      # 15 分鐘仍無 seg_ver_v2 的篇數 > 0 持續 15 分鐘 → 呼叫（計畫書 P0 第 2 項；PR #15 原為 10 分鐘）
+      # 15 分鐘仍無 seg_ver_v2 的篇數 > 0 持續 15 分鐘 → 呼叫（計畫書 P0 第 2 項；初版為 10 分鐘）
       - alert: SegUnsegmentedDocs
         expr: sum(qseg_coverage_unsegmented_docs) > 0
         for: 15m
@@ -15,7 +15,7 @@ groups:
         annotations: { summary: "有文章超過 15 分鐘仍未斷詞（seg_ver_v2 缺），共 {{ $value }} 篇" }
       # 覆蓋檢查本身停擺（超過 10 分鐘沒有成功一次，或從未成功）
       - alert: SegCoverageStale
-        # max() 先把 instance 標籤去掉再 or vector(0)：真實環境驗證抓到「metric or vector(0)」會把有標籤的序列和無標籤的 0 都留下，
+        # max() 先把 instance 標籤去掉再 or vector(0)：端對端驗證抓到「metric or vector(0)」會把有標籤的序列和無標籤的 0 都留下，
         # 多出一條 {} 的告警永遠在響（time() − 0）；同樣寫法的 ReconStale／QualityStale 一併改
         expr: (time() - (max(qseg_coverage_last_success_timestamp_seconds) or vector(0))) > 600
         for: 5m

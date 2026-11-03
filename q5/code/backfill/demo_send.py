@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Q5 回補送出端示範：本機 127.0.0.1 起一個假 ES（tests/fake_es.py），用 HTTP 跑 backfill.py --send。
 
-不是真的 Elasticsearch：painless 腳本沒有執行，guard 邏輯是 Python 模擬。只連本機，不連外網。
+不是官方 Elasticsearch：painless 腳本沒有執行，guard 邏輯是 Python 模擬。只連本機，不連外網。
 線上 index 預先放三種文件：沒有計數、爬蟲已寫過三個計數（較新）、爬蟲只寫過轉發數（較新），
 最後一種用來看逐欄時間戳：回補要補上另外兩欄，但不能動轉發數。
 

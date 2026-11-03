@@ -1,4 +1,4 @@
-"""從字典 artifact 伺服器（GCS 的本機替身）下載指定版本，逐檔比對 sha256，建 jieba Tokenizer。
+"""從字典 artifact 伺服器（GCS 的本機對應元件）下載指定版本，逐檔比對 sha256，建 jieba Tokenizer。
 
 v2：主字典＋使用者字典，載入後把 total 設回 manifest 的 total_pinned（固定 total，加詞不會牽動不含該詞的文章）
 v1：只用主字典（舊流程「純字典斷詞」的模擬：HMM 關、不清洗、不過濾）
@@ -74,7 +74,7 @@ def load(version: str = None, pipeline: str = None, base_url: str = None, pin_to
     d = fetch(version, base_url)
     manifest = json.loads((d / "manifest.json").read_text(encoding="utf-8"))
     if pipeline == "v0":
-        # 舊系統替身：純字典最長匹配，不用 jieba、不用停用詞與合併規則（legacy.py）
+        # 舊流程重現版：純字典最長匹配，不用 jieba、不用停用詞與合併規則（legacy.py）
         from . import legacy
         maxlen = int(manifest.get("algo", {}).get("maxlen", legacy.DEFAULT_MAXLEN))
         return Dictionary(version=manifest["dict_version"], manifest=manifest, tokenizer=None,

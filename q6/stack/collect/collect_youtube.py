@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Q6 YouTube 渠道真實樣本（未登入、公開 RSS）。
+"""Q6 YouTube 渠道公開頁樣本（未登入、公開 RSS）。
 
 1. 開台灣新聞頻道的公開 @handle 頁，從 HTML 讀 channel_id（"externalId" 或 canonical /channel/UC…）。
 2. 讀公開 RSS：https://www.youtube.com/feeds/videos.xml?channel_id=<id>（每頻道最新 15 支）。

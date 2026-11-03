@@ -1,5 +1,5 @@
 {
-  "_note": "真實來源（都是站方提供給閱讀器的公開 feed，不登入、不帶 cookie；Gossiping 看板只多一個 over18=1 同意標頭）。預設每 5 分鐘輪詢一次，同一主機兩次請求至少隔 2.5 秒，帶 ETag／If-Modified-Since；429／5xx 就退避。",
+  "_note": "公開來源（都是站方提供給閱讀器的公開 feed，不登入、不帶 cookie；Gossiping 看板只多一個 over18=1 同意標頭）。預設每 5 分鐘輪詢一次，同一主機兩次請求至少隔 2.5 秒，帶 ETag／If-Modified-Since；429／5xx 就退避。",
   "poll_sec": 300,
   "feeds": [
     {"name": "ptt/Gossiping", "channel": "ptt", "source": "Gossiping", "url": "https://www.ptt.cc/atom/Gossiping.xml", "headers": {"Cookie": "over18=1"}},

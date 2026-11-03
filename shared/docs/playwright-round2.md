@@ -1,11 +1,11 @@
-# Playwright 證據第二輪（2026-10-30，給 UIUX 總架構圖與 GitHub 整理）
+# Playwright 截圖紀錄（第二輪，2026-10-30）
 
 原則：已有的不重拍，只補證據不足處；全部未登入、只開公開頁，不存 cookie／token／cursor，FB／IG／Threads 不存整頁 HTML。
 一般使用者的帳號、頭像、IP 一律黑框遮住。主張、結果、來源網址與截取時間見 [`shared/capture/capture_manifest.json`](../capture/capture_manifest.json)（`round: round2-2026-10-30` 的條目）。
 
 拍攝環境有兩個，差別本身就是證據：
 
-- **雲端容器**（資料中心出口 IP）：`shared/capture/capture_round2_cloud.js`（Node＋Playwright）。PTT、Threads 照常開得到；FB、IG 直接被導去登入頁。
+- **Linux 容器**（資料中心出口 IP）：`shared/capture/capture_round2_cloud.js`（Node＋Playwright）。PTT、Threads 照常開得到；FB、IG 直接被導去登入頁。
 - **本機**（住宅 IP）：`shared/capture/capture_round2_residential.py`（Python＋Playwright 1.58）。FB、IG 只能在這裡拍。
 
 ## 新增的截圖
@@ -29,7 +29,7 @@
 | `q4/evidence/playwright/threads_post_url.png`、`q5/evidence/playwright/threads_post_repost.png` | 回覆區一般使用者的帳號與頭像補黑框（像素遮罩，其他未動） |
 | `q5/evidence/playwright/ig_reel_page.png` | 右側留言區露出的帳號尾段補黑框（像素遮罩，其他未動） |
 
-## 稽核發現（6 個代理逐張看過既有截圖），UIUX 與 GitHub 整理請照這裡改說明文字
+## 稽核發現（逐張核對既有截圖後的圖說更正）
 
 圖說和圖對不上的地方（manifest 已加 `correction` 欄位）：
 

@@ -2,43 +2,43 @@
 <html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
 <body><script>
 renderDiagram({
-  eyebrow: 'QSearch 筆試 · 第 6 題 · 真實環境驗證（q6/stack）',
-  title: '每一層都跑過真的程式：官方映像＋同介面替身，零成本',
-  sub: '與總覽圖同一套架構，GCP 託管服務換成官方模擬器或同介面替身（標籤寫「替身」）；方塊裡的數字都是這次在容器裡實測的結果，對應 q6/stack/RESULTS.md。',
+  eyebrow: 'QSearch 筆試 · 第 6 題 · 整套系統實跑（q6/stack）',
+  title: '每一層都跑過程式本體：官方映像＋同介面的對應元件，零成本',
+  sub: '與總覽圖同一套架構，GCP 託管服務換成官方模擬器或同介面的對應元件；方塊裡的數字都是這次在容器裡實測的結果，對應 q6/stack/RESULTS.md。',
   height: 910,
   lanes: [
     { x: 0, y: 0, w: 1030, h: 172, label: '① 字典 artifact：r1 → r6 共 6 版' },
     { x: 0, y: 187, w: 1030, h: 262, label: '② 回補：42.5 萬篇 PTT、46 個分區、跑了三輪' },
-    { x: 0, y: 464, w: 1030, h: 205, label: '③ 串流：六渠道真實樣本 267 篇' },
+    { x: 0, y: 464, w: 1030, h: 205, label: '③ 串流：六渠道樣本 267 篇' },
     { x: 1050, y: 187, w: 470, h: 482, label: '④ 儲存與查詢', cls: 'right' },
     { x: 0, y: 684, w: 1520, h: 205, label: '⑤ 監控與資料庫', cls: 'warm' }
   ],
   nodes: [
     { id: 'rel', x: 20, y: 44, w: 220, tag: 'git · dict/releases', title: '發版檔 rN.json', sub: '地名詞頻、新北、好市多、全聯盟、肥宅、英文虛詞' },
     { id: 'build', x: 275, y: 44, w: 220, tag: 'build_artifact.py', title: '建版本＋sha256', sub: 'total 固定 87,043,992；IK 擴充詞與 jieba 同一份' },
-    { id: 'dict', x: 530, y: 38, w: 240, cls: 'accent', tag: 'GCS 替身 · nginx', title: 'versions/rN ＋ current', sub: '切版＝原子 rename；Last-Modified／ETag 給 IK 判斷' },
+    { id: 'dict', x: 530, y: 38, w: 240, cls: 'accent', tag: 'GCS 對應元件 · nginx', title: 'versions/rN ＋ current', sub: '切版＝原子 rename；Last-Modified／ETag 給 IK 判斷' },
     { id: 'ver', x: 805, y: 44, w: 205, tag: 'seg_ver', title: '22026103006', sub: '演算法 × 10¹⁰ ＋ 日期 ＋ 序號（補零）' },
 
-    { id: 'raw', x: 20, y: 236, w: 220, cls: 'store', tag: 'GCS／BigQuery 匯出替身', title: '原文 46 個分區', sub: 'PTT × 月，424,887 篇，平均 29 字' },
-    { id: 'job', x: 275, y: 230, w: 220, cls: 'accent', tag: 'Cloud Run Jobs 替身', title: '回補 Job × 3 task', sub: '同一映像；全域限速分給在跑的 task' },
-    { id: 'pg', x: 530, y: 236, w: 240, cls: 'store', tag: 'Cloud SQL 替身 · PostgreSQL 16', title: '帳本與控制表', sub: '分區狀態、checkpoint、限速、探針基準、發版紀錄' },
+    { id: 'raw', x: 20, y: 236, w: 220, cls: 'store', tag: 'GCS／BigQuery 匯出對應元件', title: '原文 46 個分區', sub: 'PTT × 月，424,887 篇，平均 29 字' },
+    { id: 'job', x: 275, y: 230, w: 220, cls: 'accent', tag: 'Cloud Run Jobs 對應元件', title: '回補 Job × 3 task', sub: '同一映像；全域限速分給在跑的 task' },
+    { id: 'pg', x: 530, y: 236, w: 240, cls: 'store', tag: 'Cloud SQL 對應元件 · PostgreSQL 16', title: '帳本與控制表', sub: '分區狀態、checkpoint、限速、探針基準、發版紀錄' },
     { id: 'gate', x: 805, y: 236, w: 205, cls: 'gate', tag: '每一批', title: '閘門 G1–G4', sub: '洩漏看原文、必不可拆看斷點、p95 對發版前基準、首月 PM 簽核' },
     { id: 'tp', x: 275, y: 372, w: 495, tag: '實測', title: '回補吞吐：單 task 2,852–2,986 篇/秒；3 task 限速 2,770、不限速 5,170', sub: '' },
 
-    { id: 'six', x: 20, y: 506, w: 220, tag: '六渠道真實樣本', title: 'FB・IG・YouTube・PTT・媒體・Threads', sub: '未登入公開頁；IG／FB 在本機抓' },
-    { id: 'parser', x: 275, y: 506, w: 220, tag: 'parser 替身', title: '只寫本體欄位', sub: 'partial update＋doc_as_upsert，不碰斷詞欄位' },
+    { id: 'six', x: 20, y: 506, w: 220, tag: '六渠道樣本', title: 'FB・IG・YouTube・PTT・媒體・Threads', sub: '未登入公開頁；IG／FB 在本機抓' },
+    { id: 'parser', x: 275, y: 506, w: 220, tag: 'parser 對應元件', title: '只寫本體欄位', sub: 'partial update＋doc_as_upsert，不碰斷詞欄位' },
     { id: 'ps', x: 530, y: 506, w: 240, tag: 'Pub/Sub 官方模擬器', title: 'parsed-posts', sub: 'v1、v2 各一個訂閱；壞訊息 5 次後進 DLQ' },
-    { id: 'segs', x: 805, y: 500, w: 205, cls: 'accent', tag: 'Cloud Run 服務替身', title: '斷詞服務 v1／v2', sub: '發完 1.7 秒全寫好；重送全 noop' },
+    { id: 'segs', x: 805, y: 500, w: 205, cls: 'accent', tag: 'Cloud Run 服務對應元件', title: '斷詞服務 v1／v2', sub: '發完 1.7 秒全寫好；重送全 noop' },
 
-    { id: 'es', x: 1070, y: 232, w: 430, cls: 'store', tag: 'Compute Engine 替身 · 官方 ES 9.5.5', title: 'posts（3 分片，425,154 篇）', sub: '<code>terms_v1</code>／<code>terms_v2</code>、<code>seg_ver</code>、<code>content</code>（IK）＋<code>content.bigram</code>；smartcn、ICU、IK 外掛' },
-    { id: 'api', x: 1070, y: 392, w: 430, tag: 'Cloud Run 服務替身 · FastAPI', title: '文字雲 API', sub: '全期 p95 166 ms、近一個月 13 ms；軟停用詞與合併在查詢時套用' },
+    { id: 'es', x: 1070, y: 232, w: 430, cls: 'store', tag: 'Compute Engine 對應元件 · 官方 ES 9.5.5', title: 'posts（3 分片，425,154 篇）', sub: '<code>terms_v1</code>／<code>terms_v2</code>、<code>seg_ver</code>、<code>content</code>（IK）＋<code>content.bigram</code>；smartcn、ICU、IK 外掛' },
+    { id: 'api', x: 1070, y: 392, w: 430, tag: 'Cloud Run 服務對應元件 · FastAPI', title: '文字雲 API', sub: '全期 p95 166 ms、近一個月 13 ms；軟停用詞與合併在查詢時套用' },
     { id: 'pm', x: 1070, y: 545, w: 205, title: 'PM A/B 頁', sub: '兩張雲、差異清單、點詞看原文' },
     { id: 'kib', x: 1295, y: 545, w: 205, title: 'Kibana 9.5.5', sub: 'Discover 對照同一篇的 v1／v2' },
 
-    { id: 'otel', x: 20, y: 730, w: 300, tag: 'Ops Agent 替身', title: 'OpenTelemetry Collector', sub: 'elasticsearch ＋ postgresql receiver（Ops Agent 用的同一套）' },
-    { id: 'prom', x: 345, y: 730, w: 300, tag: 'Cloud Monitoring 替身', title: 'Prometheus ＋ 告警規則', sub: '告警只有超過 180 秒的查詢；串流延遲 p95、寫入拒絕只收指標' },
+    { id: 'otel', x: 20, y: 730, w: 300, tag: 'Ops Agent 對應元件', title: 'OpenTelemetry Collector', sub: 'elasticsearch ＋ postgresql receiver（Ops Agent 用的同一套）' },
+    { id: 'prom', x: 345, y: 730, w: 300, tag: 'Cloud Monitoring 對應元件', title: 'Prometheus ＋ 告警規則', sub: '告警只有超過 180 秒的查詢；串流延遲 p95、寫入拒絕只收指標' },
     { id: 'graf', x: 670, y: 730, w: 300, tag: '儀表板', title: 'Grafana 14 個面板（分 4 列）', sub: 'API p95、ES 執行緒池、回補吞吐與帳本、串流 lag' },
-    { id: 'logs', x: 995, y: 730, w: 245, tag: 'Cloud Logging 替身', title: '結構化 JSON 日誌', sub: 'event、duration_ms、seg_ver、request_id' },
+    { id: 'logs', x: 995, y: 730, w: 245, tag: 'Cloud Logging 對應元件', title: '結構化 JSON 日誌', sub: 'event、duration_ms、seg_ver、request_id' },
     { id: 'zero', x: 1265, y: 730, w: 235, cls: 'gate', tag: '成本', title: '0 元', sub: 'GCP 只跑 terraform plan／test，不 apply、不開任何計費資源' }
   ],
   edges: [
@@ -59,7 +59,7 @@ renderDiagram({
     { from: 'dict', to: 'job', sides: ['bottom', 'top'], fromT: 0.15, toT: 0.8, my: 205, dashed: true, color: 'accent', label: '載入 rN', labelAt: [500, 205] },
     { from: 'dict', to: 'es', sides: ['top', 'top'], fromT: 0.5, toT: 0.5, route: 'points', points: [[650, 18], [1285, 18]], dashed: true, color: 'accent', label: 'IK 遠端字典：切版後 8–58 秒生效', labelAt: [1160, 18] }
   ],
-  footL: '全部在雲端容器內執行：官方映像（Elasticsearch、Kibana、PostgreSQL、Pub/Sub 模擬器、OTel、Prometheus、Grafana）＋本 repo 程式',
+  footL: '全部在Linux 容器內執行：官方映像（Elasticsearch、Kibana、PostgreSQL、Pub/Sub 模擬器、OTel、Prometheus、Grafana）＋本 repo 程式',
   footR: 'q6/architecture/stack/diagram-stack.png'
 });
 </script></body></html>

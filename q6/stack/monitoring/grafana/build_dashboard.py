@@ -185,7 +185,7 @@ B.add(*ts("錯誤分解（5 分鐘增量）：逾時／ES 部分結果／其他�
     ('sum(increase(wordcloud_over_180s_total{seg=~"$seg"}[5m]))', "慢成功（>180 秒）")], stack=True, w=8,
     desc="timeout＝requests 讀逾時 180 秒；partial＝ES 自己的 170 秒 timeout 回 timed_out（WordcloudPartialResults）；other＝ES 4xx/5xx 或連不上。告警 WordcloudSlo180sBurn 看 SLI，不看這裡"))
 B.add(*ts("查詢量與快取（每秒）", [('sum by (seg, result) (rate(wordcloud_cache_total{seg=~"$seg"}[$__rate_interval]))', "{{seg}} {{result}}")], unit="reqps", stack=True, w=8,
-          desc="hit＝快取命中；coalesced＝同一鍵的查詢合併等第一筆（single-flight）；miss＝真的打 ES。已結束日期範圍的快取 24 小時、含今天的 300 秒"))
+          desc="hit＝快取命中；coalesced＝同一鍵的查詢合併等第一筆（single-flight）；miss＝打 ES。已結束日期範圍的快取 24 小時、含今天的 300 秒"))
 B.add(*ts("各階段耗時 p95：overlay／state／ES／post", [('histogram_quantile(0.95, sum by (le, phase) (rate(wordcloud_phase_seconds_bucket{seg=~"$seg"}[$__rate_interval])))', "{{phase}}")],
           unit="s", w=8, desc="ES 以外的階段應該都在毫秒級；PG 連線池（最多 4 條，statement_timeout 10 秒）出問題會先反映在 state／overlay"))
 

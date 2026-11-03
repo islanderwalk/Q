@@ -1,6 +1,6 @@
-"""建「原文湖」：RAW_ROOT/<channel>/<yyyy-mm>.jsonl（GCS／BigQuery 匯出的本機替身），給灌資料（seed）與回補 Job 用。
+"""建「原文湖」：RAW_ROOT/<channel>/<yyyy-mm>.jsonl（GCS／BigQuery 匯出的本機對應元件），給灌資料（seed）與回補 Job 用。
 
-全部來源都是真實文字＋真實發文時間；沒有發文時間的語料不收（2026-10-31 起不再有合成時間）：
+全部來源都是原文＋原始發文時間；沒有發文時間的語料不收（2026-10-31 起不再有合成時間）：
 1. --titles   ../data/ptt_titles_7d.jsonl：八卦板標題 6,685 則，時間取自文章代碼 M.<unix 秒>；
               425 則已刪除文章沒有代碼 → 略過，不補時間
 2. --pretrain yuhuanstudio/PTT-pretrain-zhtw（Hugging Face，Apache-2.0）：507,555 篇 PTT 文章全文（多看板、2001–2025），
@@ -12,7 +12,7 @@
 用法：python prepare_raw.py --out runtime/raw [--titles …] [--pretrain …parquet] [--gossip100k …parquet]
                             [--since 2020-01] [--max-per-source N]
 輸出：<out>/ptt/<yyyy-mm>.jsonl（每行一篇；post_id 去重，先到先贏）與 <out>/_manifest.json（來源、篩掉多少、月份分布）。
-分區 = 渠道 × 真實月份；回補帳本（setup.py）每個分區一列。
+分區 = 渠道 × 發文月份；回補帳本（setup.py）每個分區一列。
 """
 import argparse
 import hashlib

@@ -213,8 +213,8 @@ def _requirement_names():
 
 def test_requirements_cover_imports():
     """main.py 匯入的第三方套件與 Dockerfile 用的 uvicorn 都要在 requirements.txt。
-    google-cloud-pubsub 沒用到（dry-run 不發佈後續事件），已從 requirements 拿掉（Terraform 分支 67f0a79 併入）；
-    之後真的要發佈事件、加回來時也不會讓這個測試失敗。"""
+    google-cloud-pubsub 沒用到（dry-run 不發佈後續事件），已從 requirements 拿掉（Terraform 整理後併入）；
+    之後要發佈事件、加回來時也不會讓這個測試失敗。"""
     tree = ast.parse((PARSER_DIR / "main.py").read_text(encoding="utf-8"))
     imported = {(n.module if isinstance(n, ast.ImportFrom) else a.name).split(".")[0]
                 for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom))

@@ -26,7 +26,7 @@ groups:
         labels: { severity: warn }
         annotations: { summary: "feed 超過 15 分鐘沒有成功抓取（{{ $labels.feed }}）" }
       - alert: CollectorFeedDead
-        # 停用的 feed（沒有 YouTube API key、COLLECT_SKIP）不算：真實環境驗證時三個 YouTube feed 因為沒有 key 被判成 dead
+        # 停用的 feed（沒有 YouTube API key、COLLECT_SKIP）不算：端對端驗證時三個 YouTube feed 因為沒有 key 被判成 dead
         expr: (time() - collector_last_ok_timestamp_seconds) > 3600 and on (feed) collector_feed_enabled == 1
         for: 5m
         labels: { severity: page }

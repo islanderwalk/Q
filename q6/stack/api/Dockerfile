@@ -1,5 +1,5 @@
-# 文字雲查詢 API（Cloud Run 服務）＋ PM A/B 前端靜態頁＋真實來源採集器（同一個映像，command 不同）。建置 context = q6/stack/
-# 映像裡帶著 data/channels 的 267 篇真實六渠道樣本，給 PM 頁「重播樣本」用。
+# 文字雲查詢 API（Cloud Run 服務）＋ PM A/B 前端靜態頁＋公開 feed 採集器（同一個映像，command 不同）。建置 context = q6/stack/
+# 映像裡帶著 data/channels 的 267 篇六渠道樣本，給 PM 頁「重播樣本」用。
 # 建置環境若有 TLS 攔截代理，用 --secret id=ca,src=<CA 檔> 傳入（只在建置時掛載，不進映像）
 FROM mirror.gcr.io/library/python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

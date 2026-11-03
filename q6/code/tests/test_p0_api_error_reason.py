@@ -18,7 +18,7 @@ def load_app():
         return sys.modules["q6_api_app"]
     if str(API) not in sys.path:          # app.py 內 import ops（同目錄）；單獨跑這個目錄的測試時 api/ 還不在 sys.path
         sys.path.insert(0, str(API))
-    # api/web（前端建置產物）不在 repo 裡，載入時 StaticFiles 會檢查目錄；這裡換成空替身，只為了 import 不為了服務靜態檔
+    # api/web（前端建置產物）不在 repo 裡，載入時 StaticFiles 會檢查目錄；這裡換成空對應元件，只為了 import 不為了服務靜態檔
     import fastapi.staticfiles as fs
     real_static = fs.StaticFiles
     async def _no_static(scope, receive, send):

@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS live_events (
   detail jsonb
 );
 CREATE INDEX IF NOT EXISTS live_events_at ON live_events (at DESC);
--- 真實來源採集器（PTT 看板 Atom、YouTube 頻道 RSS、中央社／公視 RSS）：每個 feed 的最近一次抓取狀態與條件式請求標頭
+-- 公開 feed 採集器（PTT 看板 Atom、YouTube 頻道 RSS、中央社／公視 RSS）：每個 feed 的最近一次抓取狀態與條件式請求標頭
 CREATE TABLE IF NOT EXISTS collector_state (
   feed text PRIMARY KEY,                      -- feeds.json 的 name，例如 ptt/Gossiping
   channel text NOT NULL,

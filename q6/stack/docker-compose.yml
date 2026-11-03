@@ -1,4 +1,4 @@
-# Q6 真實環境：官方映像為主，GCP 託管服務在本機以官方模擬器或同介面替身代替（對照表見 README.md）。
+# Q6 整套系統（Docker）：官方映像為主，GCP 託管服務在本機以官方模擬器或同介面的對應元件代替（對照表見 README.md）。
 # 啟動：./run.sh up（先建字典 artifact、外掛、映像）；所有資料放 runtime/（不進 git）。
 name: qsearch-q6
 x-seg: &seg
@@ -15,7 +15,7 @@ x-seg: &seg
   volumes: [ "./runtime/raw:/data/raw:ro" ]
 
 services:
-  dictsrv:            # 字典 artifact（GCS bucket 的本機替身；nginx 回 Last-Modified／ETag，IK 靠這兩個標頭判斷要不要重載）
+  dictsrv:            # 字典 artifact（GCS bucket 的本機對應元件；nginx 回 Last-Modified／ETag，IK 靠這兩個標頭判斷要不要重載）
     image: mirror.gcr.io/library/nginx:1.27-alpine
     volumes: [ "./runtime/dictsrv:/usr/share/nginx/html:ro" ]
     ports: [ "8081:80" ]
@@ -28,12 +28,12 @@ services:
       - node.name=es-1
       - discovery.type=single-node
       - xpack.security.enabled=false
-      # 容器的磁碟是按 session 配額，ES 依「總容量的百分比」算水位會誤判已滿；改用絕對剩餘空間
+      # 容器的磁碟是固定配額，ES 依「總容量的百分比」算水位會誤判已滿；改用絕對剩餘空間
       - cluster.routing.allocation.disk.watermark.low=4gb
       - cluster.routing.allocation.disk.watermark.high=2gb
       - cluster.routing.allocation.disk.watermark.flood_stage=1gb
       - ES_JAVA_OPTS=-Xms${ES_HEAP:-4g} -Xmx${ES_HEAP:-4g}
-      - path.repo=/usr/share/elasticsearch/snapshots           # fs 快照倉庫（GCS 倉庫的本機替身）；scripts/setup.py 建倉庫與 SLM 政策
+      - path.repo=/usr/share/elasticsearch/snapshots           # fs 快照倉庫（GCS 倉庫的本機對應元件）；scripts/setup.py 建倉庫與 SLM 政策
     volumes: [ "esdata:/usr/share/elasticsearch/data", "essnap:/usr/share/elasticsearch/snapshots" ]
     ports: [ "9200:9200" ]
     depends_on: [ dictsrv ]
@@ -72,7 +72,7 @@ services:
     command: [ "service" ]
     environment: { <<: *segenv, PIPELINE: v1, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v1, DICT_VERSION: qsearch-q6-2026.10.30.1, METRICS_PORT: "9108" }
 
-  seg-v0:             # 串流斷詞服務 v0（舊系統替身：凍結 2019 字典＋逆向最長匹配，重現維護多年的舊文字雲）
+  seg-v0:             # 串流斷詞服務 v0（舊流程重現版：凍結 2019 字典＋逆向最長匹配，重現維護多年的舊文字雲）
     <<: *seg
     command: [ "service" ]
     environment: { <<: *segenv, PIPELINE: v0, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v0, DICT_VERSION: "${DICT_VERSION_V0:-qsearch-q6-legacy-2019.12.31.1}", METRICS_PORT: "9108" }
@@ -107,7 +107,7 @@ services:
     environment: &apienv
       ES_URL: http://es:9200
       DICT_BASE_URL: http://dictsrv
-      DICT_ROOT: /dict                               # 與 dictsrv 同一個目錄（GCS bucket 的本機替身），API 直接寫新版、切 current
+      DICT_ROOT: /dict                               # 與 dictsrv 同一個目錄（GCS bucket 的本機對應元件），API 直接寫新版、切 current
       PUBSUB_EMULATOR_HOST: pubsub:8085
       PUBSUB_PROJECT: qsearch-local
       PG_DSN: postgresql://qsearch:qsearch@pg:5432/qsearch
@@ -115,7 +115,7 @@ services:
     ports: [ "8080:8080" ]
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_started }, dictsrv: { condition: service_started } }
 
-  collector:          # 真實來源採集器：PTT 看板 Atom、YouTube 頻道（Data API；RSS 只限 POC）、中央社／公視 RSS → ES 本體 ＋ Pub/Sub parsed-posts（api/collector.py）
+  collector:          # 公開 feed 採集器：PTT 看板 Atom、YouTube 頻道（Data API；RSS 只限 POC）、中央社／公視 RSS → ES 本體 ＋ Pub/Sub parsed-posts（api/collector.py）
     image: qsearch-wordcloud-api:local
     command: [ "python", "collector.py" ]
     environment: { <<: *apienv, COLLECT_SKIP: "${COLLECT_SKIP:-}", COLLECT_GAP_SEC: "2.5", COLLECTOR_METRICS_PORT: "9111",

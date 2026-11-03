@@ -38,7 +38,7 @@ loki.process "q6" {
   stage.labels {
     values = { event = "", severity = "", outcome = "", channel = "" }
   }
-  // 只數採集器的 collect 事件行（真實環境驗證：不加 match 會把 API 的每一行也算進去）。
+  // 只數採集器的 collect 事件行（端對端驗證：不加 match 會把 API 的每一行也算進去）。
   // Alloy 會自動加前綴，Prometheus 裡的名字是 loki_process_custom_crawl_log_lines_total（標籤 channel／outcome／service）
   stage.match {
     selector = "{service=\"collector\", event=\"collect\"}"

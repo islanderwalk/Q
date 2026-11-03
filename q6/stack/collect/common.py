@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Q6 真實渠道樣本收集：共用工具。
+"""Q6 渠道樣本收集：共用工具。
 
 規則（每支 collect_*.py 都遵守）：
 - 只抓未登入看得到的公開頁面／公開 RSS；不登入、不存 cookie／token／cursor。
@@ -69,7 +69,7 @@ class Fetcher:
     """每個網站（hostname）各自計時與計數；超過上限就拒絕再抓。"""
 
     def __init__(self, channel, max_loads=MAX_LOADS_PER_SITE, gap=GAP_SECONDS, already_used=None, cache_dir=None):
-        """cache_dir：開發時重跑解析用的暫存（放在 repo 外，例如 scratchpad），有快取就不再連線、不計次。
+        """cache_dir：開發時重跑解析用的暫存（放在 repo 外，例如暫存目錄），有快取就不再連線、不計次。
         Threads 不用快取（不留整頁 HTML）。"""
         self.cache_dir = Path(cache_dir) if cache_dir else None
         if self.cache_dir:
@@ -79,7 +79,7 @@ class Fetcher:
         self.gap = gap
         self.last = {}
         self.count = dict(already_used or {})  # 含這次之前已用掉的次數，用來擋 30 次上限
-        self.network = {}  # 這次真的連線的次數
+        self.network = {}  # 這次實際連線的次數
         self.cache_hits = 0
         self.session = requests.Session()
         self.session.headers.update(HEADERS)

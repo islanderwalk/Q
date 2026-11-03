@@ -1,0 +1,602 @@
+[
+ {
+  "platform": "facebook",
+  "target": "Facebook · cnanewstaiwan",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 57 · 抓到 56 篇",
+  "file": "facebook_cnanewstaiwan_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 126140,
+  "w": 1600,
+  "h": 861
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · cnanewstaiwan",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 57 · 抓到 56 篇",
+  "file": "facebook_cnanewstaiwan_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 9656,
+  "w": 1600,
+  "h": 861
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · cnanewstaiwan",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 57 · 抓到 56 篇",
+  "file": "facebook_cnanewstaiwan_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 166711,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · cnanewstaiwan",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 57 · 抓到 56 篇",
+  "file": "facebook_cnanewstaiwan_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 151217,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · PNNPTS",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 19 · 抓到 4 篇",
+  "file": "facebook_PNNPTS_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 65235,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · PNNPTS",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 19 · 抓到 4 篇",
+  "file": "facebook_PNNPTS_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 53097,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · PNNPTS",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 19 · 抓到 4 篇",
+  "file": "facebook_PNNPTS_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 150152,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · PNNPTS",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 19 · 抓到 4 篇",
+  "file": "facebook_PNNPTS_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 140939,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · ftvnews53",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 11 · 抓到 0 篇",
+  "file": "facebook_ftvnews53_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 31143,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · ftvnews53",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 11 · 抓到 0 篇",
+  "file": "facebook_ftvnews53_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 31143,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · ftvnews53",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 11 · 抓到 0 篇",
+  "file": "facebook_ftvnews53_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 125954,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · ftvnews53",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 11 · 抓到 0 篇",
+  "file": "facebook_ftvnews53_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 116385,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · NASA",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 17 · 抓到 5 篇",
+  "file": "facebook_NASA_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 70541,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · NASA",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 17 · 抓到 5 篇",
+  "file": "facebook_NASA_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 57491,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · NASA",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 17 · 抓到 5 篇",
+  "file": "facebook_NASA_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 165489,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "facebook",
+  "target": "Facebook · NASA",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 17 · 抓到 5 篇",
+  "file": "facebook_NASA_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 143020,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_cnanews_tw_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 82203,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_cnanews_tw_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 19138,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_cnanews_tw_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 173681,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_cnanews_tw_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 127646,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 2 篇",
+  "file": "instagram_cnanews_tw_reels_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 61776,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 2 篇",
+  "file": "instagram_cnanews_tw_reels_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 140321,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 2 篇",
+  "file": "instagram_cnanews_tw_reels_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 154044,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · cnanews_tw_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 2 篇",
+  "file": "instagram_cnanews_tw_reels_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 243091,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 45 · 抓到 315 篇",
+  "file": "instagram_pts_news_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 61146,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 45 · 抓到 315 篇",
+  "file": "instagram_pts_news_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 18381,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 45 · 抓到 315 篇",
+  "file": "instagram_pts_news_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 164884,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 45 · 抓到 315 篇",
+  "file": "instagram_pts_news_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 133136,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 46 · 抓到 3 篇",
+  "file": "instagram_pts_news_reels_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 61136,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 46 · 抓到 3 篇",
+  "file": "instagram_pts_news_reels_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 128453,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 46 · 抓到 3 篇",
+  "file": "instagram_pts_news_reels_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 147107,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · pts.news_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 46 · 抓到 3 篇",
+  "file": "instagram_pts_news_reels_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 229136,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_ftvnews_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 9380,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_ftvnews_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 153450,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_ftvnews_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 114028,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 315 篇",
+  "file": "instagram_ftvnews_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 259760,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_ftvnews_reels_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 56157,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_ftvnews_reels_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 164423,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_ftvnews_reels_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 150322,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · ftvnews_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_ftvnews_reels_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 264774,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 314 篇",
+  "file": "instagram_nasa_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 53778,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 314 篇",
+  "file": "instagram_nasa_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 71057,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 314 篇",
+  "file": "instagram_nasa_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 142949,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 44 · 抓到 314 篇",
+  "file": "instagram_nasa_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 198870,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_nasa_reels_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 50958,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_nasa_reels_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 93661,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_nasa_reels_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 144900,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "instagram",
+  "target": "Instagram · nasa_reels",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 43 · 抓到 2 篇",
+  "file": "instagram_nasa_reels_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 192898,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 91 · 抓到 177 篇",
+  "file": "threads_cnanews_tw_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 61458,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 91 · 抓到 177 篇",
+  "file": "threads_cnanews_tw_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 59040,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 91 · 抓到 177 篇",
+  "file": "threads_cnanews_tw_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 89820,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · cnanews_tw",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 91 · 抓到 177 篇",
+  "file": "threads_cnanews_tw_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 156245,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 93 · 抓到 222 篇",
+  "file": "threads_pts_news_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 57601,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 93 · 抓到 222 篇",
+  "file": "threads_pts_news_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 71080,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 93 · 抓到 222 篇",
+  "file": "threads_pts_news_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 153464,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · pts.news",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 93 · 抓到 222 篇",
+  "file": "threads_pts_news_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 167648,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 111 · 抓到 189 篇",
+  "file": "threads_ftvnews_top.jpg",
+  "caption": "頁面頂部",
+  "bytes": 53921,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 111 · 抓到 189 篇",
+  "file": "threads_ftvnews_after_scroll.jpg",
+  "caption": "捲動後",
+  "bytes": 77167,
+  "w": 1600,
+  "h": 548
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 111 · 抓到 189 篇",
+  "file": "threads_ftvnews_devtools_F12.jpg",
+  "caption": "F12 Network｜頂部",
+  "bytes": 146532,
+  "w": 1600,
+  "h": 956
+ },
+ {
+  "platform": "threads",
+  "target": "Threads · ftvnews",
+  "stats": "HTTP 200 · 捲動 25 次 · API 回應 111 · 抓到 189 篇",
+  "file": "threads_ftvnews_devtools_F12_after_scroll.jpg",
+  "caption": "F12 Network｜捲動後",
+  "bytes": 174872,
+  "w": 1600,
+  "h": 956
+ }
+]

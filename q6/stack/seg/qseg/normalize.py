@@ -11,7 +11,7 @@ import segmenter as sg
 
 TAG_RE = re.compile(r"<[^>]+>")
 # 沒有協定的網址、被換行切斷的網址殘片（PTT 推文把 https://… 切成「http」+「s://…」）
-# 前面不能用 \w：Python 的 \w 包含中文，「信箱是msn.com」的「是」會讓整條規則失效（回補閘門 G2 抓到的真實案例）
+# 前面不能用 \w：Python 的 \w 包含中文，「信箱是msn.com」的「是」會讓整條規則失效（回補閘門 G2 抓到的實例）
 BARE_URL_RE = re.compile(r"(?<![A-Za-z0-9_@.-])(?:[a-z0-9-]+\.)+(?:com|tw|cc|net|org|io|me|ly|gl|co|es|gd|be|to|info)(?:/[^\s，。、）)]*)?", re.I)
 URL_FRAGMENT_RE = re.compile(r"(?<![a-z])s?://\S+|\bhttps?\b", re.I)
 MENTION_RE = re.compile(r"@[\w.]+")

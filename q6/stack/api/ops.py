@@ -1,9 +1,9 @@
-"""PM 頁「資料工程端」的真實操作，給 app.py 與 collector.py 用；不依賴 fastapi，可單獨測（q6/stack/tests）。
+"""PM 頁「資料工程端」的實際操作，給 app.py 與 collector.py 用；不依賴 fastapi，可單獨測（q6/stack/tests）。
 
 - 字典發版：從 artifact 的 current 版複製一份、加詞、逐檔算 sha256、寫 manifest，再原子切換 current
   （GCS 上就是改 current 物件）。不需要 dict.txt.big：主字典就在 current 版的 base.dict 裡。
 - 控制訊息：發到 Pub/Sub 主題 dict-releases，斷詞服務 v2 收到後重載字典並定向重跑（seg/qseg/control.py）。
-- 串流：把一篇貼文（真實渠道樣本重播，或收集器抓到的新文）當 parser 的輸出送進 parsed-posts，
+- 串流：把一篇貼文（渠道樣本重播，或收集器抓到的新文）當 parser 的輸出送進 parsed-posts，
   同時把文章本體寫進 ES（parser 自己那一段）。
 """
 import hashlib
@@ -250,7 +250,7 @@ def base_doc(post: dict) -> dict:
 
 
 def load_channel_samples(folder: Path) -> list:
-    """data/channels/*.jsonl 的六渠道真實樣本（2026-10-31 未登入公開頁抓的），依發文時間由舊到新。"""
+    """data/channels/*.jsonl 的六渠道公開頁樣本（2026-10-31 未登入公開頁抓的），依發文時間由舊到新。"""
     posts = []
     for ch in CHANNELS:
         p = folder / f"{ch}.jsonl"

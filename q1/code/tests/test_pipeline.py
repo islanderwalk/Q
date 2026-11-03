@@ -91,11 +91,11 @@ def test_canned_rule_steps_each_reduce_customer_misjudgements(run):
 
 
 def test_shares_cleaning_bias_small_and_tagger_bias_downward(run):
-    """估計佔比和真實佔比的差距拆成兩段，分開檢查。
+    """估計佔比和實際佔比的差距拆成兩段，分開檢查。
 
     - 清理造成的：和「清理完全正確時同一套規則的佔比」（oracle_share）比，seed 7 最大差 0.33 個百分點，門檻 1 個百分點。
     - 分類規則造成的：產生器有 12% 的說法不在關鍵詞裡（recall 約 0.82～0.92），所以估計值應該全部偏低。
-      直接拿估計值和真實值比固定門檻（以前是 ≤ 5 個百分點）量到的是產生器的亂數，不是程式，所以不這樣測。
+      直接拿估計值和實際值比固定門檻（以前是 ≤ 5 個百分點）量到的是產生器的亂數，不是程式，所以不這樣測。
     """
     _, s = run
     ev = s["truth_eval"]

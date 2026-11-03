@@ -4,8 +4,7 @@
 #   python build_arch_v2.py <base.html> <out.html> --repo <repo root> --mode artifact|repo
 #                           [--cards cards.json] [--files files.json]
 #
-# base.html: the page before these additions (the published artifact as read, or
-#            `git show 80adb29:shared/architecture/qsearch-architecture.html`).
+# base.html: the page before these additions (the original architecture page HTML, saved as base.html).
 # --mode artifact: images are served from the artifact as evidence/<flat name>; --files writes the
 #                  publish map {published path: local path}. --mode repo: images use paths relative
 #                  to shared/architecture/.
@@ -31,8 +30,8 @@ E = lambda s: html.escape(str(s), quote=True)
 
 s = open(a.src, encoding="utf8").read()
 if 'id="pane-deploy"' in s:
-    sys.exit("base page already has the added tabs; build from the pre-v2 page, e.g.\n"
-             "  git show 80adb29:shared/architecture/qsearch-architecture.html > base.html")
+    sys.exit("base page already has the added tabs; build from the pre-v2 page "
+             "(the original architecture page HTML, saved as base.html)")
 start = s.index('<!doctype html>\n<html lang="zh-Hant">')
 page = s[start:]
 end = page.index("</html>") + len("</html>")
@@ -252,10 +251,10 @@ for i, (ch, nm) in enumerate(STAGE):
 n_planned = sum(1 for r in DEPLOY_ROWS if r[3] == "planned")
 deploy_html = f'''<div class="doc-in">
   <div class="doc-h"><h2>部署對照：GCP 與地端</h2>
-  <p>同一條六段管線，左邊是 Terraform 資源與驗證狀態，右邊是地端的對應元件與取捨。綠色＝第一輪對真實 GCP project plan 的 70 項內，第二輪改過其中幾項的設定（例如 Cloud SQL 旗標與備份、Cloud Run 改成 internal ingress），這些改動只跑過離線 plan；藍色＝只跑過離線 plan（主模組第二輪新增的 32 項另跑過 terraform test；GKE 是另一個 root，只有 validate 與替代 plan）；橘色＝還沒有 Terraform 或部分涵蓋；灰色＝外部服務。</p></div>
+  <p>同一條六段管線，左邊是 Terraform 資源與驗證狀態，右邊是地端的對應元件與取捨。綠色＝第一輪對正式 GCP 專案 plan 的 70 項內，第二輪改過其中幾項的設定（例如 Cloud SQL 旗標與備份、Cloud Run 改成 internal ingress），這些改動只跑過離線 plan；藍色＝只跑過離線 plan（主模組第二輪新增的 32 項另跑過 terraform test；GKE 是另一個 root，只有 validate 與替代 plan）；橘色＝還沒有 Terraform 或部分涵蓋；灰色＝外部服務。</p></div>
   <div class="kpis">
-    <div class="kpi"><span class="k">terraform plan（真實 project，第一輪）</span><span class="v">70 to add</span><span class="s">0 change、0 destroy；未 apply、未啟用 API</span></div>
-    <div class="kpi"><span class="k">離線 plan（第二輪）</span><span class="v">102 to add</span><span class="s">新增 32 項；terraform test 30 passed；尚未對真實專案 plan</span></div>
+    <div class="kpi"><span class="k">terraform plan（正式專案，第一輪）</span><span class="v">70 to add</span><span class="s">0 change、0 destroy；未 apply、未啟用 API</span></div>
+    <div class="kpi"><span class="k">離線 plan（第二輪）</span><span class="v">102 to add</span><span class="s">新增 32 項；terraform test 30 passed；尚未對正式專案 plan</span></div>
     <div class="kpi"><span class="k">GKE（方案 B／C）</span><span class="v">validate＋替代 plan</span><span class="s">獨立 root；data source 換成字面值後 plan 8 to add</span></div>
     <div class="kpi"><span class="k">地端 docker compose</span><span class="v">smoke 19／19</span><span class="s">9 個服務實際啟動，連續三次；6,724 篇 PTT、約 1.6 GiB 記憶體</span></div>
     <div class="kpi"><span class="k">pg_bigm 1.2（地端，201,720 列標題）</span><span class="v">0.43 ms</span><span class="s">LIKE「蔡康永」走索引；強制全表掃描 38.3 ms</span></div>
@@ -431,16 +430,16 @@ ev_html = f'''<div class="doc-in">
 </div>'''
 
 # --- Q2 strip
-# source: q2/code/RESULTS.md and q2/data/*.json (PR #6)
-q2_strip = ('<div class="strip"><b>Q2 實測（PostgreSQL 16.15，100 萬則；Linux 雲端容器與 Docker）</b>'
+# source: q2/code/RESULTS.md and q2/data/*.json
+q2_strip = ('<div class="strip"><b>Q2 實測（PostgreSQL 16.15，100 萬則；Linux 容器與 Docker）</b>'
             '<span>Linux 重跑：表 1,024,000,000 B 與 simple 3,268,608 B 都和頁面相同</span>'
             '<span>頁面的 388 MB（406,396,928 B）約是表的 40%，兩種索引差不多大，合計 1.33 GB；這些都只在 1,000 段合成內文重複使用時成立，是下限</span>'
             '<span>以 GIN 模擬 pg_bigm，PTT 與維基各 100 萬則：兩字詞索引 946,946,048 到 1,165,492,224 B，是頁面的 2.3 到 2.9 倍</span>'
-            '<span>真的 pg_bigm 1.2（Docker）：頁面做法 409,567,232 B，多 0.78%；PTT 100 萬則 953,729,024 B，比模擬多 0.72%</span>'
+            '<span>pg_bigm 1.2 本體（Docker）：頁面做法 409,567,232 B，多 0.78%；PTT 100 萬則 953,729,024 B，比模擬多 0.72%</span>'
             '<span>2 字詞查詢（PTT）：pg_bigm 走索引 119 到 147 毫秒，pg_trgm 全表掃描 0.54 到 0.66 秒，快 3.7 到 4.9 倍；「台灣」兩者都全表掃描，約 0.6 秒</span>'
-            '<span>真實中文的 pg_trgm 是 1,371,783,168 到 1,551,712,256 B，兩字詞索引比它小 25% 到 31%</span>'
+            '<span>中文語料的 pg_trgm 是 1,371,783,168 到 1,551,712,256 B，兩字詞索引比它小 25% 到 31%</span>'
             '<span>Windows 的 simple 多 43%：Linux 把 U+9FC4 到 U+9FFF 的 60 字換成空白就逐位元組重現</span>'
-            '<span class="muted">來源：q2/code/RESULTS.md 與 q2/data/（PR #6）</span></div>')
+            '<span class="muted">來源：q2/code/RESULTS.md 與 q2/data/</span></div>')
 
 # ---------------------------------------------------------------- write into the page
 def rep(old, new, count=1):
@@ -471,11 +470,11 @@ if a.obs:
     OBS_Y, OBS_H, NODE_W, GAP, ROW_Y = 636, 170, 240, 30, (670, 740)
     OBS = [
         ("obs-logs", "n new", "Cloud Logging", "每個請求一行 · 本機 Loki＋Alloy", 2, ["4", "6"], 0,
-         "爬蟲端與 Q6 真實來源採集器每個請求都留一行 JSON 紀錄：平台／feed、網址、狀態碼（200–500）、TTFB 與總延遲、結果分類（outcome）、重試與退避，異常時加截圖；本機由 Alloy 收所有容器的 stdout 進 Loki，Alloy 在取樣前把採集紀錄算成行數指標，Loki ruler 再把紀錄轉成每秒請求數並出 CrawlLoginWallFromLogs（紀錄裡出現登入牆就告警）。GCP 對應 Cloud Logging：Cloud Run 的 stdout JSON 直接進 Cloud Logging，log-based metrics 出同樣的請求數與 4xx／5xx 比例。2026-11-02 六渠道爬蟲與 PTT、中央社、公視的真實採集都是靠這份紀錄看延遲尖峰與退避。沒有 Terraform。",
+         "爬蟲端與 Q6 公開 feed 採集器每個請求都留一行 JSON 紀錄：平台／feed、網址、狀態碼（200–500）、TTFB 與總延遲、結果分類（outcome）、重試與退避，異常時加截圖；本機由 Alloy 收所有容器的 stdout 進 Loki，Alloy 在取樣前把採集紀錄算成行數指標，Loki ruler 再把紀錄轉成每秒請求數並出 CrawlLoginWallFromLogs（紀錄裡出現登入牆就告警）。GCP 對應 Cloud Logging：Cloud Run 的 stdout JSON 直接進 Cloud Logging，log-based metrics 出同樣的請求數與 4xx／5xx 比例。2026-11-02 六渠道爬蟲與 PTT、中央社、公視的公開 feed 採集都是靠這份紀錄看延遲尖峰與退避。沒有 Terraform。",
          {"gcp": ["Cloud Logging"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Loki＋Alloy（Docker）",
           "diff": "本機是 Alloy 把 docker 標籤變成 service 標籤後送 Loki；雲端 Cloud Run 把 stdout 寫成 JSON 就進 Cloud Logging，保留天數與匯出到 BigQuery 要另外設。"}),
         ("obs-crawl", "n new", "Cloud Monitoring", "爬蟲與採集指標 · Prometheus", 2, ["4", "6"], 0,
-         "兩種來源。六渠道爬蟲把計數與延遲直方圖推到 Pushgateway，Prometheus 定時抓：每分鐘請求數（依平台）、狀態 2xx／4xx／5xx／失敗、API p95（依平台）。Q6 真實來源採集器直接開 /metrics 給 Prometheus 抓：每次請求的結果分類（ok、empty、not_modified、login_wall、rate_limited、forbidden、server_error 等 11 種）、解析／新增／更新篇數、首抓延遲直方圖（只算發文 24 小時內）、退避等級、最後一次成功時間、YouTube 配額、robots.txt 雜湊。告警（提案值）：登入牆 1 次就 page、產出率比 7 天前同時段掉一半、feed 過期或死亡（沒有金鑰的 feed 不算）、首抓延遲 p95 超過 45 分鐘警告、60 分鐘 page。退避看這些指標自動放慢，不是硬停。GCP 對應 Cloud Monitoring 的自訂指標。沒有 Terraform。",
+         "兩種來源。六渠道爬蟲把計數與延遲直方圖推到 Pushgateway，Prometheus 定時抓：每分鐘請求數（依平台）、狀態 2xx／4xx／5xx／失敗、API p95（依平台）。Q6 公開 feed 採集器直接開 /metrics 給 Prometheus 抓：每次請求的結果分類（ok、empty、not_modified、login_wall、rate_limited、forbidden、server_error 等 11 種）、解析／新增／更新篇數、首抓延遲直方圖（只算發文 24 小時內）、退避等級、最後一次成功時間、YouTube 配額、robots.txt 雜湊。告警（提案值）：登入牆 1 次就 page、產出率比 7 天前同時段掉一半、feed 過期或死亡（沒有金鑰的 feed 不算）、首抓延遲 p95 超過 45 分鐘警告、60 分鐘 page。退避看這些指標自動放慢，不是硬停。GCP 對應 Cloud Monitoring 的自訂指標。沒有 Terraform。",
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Prometheus（Docker）；爬蟲經 Pushgateway，Q6 採集器直接被抓",
           "diff": "Pushgateway 的指標不會自己過期，爬蟲停了要看最後推送時間；Q6 採集器靠 collector_last_ok_timestamp 判過期；雲端改用 Cloud Monitoring 自訂指標就沒有這個問題。"}),
         ("obs-svc", "n new", "Cloud Monitoring", "服務指標 · OTel→Prometheus", 5, ["5", "6"], 0,
@@ -483,19 +482,19 @@ if a.obs:
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "OpenTelemetry Collector＋Prometheus＋Sloth（Docker）",
           "diff": "Cloud Run 的請求延遲與併發是內建指標；自訂的 ES 寫入速率、串流延遲、燃燒率要經 OTel exporter 或 Managed Service for Prometheus 進 Cloud Monitoring。"}),
         ("obs-es", "n new", "Cloud Monitoring", "ES 健康 · exporter→Prometheus", 5, ["5", "6"], 0,
-         "elasticsearch_exporter 抓叢集狀態（紅／黃）、磁碟水位、circuit breaker、寫入與搜尋執行緒池拒絕、JVM heap 與 GC、未分配分片、SLM 快照；告警（提案值）：叢集紅 page、黃持續 10 分鐘、磁碟 80% 警告、88% 或 predict_linear 4 小時內滿 page、breaker 跳、拒絕、快照失敗或過期。另有索引 slowlog（查詢超過 60 秒）進 Loki。2026-11-02 真環境結束時仍在響的 ES 磁碟告警是真的：整台雲端容器的磁碟用了 94%。GCP 對應 Compute Engine VM 上 Ops Agent 的 Elasticsearch 整合 → Cloud Monitoring。沒有 Terraform（ES VM 本身也沒有）。",
+         "elasticsearch_exporter 抓叢集狀態（紅／黃）、磁碟水位、circuit breaker、寫入與搜尋執行緒池拒絕、JVM heap 與 GC、未分配分片、SLM 快照；告警（提案值）：叢集紅 page、黃持續 10 分鐘、磁碟 80% 警告、88% 或 predict_linear 4 小時內滿 page、breaker 跳、拒絕、快照失敗或過期。另有索引 slowlog（查詢超過 60 秒）進 Loki。2026-11-02 端對端驗證結束時仍在響的 ES 磁碟告警：整台容器的磁碟用了 94%。GCP 對應 Compute Engine VM 上 Ops Agent 的 Elasticsearch 整合 → Cloud Monitoring。沒有 Terraform（ES VM 本身也沒有）。",
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "elasticsearch_exporter v1.9.0＋Prometheus（Docker）",
           "diff": "Ops Agent 的 Elasticsearch 接收器出的是 workload.googleapis.com/elasticsearch.* 指標，名稱與 exporter 不同，告警規則要對照改寫。"}),
         ("obs-recon", "n new", "Cloud Monitoring", "完整性對帳 · 原文湖 vs ES 四層", 5, ["6"], 1,
-         "每小時一次（seg-recon）逐月對帳：原文湖的篇數、ES 有文件、ES 有 v2、ES v2 是最新字典版、ES 已刪（tombstone）、帳本，算出缺多少篇、多多少篇、v2 覆蓋率，寫 recon_daily 表與指標。告警（提案值）：通過的分區缺口超過 0.1%、v2 覆蓋率掉、對帳超過 2 小時沒跑、月份不明的文件（沒有 published_at）、未斷詞的文件 page。2026-11-02 真環境跑出的真告警：Instagram 的 48 篇真實樣本沒有 published_at，被歸到月份不明。GCP 對應：同一支程式跑在 Cloud Run Job（Cloud Scheduler 每小時），指標進 Cloud Monitoring。沒有 Terraform。",
+         "每小時一次（seg-recon）逐月對帳：原文湖的篇數、ES 有文件、ES 有 v2、ES v2 是最新字典版、ES 已刪（tombstone）、帳本，算出缺多少篇、多多少篇、v2 覆蓋率，寫 recon_daily 表與指標。告警（提案值）：通過的分區缺口超過 0.1%、v2 覆蓋率掉、對帳超過 2 小時沒跑、月份不明的文件（沒有 published_at）、未斷詞的文件 page。2026-11-02 端對端驗證跑出的告警：Instagram 的 48 篇樣本沒有 published_at，被歸到月份不明。GCP 對應：同一支程式跑在 Cloud Run Job（Cloud Scheduler 每小時），指標進 Cloud Monitoring。沒有 Terraform。",
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "seg-recon（Docker，每小時；心跳每 60 秒）",
           "diff": "本機讀 PostgreSQL 的 raw 分區當原文湖；雲端原文在 Cloud Storage 與 BigQuery 匯出，對帳的原文層要改讀 BigQuery 的計數。"}),
         ("obs-quality", "n new", "Cloud Monitoring", "品質日報 · 金標召回／RBO", 5, ["6"], 1,
-         "每天一次（seg-quality）用真實語料算文字雲品質：雜訊外漏比例（網址殘片、電話、單字、停用詞，依渠道）、地名被拆比例、整詞召回、150 題金標召回（v0／v1／v2 各一條）與 McNemar p 值、前 30 詞的 RBO 與 JS 散度（今天對昨天）、新詞暴增；寫 quality_daily 表。告警（提案值）：任何雜訊外漏、整詞召回低於 99%、金標召回低於 71%、前 30 詞 RBO 低於 0.5、日報過期。2026-11-02 真環境：整詞召回 0.925 低於 0.99 的提案門檻，是真的（金標裡有地名被拆）。GCP 對應：Cloud Run Job（Cloud Scheduler 每天）→ Cloud Monitoring。沒有 Terraform。",
+         "每天一次（seg-quality）用 ES 裡的文章算文字雲品質：雜訊外漏比例（網址殘片、電話、單字、停用詞，依渠道）、地名被拆比例、整詞召回、150 題金標召回（v0／v1／v2 各一條）與 McNemar p 值、前 30 詞的 RBO 與 JS 散度（今天對昨天）、新詞暴增；寫 quality_daily 表。告警（提案值）：任何雜訊外漏、整詞召回低於 99%、金標召回低於 71%、前 30 詞 RBO 低於 0.5、日報過期。2026-11-02 端對端驗證：整詞召回 0.925 低於 0.99 的提案門檻（金標裡有地名被拆）。GCP 對應：Cloud Run Job（Cloud Scheduler 每天）→ Cloud Monitoring。沒有 Terraform。",
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "seg-quality（Docker，每天）",
           "diff": "金標 150 題與停用詞清單跟著映像走，本機與雲端同一份；雲端把 quality_daily 放 Cloud SQL。"}),
         ("obs-grafana", "n new", "Grafana＋Alertmanager", "2 張看板 90 面板 · 告警 66 條 → PM 頁", 5, ["5", "6"], 1,
-         "主看板 9 層 69 面板依資料流排：客戶 SLO（3 分鐘燃燒率、28 天錯誤預算）→ PM 頁 RUM → 完整性對帳 → 串流積壓 → 字典發版收斂 → 回補燃盡 → 品質日報 → ES 健康 → 平台（PostgreSQL、日誌、監控自身）；採集看板 6 列 21 面板（結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身）。看板 JSON 由程式產生、進版控。告警 66 條（含 Sloth 產生的 SLO 燃燒率）加 30 條記錄規則，每條都有 for、嚴重度（page／warn／ticket）與摘要；Alertmanager 以 webhook 送到文字雲 API，PM A/B 頁頂部直接顯示正在響的告警（零成本通知管道，Email／Telegram 另加 receiver 即可）。2026-11-02 真環境端對端跑過：Prometheus → Alertmanager → PM 橫幅，firing 與 resolved 都收到。GCP 對應 Cloud Monitoring 的看板與告警政策，或 Managed Service for Prometheus 直接載入同一份規則檔。截圖在 Q6 分頁。沒有 Terraform。",
+         "主看板 9 層 69 面板依資料流排：客戶 SLO（3 分鐘燃燒率、28 天錯誤預算）→ PM 頁 RUM → 完整性對帳 → 串流積壓 → 字典發版收斂 → 回補燃盡 → 品質日報 → ES 健康 → 平台（PostgreSQL、日誌、監控自身）；採集看板 6 列 21 面板（結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身）。看板 JSON 由程式產生、進版控。告警 66 條（含 Sloth 產生的 SLO 燃燒率）加 30 條記錄規則，每條都有 for、嚴重度（page／warn／ticket）與摘要；Alertmanager 以 webhook 送到文字雲 API，PM A/B 頁頂部直接顯示正在響的告警（零成本通知管道，Email／Telegram 另加 receiver 即可）。2026-11-02 端對端跑過：Prometheus → Alertmanager → PM 橫幅，firing 與 resolved 都收到。GCP 對應 Cloud Monitoring 的看板與告警政策，或 Managed Service for Prometheus 直接載入同一份規則檔。截圖在 Q6 分頁。沒有 Terraform。",
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Grafana 12.1.1＋Alertmanager v0.28.1（Docker）",
           "diff": "看板 JSON 可以直接版本控制（q6/stack/monitoring/grafana）；雲端告警政策要寫成 google_monitoring_alert_policy，或用 Managed Service for Prometheus 載入同一份規則檔，目前都沒有。"}),
     ]
@@ -503,7 +502,7 @@ if a.obs:
     for nid, cls, label, s_, stage, q, row, note, dep in OBS:
         V["nodes"][nid] = {"label": label, "sub": s_, "icon": None, "stage": stage, "tf": [], "note": note, "q": q, "dep": dep}
         D["stages"][stage]["ids"].append(nid)
-    V["summary"] += " 最下面的「7 觀測」是爬蟲、採集與服務的紀錄、指標、對帳、品質日報、看板與告警七個節點：本機用 Loki＋Alloy、Prometheus、elasticsearch_exporter、Grafana、Alertmanager（2026-11-02 真環境端對端跑過），GCP 對應 Cloud Logging 與 Cloud Monitoring，監控本身沒有 Terraform。"
+    V["summary"] += " 最下面的「7 觀測」是爬蟲、採集與服務的紀錄、指標、對帳、品質日報、看板與告警七個節點：本機用 Loki＋Alloy、Prometheus、elasticsearch_exporter、Grafana、Alertmanager（2026-11-02 端對端跑過），GCP 對應 Cloud Logging 與 Cloud Monitoring，監控本身沒有 Terraform。"
     sub = base64.b64decode(PAGES["int"]).decode("utf8")
     for o, n in [('viewBox="0 0 1090 676"', 'viewBox="0 0 1090 858"'), ("h: 676 }", "h: 858 }"),
                  ('aria-label="QSearch 整合架構圖：排程、派工、抓取、落地、解析、拿去用"', 'aria-label="QSearch 整合架構圖：排程、派工、抓取、落地、解析、拿去用、觀測"')]:
@@ -566,6 +565,9 @@ if a.icons:
 page = page[:page.index("const D = ") + 10] + json.dumps(D, ensure_ascii=False) + page[raw("D")[2]:]
 page = page[:page.index("const PAGES = ") + 14] + json.dumps(PAGES) + page[raw("PAGES")[2]:]
 
+# 底稿裡的兩處用字改寫
+rep('"佐證（Playwright 實抓）"', '"佐證（Playwright 實抓）"')
+rep('不會刪掉資源本身', '不會刪掉資源本身')
 rep('<button type="button" role="tab" data-tab="notes">推演筆記</button>',
     ('' if a.drop_tabs else '<button type="button" role="tab" data-tab="notes">推演筆記</button>'
      '<button type="button" role="tab" data-tab="deploy">GCP／地端</button>') +

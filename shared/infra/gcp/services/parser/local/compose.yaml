@@ -1,5 +1,5 @@
 # 本機驗證用（不是部署設定）：Pub/Sub 模擬器 + parser 容器 + 收 header 的 echo 服務。
-# 用法見同目錄 VERIFY.md。只綁 127.0.0.1:18280-18285，不碰真的 GCP。
+# 用法見同目錄 VERIFY.md。只綁 127.0.0.1:18280-18285，不碰 GCP。
 #   docker compose -p qsearch-gcplocal -f compose.yaml up -d --no-build
 #   docker compose -p qsearch-gcplocal -f compose.yaml down -v
 name: qsearch-gcplocal

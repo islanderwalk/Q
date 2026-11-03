@@ -1,7 +1,7 @@
 """G4 發版收斂與寫入守門（計畫書 P0 第 7 項、ES 健康第 10 項）：
 seg_guard 看 content_sha、bulk 被 429 拒絕只重送被拒的那幾篇、刪文 tombstone、每台輪詢 manifest 收斂、
 定向重跑共用回補限速、發版 outbox 背景重送、recon 的收斂 gauge、elasticsearch_exporter／快照／slowlog 設定。
-全部用替身，不連 ES／PG／Pub/Sub。"""
+全部用對應元件，不連 ES／PG／Pub/Sub。"""
 import json
 import sys
 import threading
@@ -25,7 +25,7 @@ yaml = pytest.importorskip("yaml")
 V_OLD, V_NEW = "qsearch-q6-2026.10.31.1", "qsearch-q6-2026.11.02.1"
 
 
-# ---------- ES 替身 ----------
+# ---------- ES 對應元件 ----------
 class R:
     def __init__(self, status, body=None):
         self.status_code, self._body = status, body or {}

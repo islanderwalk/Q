@@ -1,4 +1,4 @@
-"""IK 遠端字典熱更新 ＋ 搜尋端同義詞即時生效：真的切一次字典 current，量多久生效、舊文件會怎樣。
+"""IK 遠端字典熱更新 ＋ 搜尋端同義詞即時生效：實際切一次字典 current，量多久生效、舊文件會怎樣。
 
 1. 切換前：_analyze 看新詞怎麼切；用 match_phrase 搜 content（IK 索引）與 content.bigram（雙字，當地面真值）
 2. 把字典伺服器的 current 從舊版原子切到新版（GCS 上就是改 current 物件）

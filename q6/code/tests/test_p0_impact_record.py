@@ -1,4 +1,4 @@
-"""P0-5：impact.record_missed 的回傳值（受影響列數）。dictionary／normalize／pipeline／psycopg 都用替身，不連 PG、不跑斷詞。
+"""P0-5：impact.record_missed 的回傳值（受影響列數）。dictionary／normalize／pipeline／psycopg 都用對應元件，不連 PG、不跑斷詞。
 impact.main 用 multiprocessing 的 fork，Windows 上不可用，所以這裡不測 main。"""
 import importlib
 import sys

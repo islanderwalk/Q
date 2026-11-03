@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""QSearch 第 6 題：用真實 PTT 文本跑新舊斷詞前後對照。
+"""QSearch 第 6 題：用 PTT 文本跑新舊斷詞前後對照。
 
-語料：q3/data/ptt_q3_out/index_entries.csv 的 7 天內 6,685 列標題（2026/10/26 實抓，真實繁體文字；其中 425 列為已刪除文章，沒有 aid）。
+語料：q3/data/ptt_q3_out/index_entries.csv 的 7 天內 6,685 列標題（2026/10/26 實抓，繁體文字；其中 425 列為已刪除文章，沒有 aid）。
 注意：q3/data/ptt_q3_census_out/articles.jsonl 只有時間與計數，沒有內文，所以本題改用標題。
 
 主字典：預設 jieba 內建字典（--tag default）；--base-dict 可換成繁體 dict.txt.big 等，新舊兩邊同時換。

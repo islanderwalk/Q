@@ -1,4 +1,4 @@
-// Q6 真實渠道：每種「還沒有截圖」的來源各拍一張未登入截圖（1440×900，非整頁）。
+// Q6 六渠道：每種「還沒有截圖」的來源各拍一張未登入截圖（1440×900，非整頁）。
 // PTT、Threads 個人頁在 repo 已有截圖（q6/evidence/playwright、q4/evidence/playwright），
 // 這裡的 Threads 是本次用到的台灣帳號 @pts.news。不登入、不存 cookie（每張用新的 context，結束即丟）。
 // 用法：node q6/stack/collect/screenshots.js [名稱…]（不給名稱＝全部；結果併入 screenshots.json）

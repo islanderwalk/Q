@@ -4,7 +4,7 @@
 對每個公開帳號各抓一次，兩種抓法做對照：
   (1) HTTP client：requests 帶一組正常瀏覽器 header，抓 profile HTML 一次。
       加 --sec-fetch 會多帶 Sec-Fetch-Mode/Sec-Fetch-Dest 兩個導覽標頭（驗證 SHELL 的成因）。
-  (2) 真實瀏覽器：Playwright 無頭 Chromium 開同一頁，記錄整頁所有 request，
+  (2) 瀏覽器：Playwright 無頭 Chromium 開同一頁，記錄整頁所有 request，
       以及網頁自己送出的 /graphql 請求（只記 friendly name、doc_id、狀態、大小、串數）。
 
 每種抓法都量：狀態碼、傳輸位元組（壓縮後）與解壓後大小、頁面內嵌 JSON 裡找到的
@@ -320,7 +320,7 @@ def http_fetch(account, out_dir, sec_fetch=False):
 
 
 def browser_fetch(account, out_dir, scrolls, device="desktop", executable_path=None):
-    """用 Playwright 真實 Chromium 開同一頁，記錄整頁所有 request 與網頁自己送的 GraphQL。"""
+    """用 Playwright Chromium 開同一頁，記錄整頁所有 request 與網頁自己送的 GraphQL。"""
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
     from playwright.sync_api import sync_playwright
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Q5 回補送出端：對真的 Elasticsearch 跑 backfill.py --send，painless 腳本（GUARD_SCRIPT）真的執行。
+"""Q5 回補送出端：對官方 Elasticsearch 跑 backfill.py --send，painless 腳本（GUARD_SCRIPT）實際執行。
 
-demo_send.py 連的是 Python 假 ES（tests/fake_es.py），腳本邏輯是 Python 模擬；這支改連真的 ES。
+demo_send.py 連的是 Python 假 ES（tests/fake_es.py），腳本邏輯是 Python 模擬；這支改連官方 ES。
 只連命令列給的 ES 位址（例如本機 Docker 起的單節點），不連外網。線上文件的三種情況與 demo_send.py 相同
 （seed()）：沒有計數、爬蟲已寫過三個計數（較新）、爬蟲只寫過轉發數（較新）。
 

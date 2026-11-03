@@ -13,7 +13,7 @@
 # 為什麼要 override_resource：
 #   mock provider 在 plan 階段不會產生 computed 屬性（id、email、uri、self_link 都是 unknown），
 #   斷言若引用 unknown 值會報 "Unknown condition value"。下面對每個被引用的資源
-#   各給一個「互不相同、格式接近真實」的值，並設 override_during = plan。
+#   各給一個「互不相同、格式接近實際」的值，並設 override_during = plan。
 #   因為每個資源的值都不同，「A 指向 B」這類引用比對才有意義（指錯資源就會失敗）。
 
 mock_provider "google" {}

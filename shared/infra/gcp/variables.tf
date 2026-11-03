@@ -164,7 +164,7 @@ variable "image_wordcloud_api" {
 
 variable "image_collector" {
   type        = string
-  description = "Q6 真實來源採集器映像（與文字雲 API 同一個映像，command 不同）。"
+  description = "Q6 公開 feed 採集器映像（與文字雲 API 同一個映像，command 不同）。"
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 

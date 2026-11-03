@@ -1,6 +1,6 @@
 """回補 Job（Cloud Run Jobs）：一次領一個分區（渠道 × 月，由新到舊），讀原文 → 斷詞 → 條件寫入 → 過閘門。
 
-- 原文來源：RAW_ROOT/<channel>/<yyyy-mm>.jsonl（GCS／BigQuery 匯出的本機替身；設計上不從 ES scroll，避免和線上查詢搶）
+- 原文來源：RAW_ROOT/<channel>/<yyyy-mm>.jsonl（GCS／BigQuery 匯出的本機對應元件；設計上不從 ES scroll，避免和線上查詢搶）
 - 斷點續跑：每個 bulk 寫成功後才把 checkpoint_line 寫回 PostgreSQL；中途掛掉，下一次從 checkpoint 接著做，
   重做的部分因 seg_ver 守門變成 noop，不會重複或倒退
 - 限速：每批前讀 backfill_control.max_docs_per_sec／paused（告警後可由人或控制程式調低）

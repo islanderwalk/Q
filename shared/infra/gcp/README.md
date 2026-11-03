@@ -2,12 +2,12 @@
 
 ## 狀態摘要
 
-- **第一輪（本機，對真實專案）**：`terraform plan` 退出碼 0，`Plan: 70 to add, 0 to change, 0 to destroy.`（project `project-823e124b-87e9-4f9e-a34`，project_number `425708154183`）。plan 檔存在 `S\tf\tfplan`（repo 外）。
-- **第二輪（2026-10-30，雲端容器，沒有 GCP 憑證）**：補了 32 個資源（Cloud Tasks OIDC、每站限速佇列、Q3 的 PTT 每小時 Job、Cloud SQL 強化與 IAM 登入、Secret Manager、DLQ 不過期等）。
+- **第一輪（本機，對正式 GCP 專案）**：`terraform plan` 退出碼 0，`Plan: 70 to add, 0 to change, 0 to destroy.`（project `project-823e124b-87e9-4f9e-a34`，project_number `425708154183`）。plan 檔存在 `S\tf\tfplan`（repo 外）。
+- **第二輪（2026-10-30，Linux 容器，沒有 GCP 憑證）**：補了 32 個資源（Cloud Tasks OIDC、每站限速佇列、Q3 的 PTT 每小時 Job、Cloud SQL 強化與 IAM 登入、Secret Manager、DLQ 不過期等）。
   fmt／validate 退出碼 0；**離線 plan `Plan: 102 to add`**（所有可選開關打開時 109）；`terraform test` **30 passed**；tflint 0 issues。細節見「第二輪驗證」。
-- **新增的 32 個資源還沒有對真實專案 plan 過**（容器沒有憑證）。要確認，請在有登入的本機重跑 `terraform plan`，預期是 `Plan: 102 to add`。
-- **第三輪（2026-11-02，雲端容器，沒有 GCP 憑證；Q6 文字雲）**：把 `q6/stack` 在本機 Docker 跑通的 Q6 元件補成 Terraform（`q6.tf`：斷詞服務 v0／v1／v2、文字雲 API ＋ PM A/B 頁、真實來源採集器、Pub/Sub parsed-posts／dict-releases、字典 bucket、YouTube 金鑰 secret），並依監控計畫書補第二個固定出口 IP、NAT 動態配埠與錯誤日誌、Cloud SQL 兩個逾時／慢查詢旗標。
-  fmt／validate 退出碼 0；**離線 plan `Plan: 147 to add`**（基準 102，+45，沒有刪改既有資源；可選全開 153）；`terraform test` **37 passed**。細節見「第三輪驗證」。這 45 個資源同樣還沒對真實專案 plan 過。
+- **新增的 32 個資源還沒有對正式 GCP 專案 plan 過**（容器沒有憑證）。要確認，請在有登入的本機重跑 `terraform plan`，預期是 `Plan: 102 to add`。
+- **第三輪（2026-11-02，Linux 容器，沒有 GCP 憑證；Q6 文字雲）**：把 `q6/stack` 在本機 Docker 跑通的 Q6 元件補成 Terraform（`q6.tf`：斷詞服務 v0／v1／v2、文字雲 API ＋ PM A/B 頁、公開 feed 採集器、Pub/Sub parsed-posts／dict-releases、字典 bucket、YouTube 金鑰 secret），並依監控計畫書補第二個固定出口 IP、NAT 動態配埠與錯誤日誌、Cloud SQL 兩個逾時／慢查詢旗標。
+  fmt／validate 退出碼 0；**離線 plan `Plan: 147 to add`**（基準 102，+45，沒有刪改既有資源；可選全開 153）；`terraform test` **37 passed**。細節見「第三輪驗證」。這 45 個資源同樣還沒對正式 GCP 專案 plan 過。
 - **沒有 apply。** 沒有啟用任何 API、沒有建立任何雲端資源。
 - 映像檔全部用 `us-docker.pkg.dev/cloudrun/container/hello`（job 為 `.../job`），所以 plan 不需要先 build 映像。
 - 本 README 的 `plan` 結果是 plan 當下的快照。若之後改了變數或程式，需要重跑。
@@ -33,7 +33,7 @@
 | `shared/infra/gcp/cloudbuild.tf` | Cloud Build trigger：1st gen（`github_owner` 留空時不建立，legacy）與 2nd gen `repository_event_config`＋`service_account`（`cloudbuild_repository_id` 留空時不建立） |
 | `shared/infra/gcp/legacy_gce.tf` | 可選：legacy GCE instance template（Shielded VM、OS Login、擋專案 SSH key）+ 區域 MIG + health check + 健康檢查防火牆（`enable_legacy_gce`，預設 false） |
 | `shared/infra/gcp/outputs.tf` | Cloud Run URL、Pub/Sub 主題／訂閱 id、bucket、BQ 表、AR repo、固定出口 IP（`egress_static_ips` 列兩個）、Cloud SQL 私有 IP、`q6`（Q6 服務 URL、主題／訂閱、字典 bucket） |
-| `shared/infra/gcp/services/parser/` | 從 lab 複製的 FastAPI parser（`POST /events/crawl-fetched`，目前只 log 並 ACK，**不是正式解析器**）；`Event` 已改成 strict 且六欄必填（與 avsc 一致）、映像以 uid 10001 執行；`tests/`（pytest 119 passed；PR #7 當時 13 項，與 Python 分支合併後 119 項）、`local/`（Pub/Sub 模擬器實跑，見 `local/VERIFY.md`） |
+| `shared/infra/gcp/services/parser/` | 從 lab 複製的 FastAPI parser（`POST /events/crawl-fetched`，目前只 log 並 ACK，**不是正式解析器**）；`Event` 已改成 strict 且六欄必填（與 avsc 一致）、映像以 uid 10001 執行；`tests/`（pytest 119 passed；最初 13 項，與 Python 驗證合併後 119 項）、`local/`（Pub/Sub 模擬器實跑，見 `local/VERIFY.md`） |
 | `shared/infra/gcp/tests/` | `terraform test`（mock provider，不需憑證）：architecture 11、toggles 5、validation 4、hardening 10、q6 7 個 run（共 37） |
 | `shared/infra/gcp/optional/gke/` | 方案 B／C 的 GKE：Autopilot 叢集、Standard 叢集＋browser-pool 節點池、HPA（**獨立 root**，不併入主 plan）；私有節點、`master_authorized_cidr`（必填）、專用節點 SA、Workload Identity、REGULAR channel |
 | `shared/infra/gcp/.terraform.lock.hcl` | provider 鎖定檔（建議版控） |
@@ -44,12 +44,12 @@
 在 repo 外指定 `TF_DATA_DIR`，避免 `.terraform/` 寫進 repo：
 
 ```bash
-export TF_DATA_DIR="<scratchpad>/tf/data"
+export TF_DATA_DIR="<scratch>/tf/data"
 cd shared/infra/gcp
 terraform fmt -check -recursive
 terraform init
 terraform validate
-terraform plan -var project_id=<PROJECT_ID> -var project_number=<PROJECT_NUMBER> -out=<scratchpad>/tf/tfplan
+terraform plan -var project_id=<PROJECT_ID> -var project_number=<PROJECT_NUMBER> -out=<scratch>/tf/tfplan
 # 不要執行 apply：這份 README 的範圍只到 plan。
 ```
 
@@ -92,9 +92,9 @@ GKE 可選模組（另開 root，需先 apply 主模組）：`cd shared/infra/gc
 | 方案 B：browser HPA | `shared/infra/gcp/optional/gke`：`kubernetes_horizontal_pod_autoscaler_v2.browser` | Q4 |
 | Q6 斷詞服務 v0／v1／v2：Cloud Run qsearch-seg-v0／v1／v2（internal、min 1、streaming pull、v2 最多 10 台） | `google_cloud_run_v2_service.seg["v0" / "v1" / "v2"]`、`google_service_account.seg`、`google_pubsub_subscription_iam_member.seg_pull_parsed_posts[*]`、`seg_pull_dict_releases`、`google_storage_bucket_iam_member.seg_read_dict` | Q6 |
 | Q6 文字雲 API ＋ PM A/B 頁：Cloud Run qsearch-wordcloud-api（timeout 190 秒＝SLA 180 秒＋餘裕、min 1） | `google_cloud_run_v2_service.wordcloud_api`、`google_service_account.wordcloud_api`、`google_storage_bucket_iam_member.api_write_dict`、`google_pubsub_topic_iam_member.api_publish_dict_releases`、`api_publish_parsed_posts` | Q6 |
-| Q6 真實來源採集器：Cloud Run qsearch-collector（單實例、egress ALL_TRAFFIC 走 NAT 固定 IP、YouTube 金鑰由 Secret Manager 掛環境變數） | `google_cloud_run_v2_service.collector`、`google_service_account.collector`、`google_pubsub_topic_iam_member.collector_publish_parsed_posts`、`google_secret_manager_secret.youtube_api_key`、`google_secret_manager_secret_iam_member.collector_youtube_key_access` | Q6 |
+| Q6 公開 feed 採集器：Cloud Run qsearch-collector（單實例、egress ALL_TRAFFIC 走 NAT 固定 IP、YouTube 金鑰由 Secret Manager 掛環境變數） | `google_cloud_run_v2_service.collector`、`google_service_account.collector`、`google_pubsub_topic_iam_member.collector_publish_parsed_posts`、`google_secret_manager_secret.youtube_api_key`、`google_secret_manager_secret_iam_member.collector_youtube_key_access` | Q6 |
 | Q6 事件：Pub/Sub qsearch-parsed-posts（保留 7 天）＋ DLQ、qsearch-dict-releases | `google_pubsub_topic.parsed_posts`、`parsed_posts_dlq`、`dict_releases`、`google_pubsub_subscription.parsed_posts_seg[*]`（pull、5 次進 DLQ、退避 10 秒～10 分、不過期）、`dict_releases_seg_v2`、`parsed_posts_dlq_inspect`、服務代理的 DLQ 權限 `parsed_posts_dlq_publisher`／`parsed_posts_seg_dlq_ack[*]` | Q6 |
-| Q6 字典 artifact：GCS `<project>-qsearch-dict`（版本化、private；本機 dictsrv 的替身） | `google_storage_bucket.dict_artifacts` | Q6 |
+| Q6 字典 artifact：GCS `<project>-qsearch-dict`（版本化、private；本機 dictsrv 的對應元件） | `google_storage_bucket.dict_artifacts` | Q6 |
 | Q6 的 Cloud SQL 與 ES 權限 | `google_sql_user.iam_sa["seg" / "wordcloud_api" / "collector"]` 與對應 `sql_client`／`sql_instance_user`、`google_secret_manager_secret_iam_member.q6_es_api_key_access[*]` | Q6 |
 | Q6 監控：Prometheus／Alertmanager／Grafana／Loki | 沒有 Terraform。本機全套在 `q6/stack/monitoring/`（66 條告警、30 條記錄規則、兩張看板），GCP 對應（Cloud Monitoring／Managed Service for Prometheus）見 `q6/stack/MONITORING.md` | Q6 |
 | legacy GCE（可選） | `google_compute_region_instance_group_manager.crawler_legacy`、`google_compute_firewall.legacy_health_check`（count） | — |
@@ -103,7 +103,7 @@ GKE 可選模組（另開 root，需先 apply 主模組）：`cd shared/infra/gc
 
 ## 驗證結果（第一輪：本機，指令、退出碼、摘要）
 
-| 步驟 | 指令（TF_DATA_DIR=`S\tf\data`） | 退出碼 | 摘要 |
+| 步驟 | 指令（TF_DATA_DIR 指到 repo 外） | 退出碼 | 摘要 |
 |---|---|---|---|
 | 版本 | `terraform version` | 0 | v1.16.6 windows_amd64 |
 | 格式（第一次） | `terraform fmt -check -recursive` | 3 | 需格式化：`shared/infra/gcp/cloudbuild.tf`、`shared/infra/gcp/outputs.tf` |
@@ -122,7 +122,7 @@ optional/gke 的 warning：`remove_default_node_pool` 在新版叢集上被標�
 
 **版本落差：** NOTES 寫最新 tag 是 v8.7.0，但 registry 上裝到的是 v8.9.0。文件比對用的是 v8.7.0 的 tag；validate 與 plan 用的是 v8.9.0。兩者的欄位應該相同，但這個差距沒有逐一確認。
 
-## 第二輪驗證（2026-10-30，雲端容器，沒有 GCP 憑證）
+## 第二輪驗證（2026-10-30，Linux 容器，沒有 GCP 憑證）
 
 Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、plan 檔、state 都放在 repo 外。容器沒有任何 GCP 憑證，所以 plan 用假 token 並擋掉對外連線（只有在不需要讀雲端時 plan 才會成功，本模組沒有 data source，所以可以）。
 
@@ -131,19 +131,19 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 | 鎖定檔 | `terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64`（root 與 optional/gke） | 0 | 原本只有 Windows 的 hash，在 Linux 上 `init -lockfile=readonly` 後 validate 會失敗；補齊四個平台 |
 | 格式 | `terraform fmt -check -recursive` | 0 | 通過 |
 | 驗證 | `terraform validate` | 0 | `Success! The configuration is valid.` |
-| 離線 plan（修改前） | `GOOGLE_OAUTH_ACCESS_TOKEN=fake terraform plan -refresh=false -var project_id=qsearch-offline-check -var project_number=123456789012` | 0 | `Plan: 70 to add`（與第一輪真實專案相同） |
+| 離線 plan（修改前） | `GOOGLE_OAUTH_ACCESS_TOKEN=fake terraform plan -refresh=false -var project_id=qsearch-offline-check -var project_number=123456789012` | 0 | `Plan: 70 to add`（與第一輪正式 GCP 專案相同） |
 | 離線 plan（修改後） | 同上 | 0 | **`Plan: 102 to add, 0 to change, 0 to destroy.`**（+32，沒有刪掉任何既有資源） |
 | 離線 plan（可選全開） | 加 `enable_legacy_gce=true`、`github_owner=example-org` | 0 | `Plan: 109 to add` |
 | 單元測試 | `terraform test`（`tests/*.tftest.hcl`，mock provider） | 0 | **`Success! 30 passed, 0 failed.`**（含「預設 hello 映像會觸發 check」的反向測試） |
 | 變異測試 | 在暫存複本各改壞一行：pg_bigm flag、parser ingress、actAs 成員、audit 訂閱 ttl、backfill SA、ssl_mode、PTT 佇列 rps、parser push audience | 1（每次） | **8/8 被抓到**（每次都只有 1 個 run 失敗） |
 | tflint 0.65.0＋google ruleset 0.41.0（recommended） | root 與 optional/gke | 0 | 0 issues |
-| trivy 0.76.1 | HCL／plan JSON | 0 | HCL 26 → 11、plan 12 → 10；**HIGH 全部清掉**（Cloud SQL 未強制加密、GKE 公開節點等）。剩下的見「待使用者決定」 |
+| trivy 0.76.1 | HCL／plan JSON | 0 | HCL 26 → 11、plan 12 → 10；**HIGH 全部清掉**（Cloud SQL 未強制加密、GKE 公開節點等）。剩下的見「待決定事項」 |
 | checkov 3.4.0 | plan JSON | 1 | 失敗 24／70 資源 → 23／102 資源（通過 27 → 69）。剩下的是 SQL log flags、flow logs、bucket versioning／存取 log、CMEK；CKV_GCP_6 要求客戶端憑證（`TRUSTED_CLIENT_CERTIFICATE_REQUIRED`），本模組刻意用 `ENCRYPTED_ONLY`＋IAM 登入 |
 | optional/gke | validate；把兩個 data source 換成字面值的 harness plan | 0／0 | validate 通過（1 個 deprecation warning）；`Plan: 8 to add`；checkov 25 → 11、trivy 13 → 1 |
 | parser 單元測試 | `pytest services/parser/tests` | 0 | 13 passed |
 | Pub/Sub 模擬器實跑 | `services/parser/local/`（見該目錄 VERIFY.md） | 0 | 合法事件 204 一次；三種壞事件各 422 五次後進 DLQ；容器以 uid 10001 執行 |
 
-**仍然沒有實測（需要真實專案）：** Cloud Tasks 以 OIDC 呼叫 internal ingress 的 worker、Pub/Sub push 到 internal ingress 的服務、Cloud SQL 上 `CREATE EXTENSION pg_bigm`、IAM 資料庫登入、BigQuery 訂閱實際寫入、Secret Manager 讀取。
+**仍然沒有實測（需要正式 GCP 專案）：** Cloud Tasks 以 OIDC 呼叫 internal ingress 的 worker、Pub/Sub push 到 internal ingress 的服務、Cloud SQL 上 `CREATE EXTENSION pg_bigm`、IAM 資料庫登入、BigQuery 訂閱實際寫入、Secret Manager 讀取。
 
 ### 成本（asia-east1 牌價，2026-10-30，以修改前 70 個資源計）
 
@@ -154,9 +154,9 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 | Q4 規模（每天 160 萬次請求） | US$1,788（GCP） | GCS 每次抓取一個物件的操作費 US$1,217，批次寫可降到約 US$573；住宅代理另加 US$2.8k–3.3k |
 | 地端（B 級估算） | NT$1,515–3,914 | 不含人力 |
 
-第二輪新增的備份、PITR、Secret、Scheduler job 沒有重新計價；備份依資料量計費。符合 Q2 預算的 Cloud SQL 規格見「待使用者決定」。
+第二輪新增的備份、PITR、Secret、Scheduler job 沒有重新計價；備份依資料量計費。符合 Q2 預算的 Cloud SQL 規格見「待決定事項」。
 
-## 第三輪驗證（2026-11-02，雲端容器，沒有 GCP 憑證；Q6 文字雲）
+## 第三輪驗證（2026-11-02，Linux 容器，沒有 GCP 憑證；Q6 文字雲）
 
 把 `q6/stack` 在本機 Docker 實跑過的 Q6 元件補成 Terraform（`q6.tf`），並依 Q6 監控計畫書調整網路與 Cloud SQL：第二個固定出口 IP（一個 IP 只有 64,512 個埠、被封鎖時有退路）、NAT 動態配埠 1,024–8,192 與 ERRORS_ONLY 日誌、`idle_in_transaction_session_timeout`＝60 秒、`log_min_duration_statement`＝1 秒。與第二輪一樣只做 fmt／validate／離線 plan／`terraform test`，**沒有 apply、沒有建立任何雲端資源**。Terraform 與 provider 版本同第二輪。
 
@@ -173,7 +173,7 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 
 設計上與本機版一致的值：pull 訂閱 `max_delivery_attempts`＝5、ack 60 秒（dict-releases 600 秒）、退避 10 秒～10 分鐘；parsed-posts 保留 7 天；API timeout 190 秒（`api/app.py` 的 ES 查詢逾時 170 秒）；採集器單實例（禮貌速率、ETag 與退避狀態在 `collector_state`）。Secret 只建容器，YouTube 金鑰值用 `gcloud secrets versions add` 另外放，不進 tfvars、state 或 git。
 
-**仍然沒有實測（需要真實專案）：** Cloud Run streaming pull 的 min 1 實例在 Direct VPC 下連 ES VM 與 Cloud SQL 私有 IP、採集器 egress ALL_TRAFFIC 經 NAT 出去的實際來源 IP、Secret 以環境變數掛進 Cloud Run、第二個 NAT IP 的白名單。這 45 個資源和第二輪的 32 個一樣，還沒對真實專案 plan 過。
+**仍然沒有實測（需要正式 GCP 專案）：** Cloud Run streaming pull 的 min 1 實例在 Direct VPC 下連 ES VM 與 Cloud SQL 私有 IP、採集器 egress ALL_TRAFFIC 經 NAT 出去的實際來源 IP、Secret 以環境變數掛進 Cloud Run、第二個 NAT IP 的白名單。這 45 個資源和第二輪的 32 個一樣，還沒對正式 GCP 專案 plan 過。
 
 **成本提醒（沒有 apply，所以目前為 0）：** 五個 Cloud Run 服務都是 `min_instance_count = 1`（斷詞服務要常駐拉訊息、API 的快取在記憶體），apply 後會有常駐實例的閒置費；A/B 結束後 v0／v1 可以縮到 0 或刪掉。第二個固定 IP 在有掛到 NAT 時不另收費。
 
@@ -207,8 +207,8 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 | 22 | MIG target_size 與 autoscaler 打架 | **已確認** | compute_region_instance_group_manager 文件：設了 target_size 會與 autoscaler 衝突 |
 | 23 | Cloud Run Job 雙層 template.template | **已確認** | cloud_run_v2_job 文件範例：`template { template { containers ... } }` |
 | 24 | Cloud Scheduler 的 OIDC SA 需要 run.invoker | **已確認** | GCP http-target-auth 文件：Cloud Run 目標需要 `roles/run.invoker` |
-| 25 | Cloud Tasks 派送到 Cloud Run 所需的 SA 權限（actAs 等） | **已確認並實作（第二輪）** | Cloud Tasks OidcToken 文件："The service account must be within the same project as the queue. The caller must have iam.serviceAccounts.actAs permission for the service account." 已加：tasks-invoker SA、scheduler_app 對它的 `serviceAccountUser`、Cloud Tasks 服務代理的 `serviceAccountUser`、worker 的 `run.invoker`。`terraform test` 的 `cloud_tasks_oidc_chain` 檢查這四項；實際派送未在真實專案測 |
-| 26 | Autopilot 的 ip_allocation_policy | **已確認（文件），未對真實專案 plan** | provider 文件：未設定時由 GKE 後端決定；Autopilot 1.27+／Standard 1.29+ 的 Service 用 GKE 管理的 34.118.224.0/20。GKE 加到 crawler-subnet 的次要範圍不會被主 root 刪掉（`send_secondary_ip_range_if_empty` 預設 false）。harness plan 通過 |
+| 25 | Cloud Tasks 派送到 Cloud Run 所需的 SA 權限（actAs 等） | **已確認並實作（第二輪）** | Cloud Tasks OidcToken 文件："The service account must be within the same project as the queue. The caller must have iam.serviceAccounts.actAs permission for the service account." 已加：tasks-invoker SA、scheduler_app 對它的 `serviceAccountUser`、Cloud Tasks 服務代理的 `serviceAccountUser`、worker 的 `run.invoker`。`terraform test` 的 `cloud_tasks_oidc_chain` 檢查這四項；實際派送未在正式 GCP 專案測 |
+| 26 | Autopilot 的 ip_allocation_policy | **已確認（文件），未對正式 GCP 專案 plan** | provider 文件：未設定時由 GKE 後端決定；Autopilot 1.27+／Standard 1.29+ 的 Service 用 GKE 管理的 34.118.224.0/20。GKE 加到 crawler-subnet 的次要範圍不會被主 root 刪掉（`send_secondary_ip_range_if_empty` 預設 false）。harness plan 通過 |
 
 **另外補強（NOTES 沒列）：** Cloud SQL 私有 IP 需要 Private Services Access（GCP 文件標題「Configure private services access」已確認；`google_service_networking_connection` 的寫法依 provider 文件，plan 中已通過）。
 
@@ -228,7 +228,7 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 12. **（第二輪）worker 每實例並行 4**（原本預設 80 × 50 實例 = 4,000 個同時抓取），每站速率改由 Cloud Tasks `crawl_site` 佇列控制。
 13. **（第二輪）scheduler、parser、backfill 加 Direct VPC egress（PRIVATE_RANGES_ONLY）**：Cloud SQL 只有私有 IP，沒有 VPC 出口就連不到；PRIVATE_RANGES_ONLY 讓其他流量不經 NAT。ptt-crawl Job 用 ALL_TRAFFIC，出口走固定 IP。
 14. **（第二輪）push 訂閱的 OIDC `audience` 明寫成服務 URL**（不帶路徑）。未指定時預設是整個 push endpoint（含 `/events/crawl-fetched`），Cloud Run 是否接受帶路徑的 audience 沒有實測，明寫可以避開這個不確定。
-15. **（第二輪）`checks.tf` 加 `no_placeholder_images`**：只要 `image_*` 還是 hello 示範映像，plan／apply 會出現警告。Python 驗證 thread 用 docker 實測，hello 對任何 POST 都回 200，Pub/Sub 會把事件全部 ack 掉、也不會進 DLQ。
+15. **（第二輪）`checks.tf` 加 `no_placeholder_images`**：只要 `image_*` 還是 hello 示範映像，plan／apply 會出現警告。Python 驗證用 docker 實測，hello 對任何 POST 都回 200，Pub/Sub 會把事件全部 ack 掉、也不會進 DLQ。
 
 ## 未覆蓋（沒有 Terraform，架構圖上仍存在）
 
@@ -242,7 +242,7 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 - **映像建置**：Cloud Build trigger 只有 crawler-api；parser、worker、scheduler、backfill、ptt-crawl、Q6 的 seg／wordcloud-api／collector 沒有建置資源，`image_*` 只能指向已存在的映像。
 - **監控與告警**（未確認訊息數、最舊訊息年齡、DLQ 數、Q6 的 66 條告警與兩張看板）：沒有 Terraform。本機版是 `q6/stack/monitoring/` 的 Prometheus／Alertmanager／Grafana／Loki；搬到 GCP 要另寫 `google_monitoring_alert_policy`（或 Managed Service for Prometheus 的規則）與通知管道。
 
-## 待使用者決定
+## 待決定事項
 
 1. **原始檔**：是 30 天轉 COLDLINE（int.txt），還是 30 天刪除（snippet）？兩者不能同時成立。預設採 COLDLINE，不刪。
 2. **worker 的 timeout 60s** 與 crawl-sub 的 ack_deadline 60s 對齊。長時間抓取（需要無頭瀏覽器）應移到 Cloud Run Job 或 GKE；超過 ack 時間會重送，需要 worker 冪等。

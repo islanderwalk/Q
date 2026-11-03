@@ -1,4 +1,4 @@
-// Q6 真實環境截圖：PM A/B 文字雲、Kibana、Grafana、Prometheus（全部是本機容器，畫面上的數字來自真的 ES／PG）
+// Q6 整套系統截圖：PM A/B 文字雲、Kibana、Grafana、Prometheus（全部是本機容器，畫面上的數字來自官方 ES／PG）
 // 用法：node screenshots.js <輸出目錄> <grafana 起點 epoch ms> <grafana 終點 epoch ms>
 const { chromium } = require('playwright');
 const path = require('path');
@@ -48,7 +48,7 @@ async function shot(page, url, file, { wait = 'networkidle', settle = 1500, full
 
   }
   // Grafana：兩個看板（主看板 9 層、採集看板 6 層；monitoring/grafana/build_dashboard.py 產生）。
-  // 面板是捲到才畫，所以用一個很高的視窗一次全部畫出來；畫面上的數字來自真的 Prometheus／PostgreSQL／Loki
+  // 面板是捲到才畫，所以用一個很高的視窗一次全部畫出來；畫面上的數字來自 Prometheus／PostgreSQL／Loki
   if (want('grafana')) {
   const tall = await ctx.newPage();
   await tall.setViewportSize({ width: 1600, height: 7200 });

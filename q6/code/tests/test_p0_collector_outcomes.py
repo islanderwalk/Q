@@ -1,5 +1,5 @@
 """採集器（計畫書 P0 第 3、4 項）：每次請求的 outcome 分類、首抓延遲、robots.txt 解析、YouTube Data API 路徑與金鑰遮蔽。
-全部純函式或 monkeypatch 替身，不連網、不連 ES／PostgreSQL。"""
+全部純函式或 monkeypatch fake，不連網、不連 ES／PostgreSQL。"""
 import json
 import sys
 from datetime import datetime, timedelta, timezone

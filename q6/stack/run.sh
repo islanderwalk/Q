@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Q6 真實環境：一步一步重跑。全部在本機 Docker，零成本。用法：./run.sh <步驟>
+# Q6 整套系統：一步一步重跑。全部在本機 Docker，零成本。用法：./run.sh <步驟>
 #   build   下載並驗證 ES 外掛、建字典 artifact r1–r6、建三個映像
 #   up      起 ES／Kibana／PostgreSQL／Pub/Sub 模擬器／字典服務／API／監控
-#   seed    建索引與訂閱，灌 PTT 真實文章（真實發文時間：標題 + 兩個公開語料），寫舊詞表 terms_v1（「現在的線上狀態」）
+#   seed    建索引與訂閱，灌 PTT 文章（原始發文時間：標題 + 兩個公開語料），寫舊詞表 terms_v1（「現在的線上狀態」）
 #   backfill 回補 v2：首月跑完等 PM 簽核；AUTO_APPROVE=1（預設）用指令簽核並接著開 3 個 task，AUTO_APPROVE=0 到 PM 頁簽核後再跑 backfill-tasks
 #   backfill-tasks 開 3 個回補 task（PM 簽核過之後）
-#   live    字典 current 切到最新版，起串流斷詞 v1／v2、API（PM 頁 http://127.0.0.1:8080）、真實來源採集器
+#   live    字典 current 切到最新版，起串流斷詞 v1／v2、API（PM 頁 http://127.0.0.1:8080）、公開 feed 採集器
 #   stream  送六渠道樣本（含重送冪等、壞訊息進 DLQ 的實測）
 #   exp     ES 實驗（分析器、聚合、版本守門、延遲、PG 對照）、寫入壓力對查詢延遲
 #   ik      IK 遠端字典熱更新＋同義詞（會把字典 current 切到 r5）
@@ -14,7 +14,7 @@
 #   slo     用 Sloth 從 monitoring/slo/*.yml 重新產生 monitoring/rules/slo.yml（燃燒率規則）；promtool 檢查全部規則
 # 需要：Docker、Python 3（requests、jieba、psycopg、google-cloud-pubsub）、Node＋Playwright。
 # 原始資料（不進 git）：DL=… 放 dict.txt.big、ptt_pretrain.parquet、ptt_gossiping_100k.parquet（下載方式見 README.md）。
-# 測試機縮小規模：SINCE=2020-01、MAX_PER_SOURCE=50000（都是真實文章，只是少收一點）。
+# 測試機縮小規模：SINCE=2020-01、MAX_PER_SOURCE=50000（都是原文，只是少收一點）。
 set -euo pipefail
 cd "$(dirname "$0")"
 DL=${DL:-/tmp/q6dl}
@@ -26,7 +26,7 @@ case "${1:-}" in
   build)
     es/fetch_plugins.sh
     $PY dict/build_artifact.py "$DL/dict.txt.big" runtime/dictsrv $R.1 $R.3 $R.4 $R.5 $R.6 $R.2   # 最後一個是 current
-    $PY dict/build_legacy.py runtime/dictsrv qsearch-q6-legacy-2019.12.31.1 --moe "$DL/moe_revised_words.txt" --jieba-tw "$DL/jieba_tw_dict.txt"   # v0 舊系統替身字典
+    $PY dict/build_legacy.py runtime/dictsrv qsearch-q6-legacy-2019.12.31.1 --moe "$DL/moe_revised_words.txt" --jieba-tw "$DL/jieba_tw_dict.txt"   # v0 舊流程重現版字典
     docker build --network host -t qsearch-es:9.5.5 es
     (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$(git rev-parse --short HEAD)" -t qsearch-seg:local -f stack/seg/Dockerfile .)
     docker build --network host "${secret[@]}" -t qsearch-wordcloud-api:local -f api/Dockerfile .
@@ -44,7 +44,7 @@ case "${1:-}" in
     PUBSUB_EMULATOR_HOST=localhost:8085 $PY scripts/setup.py
     for i in 0 1 2; do docker compose --profile job run -d --no-deps --name seed-$i -e CLOUD_RUN_TASK_INDEX=$i -e CLOUD_RUN_TASK_COUNT=3 \
       -e PIPELINE=v1 -e DICT_VERSION=$R.1 seg-job seed; done
-    # v0 舊系統替身：同一批原文再用凍結 2019 字典寫 terms_v0（「上線前的舊文字雲」）
+    # v0 舊流程重現版：同一批原文再用凍結 2019 字典寫 terms_v0（「上線前的舊文字雲」）
     for i in 0 1 2; do docker compose --profile job run -d --no-deps --name seed-v0-$i -e CLOUD_RUN_TASK_INDEX=$i -e CLOUD_RUN_TASK_COUNT=3 \
       -e PIPELINE=v0 -e DICT_VERSION=qsearch-q6-legacy-2019.12.31.1 seg-job seed; done
     ;;

@@ -6,7 +6,7 @@
   線上時間戳不是數字時回 400）。noop 或錯誤時文件不變，所以先在副本上改。
 - index 動作＋version_type=external：給的版本小於或等於現有版本時回 409。
 - 可注入單筆 429（es_rejected_execution_exception）、整個請求 HTTP 429，以及單筆 400。
-這只能驗證送出端的流程與冪等性，painless 腳本本身要在真的 ES 上驗證。
+這只能驗證送出端的流程與冪等性，painless 腳本本身要在官方 ES 上驗證。
 """
 import copy
 import json

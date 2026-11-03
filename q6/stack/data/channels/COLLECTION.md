@@ -1,6 +1,6 @@
-# Q6 真實渠道樣本：收集紀錄
+# Q6 六渠道公開貼文樣本：收集紀錄
 
-給 Q6 斷詞 pipeline 測試用的公開貼文，6 個渠道：論壇（PTT）、Threads、YouTube、媒體，加上 Facebook、Instagram（含 Reels）。Facebook、Instagram 在本機上抓（雲端容器的 IP 會被 Meta 擋），見文末一節。
+給 Q6 斷詞 pipeline 測試用的公開貼文，6 個渠道：論壇（PTT）、Threads、YouTube、媒體，加上 Facebook、Instagram（含 Reels）。Facebook、Instagram 在本機上抓（資料中心 IP 會被 Meta 擋），見文末一節。
 
 - 抓取時間：2026-10-31 01:31–01:41（+08:00），全部未登入，使用桌面 Chrome UA。
 - 不存 cookie、token、cursor。Threads 只留抽出的欄位，不存 HTML。
@@ -57,7 +57,7 @@
 - 短網址：reurl.cc 2 篇（共 3 個）、bit.ly 1 篇。
 - noise-05 截圖裡的 `tinyurl.com` 和被推文斷行切開的網址都在推文列。依規則推文不收，所以 `text` 裡沒有這兩項。
 - 電話樣式 2 篇：
-  - `Kaohsiung/M.1793291047.A.07A`：真的手機號碼（自家宣傳）。
+  - `Kaohsiung/M.1793291047.A.07A`：商家自家宣傳的手機號碼。
   - `Lifeismoney/M.1793168867.A.ECB`：**誤判**。`PHONE_RE` 把引言列「※ 引述《a05079944 (BACOBOO)》」中的帳號 `a05079944` 當成電話，因為前面是字母不是數字。這是 pipeline 可以拿來測的反例。
 
 ## Threads（`threads.jsonl`，61 篇）
@@ -187,7 +187,7 @@ node screenshots.js [名稱…]                 # 截圖（Node Playwright）
 
 ## Facebook、Instagram（`facebook.jsonl` 4 篇、`instagram.jsonl` 48 篇）
 
-- 抓取時間：2026-10-31 01:46（+08:00），在本機 Windows 電腦用 `collect/capture_q6_fb_ig.py` 跑（住宅網路；雲端容器的 IP 會被 Meta 導去登入頁）。
+- 抓取時間：2026-10-31 01:46（+08:00），在本機 Windows 電腦用 `collect/capture_q6_fb_ig.py` 跑（住宅網路；資料中心 IP 會被 Meta 導去登入頁）。
 - 全部未登入。登入邀請框只按 Esc／不點，不輸入任何帳密；不存 cookie、token、cursor，也不存 HTML，只留從頁面內嵌 JSON 抽出的欄位。
 - 每個網址載入一次：FB 4 次、IG 8 次（4 個帳號各自的主頁與 Reels 頁），紀錄在 `_meta/capture_q6_fb_ig_log.txt`。
 

@@ -4,7 +4,7 @@
 
 遵守 shared/capture 的規則：只抓未登入看得到的公開頁、不存 cookie/token/cursor、
 不用代理輪替、不偽裝指紋、不存整頁 HTML。手機視窗；每個帳號單次載入、間隔 ≥4 秒。
-流程：載入 → 輪詢等 splash 消失且真正的貼文（a[href*=/post/]）渲染 →
+流程：載入 → 輪詢等 splash 消失且實際的貼文（a[href*=/post/]）渲染 →
 只隱藏 [role=dialog] 與半透明黑色遮罩（等同 devtools 隱藏彈窗）→ 截圖。
 """
 import os, time, json

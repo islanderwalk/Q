@@ -1,4 +1,4 @@
-"""Q6 的 ES 實驗（全部打真的 ES 9.5.5 單節點，結果寫 results/es/*.json）。
+"""Q6 的 ES 實驗（全部打官方 ES 9.5.5 單節點，結果寫 results/es/*.json）。
 
 analyzers  ：同幾句話，ES 內建／外掛分析器 vs jieba 舊流程 v1／新流程 v2 怎麼切
 aggs       ：terms 聚合的語意（doc_count 是篇數）、shard_size 與誤差上界、query 與 post_filter、_reindex 不必重算

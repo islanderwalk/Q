@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""QSearch 筆試 Q2–Q5 真實網頁證據截圖（Playwright）。
+"""QSearch 筆試 Q2–Q5 公開網頁證據截圖（Playwright）。
 
 只抓未登入看得到的公開頁面；每個網站兩次導覽至少間隔 1.5 秒，總量很小；
 不存 cookie／token 的值；不用代理輪替、不偽裝指紋。

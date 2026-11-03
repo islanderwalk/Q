@@ -1,6 +1,6 @@
-# Playwright 證據交接（給 UIUX 大師）
+# Playwright 截圖紀錄（第一輪）
 
-日期：2026-10-30。repo：claude-code（分支 restructure-q1-q6，未 commit）。證據等級：A＝實抓，B＝推論。
+日期：2026-10-30。證據等級：A＝實抓，B＝推論。
 
 ## 新增的截圖與資料
 

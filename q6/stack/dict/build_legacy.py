@@ -1,4 +1,4 @@
-"""建 v0「舊系統替身」的字典 artifact：versions/<版本>/{legacy.dict, manifest.json}。
+"""建 v0「舊流程重現版」的字典 artifact：versions/<版本>/{legacy.dict, manifest.json}。
 
 用法：python dict/build_legacy.py <輸出根目錄> <版本> --moe <moe_revised_words.txt> --jieba-tw <jieba_tw_dict.txt>
 版本規格在 dict/releases/<版本>.json：layers 列出每一層的來源、授權、凍結日；layers 的 "arg" 由命令列給檔案，

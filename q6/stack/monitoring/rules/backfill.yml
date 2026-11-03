@@ -25,7 +25,7 @@ groups:
         for: 30m
         labels: { severity: warn }
         annotations: { summary: "回補 8 小時平均速率低於每秒 1,450 篇（{{ $value | printf \"%.0f\" }}）：45 工作天內做不完 5 億篇" }
-      # ETA ＝ 剩餘篇數 ÷ 近 15 分鐘速率；超過一個 8 小時離峰窗 → warn（提案值；真正的離峰窗依客戶流量定）
+      # ETA ＝ 剩餘篇數 ÷ 近 15 分鐘速率；超過一個 8 小時離峰窗 → warn（提案值；實際的離峰窗依客戶流量定）
       - alert: BackfillEtaBeyondWindow
         expr: (qseg_backfill_remaining_docs / (qseg_backfill_docs_per_sec_15m > 0)) > 8 * 3600 and qseg_ledger_partitions{status="running"} > 0
         for: 15m

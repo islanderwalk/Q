@@ -45,6 +45,6 @@
 
 ## 4. 尚未涵蓋
 
-- 地端只驗證了功能（6,724 篇 PTT fixture、20 萬列 pg_bigm 放大測試）；高可用、真實抓取、Q2 規模都沒測。
-- GCP 側沒有真實憑證，只做離線 plan、mock 測試與 Pub/Sub 模擬器；OIDC 呼叫、internal ingress、Cloud SQL `CREATE EXTENSION pg_bigm`、IAM DB 登入、BigQuery 訂閱寫入都未實測。
+- 地端只驗證了功能（6,724 篇 PTT fixture、20 萬列 pg_bigm 放大測試）；高可用、線上抓取、Q2 規模都沒測。
+- GCP 側沒有 GCP 憑證，只做離線 plan、mock 測試與 Pub/Sub 模擬器；OIDC 呼叫、internal ingress、Cloud SQL `CREATE EXTENSION pg_bigm`、IAM DB 登入、BigQuery 訂閱寫入都未實測。
 - 兩邊都還沒有 Terraform／compose 的：session refresher、Elasticsearch 叢集本體、Memorystore／Redis（GCP 側）、Vector DB、監控。

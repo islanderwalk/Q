@@ -66,7 +66,7 @@ def replay(s: Settings, mode: str, since: str | None = None, wait: bool = True, 
               "inbox_rows_before": len(before)}
     if wait and sent:
         # 每個重送的事件：inbox 列必須存在、三個 done 旗標為真；原本就有的列 deliveries 要 +1，
-        # reparse 模式另外要求 processed_count +1（證明真的從 MinIO 重讀重解析）。
+        # reparse 模式另外要求 processed_count +1（證明從 MinIO 重讀重解析）。
         deadline = time.time() + timeout
         while True:
             now = _snapshot(conn, sent)

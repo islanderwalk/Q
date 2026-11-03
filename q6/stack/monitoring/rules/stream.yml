@@ -9,7 +9,7 @@ groups:
         for: 2m
         labels: { severity: page }
         annotations: { summary: "串流斷詞服務抓不到 /metrics 超過 2 分鐘（{{ $labels.instance }}）；積壓告警這段時間不會響" }
-      # 積壓年齡（最舊未 ack 訊息）＞ 10 分鐘持續 5 分鐘 → 開單；＞ 45 分鐘 → 呼叫（提案值：計畫書 P0 第 5 項；PR #15 原為 5／15 分鐘）
+      # 積壓年齡（最舊未 ack 訊息）＞ 10 分鐘持續 5 分鐘 → 開單；＞ 45 分鐘 → 呼叫（提案值：計畫書 P0 第 5 項；初版為 5／15 分鐘）
       - alert: SegBacklogAgeTicket
         expr: (time() - min by (pipeline) (qseg_oldest_unacked_publish_ts)) > 600
         for: 5m

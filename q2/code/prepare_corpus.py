@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""QSearch 第 2 題：把真實中文語料切成「每則 250 字」的貼文檔，給 run_q2.py --mode corpus 用。
+"""QSearch 第 2 題：把中文語料切成「每則 250 字」的貼文檔，給 run_q2.py --mode corpus 用。
 
-頁面與 repeat／distinct 兩種造資料方式都是隨機 CJK 字，字頻是均勻分布；真實中文是齊夫分布，
-索引體積會落在兩者之間。這支腳本產生真實字頻的內文，一行一則（UTF-8，行內不含換行與 tab）。
+頁面與 repeat／distinct 兩種造資料方式都是隨機 CJK 字，字頻是均勻分布；中文語料是齊夫分布，
+索引體積會落在兩者之間。這支腳本產生符合實際字頻的內文，一行一則（UTF-8，行內不含換行與 tab）。
 
 用法：
     # 中文維基（Hugging Face wikimedia/wikipedia 20231101.zh 的 parquet，欄位 text）
@@ -122,7 +122,7 @@ def write_posts(posts: list, out: Path) -> dict:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="QSearch Q2：真實中文語料切成 250 字貼文")
+    ap = argparse.ArgumentParser(description="QSearch Q2：中文語料切成 250 字貼文")
     sub = ap.add_subparsers(dest="source", required=True)
     w = sub.add_parser("wiki")
     w.add_argument("--parquet", nargs="+", required=True)
@@ -149,7 +149,7 @@ def main(argv=None):
             if args.rows <= 0:
                 sys.exit("recombine 需要 --rows")
             posts = recombine_posts(lines, args.rows, size=args.chars, seed=args.seed)
-    # 打散順序：真實貼文表裡相鄰列通常來自不同粉絲頁，不該因為來源順序讓相鄰列共用詞而壓縮得特別好
+    # 打散順序：線上貼文表裡相鄰列通常來自不同粉絲頁，不該因為來源順序讓相鄰列共用詞而壓縮得特別好
     random.Random(args.seed).shuffle(posts)
     if args.rows:
         if len(posts) < args.rows:

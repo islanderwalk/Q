@@ -20,7 +20,7 @@ RERUN_DOCS = Counter("qseg_rerun_docs_total", "定向重跑寫入結果（create
 OLDEST_UNACKED = Gauge("qseg_oldest_unacked_publish_ts", "尚未 ack／nack 的最舊訊息之 publish_time（Unix 秒）；沒有未結訊息時＝現在，年齡為 0", ["pipeline"])
 
 
-# 同一個模組定義全部指標，但每個常駐服務只能曝露自己擁有的：真實環境驗證抓到 seg-v0／v1／v2 也把
+# 同一個模組定義全部指標，但每個常駐服務只能曝露自己擁有的：端對端驗證抓到 seg-v0／v1／v2 也把
 # qseg_recon_last_success_timestamp_seconds、qseg_quality_whole_word_recall 等「別人的」無標籤 gauge 以 0 曝露出去，
 # ReconStale／QualityStale／QualityWholeWordRecallLow 每個 instance 各響一次（5 倍誤響）。owner → 自己的指標前綴。
 OWNERS = {

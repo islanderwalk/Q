@@ -1,4 +1,4 @@
-"""建字典 artifact（GCS 物件的本機替身）：每一版一個資料夾，內含 jieba 與 IK 兩邊用的檔案和 manifest。
+"""建字典 artifact（GCS 物件的本機對應元件）：每一版一個資料夾，內含 jieba 與 IK 兩邊用的檔案和 manifest。
 
 用法：python build_artifact.py <dict.txt.big> <輸出根目錄> [版本 ...]
 輸出：<根>/versions/<dict_version>/{base.dict,user.dict,stopwords.txt,soft_stopwords.txt,merges.tsv,

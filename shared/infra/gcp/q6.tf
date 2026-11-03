@@ -1,13 +1,13 @@
-# Q6 文字雲：串流斷詞服務 v0／v1／v2、文字雲 API（PM A/B 頁）、真實來源採集器；Pub/Sub parsed-posts（含 DLQ）與 dict-releases；
+# Q6 文字雲：串流斷詞服務 v0／v1／v2、文字雲 API（PM A/B 頁）、公開 feed 採集器；Pub/Sub parsed-posts（含 DLQ）與 dict-releases；
 # 字典 artifact bucket。每一項都對應 q6/stack/docker-compose.yml 與 scripts/setup.py 裡本機模擬器的同名主題／訂閱。
 # 只補 Terraform、離線 plan 與 terraform test；沒有 apply（零成本原則）。
 # Elasticsearch 在 Compute Engine VM（crawler-subnet 內的私有 IP，上面裝 Ops Agent），不在這個模組裡建：var.elasticsearch_url。
 
 locals {
-  seg_pipelines = toset(["v0", "v1", "v2"]) # v0 舊系統替身、v1 現況、v2 新流程：A/B 期間各寫各的欄位
+  seg_pipelines = toset(["v0", "v1", "v2"]) # v0 舊流程重現版、v1 現況、v2 新流程：A/B 期間各寫各的欄位
 }
 
-# --- 字典 artifact：本機 dictsrv（nginx）的替身；斷詞服務每 15 秒輪詢 current/manifest.json，發版只增版本、再切 current ---
+# --- 字典 artifact：本機 dictsrv（nginx）的對應元件；斷詞服務每 15 秒輪詢 current/manifest.json，發版只增版本、再切 current ---
 resource "google_storage_bucket" "dict_artifacts" {
   name                        = "${var.project_id}-qsearch-dict"
   location                    = upper(var.region)
@@ -296,7 +296,7 @@ resource "google_cloud_run_v2_service" "wordcloud_api" {
   depends_on = [google_project_service.required]
 }
 
-# 真實來源採集器：單實例（同一個 feed 不能兩台同時抓：禮貌速率、ETag 與退避狀態在 collector_state）；
+# 公開 feed 採集器：單實例（同一個 feed 不能兩台同時抓：禮貌速率、ETag 與退避狀態在 collector_state）；
 # 出站走 Direct VPC egress ALL_TRAFFIC → Cloud NAT 固定 IP（目標站看到的永遠是同幾個 IP）。
 resource "google_cloud_run_v2_service" "collector" {
   name                = "qsearch-collector"

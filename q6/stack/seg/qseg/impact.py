@@ -1,7 +1,7 @@
 """加詞影響範圍的地面真值：用全量原文比較「舊字典」與「新字典」斷詞結果，看哪些文章變了。
 
 同時跑兩種新字典：固定 total（manifest.total_pinned）與不固定（jieba 預設，加詞後 total 會變），
-回答「新增詞只重跑原文含該字串的文章」這句話在真實資料上是否成立。
+回答「新增詞只重跑原文含該字串的文章」這句話在正式資料上是否成立。
 用法：python -m qseg impact <舊版> <新版> <詞,詞> [processes] [--record]
 --record：把「不含新詞卻變了的文章數（固定 total）」寫進 dict_releases.bigram_audit_missed（P0-5 的漏抓數）
 """

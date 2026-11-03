@@ -16,7 +16,7 @@ WEB = REALENV / "web"
 
 
 def hist_count(child):
-    """直方圖子序列的觀測次數：真的 prometheus_client 的 _buckets 內部不是累積的（每筆只進一桶，收集時才累加），所以全部加總；fake 替身把 observe 累加在 _value。"""
+    """直方圖子序列的觀測次數：prometheus_client 本體 的 _buckets 內部不是累積的（每筆只進一桶，收集時才累加），所以全部加總；fake把 observe 累加在 _value。"""
     return sum(b.get() for b in child._buckets) if hasattr(child, "_buckets") else child._value.get()
 
 

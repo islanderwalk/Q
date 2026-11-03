@@ -1,7 +1,7 @@
 # 地端 stack 實跑驗證紀錄（docker compose）
 
-> 日期：2026-10-30。執行環境：雲端容器（Linux，16 GiB RAM，Docker 29.9.2、Docker Compose v5.6.1）。
-> 「抓」只讀 repo 內的 fixture（`shared/capture/html/`、`q6/data/ptt_titles_7d.jsonl`），**沒有連任何真實網站**。
+> 日期：2026-10-30。執行環境：Linux 容器（Linux，16 GiB RAM，Docker 29.9.2、Docker Compose v5.6.1）。
+> 「抓」只讀 repo 內的 fixture（`shared/capture/html/`、`q6/data/ptt_titles_7d.jsonl`），**沒有連任何線上網站**。
 > 帳密全部是 `.env.example` 的示範值，只能本機用。
 
 ## 架構：同一條 6 段管線，換成地端元件
@@ -95,7 +95,7 @@ OpenSearch 914 MiB、MinIO 230 MiB、RabbitMQ 184 MiB、ClickHouse 164 MiB、par
 
 ## 沒有證明的事
 
-- **真實抓取**：worker 只讀 fixture，不碰真實網站、代理池、出口 IP、封鎖行為（Q4 的核心問題）。
+- **線上抓取**：worker 只讀 fixture，不碰線上網站、代理池、出口 IP、封鎖行為（Q4 的核心問題）。
 - **高可用**：每個服務都是單機單副本。RabbitMQ quorum queue 只有 1 個節點，MinIO 沒有 erasure coding，PostgreSQL 沒有 replica，沒有備份還原演練。
 - **規模**：資料只有 6,724 篇（加上 20 萬列的 pg_bigm 放大測試）。Q2 的每日量、ClickHouse 批次寫入、OpenSearch 分片都沒測。
 - **中文斷詞**：OpenSearch 用內建 `cjk` analyzer（中日韓字元 bigram，與 pg_bigm 同概念），沒有裝 IK／smartcn，Q6 的斷詞方案沒驗證。

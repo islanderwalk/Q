@@ -1,6 +1,6 @@
 # Cloud Run 服務與 Job。
 # deletion_protection 一律明確設定（預設 true，provider 文件確認預設即為 true）。
-# image 全部用變數；預設 hello 映像讓 plan 成立，真正部署時改 var.image_* 為 Artifact Registry 映像。
+# image 全部用變數；預設 hello 映像讓 plan 成立，實際部署時改 var.image_* 為 Artifact Registry 映像。
 
 # 入口：管理後台 POST /crawl。
 resource "google_cloud_run_v2_service" "api" {
