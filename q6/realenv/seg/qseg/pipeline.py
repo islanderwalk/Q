@@ -1,6 +1,7 @@
 """一篇文章 → 詞表。v1 = 舊流程（原文、純字典、HMM 關、不過濾）；v2 = 新流程（渠道清洗 → jieba＋HMM → 過濾）。
 回傳去重後的詞（保留首次出現順序）：ES terms 聚合算的是「有幾篇文章提到」，同一篇重複 10 次仍只算 1 篇，
 存重複值對文字雲沒有幫助（筆記 §3.4）。"""
+import hashlib
 import re
 from datetime import datetime, timezone
 
@@ -57,7 +58,10 @@ def must_keep_split(text: str, toks: list, words) -> list:
 
 
 def segment_checked(dic, channel: str, text: str):
-    """回傳 (詞表, 被切開的必不可拆詞)。v1 不檢查。"""
+    """回傳 (詞表, 被切開的必不可拆詞)。v0／v1 不檢查。"""
+    if dic.pipeline == "v0":
+        from . import legacy
+        return legacy.tokens(text or "", dic.legacy_words, dic.legacy_maxlen), []
     if dic.pipeline == "v1":
         return _dedupe(t for t in (x.strip() for x in dic.tokenizer.lcut(text or "", HMM=False)) if t), []
     clean = normalize(channel, text)
@@ -82,9 +86,10 @@ def month_of(published_at: str) -> str:
 
 def base_doc(post: dict) -> dict:
     """文章本體欄位（parser 寫入的部分）。斷詞欄位不在這裡，由各版斷詞服務各寫各的。"""
-    keys = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at")
+    keys = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at", "author")
     doc = {k: post.get(k) for k in keys}
     doc["content"] = post.get("text") or post.get("content") or ""
+    doc["content_sha"] = hashlib.sha256(doc["content"].encode("utf-8")).hexdigest()[:16]   # 同一版斷詞下原文改了也看得出來（api/ops.py 同一定義）
     doc["month"] = month_of(post.get("published_at"))
     return doc
 

@@ -167,3 +167,4 @@
 - 衝突「每批品質檢查點」：PLAN.md 與目前卡片：5 個檢查點（筆數對帳、dict_version、金標 200 則錯誤率 < 2%、異常 ±20%、寫入失敗 < 0.1%）／answer_600.txt 與研究頁：閘門 G1–G4；G4 的 PM 抽查只在各渠道首月，之後 G1–G3 正常就自動放行。採用：顯示 G1–G4。這是答案檔的版本，也和分支閘門圖一致。
 - 衝突「ptt_noise_02 的圖說」：目前卡片：電話號碼（已遮）等斷詞雜訊／capture_manifest.json 與 playwright.md：02 是地名「鼓山區」，電話在 04。採用：依 manifest 改圖說，電話改用 ptt_noise_04。
 - 衝突「pytest 狀態」：master README.md：pytest 由 python 代理執行中，本次未重跑／python.md：q6/code/tests 9 passed（退出碼 0）；python-verification 的 HANDOFF.md 記主代理已重跑確認。採用：顯示 9 passed。python.md 是之後補跑的紀錄。
+- 2026-11-02 更新（監控計畫書實作與 q6.tf）：notes 的「監控」與「GCP 的 terraform plan」兩條、verify 的 terraform 一條與新增的「監控真環境驗證」一條、todo、facts 的沙盤來源一條、figures（主看板、採集看板、PM 告警橫幅三張真實截圖）與 evidence（同三張）依 q6/realenv/MONITORING.md「真實環境驗證」與 shared/infra/gcp/README.md「第三輪驗證」改寫；舊的回補看板與爬蟲看板圖保留。一張圖的「7 觀測」帶由 4 個節點改成 7 個（加 ES 健康、完整性對帳、品質日報，看板節點併入 Alertmanager → PM 頁）。

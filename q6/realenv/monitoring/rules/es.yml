@@ -1,0 +1,74 @@
+# Elasticsearch 叢集健康（計畫書 P0 第 10 項；指標來自 elasticsearch_exporter v1.9.0）。門檻都是提案值；
+# 磁碟規則對齊 ES 自己的預設水位 85／90／95%（本機 compose 改成絕對值 4gb／2gb／1gb，正式環境還原百分比）。
+# awesome-prometheus-alerts 的 HighQueryLatency > 1 秒對文字雲不適用（改看 slowlog > 60 秒進 Loki）；HighIndexingRate 每秒 10,000 次在每秒 3,000 篇下不會觸發，不收。
+groups:
+  - name: q6-elasticsearch
+    rules:
+      - alert: ElasticsearchExporterDown
+        expr: up{job="es-exporter"} == 0 or absent(up{job="es-exporter"})
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "elasticsearch_exporter 抓不到：下面的 ES 規則這段時間都不會響" }
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 1m
+        labels: { severity: page }
+        annotations: { summary: "ES 叢集 red：有主分片不可用，寫入與查詢會失敗" }
+      - alert: ElasticsearchClusterYellow
+        expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "ES 叢集 yellow 超過 10 分鐘（本機單節點 0 副本本來就是 yellow；多節點正式環境才算異常）" }
+      # 磁碟：> 80% warn；> 88% 或依近 1 小時趨勢 4 小時內會滿 → page（ES 在 85% 不再分配分片、90% 搬走分片、95% 設成唯讀）
+      - alert: ElasticsearchDiskHigh
+        expr: 1 - (elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes) > 0.80
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "ES 節點 {{ $labels.name }} 磁碟用量超過 80%（ES 85% 起不再分配新分片）" }
+      - alert: ElasticsearchDiskCritical
+        expr: |
+          1 - (elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes) > 0.88
+            or predict_linear(elasticsearch_filesystem_data_available_bytes[1h], 4 * 3600) < 0
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "ES 節點 {{ $labels.name }} 磁碟超過 88% 或 4 小時內會滿（95% 會被設成唯讀，回補與串流都會停）" }
+      - alert: ElasticsearchBreakerTripped
+        expr: increase(elasticsearch_breakers_tripped[10m]) > 0
+        for: 0m
+        labels: { severity: warn }
+        annotations: { summary: "ES circuit breaker {{ $labels.breaker }} 被觸發（大聚合或 fielddata 打爆記憶體）" }
+      - alert: ElasticsearchWriteRejections
+        expr: increase(elasticsearch_thread_pool_rejected_count{type="write"}[10m]) > 0
+        for: 0m
+        labels: { severity: warn }
+        annotations: { summary: "ES 寫入佇列拒絕（429）：回補或串流寫太快，G3 會自動降速" }
+      - alert: ElasticsearchSearchRejections
+        expr: increase(elasticsearch_thread_pool_rejected_count{type="search"}[10m]) > 0
+        for: 0m
+        labels: { severity: warn }
+        annotations: { summary: "ES 搜尋佇列拒絕：查詢排不進去，文字雲會變慢或失敗" }
+      - alert: ElasticsearchHeapHigh
+        expr: elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"} > 0.90
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "ES 節點 {{ $labels.name }} JVM heap 超過 90% 持續 10 分鐘（GC 風暴前兆）" }
+      - alert: ElasticsearchGcTimeHigh
+        expr: rate(elasticsearch_jvm_gc_collection_seconds_sum[5m]) > 0.1
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "ES 節點 {{ $labels.name }} GC 時間占比超過 10%（{{ $labels.gc }}）" }
+      - alert: ElasticsearchUnassignedShards
+        expr: elasticsearch_cluster_health_unassigned_shards > 0
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "ES 有 {{ $value }} 個分片未分配超過 15 分鐘" }
+      - alert: ElasticsearchSnapshotFailed
+        expr: increase(elasticsearch_slm_stats_total_snapshots_failed_total[1d]) > 0
+        for: 0m
+        labels: { severity: warn }
+        annotations: { summary: "SLM 快照失敗（最近 1 天）：備份沒成功" }
+      - alert: ElasticsearchSnapshotStale
+        expr: increase(elasticsearch_slm_stats_total_snapshots_taken_total[2d]) == 0
+        for: 1h
+        labels: { severity: ticket }
+        annotations: { summary: "2 天內沒有成功的 SLM 快照（政策 daily-posts 每天 01:30）" }

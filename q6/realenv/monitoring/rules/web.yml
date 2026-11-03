@@ -1,0 +1,50 @@
+# PM 頁（計畫書 P1「PM 頁（Faro）」那一列，這裡用自寫的 web/rum.js → POST /api/rum；指標都在 wordcloud-api，服務掛掉由 rules/api.yml 的 WordcloudApiDown 先響）。
+# 門檻都是提案值：LCP 2.5 秒、INP 200 ms、CLS 0.1 是 web-vitals 的「良好」上限；樣本 < 5 次不評（本機只有 PM 一個人在看）。
+groups:
+  - name: q6-web
+    rules:
+      - alert: WebLcpSlow
+        expr: |
+          histogram_quantile(0.75, sum by (le) (rate(wordcloud_web_vitals_seconds_bucket{metric="lcp"}[1h]))) > 2.5
+            and on () sum(increase(wordcloud_web_vitals_seconds_count{metric="lcp"}[1h])) >= 5
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "PM 頁 LCP p75 超過 2.5 秒（{{ $value | humanizeDuration }}）：頁面本身慢，不是文字雲查詢慢" }
+      - alert: WebInpSlow
+        expr: |
+          histogram_quantile(0.75, sum by (le) (rate(wordcloud_web_vitals_seconds_bucket{metric="inp"}[1h]))) > 0.2
+            and on () sum(increase(wordcloud_web_vitals_seconds_count{metric="inp"}[1h])) >= 5
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "PM 頁 INP p75 超過 200 ms：互動卡（文字雲排版或 2 秒重繪在主執行緒太久）" }
+      - alert: WebClsHigh
+        expr: |
+          histogram_quantile(0.75, sum by (le) (rate(wordcloud_web_cls_bucket[1h]))) > 0.1
+            and on () sum(increase(wordcloud_web_cls_count[1h])) >= 5
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "PM 頁 CLS p75 超過 0.1：版面在跳（表格重繪時高度變化）" }
+      # 首次出雲：從開頁到第一次畫出文字雲；對照伺服器端 API p95（面板並排）
+      - alert: WebFirstCloudSlow
+        expr: |
+          histogram_quantile(0.75, sum by (le) (rate(wordcloud_web_vitals_seconds_bucket{metric="ttfc"}[1h]))) > 10
+            and on () sum(increase(wordcloud_web_vitals_seconds_count{metric="ttfc"}[1h])) >= 5
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "PM 頁首次出雲 p75 超過 10 秒：對照 wordcloud_duration_seconds 看是 API 慢還是頁面慢" }
+      - alert: WebJsErrors
+        expr: sum(increase(wordcloud_web_errors_total[1h])) > 0
+        for: 0m
+        labels: { severity: ticket }
+        annotations: { summary: "PM 頁最近 1 小時有 {{ $value }} 次 JS 錯誤（看 API 日誌 rum_beacon 與瀏覽器 console）" }
+      # 排版放不下而沒畫出來的詞：PM 看到的雲少了詞（頁面現在會顯示，這裡留紀錄）
+      - alert: WebDroppedWords
+        expr: sum(increase(wordcloud_web_dropped_words_total[1h])) > 0
+        for: 0m
+        labels: { severity: ticket }
+        annotations: { summary: "PM 頁最近 1 小時有 {{ $value }} 個詞排版放不下沒畫出來（頁面有提示；詞數 100 時常見，考慮放大版面或縮字）" }
+      - alert: WebCountMismatch
+        expr: sum(increase(wordcloud_web_count_mismatch_total[1h])) > 0
+        for: 0m
+        labels: { severity: ticket }
+        annotations: { summary: "PM 頁最近 1 小時有 {{ $value }} 次雲上篇數與明細抽屜不一致（快取或兩次查詢之間資料變了）" }

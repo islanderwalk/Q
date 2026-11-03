@@ -28,6 +28,8 @@ async function shot(page, url, file, { wait = 'networkidle', settle = 1500, full
     await shot(page, pm + '?channels=' + ch + (ch === 'ptt' ? '&from=2026-10-01' : ''), `pm/10_channel_${ch}.png`, { before: waitCloud, full: true });
   await shot(page, pm + '?from=2026-10-01&term=' + encodeURIComponent('颱風') + '&seg=v2', 'pm/20_posts_drawer_typhoon.png', { before: waitCloud, settle: 2500, full: true });
   await shot(page, pm + '?term=' + encodeURIComponent('肥宅') + '&seg=v2', 'pm/21_posts_drawer_new_word.png', { before: waitCloud, settle: 2500, full: true });
+  // 告警橫幅：Alertmanager → /api/ops/alert → live_events → /api/ops/alerts → #alerts（有告警在響時才會出現）
+  await shot(page, pm, 'pm/30_alerts_strip.png', { before: async p => { await waitCloud(p); await p.waitForSelector('#alerts:not([hidden])', { timeout: 30000 }).catch(() => {}); }, settle: 2000, full: false });
 
   }
   // Kibana：Discover 看同一篇的 v1／v2 詞表與版本欄位
@@ -45,12 +47,20 @@ async function shot(page, url, file, { wait = 'networkidle', settle = 1500, full
   await shot(kpage, `${kib}/app/management/data/index_management/indices`, 'kibana/03_index_management.png', { settle: 5000 });
 
   }
-  // Grafana：回補與寫入壓力期間（面板是捲到才畫，所以用一個很高的視窗一次全部畫出來）
+  // Grafana：兩個看板（主看板 9 層、採集看板 6 層；monitoring/grafana/build_dashboard.py 產生）。
+  // 面板是捲到才畫，所以用一個很高的視窗一次全部畫出來；畫面上的數字來自真的 Prometheus／PostgreSQL／Loki
   if (want('grafana')) {
   const tall = await ctx.newPage();
-  await tall.setViewportSize({ width: 1600, height: 2600 });
-  await shot(tall, `http://localhost:3000/d/qsearch-q6/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/01_dashboard_backfill_window.png', { wait: 'load', settle: 12000 });
+  await tall.setViewportSize({ width: 1600, height: 7200 });
+  await shot(tall, `http://localhost:3000/d/qsearch-q6/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/01_dashboard_main.png', { wait: 'load', settle: 15000 });
+  await tall.setViewportSize({ width: 1600, height: 3200 });
+  await shot(tall, `http://localhost:3000/d/qsearch-q6-collect/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/02_dashboard_collect.png', { wait: 'load', settle: 15000 });
+  await tall.setViewportSize({ width: 1440, height: 900 });
+  await shot(tall, 'http://localhost:3000/alerting/list?view=state&search=', 'grafana/03_alert_rules_from_prometheus.png', { wait: 'load', settle: 6000 });
   await tall.close();
+  }
+  if (want('alertmanager')) {
+  await shot(page, 'http://localhost:9093/#/alerts', 'alertmanager/01_alerts.png', { wait: 'load', settle: 3000 });
   }
   if (want('prometheus')) {
   // Prometheus：告警規則與串流延遲

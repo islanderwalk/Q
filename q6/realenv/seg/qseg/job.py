@@ -5,7 +5,10 @@
   重做的部分因 seg_ver 守門變成 noop，不會重複或倒退
 - 限速：每批前讀 backfill_control.max_docs_per_sec／paused（告警後可由人或控制程式調低）
 - 多 task：每個 task 從帳本 FOR UPDATE SKIP LOCKED 領整個分區，task 之間不會重疊，也不用事先切 slice
-- 閘門：G1 筆數守恆、G2 洩漏 = 0（網址殘片、電話、硬停用詞）、G3 無寫入拒絕且探針查詢 p95 不惡化、G4 各渠道首月 PM 抽查
+- 閘門：G1 筆數守恆（比不重複 post_id，重抓的重複行不算）、G2 洩漏比例 ≤ 0.1%（網址殘片、電話、硬停用詞、必不可拆的詞；提案值，
+  原本是 = 0）、G3 無寫入拒絕且線上正在用的欄位（CANARY_FIELD，預設 terms_v1）探針 p95 不惡化、G4 各渠道首月 PM 抽查
+- 計畫書修正：認領加 attempts < 3（超過轉 failed，不再反覆重領）；心跳改背景執行緒每 20 秒（原本跟著每 500 篇的 bulk 走，
+  一批慢了就被當成死掉）；G3 過了而且沒被降速就把全域限速回升 25%，最多回到 backfill_control.ceiling_docs_per_sec（原本只降不升）
 """
 import argparse
 import json
@@ -13,6 +16,7 @@ import os
 import re
 import socket
 import statistics
+import threading
 import time
 from pathlib import Path
 
@@ -24,6 +28,9 @@ from .logs import log
 from .pipeline import base_doc, seg_fields, seg_ver, segment_checked
 
 CHUNK = int(os.environ.get("BACKFILL_CHUNK", "500"))
+G2_MAX_RATIO = float(os.environ.get("G2_MAX_LEAK_RATIO", "0.001"))   # 提案值：每類洩漏 ÷ 分區篇數 ≤ 0.1%
+CANARY_FIELD = os.environ.get("CANARY_FIELD", "terms_v1")              # 線上客戶現在查的欄位（A/B 期間是舊流程 v1）；回補寫 v2 不該拖慢它
+HEARTBEAT_SEC = int(os.environ.get("BACKFILL_HEARTBEAT_SEC", "20"))
 LEAK_REGEX = {
     "phone_like": "[0-9][0-9\\-]{6,}",
     "pure_number": "[0-9]+",
@@ -47,10 +54,10 @@ def url_leaks(raw: str, terms: list) -> list:
     return [t for t in terms if t.lower() in pieces and t.lower() not in outside]
 
 
-def canary_p95(es: ES, channel: str, n: int = 5) -> float:
-    """探針：跑 n 次該渠道的文字雲聚合，取 p95（毫秒，用 ES 回傳的 took）。"""
+def canary_p95(es: ES, channel: str, n: int = 5, field: str = None) -> float:
+    """探針：跑 n 次該渠道的文字雲聚合（線上正在用的欄位），取 p95（毫秒，用 ES 回傳的 took）。"""
     body = {"size": 0, "query": {"term": {"channel": channel}},
-            "aggs": {"t": {"terms": {"field": "terms_v2", "size": 50}}}}
+            "aggs": {"t": {"terms": {"field": field or CANARY_FIELD, "size": 50}}}}
     took = [es.req("POST", f"/{es.index}/_search?request_cache=false", body)["took"] for _ in range(n)]
     return float(sorted(took)[max(0, int(round(0.95 * n)) - 1)])
 
@@ -77,18 +84,66 @@ def canary_after(conn, es: ES, channel: str, baseline: float, tries: int = 3):
     return p95, log_
 
 
+def g2_ratios(leaks: dict, split: dict, raw_count: int) -> dict:
+    """每類洩漏 ÷ 分區篇數（必不可拆的詞也算一類）。"""
+    n = max(1, raw_count or 0)
+    out = {k: v / n for k, v in leaks.items()}
+    out["must_keep_split"] = sum((split or {}).values()) / n
+    return out
+
+
+def g2_pass(ratios: dict, max_ratio: float = None) -> bool:
+    return all(v <= (G2_MAX_RATIO if max_ratio is None else max_ratio) for v in ratios.values())
+
+
+def load_partition_lines(raw: Path):
+    """讀原文分區：同一個 post_id 只留第一行（重抓的重複行會讓 G1 誤判、也會多算 noop）；回 (去重後的行, 原始行數)。"""
+    lines, seen, total = [], set(), 0
+    for line in raw.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        total += 1
+        pid = json.loads(line).get("post_id")
+        if pid in seen:
+            continue
+        seen.add(pid)
+        lines.append(line)
+    return lines, total
+
+
+class Heartbeat(threading.Thread):
+    """背景每 20 秒更新帳本 heartbeat_at（用自己的連線）：原本跟著每 500 篇的 bulk 走，一批斷詞慢了就超過 2 分鐘而被當成死掉重領。"""
+
+    def __init__(self, dsn: str, partition_id: str, interval: int = HEARTBEAT_SEC):
+        super().__init__(daemon=True, name=f"heartbeat-{partition_id}")
+        self.dsn, self.pid, self.interval, self.stop_ev, self.beats = dsn, partition_id, interval, threading.Event(), 0
+
+    def run(self):
+        while not self.stop_ev.wait(self.interval):
+            try:
+                with psycopg.connect(self.dsn, autocommit=True) as c:
+                    c.execute("UPDATE backfill_ledger SET heartbeat_at=now() WHERE partition_id=%s AND status='running'", (self.pid,))
+                self.beats += 1
+            except Exception as e:
+                log("heartbeat_failed", "WARNING", partition=self.pid, error=str(e)[:200])
+
+    def stop(self):
+        self.stop_ev.set()
+
+
 def gates(es: ES, dic, part: dict, raw_count: int, rejected_delta: int, p95_before: float, p95_after: float, first_month: bool,
           split: dict = None, url_leak: dict = None):
     es.req("POST", f"/{es.index}/_refresh")
     target = seg_ver("v2", dic.version)
     scope = [{"term": {"channel": part["channel"]}}, {"term": {"month": part["month"]}}]
     done = es.count({"bool": {"filter": scope + [{"range": {"seg_ver_v2": {"gte": target}}}]}})
-    g1 = {"pass": done == raw_count, "raw": raw_count, "es_at_target": done}
+    g1 = {"pass": done == raw_count, "raw": raw_count, "es_at_target": done, "basis": "distinct post_id"}
     leaks = {k: es.count({"bool": {"filter": scope + [{"regexp": {"terms_v2": v}}]}}) for k, v in LEAK_REGEX.items()}
     leaks["url_fragment"] = sum((url_leak or {}).values())
     leaks["hard_stopwords"] = es.count({"bool": {"filter": scope + [{"terms": {"terms_v2": sorted(dic.stopwords)}}]}})
     split = {k: v for k, v in (split or {}).items() if v}
-    g2 = {"pass": all(v == 0 for v in leaks.values()) and not split, **leaks, "must_keep_split": split}
+    ratios = g2_ratios(leaks, split, raw_count)
+    g2 = {"pass": g2_pass(ratios), **leaks, "must_keep_split": split, "ratios": {k: round(v, 6) for k, v in ratios.items()}, "max_ratio": G2_MAX_RATIO}
     g3 = {"pass": rejected_delta == 0 and p95_after <= g3_limit(p95_before),
           "write_rejected": rejected_delta, "canary_baseline_ms": p95_before, "canary_p95_ms_after": p95_after,
           "limit_ms": g3_limit(p95_before)}
@@ -96,21 +151,32 @@ def gates(es: ES, dic, part: dict, raw_count: int, rejected_delta: int, p95_befo
     return {"G1": g1, "G2": g2, "G3": g3, "G4": g4}
 
 
+EXHAUST_SQL = """UPDATE backfill_ledger SET status='failed', finished_at=now(),
+                   gates=coalesce(gates, '{}'::jsonb) || jsonb_build_object('attempts_exhausted', jsonb_build_object('attempts', attempts, 'at', now()))
+                 WHERE status IN ('pending','running') AND attempts >= %s
+                   AND (status <> 'running' OR heartbeat_at IS NULL OR heartbeat_at < now() - interval '2 minutes')
+                 RETURNING partition_id, attempts"""
+
+
 def claim(conn, partition_id=None):
-    """領一個分區。某渠道還沒有任何分區 passed 時，只放行一個（它就是要 PM 抽查的首月），其餘等 PM 簽核。"""
+    """領一個分區。某渠道還沒有任何分區 passed 時，只放行一個（它就是要 PM 抽查的首月），其餘等 PM 簽核。
+    被領過 MAX_ATTEMPTS 次仍沒做完的分區轉 failed（OOM 後反覆被重領要有人看），不再自動重領。"""
     with conn.transaction():
         conn.execute("SELECT pg_advisory_xact_lock(6006)")  # 多個 task 同時領，序列化這一小段
+        for pid, attempts in conn.execute(EXHAUST_SQL, (config.MAX_ATTEMPTS,)).fetchall():
+            log("attempts_exhausted", "ERROR", partition=pid, attempts=attempts, max_attempts=config.MAX_ATTEMPTS)
         if partition_id:
             row = conn.execute("SELECT partition_id FROM backfill_ledger WHERE partition_id=%s FOR UPDATE", (partition_id,)).fetchone()
         else:
             # failed 不自動重領：要人看過閘門結果、修好之後用 --partition（必要時加 --force）重跑
             row = conn.execute("""SELECT partition_id FROM backfill_ledger l WHERE status IN ('pending','running')
+                                  AND attempts < %s
                                   AND (status <> 'running' OR heartbeat_at IS NULL OR heartbeat_at < now() - interval '2 minutes')
                                   AND (EXISTS (SELECT 1 FROM backfill_ledger p WHERE p.channel = l.channel AND p.status = 'passed')
                                        OR NOT EXISTS (SELECT 1 FROM backfill_ledger p WHERE p.channel = l.channel
                                                       AND p.partition_id <> l.partition_id
                                                       AND p.status IN ('running', 'awaiting_pm', 'failed')))
-                                  ORDER BY month DESC, channel LIMIT 1 FOR UPDATE SKIP LOCKED""").fetchone()
+                                  ORDER BY month DESC, channel LIMIT 1 FOR UPDATE SKIP LOCKED""", (config.MAX_ATTEMPTS,)).fetchone()
         if not row:
             return None
         conn.execute("""UPDATE backfill_ledger SET status='running', worker=%s, attempts=attempts+1,
@@ -142,16 +208,18 @@ def run_partition(conn, es: ES, dic, part, stop_after: int = None, force: bool =
         conn.execute("UPDATE backfill_ledger SET checkpoint_line=0, written=0, noop=0, errors=0 WHERE partition_id=%s", (pid,))
         part = {**part, "checkpoint_line": 0}
     raw = Path(config.RAW_ROOT) / channel / f"{month}.jsonl"
-    lines = raw.read_text(encoding="utf-8").splitlines()
-    raw_count = len(lines)
-    conn.execute("UPDATE backfill_ledger SET raw_count=%s WHERE partition_id=%s", (raw_count, pid))
+    lines, raw_lines = load_partition_lines(raw)
+    raw_count = len(lines)   # 不重複 post_id 數（G1 比這個；原始行數另記 raw_lines）
+    conn.execute("UPDATE backfill_ledger SET raw_count=%s, raw_lines=%s WHERE partition_id=%s", (raw_count, raw_lines, pid))
+    hb = Heartbeat(config.PG_DSN, pid)
+    hb.start()
     first_month = conn.execute("SELECT count(*) AS n FROM backfill_ledger WHERE channel=%s AND status='passed'", (channel,)).fetchone()["n"] == 0
     base = conn.execute("SELECT canary_baseline_ms FROM backfill_control WHERE id=1").fetchone()["canary_baseline_ms"]
     p95_before = base if base is not None else canary_p95(es, channel)
     rej0 = es.write_rejected_total()
     start = part["checkpoint_line"]
-    log("partition_start", partition=pid, raw=raw_count, resume_from=start, dict_version=dic.version, task=config.TASK_INDEX,
-        seg_build=config.SEG_BUILD, force=force)
+    log("partition_start", partition=pid, raw=raw_count, raw_lines=raw_lines, resume_from=start, dict_version=dic.version, task=config.TASK_INDEX,
+        seg_build=config.SEG_BUILD, force=force, canary_field=CANARY_FIELD)
     t_start, processed = time.perf_counter(), 0
     split, split_examples = {}, []  # 斷點續跑時只算這次處理到的部分；要完整數字就 --force 從頭跑
     url_leak, leak_examples = {}, []
@@ -177,6 +245,7 @@ def run_partition(conn, es: ES, dic, part, stop_after: int = None, force: bool =
         res = es.bulk_seg(items, force=force) if items else {"created": 0, "updated": 0, "noop": 0, "errors": 0, "rejected": 0, "took_ms": 0, "failed_ids": []}
         res.pop("failed_ids", None)
         if res["errors"]:
+            hb.stop()
             conn.execute("UPDATE backfill_ledger SET status='failed', errors=errors+%s, heartbeat_at=now() WHERE partition_id=%s", (res["errors"], pid))
             log("partition_failed", "ERROR", partition=pid, at_line=i, **res)
             return False
@@ -197,6 +266,7 @@ def run_partition(conn, es: ES, dic, part, stop_after: int = None, force: bool =
             log("partition_interrupted", "WARNING", partition=pid, checkpoint_line=i)
             os._exit(137)  # 模擬 task 被砍（OOM／搶佔），不更新狀態，checkpoint 留在 PG
     elapsed = time.perf_counter() - t_start
+    hb.stop()
     p95_after, p95_tries = canary_after(conn, es, channel, p95_before)
     g = gates(es, dic, part, raw_count, es.write_rejected_total() - rej0, p95_before, p95_after, first_month, split, url_leak)
     g["G3"]["canary_tries_ms"] = p95_tries
@@ -206,12 +276,27 @@ def run_partition(conn, es: ES, dic, part, stop_after: int = None, force: bool =
         g["G2"]["url_leak_terms"] = url_leak
         g["G2"]["url_leak_examples"] = leak_examples
     ok = all(v["pass"] for k, v in g.items() if k != "G4")
+    if g["G3"]["pass"] and len(p95_tries) == 1:
+        g["G3"]["recovered_max_docs_per_sec"] = recover_throttle(conn, channel)
     status = ("awaiting_pm" if not g["G4"]["pass"] else "passed") if ok else "failed"
     dps = round(processed / elapsed, 1) if elapsed > 0 and processed else None
     conn.execute("""UPDATE backfill_ledger SET status=%s, gates=%s, finished_at=now(), heartbeat_at=now(), docs_per_sec=%s
                     WHERE partition_id=%s""", (status, json.dumps(g, ensure_ascii=False), dps, pid))
     log("partition_done", partition=pid, status=status, docs_per_sec=dps, gates=g)
     return ok
+
+
+def recover_throttle(conn, channel: str):
+    """G3 過了而且這個分區沒被降速：全域限速回升 25%，最多回到 ceiling（原本只降不升，final_control 停在每秒 750 篇）。回傳新值（沒變回 None）。"""
+    with conn.transaction():
+        c = conn.execute("SELECT max_docs_per_sec, ceiling_docs_per_sec FROM backfill_control WHERE id=1 FOR UPDATE").fetchone()
+        if not c or c["max_docs_per_sec"] >= c["ceiling_docs_per_sec"]:
+            return None
+        new = min(c["ceiling_docs_per_sec"], max(c["max_docs_per_sec"] + 1, int(c["max_docs_per_sec"] * 1.25)))
+        conn.execute("UPDATE backfill_control SET max_docs_per_sec=%s, updated_at=now(), reason=%s WHERE id=1",
+                     (new, f"G3 通過回升：{channel} 探針正常，{c['max_docs_per_sec']} → {new}（上限 {c['ceiling_docs_per_sec']}）"))
+    log("g3_recover", channel=channel, max_docs_per_sec=new, ceiling=c["ceiling_docs_per_sec"])
+    return new
 
 
 def baseline(argv=None):
@@ -224,7 +309,7 @@ def baseline(argv=None):
     p95 = canary_p95(es, a.channel, a.runs)
     with psycopg.connect(config.PG_DSN, autocommit=True) as conn:
         conn.execute("UPDATE backfill_control SET canary_baseline_ms=%s, updated_at=now() WHERE id=1", (p95,))
-    log("canary_baseline", channel=a.channel, runs=a.runs, p95_ms=p95, limit_ms=g3_limit(p95))
+    log("canary_baseline", channel=a.channel, runs=a.runs, p95_ms=p95, limit_ms=g3_limit(p95), field=CANARY_FIELD)
     return 0
 
 

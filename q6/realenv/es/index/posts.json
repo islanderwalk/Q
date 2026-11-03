@@ -5,40 +5,135 @@
     "refresh_interval": "1s",
     "analysis": {
       "filter": {
-        "search_synonyms": {"type": "synonym_graph", "synonyms_set": "qsearch-search", "updateable": true}
+        "search_synonyms": {
+          "type": "synonym_graph",
+          "synonyms_set": "qsearch-search",
+          "updateable": true
+        }
       },
       "analyzer": {
-        "ik_index": {"type": "custom", "tokenizer": "ik_max_word"},
-        "ik_search": {"type": "custom", "tokenizer": "ik_smart", "filter": ["lowercase", "search_synonyms"]},
-        "cjk_bigram_idx": {"type": "custom", "tokenizer": "standard", "filter": ["cjk_width", "lowercase", "cjk_bigram"]}
+        "ik_index": {
+          "type": "custom",
+          "tokenizer": "ik_max_word"
+        },
+        "ik_search": {
+          "type": "custom",
+          "tokenizer": "ik_smart",
+          "filter": [
+            "lowercase",
+            "search_synonyms"
+          ]
+        },
+        "cjk_bigram_idx": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "cjk_width",
+            "lowercase",
+            "cjk_bigram"
+          ]
+        }
       }
-    }
+    },
+    "index.search.slowlog.threshold.query.warn": "60s",
+    "index.search.slowlog.threshold.query.info": "10s",
+    "index.search.slowlog.threshold.fetch.warn": "10s",
+    "index.indexing.slowlog.threshold.index.warn": "5s"
   },
   "mappings": {
     "dynamic": "strict",
     "properties": {
-      "post_id": {"type": "keyword"},
-      "channel": {"type": "keyword"},
-      "sub_type": {"type": "keyword"},
-      "source": {"type": "keyword"},
-      "url": {"type": "keyword", "index": false},
-      "published_at": {"type": "date"},
-      "fetched_at": {"type": "date"},
-      "month": {"type": "keyword"},
-      "content": {
-        "type": "text", "analyzer": "ik_index", "search_analyzer": "ik_search",
-        "fields": {"bigram": {"type": "text", "analyzer": "cjk_bigram_idx"}}
+      "post_id": {
+        "type": "keyword"
       },
-      "terms_v1": {"type": "keyword"},
-      "seg_ver_v1": {"type": "long"},
-      "dict_version_v1": {"type": "keyword"},
-      "seg_build_v1": {"type": "keyword"},
-      "seg_at_v1": {"type": "date"},
-      "terms_v2": {"type": "keyword", "eager_global_ordinals": true},
-      "seg_ver_v2": {"type": "long"},
-      "dict_version_v2": {"type": "keyword"},
-      "seg_build_v2": {"type": "keyword"},
-      "seg_at_v2": {"type": "date"}
+      "channel": {
+        "type": "keyword"
+      },
+      "sub_type": {
+        "type": "keyword"
+      },
+      "source": {
+        "type": "keyword"
+      },
+      "url": {
+        "type": "keyword",
+        "index": false
+      },
+      "published_at": {
+        "type": "date"
+      },
+      "fetched_at": {
+        "type": "date"
+      },
+      "author": {
+        "type": "keyword"
+      },
+      "content_sha": {
+        "type": "keyword"
+      },
+      "deleted_at": {
+        "type": "date"
+      },
+      "month": {
+        "type": "keyword"
+      },
+      "content": {
+        "type": "text",
+        "analyzer": "ik_index",
+        "search_analyzer": "ik_search",
+        "fields": {
+          "bigram": {
+            "type": "text",
+            "analyzer": "cjk_bigram_idx"
+          }
+        }
+      },
+      "terms_v0": {
+        "type": "keyword"
+      },
+      "seg_ver_v0": {
+        "type": "long"
+      },
+      "dict_version_v0": {
+        "type": "keyword"
+      },
+      "seg_build_v0": {
+        "type": "keyword"
+      },
+      "seg_at_v0": {
+        "type": "date"
+      },
+      "terms_v1": {
+        "type": "keyword"
+      },
+      "seg_ver_v1": {
+        "type": "long"
+      },
+      "dict_version_v1": {
+        "type": "keyword"
+      },
+      "seg_build_v1": {
+        "type": "keyword"
+      },
+      "seg_at_v1": {
+        "type": "date"
+      },
+      "terms_v2": {
+        "type": "keyword",
+        "eager_global_ordinals": true
+      },
+      "seg_ver_v2": {
+        "type": "long"
+      },
+      "dict_version_v2": {
+        "type": "keyword"
+      },
+      "seg_build_v2": {
+        "type": "keyword"
+      },
+      "seg_at_v2": {
+        "type": "date"
+      }
     }
   }
 }

@@ -1,0 +1,55 @@
+# 完整性：ES 覆蓋、未斷詞、缺 published_at（seg-coverage 服務）＋ 四層對帳（seg-recon 服務；計畫書 P0 第 2 項）。門檻都是提案值。
+groups:
+  - name: q6-completeness
+    rules:
+      - alert: SegCoverageDown
+        expr: up{job="seg-coverage"} == 0 or absent(up{job="seg-coverage"})
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "覆蓋檢查服務抓不到 /metrics（seg-coverage）" }
+      # 15 分鐘仍無 seg_ver_v2 的篇數 > 0 持續 15 分鐘 → 呼叫（計畫書 P0 第 2 項；PR #15 原為 10 分鐘）
+      - alert: SegUnsegmentedDocs
+        expr: sum(qseg_coverage_unsegmented_docs) > 0
+        for: 15m
+        labels: { severity: page }
+        annotations: { summary: "有文章超過 15 分鐘仍未斷詞（seg_ver_v2 缺），共 {{ $value }} 篇" }
+      # 覆蓋檢查本身停擺（超過 10 分鐘沒有成功一次，或從未成功）
+      - alert: SegCoverageStale
+        # max() 先把 instance 標籤去掉再 or vector(0)：真實環境驗證抓到「metric or vector(0)」會把有標籤的序列和無標籤的 0 都留下，
+        # 多出一條 {} 的告警永遠在響（time() − 0）；同樣寫法的 ReconStale／QualityStale 一併改
+        expr: (time() - (max(qseg_coverage_last_success_timestamp_seconds) or vector(0))) > 600
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "ES 覆蓋檢查超過 10 分鐘沒有成功（或尚未啟動）" }
+      # published_at 缺值 > 0 → warn（提案值；驗收範圍未定義，目前對全部文章）
+      - alert: SegPublishedAtMissing
+        expr: sum by (channel) (qseg_coverage_missing_published_at_docs) > 0
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "有文章缺 published_at（{{ $labels.channel }}）" }
+      # 四層對帳：已 passed 的分區，原文有、ES 沒有的比例 > 0.1% → warn（計畫書：「未歸因差額 > 0.1% 警告」）
+      - alert: ReconMissingDocs
+        expr: qseg_recon_missing_ratio > 0.001 and on (channel, month) qseg_recon_partition_passed == 1
+        for: 1h
+        labels: { severity: warn }
+        annotations: { summary: "回補已通過的分區 {{ $labels.channel }}/{{ $labels.month }} 有 {{ $value | humanizePercentage }} 的原文不在 ES（採集掉資料或回補漏批）" }
+      # 已 passed 的分區，有 terms_v2 的篇數 < ES 篇數（扣掉已刪）→ 某一版沒套用完或串流漏斷詞
+      - alert: ReconV2CoverageGap
+        expr: |
+          (qseg_recon_docs{layer="es"} - on (channel, month) qseg_recon_docs{layer="es_deleted"} - on (channel, month) qseg_recon_docs{layer="es_with_v2"}) > 0
+            and on (channel, month) qseg_recon_partition_passed == 1
+        for: 1h
+        labels: { severity: warn }
+        annotations: { summary: "{{ $labels.channel }}/{{ $labels.month }} 有 {{ $value }} 篇沒有 terms_v2 但分區已 passed" }
+      # 對帳 26 小時沒成功（每小時跑；計畫書對影子比對的 26 小時規則同樣適用）
+      - alert: ReconStale
+        expr: (time() - (max(qseg_recon_last_success_timestamp_seconds) or vector(0))) > 26 * 3600
+        for: 10m
+        labels: { severity: warn }
+        annotations: { summary: "完整性對帳超過 26 小時沒有成功（或尚未啟動）" }
+      # month=unknown 的文章（published_at 缺或解析不了，不在 270 批裡）> 0 → ticket
+      - alert: ReconUnknownMonthDocs
+        expr: sum(qseg_recon_docs{layer="es", month="unknown"}) > 0
+        for: 1h
+        labels: { severity: ticket }
+        annotations: { summary: "ES 裡有 {{ $value }} 篇 month=unknown（沒有發文時間），不在任何回補分區裡" }

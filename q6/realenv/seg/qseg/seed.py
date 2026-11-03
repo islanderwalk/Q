@@ -13,7 +13,7 @@ from .pipeline import base_doc, seg_fields, segment
 
 def main(argv=None):
     dic = dictionary.load()
-    assert dic.pipeline == "v1", "seed 只寫舊流程 v1"
+    assert dic.pipeline in ("v0", "v1"), "seed 只寫舊版斷詞（v0／v1）"
     es = ES()
     es.put_guard_script()
     files = sorted(Path(config.RAW_ROOT).glob("*/*.jsonl"))
@@ -24,7 +24,7 @@ def main(argv=None):
             post = json.loads(line)
             if zlib.crc32(post["post_id"].encode()) % config.TASK_COUNT != config.TASK_INDEX:
                 continue
-            items.append((post["post_id"], base_doc(post), seg_fields(dic, segment(dic, post["channel"], post.get("text", ""))), "v1"))
+            items.append((post["post_id"], base_doc(post), seg_fields(dic, segment(dic, post["channel"], post.get("text", ""))), dic.pipeline))
             if len(items) >= 1000:
                 es.bulk_seg(items)
                 n += len(items)

@@ -9,8 +9,12 @@
 <body>
 <header class="top">
   <div class="brand"><b>QSearch 文字雲</b><span class="muted">PM A/B 驗收 · 第 6 題真實環境</span></div>
-  <div class="env" id="env">連線中…</div>
+  <div class="live" id="live"><i class="dot"></i><span id="live-text">連線中…</span>
+    <label class="tog"><input id="auto" type="checkbox" checked>資料一變就重畫</label></div>
+  <div class="env" id="env"></div>
 </header>
+<div class="banner" id="banner" hidden></div>
+<div class="alerts" id="alerts" hidden></div>
 <section class="controls">
   <label class="q">關鍵字<input id="q" placeholder="例：高雄、咖啡（空白＝全部文章）"></label>
   <div class="chips" id="chips"></div>
@@ -23,14 +27,20 @@
 </section>
 <main class="ab">
   <section class="pane" id="pane-v1">
-    <div class="ph"><h2>舊版 <code>terms_v1</code></h2><div class="meta" id="meta-v1"></div></div>
+    <div class="ph"><h2>左：<select id="left"><option value="v0" selected>v0 舊系統重現</option><option value="v1">v1 jieba 預設</option></select></h2><div class="meta" id="meta-v1"></div></div>
+    <div class="note muted" id="note-v1"></div>
     <div class="noise" id="noise-v1"></div>
+    <div class="changes" id="chg-v1"></div>
     <svg class="cloud" id="cloud-v1" viewBox="0 0 640 380" role="img" aria-label="舊版文字雲"></svg>
+    <div class="dropped muted" id="drop-v1"></div>
   </section>
   <section class="pane" id="pane-v2">
     <div class="ph"><h2>新版 <code>terms_v2</code></h2><div class="meta" id="meta-v2"></div></div>
+    <div class="note muted" id="note-v2">新流程：渠道清洗 → jieba＋使用者字典（固定 total）→ 過濾；軟停用詞與變體合併在查詢時套用</div>
     <div class="noise" id="noise-v2"></div>
+    <div class="changes" id="chg-v2"></div>
     <svg class="cloud" id="cloud-v2" viewBox="0 0 640 380" role="img" aria-label="新版文字雲"></svg>
+    <div class="dropped muted" id="drop-v2"></div>
   </section>
 </main>
 <section class="diff">
@@ -41,11 +51,61 @@
     <div class="wide"><h4>排名對照（新版前 20）</h4><table id="rank"><thead><tr><th>詞</th><th>新版名次</th><th>篇數</th><th>舊版名次</th><th>篇數</th></tr></thead><tbody></tbody></table></div>
   </div>
 </section>
+
+<section class="ops">
+  <div class="dh"><h3>資料工程端 <span class="muted">同一套 ES／PostgreSQL／Pub/Sub；這裡按下去的每一步，上面的 A/B 視窗 2 秒內反映</span></h3>
+    <label class="by">操作人<input id="by" value="PM" maxlength="40"></label></div>
+  <div class="grid">
+    <article class="card" id="card-dict">
+      <h4>字典 artifact 與斷詞服務</h4>
+      <div id="dict-current" class="kv"></div>
+      <table class="tight" id="services"><thead><tr><th>服務</th><th>載入字典</th><th>seg_ver</th><th>心跳</th></tr></thead><tbody></tbody></table>
+      <h5>版本</h5>
+      <table class="tight" id="versions"><thead><tr><th>版本</th><th>加詞</th><th>誰／何時</th></tr></thead><tbody></tbody></table>
+    </article>
+    <article class="card" id="card-release">
+      <h4>字典發版 <span class="muted">建新版 → 切 current → 控制訊息 → seg-v2 重載 → 只重跑含新詞的文章</span></h4>
+      <textarea id="words" rows="4" placeholder="一行一個詞，可加詞頻與詞性，例如：&#10;颱風假&#10;高雄市 31 ns"></textarea>
+      <input id="rel-note" placeholder="發版說明（選填）">
+      <div class="row"><button id="release">建版並發佈</button><span class="muted" id="rel-msg"></span></div>
+      <div id="run"></div>
+    </article>
+    <article class="card" id="card-stream">
+      <h4>新進資料 <span class="muted">parser 寫本體 → Pub/Sub → seg-v1／seg-v2 各自斷詞</span></h4>
+      <div class="row wrap" id="replay-ch"></div>
+      <div class="row"><label>篇數上限<input id="replay-limit" type="number" min="0" value="0" title="0 = 全部"></label>
+        <button id="replay" class="sm">重播六渠道真實樣本</button><span class="muted" id="replay-msg"></span></div>
+      <h5>真實來源採集器 <span class="muted" id="coll-ctl"></span></h5>
+      <div class="row"><button id="collect-now" class="sm">立刻抓一次</button><button id="collect-pause" class="sm ghost">暫停</button><button id="collect-resume" class="sm ghost">恢復</button><span class="muted" id="coll-msg"></span></div>
+      <table class="tight" id="feeds"><thead><tr><th>來源</th><th>上次抓</th><th>HTTP</th><th>新／累計</th><th>狀態</th></tr></thead><tbody></tbody></table>
+    </article>
+    <article class="card wide" id="card-recent">
+      <h4>剛進來的文章 <span class="muted">fetched_at 最新的 12 篇；斷詞時間減採集時間 = 串流到可查的延遲</span></h4>
+      <table class="tight" id="recent"><thead><tr><th>渠道／來源</th><th>發文</th><th>內文</th><th>新版詞表</th><th>舊版詞表</th><th>延遲</th></tr></thead><tbody></tbody></table>
+    </article>
+    <article class="card wide" id="card-ledger">
+      <h4>回補帳本 <span class="muted">渠道 × 月；首月要 PM 抽查簽核，閘門沒過要人工豁免</span></h4>
+      <div class="row wrap" id="ledger-counts"></div>
+      <div class="row wrap ctl">
+        <label class="tog"><input id="paused" type="checkbox">暫停回補</label>
+        <label>每秒篇數上限<input id="rps" type="number" min="50" max="50000" step="50"></label>
+        <button id="ctl-apply" class="sm">套用</button><span class="muted" id="ctl-msg"></span>
+        <button id="ledger-all" class="sm ghost">顯示全部分區</button>
+      </div>
+      <table class="tight" id="ledger"><thead><tr><th>分區</th><th>狀態</th><th>篇數</th><th>寫入／noop／錯</th><th>閘門</th><th>操作</th></tr></thead><tbody></tbody></table>
+    </article>
+    <article class="card wide" id="card-events">
+      <h4>事件流 <span class="muted">live_events：發版、簽核、重播、採集、限速</span></h4>
+      <ul class="events" id="events"></ul>
+    </article>
+  </div>
+</section>
 <aside class="drawer" id="drawer" hidden>
   <div class="dh"><h3 id="dr-title"></h3><button id="dr-close" aria-label="關閉">×</button></div>
   <div id="dr-body"></div>
 </aside>
 <footer class="foot muted" id="foot"></footer>
+<script src="/static/rum.js"></script>
 <script src="/static/cloud.js"></script>
 <script src="/static/app.js"></script>
 </body>

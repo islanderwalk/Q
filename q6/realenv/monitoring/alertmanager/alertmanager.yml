@@ -1,0 +1,26 @@
+# Alertmanager（零成本通知管道）：所有告警以 webhook 送到文字雲 API 的 /api/ops/alert，API 寫進 live_events，PM 頁的事件流與橫幅直接讀。
+# 要接 Email／Telegram／Discord／Slack 等免費管道，在 receivers 加一個即可（不要用 Grafana 的 line 聯絡點：LINE Notify 2025-03-31 已停服）。
+global:
+  resolve_timeout: 5m
+route:
+  receiver: pm-page
+  group_by: [alertname, severity]
+  group_wait: 10s
+  group_interval: 1m
+  # 每小時再送一次還在響的（不分嚴重度）：唯一的接收端是 PM 頁的 webhook，沒有人會被重複吵；
+  # PM 頁橫幅靠「最近 ALERT_STALE_SECONDS（2 小時 10 分）內有再收到 firing」判斷還在響，Alertmanager 重啟遺失的告警就不會永遠掛著
+  repeat_interval: 1h
+receivers:
+  - name: pm-page
+    webhook_configs:
+      - url: http://api:8080/api/ops/alert
+        send_resolved: true
+        max_alerts: 200
+inhibit_rules:
+  # 同一條規則已經在呼叫（page）時，它的開單／警告版本不再另外通知（Sloth 的 page 與 ticket 同名、只差 severity）
+  - source_matchers: [ 'severity="page"' ]
+    target_matchers: [ 'severity=~"ticket|warn"' ]
+    equal: [alertname]
+  # API 掛掉時，它的 SLO 燃燒率與超時告警都沒有意義
+  - source_matchers: [ 'alertname="WordcloudApiDown"' ]
+    target_matchers: [ 'alertname=~"WordcloudSlo.*|WordcloudOver180s|WordcloudPartialResults"' ]

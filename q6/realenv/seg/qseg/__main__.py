@@ -30,6 +30,15 @@ def main():
     elif cmd == "shadow":
         from .shadow import main as shadow
         sys.exit(shadow(rest))
+    elif cmd == "coverage":
+        from .coverage import main as coverage
+        sys.exit(coverage(rest))
+    elif cmd == "recon":
+        from .recon import main as recon
+        sys.exit(recon(rest))
+    elif cmd == "quality":
+        from .quality import main as quality
+        sys.exit(quality(rest))
     elif cmd == "segment":
         from . import dictionary
         from .pipeline import segment_checked

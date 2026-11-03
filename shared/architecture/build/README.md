@@ -13,6 +13,7 @@
 | 撤下四個分頁（`--drop-tabs`） | 2026-10-31 撤下「請求時序」「Uvicorn 背景」「推演筆記」「GCP／地端」；節點面板的 GCP／地端／差異列保留 |
 | 節點標題旁的 GCP 圖示（`--icons`） | Google Cloud 最新版官方圖示（`icons/`，取自 cloud.google.com/icons 的 core-products-icons.zip 與 category-icons.zip，和原頁面板用的同一套；不用 legacy 圖示包），13 個 GCP 節點。最新版沒有 Scheduler／Tasks／Pub/Sub／Firestore 專屬圖示，沿用原頁的分類圖示：Developer Tools、Data Analytics、Databases |
 
+| 一張圖最下面的「7 觀測」帶（`--obs`，2026-11-02；11-03 改成兩列七個節點） | Cloud Logging（每個請求一行，本機 Loki＋Alloy）、Cloud Monitoring（爬蟲與採集指標，Prometheus）、服務指標（OTel→Prometheus）、ES 健康（elasticsearch_exporter）、完整性對帳（原文湖 vs ES 四層）、品質日報（金標召回／RBO）、Grafana＋Alertmanager（2 張看板 90 面板、告警 66 條 → PM 頁）各一個節點，點了看本機替身、GCP 對應（用最新版 Observability 分類圖示）與 Terraform 狀態（七個都還沒寫）；節點掛在 3 抓取與 6 分析兩段，沒有連線。Q6 分頁的「監控看板」放主看板、採集看板、PM 頁告警橫幅與較早的兩張圖（`cards.json` 的 `figures`） |
 | 六題卡片（`--cards cards.json`） | 每題先由一個代理整理、再由另一個代理逐項反駁核對；修正與衝突取捨記在 [`cards-verification.md`](cards-verification.md)。Playwright 第二輪（`shared/docs/playwright-round2.md`）的新截圖與圖說更正也已併入 |
 
 ## 重建
@@ -21,7 +22,7 @@
 # 底稿要用加分頁之前的版本
 git show 80adb29:shared/architecture/qsearch-architecture.html > /tmp/base.html
 python3 shared/architecture/build/build_arch_v2.py /tmp/base.html shared/architecture/qsearch-architecture.html \
-  --repo . --mode repo --status shared/architecture/build/status.json --single --icons --drop-tabs --q-tabs \
+  --repo . --mode repo --status shared/architecture/build/status.json --single --icons --drop-tabs --q-tabs --obs \
   [--cards shared/architecture/build/cards.json]
 ```
 

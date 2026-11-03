@@ -4,6 +4,7 @@
 驗證兩條路徑誰先到都不會互相蓋掉。另外：整批重送一次（冪等：應該全是 noop）、送一則壞訊息（應該進 DLQ）。
 用法：PUBSUB_EMULATOR_HOST=localhost:8085 python publish_channels.py <data/channels> <輸出.json>
 """
+import hashlib
 import json
 import sys
 import time
@@ -16,12 +17,13 @@ from google.cloud import pubsub_v1
 ES = "http://localhost:9200"
 PROJECT, TOPIC = "qsearch-local", "parsed-posts"
 CHANNELS = ["facebook", "instagram", "youtube", "ptt", "media", "threads"]
-BASE_KEYS = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at")
+BASE_KEYS = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at", "author")
 
 
 def base_doc(post):
     doc = {k: post.get(k) for k in BASE_KEYS}
     doc["content"] = post.get("text") or ""
+    doc["content_sha"] = hashlib.sha256(doc["content"].encode("utf-8")).hexdigest()[:16]   # 與 api/ops.py、seg/qseg/pipeline.py 同一定義
     doc["month"] = (post.get("published_at") or "")[:7] or "unknown"
     return doc
 

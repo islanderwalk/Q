@@ -88,6 +88,7 @@
 | [`diagram-sandbox-scenarios.png`](architecture/realenv/diagram-sandbox-scenarios.png) | 10 種情境：怎麼觸發、系統怎麼反應、實測 |
 | [`pm/`](evidence/realenv/pm) | PM A/B 文字雲頁：全期、首月抽查、關鍵字、六渠道各一張、點詞看原文 |
 | [`kibana/`](evidence/realenv/kibana)、[`grafana/`](evidence/realenv/grafana)、[`prometheus/`](evidence/realenv/prometheus) | 同一篇的 v1／v2 詞表、回補時段的查詢延遲與 ES 寫入、告警規則 |
+| [`crawler_monitor_3h_panels.png`](evidence/crawl/grafana/crawler_monitor_3h_panels.png) | 六渠道爬蟲監測看板（2026-11-02 本機實跑，台灣時間 19:00–21:40）：每分鐘請求數依平台、狀態 2xx／4xx／5xx／失敗、API p95 依平台與 Pushgateway；Loki 收每個請求的紀錄，Pushgateway→Prometheus→Grafana 出指標 |
 | [`channels/`](evidence/realenv/channels) | 五個渠道（FB、IG、YouTube、Threads、媒體）的原始公開頁；PTT 的原文截圖在 [`playwright/`](evidence/playwright) |
 
 幾個關鍵數字：

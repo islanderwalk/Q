@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS backfill_ledger (
   finished_at    timestamptz,
   docs_per_sec   numeric,
   gates          jsonb,
-  attempts       integer NOT NULL DEFAULT 0
+  attempts       integer NOT NULL DEFAULT 0,
+  raw_lines      integer                            -- 原文檔原始行數；raw_count 是不重複 post_id 數（G1 比這個）
 );
 CREATE TABLE IF NOT EXISTS backfill_control (
   id int PRIMARY KEY DEFAULT 1,
@@ -26,7 +27,8 @@ CREATE TABLE IF NOT EXISTS backfill_control (
   paused boolean NOT NULL DEFAULT false,
   updated_at timestamptz NOT NULL DEFAULT now(),
   reason text,
-  canary_baseline_ms double precision                -- 發版前、沒有回補時量的探針 p95；G3 跟它比，不跟「剛剛」比（剛剛可能也在回補）
+  canary_baseline_ms double precision,               -- 發版前、沒有回補時量的探針 p95；G3 跟它比，不跟「剛剛」比（剛剛可能也在回補）
+  ceiling_docs_per_sec integer NOT NULL DEFAULT 3000 -- G3 自動降速後允許回升的上限（PM 頁手動設限速時一起設）
 );
 INSERT INTO backfill_control (id) VALUES (1) ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS backfill_batches (       -- 每個 bulk 一列：畫吞吐曲線用（日誌行數 ≠ 處理篇數）
@@ -42,6 +44,41 @@ CREATE TABLE IF NOT EXISTS backfill_batches (       -- 每個 bulk 一列：畫�
   seg_ms numeric NOT NULL,
   bulk_ms numeric NOT NULL
 );
+CREATE INDEX IF NOT EXISTS backfill_batches_at_brin ON backfill_batches USING brin (at);   -- 吞吐面板按時間切，不要全表掃
+-- 完整性四層對帳（seg/qseg/recon.py 每小時寫；day＋channel＋month 一列，當天覆蓋）
+CREATE TABLE IF NOT EXISTS recon_daily (
+  day date NOT NULL,
+  channel text NOT NULL,
+  month text NOT NULL,
+  raw_docs integer,                                  -- L1 原文湖不重複 post_id（_manifest.json；沒有這個分區＝NULL）
+  es_docs integer NOT NULL,                          -- L2 ES 篇數（含 tombstone）
+  es_with_v2 integer NOT NULL,                       -- L3 有 terms_v2
+  es_at_latest_v2 integer NOT NULL,                  -- L4 在最新 seg_ver_v2
+  es_deleted integer NOT NULL DEFAULT 0,
+  ledger_written integer,
+  ledger_noop integer,
+  ledger_status text,
+  latest_seg_ver_v2 bigint,
+  missing_ratio numeric,                             -- max(0, raw −（es − 已刪）) ÷ raw
+  extra_docs integer,                                -- max(0,（es − 已刪）− raw)
+  computed_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (day, channel, month)
+);
+-- 文字雲品質日報（seg/qseg/quality.py 每天寫；channel='(all)' 一列放整詞召回、金標、McNemar、新詞暴增）
+CREATE TABLE IF NOT EXISTS quality_daily (
+  day date NOT NULL,
+  channel text NOT NULL,
+  dict_version text,
+  sample_window text,                                -- 抽樣視窗（QUALITY_WINDOW，例如 1d）；window 是 PostgreSQL 保留字
+  docs_sampled integer,
+  leak_url numeric, leak_phone numeric, leak_number numeric, leak_stopword numeric, must_keep_split numeric,
+  place_docs integer, place_split integer, place_split_ratio numeric,
+  whole_word_recall numeric, whole_word_words integer, whole_word_worst jsonb,
+  gold_recall jsonb, mcnemar jsonb, surges jsonb,
+  top_v2 jsonb, top_v1 jsonb, rbo_prev numeric, js_prev numeric, rbo_v1v2 numeric,
+  computed_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (day, channel)
+);
 CREATE TABLE IF NOT EXISTS dict_releases (
   dict_version text PRIMARY KEY,
   seg_ver bigint NOT NULL,
@@ -50,6 +87,15 @@ CREATE TABLE IF NOT EXISTS dict_releases (
   rerun_scope text,
   released_at timestamptz NOT NULL DEFAULT now()
 );
+-- P0-3：回補帳本的對帳缺口（passed 分區應為 0；gap≠0 代表上游原文數與 ES 寫入（written＋noop）對不上；raw_unknown＝上游原文數未記錄，gap 為 NULL）
+CREATE OR REPLACE VIEW backfill_gap AS
+  SELECT partition_id, channel, month, status, raw_count, written, noop, raw_count - (written + noop) AS gap,
+         (raw_count IS NULL) AS raw_unknown
+  FROM backfill_ledger;
+-- P0-5：實際重跑寫入數（rerun.py）、加詞影響範圍的地面真值漏抓數（impact.py --record）
+-- 注意：initdb.d 只在第一次建立 volume 時執行；既有資料庫請跑 pg/migrate_p0.sql（可重複執行）
+ALTER TABLE dict_releases ADD COLUMN IF NOT EXISTS rerun_written integer;
+ALTER TABLE dict_releases ADD COLUMN IF NOT EXISTS bigram_audit_missed integer;
 CREATE TABLE IF NOT EXISTS shadow_checks (
   id bigserial PRIMARY KEY,
   at timestamptz NOT NULL DEFAULT now(),

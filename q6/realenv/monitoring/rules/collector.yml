@@ -1,0 +1,58 @@
+# 採集器（計畫書 P0 第 3、4 項）：產出率與軟封鎖、首抓延遲、退避、robots 變更、服務掛掉保護。門檻都是提案值。
+groups:
+  - name: q6-collector
+    rules:
+      - alert: CollectorDown
+        expr: up{job="collector"} == 0 or absent(up{job="collector"})
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "採集器抓不到 /metrics 超過 2 分鐘（服務掛了）；下面的規則這段時間都不會響" }
+      # 被轉去登入頁／checkpoint ≥ 1 次立即呼叫（計畫書：「checkpoint 或登出 ≥ 1 次立即呼叫」）
+      - alert: CollectorLoginWall
+        expr: sum by (feed) (increase(collector_requests_total{outcome="login_wall"}[10m])) >= 1
+        for: 0m
+        labels: { severity: page }
+        annotations: { summary: "採集器被轉去登入頁或 checkpoint（{{ $labels.feed }}）：HTTP 200 不等於抓到" }
+      # 429／403 持續：同一個 feed 10 分鐘內 ≥ 2 次 → 開單（退避已自動加倍；人要看是不是要降頻或換來源）
+      - alert: CollectorBlocked
+        expr: sum by (feed, outcome) (increase(collector_requests_total{outcome=~"rate_limited|forbidden"}[10m])) >= 2
+        for: 0m
+        labels: { severity: ticket }
+        annotations: { summary: "採集器被限流或拒絕（{{ $labels.feed }} {{ $labels.outcome }}）" }
+      # 某個 feed 超過 3 個輪詢週期（15 分鐘）沒有成功過（含 304／0 篇），且不在退避中 → warn；超過 1 小時 → page
+      - alert: CollectorFeedStale
+        expr: (time() - collector_last_ok_timestamp_seconds) > 900 and on (feed) collector_backoff_level == 0 and on (feed) collector_feed_enabled == 1
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "feed 超過 15 分鐘沒有成功抓取（{{ $labels.feed }}）" }
+      - alert: CollectorFeedDead
+        # 停用的 feed（沒有 YouTube API key、COLLECT_SKIP）不算：真實環境驗證時三個 YouTube feed 因為沒有 key 被判成 dead
+        expr: (time() - collector_last_ok_timestamp_seconds) > 3600 and on (feed) collector_feed_enabled == 1
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "feed 超過 1 小時沒有成功抓取（{{ $labels.feed }}）：退避中也算，來源可能已經封鎖或改版" }
+      # 產出率低於 7 天前同時段的 50% 持續 30 分鐘 → page（計畫書 P0 第 3 項；分母至少 1 篇／小時才比，避免深夜 0 除）
+      - alert: CollectorYieldDrop
+        expr: |
+          sum by (channel) (rate(collector_posts_new_total[1h]))
+            < 0.5 * sum by (channel) (rate(collector_posts_new_total[1h] offset 7d))
+          and sum by (channel) (rate(collector_posts_new_total[1h] offset 7d)) > (1 / 3600)
+        for: 30m
+        labels: { severity: page }
+        annotations: { summary: "渠道產出率低於 7 天前同時段的一半（{{ $labels.channel }}）" }
+      # 首抓延遲 p95 > 45 分鐘 warn、> 60 分鐘 page；只算發文 24 小時內的新文章（計畫書 P0 第 4 項）
+      - alert: CollectorFirstSeenLagHigh
+        expr: histogram_quantile(0.95, sum by (le, channel) (rate(collector_first_seen_lag_seconds_bucket[1h]))) > 2700
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: "首抓延遲 p95 超過 45 分鐘（{{ $labels.channel }}）" }
+      - alert: CollectorFirstSeenLagCritical
+        expr: histogram_quantile(0.95, sum by (le, channel) (rate(collector_first_seen_lag_seconds_bucket[1h]))) > 3600
+        for: 15m
+        labels: { severity: page }
+        annotations: { summary: "首抓延遲 p95 超過 60 分鐘（{{ $labels.channel }}）" }
+      - alert: CollectorRobotsChanged
+        expr: increase(collector_robots_changed_total[1d]) > 0
+        for: 0m
+        labels: { severity: warn }
+        annotations: { summary: "{{ $labels.host }} 的 robots.txt 內容變了：先看新規則再繼續抓" }

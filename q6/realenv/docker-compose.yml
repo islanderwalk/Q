@@ -33,7 +33,8 @@ services:
       - cluster.routing.allocation.disk.watermark.high=2gb
       - cluster.routing.allocation.disk.watermark.flood_stage=1gb
       - ES_JAVA_OPTS=-Xms${ES_HEAP:-4g} -Xmx${ES_HEAP:-4g}
-    volumes: [ "esdata:/usr/share/elasticsearch/data" ]
+      - path.repo=/usr/share/elasticsearch/snapshots           # fs 快照倉庫（GCS 倉庫的本機替身）；scripts/setup.py 建倉庫與 SLM 政策
+    volumes: [ "esdata:/usr/share/elasticsearch/data", "essnap:/usr/share/elasticsearch/snapshots" ]
     ports: [ "9200:9200" ]
     depends_on: [ dictsrv ]
     healthcheck:
@@ -55,19 +56,26 @@ services:
   pg:                 # 官方 PostgreSQL 16：回補帳本／checkpoint、字典發版、影子比對；另放一份詞表做 ES 對照
     image: mirror.gcr.io/library/postgres:16
     environment: [ "POSTGRES_USER=qsearch", "POSTGRES_PASSWORD=qsearch", "POSTGRES_DB=qsearch" ]
-    volumes: [ "./pg/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro", "pgdata:/var/lib/postgresql/data" ]
+    volumes: [ "./pg/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro", "./pg/live.sql:/docker-entrypoint-initdb.d/02-live.sql:ro", "pgdata:/var/lib/postgresql/data" ]
     ports: [ "55433:5432" ]
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U qsearch"], interval: 5s, retries: 30 }
 
-  seg-v2:             # 串流斷詞服務 v2（Cloud Run 服務）：訂閱 parsed-posts-seg-v2
+  seg-v2:             # 串流斷詞服務 v2（Cloud Run 服務）：訂閱 parsed-posts-seg-v2；另訂閱 dict-releases（PM 頁發版 → 熱換字典 → 定向重跑）
     <<: *seg
     command: [ "service" ]
-    environment: { <<: *segenv, PIPELINE: v2, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v2, DICT_VERSION: "${DICT_VERSION_V2:-qsearch-q6-2026.10.30.2}", METRICS_PORT: "9108" }
+    environment: { <<: *segenv, PIPELINE: v2, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v2, DICT_VERSION: "${DICT_VERSION_V2:-current}",
+                   CONTROL_SUBSCRIPTION: dict-releases-seg-v2, METRICS_PORT: "9108" }
+    depends_on: { es: { condition: service_healthy }, dictsrv: { condition: service_started }, pg: { condition: service_healthy }, pubsub: { condition: service_started } }
 
   seg-v1:             # 串流斷詞服務 v1（舊流程並行，A/B 期間各寫各的欄位）
     <<: *seg
     command: [ "service" ]
     environment: { <<: *segenv, PIPELINE: v1, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v1, DICT_VERSION: qsearch-q6-2026.10.30.1, METRICS_PORT: "9108" }
+
+  seg-v0:             # 串流斷詞服務 v0（舊系統替身：凍結 2019 字典＋逆向最長匹配，重現維護多年的舊文字雲）
+    <<: *seg
+    command: [ "service" ]
+    environment: { <<: *segenv, PIPELINE: v0, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v0, DICT_VERSION: "${DICT_VERSION_V0:-qsearch-q6-legacy-2019.12.31.1}", METRICS_PORT: "9108" }
 
   seg-job:            # 回補 Job（Cloud Run Jobs）：與串流服務同一個映像，只是啟動參數不同
     <<: *seg
@@ -76,11 +84,50 @@ services:
     environment: { <<: *segenv, PIPELINE: v2, DICT_VERSION: "${DICT_VERSION_V2:-qsearch-q6-2026.10.30.2}" }
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
 
-  api:                # 文字雲 API ＋ PM A/B 前端（Cloud Run 服務）
+  seg-coverage:       # ES 覆蓋與缺值檢查（P0-2）：定時 _search 算未斷詞、published_at 缺值、A/B 覆蓋；/metrics 在 9110
+    <<: *seg
+    command: [ "coverage" ]
+    environment: { <<: *segenv, COVERAGE_PORT: "9110" }
+
+  seg-recon:          # 完整性四層對帳＋回補燃盡（計畫書 P0 第 2、8 項）：每小時寫 recon_daily、/metrics 在 9112（GCP 上為排程 Job 推自訂指標）
+    <<: *seg
+    command: [ "recon", "--interval", "${RECON_INTERVAL:-3600}" ]
+    environment: { <<: *segenv, RECON_PORT: "9112" }
+    depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
+
+  seg-quality:        # 文字雲品質日報（計畫書 P0 第 9 項）：每天寫 quality_daily（洩漏率、地名拆分、整詞召回、金標＋McNemar、新詞暴增、RBO/JS）、/metrics 在 9113
+    <<: *seg
+    command: [ "quality", "--interval", "${QUALITY_INTERVAL:-86400}" ]
+    environment: { <<: *segenv, QUALITY_PORT: "9113", QUALITY_WINDOW: "${QUALITY_WINDOW:-1d}", QUALITY_SAMPLE: "${QUALITY_SAMPLE:-300}" }
+    depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
+
+  api:                # 文字雲 API ＋ PM A/B 前端（Cloud Run 服務）＋ 資料工程端操作：發版（寫字典 artifact、切 current、發控制訊息）、簽核、重播、限速
     image: qsearch-wordcloud-api:local
     build: { context: ., dockerfile: api/Dockerfile, network: host }
-    environment: [ "ES_URL=http://es:9200", "DICT_BASE_URL=http://dictsrv" ]
+    environment: &apienv
+      ES_URL: http://es:9200
+      DICT_BASE_URL: http://dictsrv
+      DICT_ROOT: /dict                               # 與 dictsrv 同一個目錄（GCS bucket 的本機替身），API 直接寫新版、切 current
+      PUBSUB_EMULATOR_HOST: pubsub:8085
+      PUBSUB_PROJECT: qsearch-local
+      PG_DSN: postgresql://qsearch:qsearch@pg:5432/qsearch
+    volumes: [ "./runtime/dictsrv:/dict" ]
     ports: [ "8080:8080" ]
+    depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_started }, dictsrv: { condition: service_started } }
+
+  collector:          # 真實來源採集器：PTT 看板 Atom、YouTube 頻道（Data API；RSS 只限 POC）、中央社／公視 RSS → ES 本體 ＋ Pub/Sub parsed-posts（api/collector.py）
+    image: qsearch-wordcloud-api:local
+    command: [ "python", "collector.py" ]
+    environment: { <<: *apienv, COLLECT_SKIP: "${COLLECT_SKIP:-}", COLLECT_GAP_SEC: "2.5", COLLECTOR_METRICS_PORT: "9111",
+                   YOUTUBE_API_KEY_FILE: "${YOUTUBE_API_KEY_FILE:+/run/secrets/youtube_api_key}", YOUTUBE_FEED_POC: "${YOUTUBE_FEED_POC:-}" }
+    volumes: [ "${YOUTUBE_API_KEY_FILE:-/dev/null}:/run/secrets/youtube_api_key:ro" ]   # 宿主機的金鑰檔只掛進容器，不進映像、不進 git
+    ports: [ "9111:9111" ]
+    depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_started } }
+
+  es-exporter:        # elasticsearch_exporter（計畫書 P0 第 10 項）：叢集狀態、磁碟水位、breaker、thread pool 拒絕、SLM 快照成功／失敗
+    image: quay.io/prometheuscommunity/elasticsearch-exporter:v1.9.0
+    command: [ "--es.uri=http://es:9200", "--es.all", "--es.indices", "--es.shards", "--collector.clustersettings", "--collector.slm", "--collector.snapshots", "--es.timeout=30s" ]   # v1.9.0 的旗標是 --collector.*（舊的 --es.cluster_settings／--es.slm 已移除，容器會直接退出）
+    ports: [ "9114:9114" ]
     depends_on: { es: { condition: service_healthy } }
 
   otelcol:            # OpenTelemetry Collector：elasticsearch／postgresql receiver（Ops Agent 內部用的同一組 receiver）
@@ -90,10 +137,32 @@ services:
     ports: [ "8889:8889" ]
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
 
-  prometheus:         # GCP 上對應 Managed Service for Prometheus／Cloud Monitoring
+  prometheus:         # GCP 上對應 Managed Service for Prometheus／Cloud Monitoring；開 remote-write receiver 收 Loki ruler 從日誌算出的指標
     image: quay.io/prometheus/prometheus:v3.5.0
-    volumes: [ "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro" ]
+    command: [ "--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--web.enable-remote-write-receiver" ]
+    volumes: [ "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "./monitoring/rules:/etc/prometheus/rules:ro", "promdata:/prometheus" ]   # 具名卷：容器重建後指標與告警歷史還在
     ports: [ "9090:9090" ]
+    depends_on: [ alertmanager ]
+
+  loki:               # 日誌（GCP 上對應 Cloud Logging）：採集器每個請求一行、API 每個查詢一行；ruler 把日誌轉成指標（remote_write 到 Prometheus）並直接出告警
+    image: mirror.gcr.io/grafana/loki:3.5.3
+    command: [ "-config.file=/etc/loki/loki.yml" ]
+    volumes: [ "./monitoring/loki/loki.yml:/etc/loki/loki.yml:ro", "./monitoring/loki/rules:/etc/loki/rules:ro", "lokidata:/loki" ]
+    ports: [ "3100:3100" ]
+    depends_on: [ prometheus, alertmanager ]
+
+  alloy:              # 日誌代理（GCP 上對應 Ops Agent／Cloud Logging agent）：讀 docker 容器 stdout，解析 JSON 欄位成標籤，送 Loki
+    image: mirror.gcr.io/grafana/alloy:v1.10.0
+    command: [ "run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy" ]
+    volumes: [ "./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro", "/var/run/docker.sock:/var/run/docker.sock:ro" ]
+    ports: [ "12345:12345" ]
+    depends_on: [ loki ]
+
+  alertmanager:       # 告警路由與通知（GCP 上對應 Cloud Monitoring 告警政策＋通知管道）：webhook 到 API 的 /api/ops/alert，PM 頁直接看
+    image: quay.io/prometheus/alertmanager:v0.28.1
+    command: [ "--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager" ]
+    volumes: [ "./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro" ]
+    ports: [ "9093:9093" ]
 
   grafana:
     image: grafana/grafana:12.1.1
@@ -102,4 +171,4 @@ services:
     ports: [ "3000:3000" ]
     depends_on: [ prometheus, pg ]
 
-volumes: { esdata: {}, pgdata: {} }
+volumes: { esdata: {}, essnap: {}, pgdata: {}, lokidata: {}, promdata: {} }

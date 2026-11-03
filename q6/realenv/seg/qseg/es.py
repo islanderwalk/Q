@@ -17,12 +17,17 @@ GUARD_SCRIPT = """
 String f = params.f;
 def cur = ctx._source['seg_ver_' + f];
 boolean force = params.containsKey('force') && params.force;
-if (cur != null && (force ? cur > params.seg_ver : cur >= params.seg_ver)) { ctx.op = 'noop'; return; }
+def newSha = params.base.containsKey('content_sha') ? params.base.content_sha : null;
+def curSha = ctx._source.containsKey('content_sha') ? ctx._source.content_sha : null;
+boolean changed = newSha != null && curSha != null && newSha != curSha;
+if (cur != null && !changed && (force ? cur > params.seg_ver : cur >= params.seg_ver)) { ctx.op = 'noop'; return; }
 for (entry in params.base.entrySet()) {
-  if (!ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null) { ctx._source[entry.getKey()] = entry.getValue(); }
+  if (changed || !ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null) { ctx._source[entry.getKey()] = entry.getValue(); }
 }
 for (entry in params.seg.entrySet()) { ctx._source[entry.getKey()] = entry.getValue(); }
 """
+# 版本比大小、內容比雜湊：同一版 seg_ver 下原文改了（content_sha 不同）也要重寫本體與詞表；舊文件沒有 content_sha 時照舊只補空欄位
+BULK_RETRIES = int(__import__("os").environ.get("ES_BULK_RETRIES", "3"))
 
 
 class ES:
@@ -40,8 +45,7 @@ class ES:
     def put_guard_script(self):
         return self.req("PUT", "/_scripts/seg_guard", {"script": {"lang": "painless", "source": GUARD_SCRIPT}})
 
-    def bulk_seg(self, items, refresh=False, force=False):
-        """items: [(post_id, base_doc, seg_fields, pipeline)]. 回傳 {created, updated, noop, errors, rejected, took_ms}"""
+    def _bulk_lines(self, items, force):
         lines = []
         for pid, base, seg, f in items:
             ver = seg[f"seg_ver_{f}"]
@@ -51,23 +55,63 @@ class ES:
                 "script": {"id": "seg_guard", "params": {"f": f, "seg_ver": ver, "base": base, "seg": seg, "force": force}},
                 "upsert": {},
             }, ensure_ascii=False))
-        body = ("\n".join(lines) + "\n").encode("utf-8")
-        t0 = time.perf_counter()
-        r = self.s.post(f"{self.url}/_bulk" + ("?refresh=wait_for" if refresh else ""), data=body,
+        return ("\n".join(lines) + "\n").encode("utf-8")
+
+    def bulk_seg(self, items, refresh=False, force=False, retries=None, sleep=time.sleep):
+        """items: [(post_id, base_doc, seg_fields, pipeline)]. 回傳 {created, updated, noop, errors, rejected, retries, took_ms, failed_ids}
+        ES 429（寫入佇列滿、限流）：只重送被拒的那幾篇，等 1、2、4 秒最多 3 次（提案值）；還是 429 才算 errors，交給上層 nack／failed。"""
+        retries = BULK_RETRIES if retries is None else retries
+        out = {"created": 0, "updated": 0, "noop": 0, "errors": 0, "rejected": 0, "retries": 0, "took_ms": 0.0, "failed_ids": []}
+        pending = list(items)
+        for attempt in range(retries + 1):
+            t0 = time.perf_counter()
+            r = self.s.post(f"{self.url}/_bulk" + ("?refresh=wait_for" if refresh else ""), data=self._bulk_lines(pending, force),
+                            headers={"Content-Type": "application/x-ndjson"}, timeout=300)
+            out["took_ms"] += (time.perf_counter() - t0) * 1000
+            if r.status_code == 429 and attempt < retries:      # 整批被拒：全部重送
+                out["rejected"] += len(pending)
+                out["retries"] += 1
+                sleep(2 ** attempt)
+                continue
+            r.raise_for_status()
+            res = r.json()
+            again, by_id = [], {pid: it for it in pending for pid in [it[0]]}
+            for it in res["items"]:
+                u = it["update"]
+                if "error" in u:
+                    if u.get("status") == 429:
+                        out["rejected"] += 1
+                        if attempt < retries:
+                            again.append(by_id[u["_id"]])
+                            continue
+                    out["errors"] += 1
+                    out["failed_ids"].append(u["_id"])
+                else:
+                    out[u["result"] if u["result"] in out else "updated"] += 1
+            if not again:
+                break
+            pending = again
+            out["retries"] += 1
+            sleep(2 ** attempt)
+        out["took_ms"] = round(out["took_ms"], 1)
+        return out
+
+    def write_tombstones(self, items):
+        """刪文：只寫 deleted_at（文件不存在就不建）。items: [(post_id, deleted_at_iso)]。回傳 {updated, missing, errors}"""
+        lines = []
+        for pid, at in items:
+            lines.append(json.dumps({"update": {"_index": self.index, "_id": pid, "retry_on_conflict": 3}}))
+            lines.append(json.dumps({"doc": {"deleted_at": at}}))
+        r = self.s.post(f"{self.url}/_bulk", data=("\n".join(lines) + "\n").encode("utf-8"),
                         headers={"Content-Type": "application/x-ndjson"}, timeout=300)
-        took = (time.perf_counter() - t0) * 1000
         r.raise_for_status()
-        res = r.json()
-        out = {"created": 0, "updated": 0, "noop": 0, "errors": 0, "rejected": 0, "took_ms": round(took, 1), "failed_ids": []}
-        for it in res["items"]:
+        out = {"updated": 0, "missing": 0, "errors": 0}
+        for it in r.json()["items"]:
             u = it["update"]
             if "error" in u:
-                out["errors"] += 1
-                out["failed_ids"].append(u["_id"])
-                if u.get("status") == 429:
-                    out["rejected"] += 1
+                out["missing" if u.get("status") == 404 else "errors"] += 1
             else:
-                out[u["result"] if u["result"] in out else "updated"] += 1
+                out["updated"] += 1
         return out
 
     def upsert_base(self, items, refresh=False):

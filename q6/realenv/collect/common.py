@@ -17,6 +17,13 @@ from urllib.parse import urlsplit
 
 import requests
 
+try:  # P0-3：上游獨立計數（只在有裝 prometheus_client 時記；收集腳本本身不依賴它）
+    from prometheus_client import Counter
+    CRAWL_BY_MONTH = Counter("crawl_posts_by_month_total", "上游抓到的文章數（去重後），依 platform／target／月份（+08:00）",
+                             ["platform", "target", "month"])
+except ImportError:
+    CRAWL_BY_MONTH = None
+
 TW = timezone(timedelta(hours=8))
 HERE = Path(__file__).resolve().parent
 REALENV = HERE.parent
@@ -140,6 +147,20 @@ def record(**kw):
     return {k: kw[k] for k in FIELDS}
 
 
+def month_tw(published_at):
+    """published_at（ISO8601 字串）→ +08:00 的 yyyy-mm；缺值或解析不了回 "unknown"（不猜）。"""
+    if not published_at:
+        return "unknown"
+    try:
+        s = published_at.replace("Z", "+00:00") if isinstance(published_at, str) and published_at.endswith("Z") else published_at  # Python 3.10 的 fromisoformat 不吃結尾 Z
+        dt = datetime.fromisoformat(s)
+    except (TypeError, ValueError):
+        return "unknown"
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=TW)
+    return dt.astimezone(TW).strftime("%Y-%m")
+
+
 def write_jsonl(channel, rows):
     path = OUT_DIR / f"{channel}.jsonl"
     seen, out = set(), []
@@ -151,5 +172,8 @@ def write_jsonl(channel, rows):
     with path.open("w", encoding="utf-8") as f:
         for r in out:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    if CRAWL_BY_MONTH is not None:
+        for r in out:
+            CRAWL_BY_MONTH.labels(channel, r.get("source", ""), month_tw(r.get("published_at"))).inc()
     print(f"wrote {len(out)} rows -> {path}")
     return path

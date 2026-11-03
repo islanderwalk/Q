@@ -24,6 +24,7 @@ ap.add_argument("--single", action="store_true", help="keep only the 整合 view
 ap.add_argument("--icons", action="store_true", help="put official Google Cloud icons on the 整合 diagram nodes")
 ap.add_argument("--q-tabs", action="store_true", help="one tab per question Q1–Q6 (Q2 估算 and Q5 資料流 move into Q2, Q5)")
 ap.add_argument("--drop-tabs", action="store_true", help="drop the 請求時序, Uvicorn 背景, 推演筆記 and GCP／地端 tabs (2026-10-31)")
+ap.add_argument("--obs", action="store_true", help="add the 7 觀測 band (request logs, crawler/collector and service metrics, ES health, completeness reconciliation, quality daily report, Grafana dashboards + Alertmanager → PM page) under the 整合 diagram (2026-11-02)")
 a = ap.parse_args()
 REPO = a.repo
 E = lambda s: html.escape(str(s), quote=True)
@@ -153,6 +154,8 @@ if a.cards:
                     Q[k] = c[k]
         if "evidence" in c:
             Q["evidence"] = [{"img": img(e["path"]), "cap": e["cap"]} for e in c["evidence"]]
+        if "figures" in c:  # full-width images on the question tab (Q6 監控看板, 2026-11-02)
+            Q["figures"] = [{"img": img(e["path"]), "cap": e["cap"]} for e in c["figures"]]
         have = {e["path"] for e in EVID}
         for e in c.get("evidence_all", []):  # images a card cites that no README table lists
             p = e["path"]
@@ -395,6 +398,9 @@ def q_doc(q):
         parts.append(f'<section class="dgrp"><h3>資料怎麼走</h3><p class="lead qpath">{E(Q["path"])}</p></section>')
     if Q.get("notes"):
         parts.append(f'<section class="dgrp"><h3>細節與限制</h3>{ul(Q["notes"])}</section>')
+    if Q.get("figures"):
+        figs = "".join(f'<figure><a href="{E(f["img"])}"><img src="{E(f["img"])}" alt="{E(f["cap"])}" loading="lazy" decoding="async"></a><figcaption>{E(f["cap"])}</figcaption></figure>' for f in Q["figures"])
+        parts.append(f'<section class="dgrp"><h3>監控看板</h3><div class="figs">{figs}</div></section>')
     if Q.get("verify"):
         parts.append(f'<section class="dgrp"><h3>怎麼驗證的</h3>{ul(Q["verify"])}</section>')
     if Q.get("todo"):
@@ -455,10 +461,72 @@ if a.drop_tabs:
         PAGES.pop(t, None)
     D["variants"]["int"]["changed"] = [False] * len(D["variants"]["int"]["changed"])
     page = page.replace('<button type="button" class="diff" aria-pressed="false"', '<button type="button" class="diff" hidden aria-pressed="false"', 1)
+if a.obs:
+    # 7 觀測: one band across the bottom of the 整合 diagram, two rows. Row 1: crawler/collector request logs, crawler and
+    # collector metrics, service metrics, ES cluster health. Row 2: completeness reconciliation, quality daily report,
+    # Grafana dashboards + Alertmanager → PM page. Local stand-ins (Loki+Alloy / Prometheus / elasticsearch_exporter /
+    # Grafana / Alertmanager in Docker, q6/realenv, all run end to end on 2026-11-02) carry the GCP product they map to in the
+    # title; the monitoring itself has no Terraform. Nodes join the 抓取 (2) and 分析 (5) stages so the stage buttons and
+    # the 依題目 lights keep working; no edges, the band reads as "everything above reports here".
+    OBS_Y, OBS_H, NODE_W, GAP, ROW_Y = 636, 170, 240, 30, (670, 740)
+    OBS = [
+        ("obs-logs", "n new", "Cloud Logging", "每個請求一行 · 本機 Loki＋Alloy", 2, ["4", "6"], 0,
+         "爬蟲端與 Q6 真實來源採集器每個請求都留一行 JSON 紀錄：平台／feed、網址、狀態碼（200–500）、TTFB 與總延遲、結果分類（outcome）、重試與退避，異常時加截圖；本機由 Alloy 收所有容器的 stdout 進 Loki，Alloy 在取樣前把採集紀錄算成行數指標，Loki ruler 再把紀錄轉成每秒請求數並出 CrawlLoginWallFromLogs（紀錄裡出現登入牆就告警）。GCP 對應 Cloud Logging：Cloud Run 的 stdout JSON 直接進 Cloud Logging，log-based metrics 出同樣的請求數與 4xx／5xx 比例。2026-11-02 六渠道爬蟲與 PTT、中央社、公視的真實採集都是靠這份紀錄看延遲尖峰與退避。沒有 Terraform。",
+         {"gcp": ["Cloud Logging"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Loki＋Alloy（Docker）",
+          "diff": "本機是 Alloy 把 docker 標籤變成 service 標籤後送 Loki；雲端 Cloud Run 把 stdout 寫成 JSON 就進 Cloud Logging，保留天數與匯出到 BigQuery 要另外設。"}),
+        ("obs-crawl", "n new", "Cloud Monitoring", "爬蟲與採集指標 · Prometheus", 2, ["4", "6"], 0,
+         "兩種來源。六渠道爬蟲把計數與延遲直方圖推到 Pushgateway，Prometheus 定時抓：每分鐘請求數（依平台）、狀態 2xx／4xx／5xx／失敗、API p95（依平台）。Q6 真實來源採集器直接開 /metrics 給 Prometheus 抓：每次請求的結果分類（ok、empty、not_modified、login_wall、rate_limited、forbidden、server_error 等 11 種）、解析／新增／更新篇數、首抓延遲直方圖（只算發文 24 小時內）、退避等級、最後一次成功時間、YouTube 配額、robots.txt 雜湊。告警（提案值）：登入牆 1 次就 page、產出率比 7 天前同時段掉一半、feed 過期或死亡（沒有金鑰的 feed 不算）、首抓延遲 p95 超過 45 分鐘警告、60 分鐘 page。退避看這些指標自動放慢，不是硬停。GCP 對應 Cloud Monitoring 的自訂指標。沒有 Terraform。",
+         {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Prometheus（Docker）；爬蟲經 Pushgateway，Q6 採集器直接被抓",
+          "diff": "Pushgateway 的指標不會自己過期，爬蟲停了要看最後推送時間；Q6 採集器靠 collector_last_ok_timestamp 判過期；雲端改用 Cloud Monitoring 自訂指標就沒有這個問題。"}),
+        ("obs-svc", "n new", "Cloud Monitoring", "服務指標 · OTel→Prometheus", 5, ["5", "6"], 0,
+         "斷詞服務、回補 Job、文字雲 API 與 PM 頁出指標，Prometheus 抓：文字雲查詢延遲直方圖（失敗也記，桶含 180 與 300 秒）、超過 180 秒的查詢數、ES 逾時與部分結果、快取命中、串流 ack／nack 與最舊未確認訊息年齡、每台服務的字典版本與存活心跳、定向重跑、回補燃盡（剩餘篇數、每秒篇數、ETA）、PM 頁 RUM（LCP、CLS、INP、JS 錯誤）。3 分鐘 SLO 用 Sloth 產生多視窗燃燒率：28 天 99% 的查詢成功且在 180 秒內（提案值），1 小時燒掉 2% 預算（14.4 倍）或 6 小時燒掉 5%（6 倍）就呼叫，1 天 3 倍或 3 天 1 倍開單；沒有流量的時段不算進錯誤預算。本機沙盤回補時全期查詢 p95 從 114 ms 升到 192 ms，3,727 次查詢沒有一次超過 180 秒。GCP 對應 Cloud Monitoring（Cloud Run 內建指標加自訂指標）。沒有 Terraform。",
+         {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "OpenTelemetry Collector＋Prometheus＋Sloth（Docker）",
+          "diff": "Cloud Run 的請求延遲與併發是內建指標；自訂的 ES 寫入速率、串流延遲、燃燒率要經 OTel exporter 或 Managed Service for Prometheus 進 Cloud Monitoring。"}),
+        ("obs-es", "n new", "Cloud Monitoring", "ES 健康 · exporter→Prometheus", 5, ["5", "6"], 0,
+         "elasticsearch_exporter 抓叢集狀態（紅／黃）、磁碟水位、circuit breaker、寫入與搜尋執行緒池拒絕、JVM heap 與 GC、未分配分片、SLM 快照；告警（提案值）：叢集紅 page、黃持續 10 分鐘、磁碟 80% 警告、88% 或 predict_linear 4 小時內滿 page、breaker 跳、拒絕、快照失敗或過期。另有索引 slowlog（查詢超過 60 秒）進 Loki。2026-11-02 真環境結束時仍在響的 ES 磁碟告警是真的：整台雲端容器的磁碟用了 94%。GCP 對應 Compute Engine VM 上 Ops Agent 的 Elasticsearch 整合 → Cloud Monitoring。沒有 Terraform（ES VM 本身也沒有）。",
+         {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "elasticsearch_exporter v1.9.0＋Prometheus（Docker）",
+          "diff": "Ops Agent 的 Elasticsearch 接收器出的是 workload.googleapis.com/elasticsearch.* 指標，名稱與 exporter 不同，告警規則要對照改寫。"}),
+        ("obs-recon", "n new", "Cloud Monitoring", "完整性對帳 · 原文湖 vs ES 四層", 5, ["6"], 1,
+         "每小時一次（seg-recon）逐月對帳：原文湖的篇數、ES 有文件、ES 有 v2、ES v2 是最新字典版、ES 已刪（tombstone）、帳本，算出缺多少篇、多多少篇、v2 覆蓋率，寫 recon_daily 表與指標。告警（提案值）：通過的分區缺口超過 0.1%、v2 覆蓋率掉、對帳超過 2 小時沒跑、月份不明的文件（沒有 published_at）、未斷詞的文件 page。2026-11-02 真環境跑出的真告警：Instagram 的 48 篇真實樣本沒有 published_at，被歸到月份不明。GCP 對應：同一支程式跑在 Cloud Run Job（Cloud Scheduler 每小時），指標進 Cloud Monitoring。沒有 Terraform。",
+         {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "seg-recon（Docker，每小時；心跳每 60 秒）",
+          "diff": "本機讀 PostgreSQL 的 raw 分區當原文湖；雲端原文在 Cloud Storage 與 BigQuery 匯出，對帳的原文層要改讀 BigQuery 的計數。"}),
+        ("obs-quality", "n new", "Cloud Monitoring", "品質日報 · 金標召回／RBO", 5, ["6"], 1,
+         "每天一次（seg-quality）用真實語料算文字雲品質：雜訊外漏比例（網址殘片、電話、單字、停用詞，依渠道）、地名被拆比例、整詞召回、150 題金標召回（v0／v1／v2 各一條）與 McNemar p 值、前 30 詞的 RBO 與 JS 散度（今天對昨天）、新詞暴增；寫 quality_daily 表。告警（提案值）：任何雜訊外漏、整詞召回低於 99%、金標召回低於 71%、前 30 詞 RBO 低於 0.5、日報過期。2026-11-02 真環境：整詞召回 0.925 低於 0.99 的提案門檻，是真的（金標裡有地名被拆）。GCP 對應：Cloud Run Job（Cloud Scheduler 每天）→ Cloud Monitoring。沒有 Terraform。",
+         {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "seg-quality（Docker，每天）",
+          "diff": "金標 150 題與停用詞清單跟著映像走，本機與雲端同一份；雲端把 quality_daily 放 Cloud SQL。"}),
+        ("obs-grafana", "n new", "Grafana＋Alertmanager", "2 張看板 90 面板 · 告警 66 條 → PM 頁", 5, ["5", "6"], 1,
+         "主看板 9 層 69 面板依資料流排：客戶 SLO（3 分鐘燃燒率、28 天錯誤預算）→ PM 頁 RUM → 完整性對帳 → 串流積壓 → 字典發版收斂 → 回補燃盡 → 品質日報 → ES 健康 → 平台（PostgreSQL、日誌、監控自身）；採集看板 6 列 21 面板（結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身）。看板 JSON 由程式產生、進版控。告警 66 條（含 Sloth 產生的 SLO 燃燒率）加 30 條記錄規則，每條都有 for、嚴重度（page／warn／ticket）與摘要；Alertmanager 以 webhook 送到文字雲 API，PM A/B 頁頂部直接顯示正在響的告警（零成本通知管道，Email／Telegram 另加 receiver 即可）。2026-11-02 真環境端對端跑過：Prometheus → Alertmanager → PM 橫幅，firing 與 resolved 都收到。GCP 對應 Cloud Monitoring 的看板與告警政策，或 Managed Service for Prometheus 直接載入同一份規則檔。截圖在 Q6 分頁。沒有 Terraform。",
+         {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Grafana 12.1.1＋Alertmanager v0.28.1（Docker）",
+          "diff": "看板 JSON 可以直接版本控制（q6/realenv/monitoring/grafana）；雲端告警政策要寫成 google_monitoring_alert_policy，或用 Managed Service for Prometheus 載入同一份規則檔，目前都沒有。"}),
+    ]
+    V = D["variants"]["int"]
+    for nid, cls, label, s_, stage, q, row, note, dep in OBS:
+        V["nodes"][nid] = {"label": label, "sub": s_, "icon": None, "stage": stage, "tf": [], "note": note, "q": q, "dep": dep}
+        D["stages"][stage]["ids"].append(nid)
+    V["summary"] += " 最下面的「7 觀測」是爬蟲、採集與服務的紀錄、指標、對帳、品質日報、看板與告警七個節點：本機用 Loki＋Alloy、Prometheus、elasticsearch_exporter、Grafana、Alertmanager（2026-11-02 真環境端對端跑過），GCP 對應 Cloud Logging 與 Cloud Monitoring，監控本身沒有 Terraform。"
+    sub = base64.b64decode(PAGES["int"]).decode("utf8")
+    for o, n in [('viewBox="0 0 1090 676"', 'viewBox="0 0 1090 858"'), ("h: 676 }", "h: 858 }"),
+                 ('aria-label="QSearch 整合架構圖：排程、派工、抓取、落地、解析、拿去用"', 'aria-label="QSearch 整合架構圖：排程、派工、抓取、落地、解析、拿去用、觀測"')]:
+        assert sub.count(o) == 1, o
+        sub = sub.replace(o, n)
+    i = sub.index('<g class="lg">'); k = sub.index("</svg>", i)
+    legend = sub[i:k]
+    assert legend.count('y="646"') == 4 and legend.count('y="652"') == 5 and legend.count("M510 652 H540") == 1
+    legend = legend.replace('y="646"', 'y="828"').replace('y="652"', 'y="834"').replace("M510 652 H540", "M510 834 H540")
+    band = [f'<rect class="band" x="10" y="{OBS_Y}" width="1070" height="{OBS_H}" rx="10"/>', f'<text class="bl" x="20" y="{OBS_Y + 20}">7 觀測</text>']
+    col = [0, 0]
+    for nid, cls, label, s_, stage, q, row, note, dep in OBS:
+        x = 20 + col[row] * (NODE_W + GAP); col[row] += 1; cx = x + NODE_W // 2; y = ROW_Y[row]
+        band.append(f'<g class="{cls}" data-node-id="{nid}" tabindex="0" role="button" aria-label="{label}：{s_}">'
+                    f'<rect x="{x}" y="{y}" width="{NODE_W}" height="54" rx="8"/>'
+                    f'<text class="l" x="{cx}" y="{y + 19}" text-anchor="middle" dominant-baseline="central">{label}</text>'
+                    f'<text class="s" x="{cx}" y="{y + 37}" text-anchor="middle" dominant-baseline="central">{s_}</text></g>')
+    sub = sub[:i] + "\n".join(band) + "\n" + legend + sub[k:]
+    PAGES["int"] = base64.b64encode(sub.encode("utf8")).decode()
 if a.icons:
     # latest Google Cloud icons (cloud.google.com/icons: core-products-icons.zip + category-icons.zip),
     # the same set the original page already uses in D.icons; no legacy icons
-    ICON_FILE = ["cloud-run", "cloud-sql", "cloud-storage", "data-analytics", "developer-tools", "databases"]
+    ICON_FILE = ["cloud-run", "cloud-sql", "cloud-storage", "data-analytics", "developer-tools", "databases"] + (["observability"] if a.obs else [])
     GICON = {k: "data:image/svg+xml;base64," + base64.b64encode(open(os.path.join(HERE, "icons", k + ".svg"), "rb").read()).decode()
              for k in ICON_FILE}
     # same node -> icon picks as the original 整合 diagram; Firestore token pool gets the Databases category icon
@@ -466,6 +534,8 @@ if a.icons:
                  "crawl": "cloud-run", "tokenpool": "databases", "tokenjob": "cloud-run", "gcs": "cloud-storage",
                  "fetched": "data-analytics", "parser": "cloud-run", "replay": "cloud-run", "searchdb": "cloud-sql",
                  "searchapi": "data-analytics"}
+    if a.obs:  # Cloud Logging / Cloud Monitoring have no product icon in the latest set; the Observability category icon covers both
+        NODE_ICON.update({k: "observability" for k in ("obs-logs", "obs-crawl", "obs-svc", "obs-es", "obs-recon", "obs-quality")})
     for k, v in GICON.items():
         D["icons"].setdefault(k, v)
     for nid, ic in NODE_ICON.items():

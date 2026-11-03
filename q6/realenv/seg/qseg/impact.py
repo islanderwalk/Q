@@ -2,7 +2,8 @@
 
 同時跑兩種新字典：固定 total（manifest.total_pinned）與不固定（jieba 預設，加詞後 total 會變），
 回答「新增詞只重跑原文含該字串的文章」這句話在真實資料上是否成立。
-用法：python -m qseg impact <舊版> <新版> <詞,詞> [processes]
+用法：python -m qseg impact <舊版> <新版> <詞,詞> [processes] [--record]
+--record：把「不含新詞卻變了的文章數（固定 total）」寫進 dict_releases.bigram_audit_missed（P0-5 的漏抓數）
 """
 import json
 import multiprocessing as mp
@@ -50,7 +51,17 @@ def _work(path):
     return n, contains, changed_p, changed_u, outside_p, outside_u, raw_p, raw_u
 
 
+def record_missed(dsn, dict_version, missed) -> int:
+    """把漏抓數寫進 dict_releases；回傳受影響列數（0 ＝ 版本不存在，呼叫端要視為失敗）。"""
+    import psycopg
+    with psycopg.connect(dsn, autocommit=True) as c:
+        cur = c.execute("UPDATE dict_releases SET bigram_audit_missed=%s WHERE dict_version=%s", (missed, dict_version))
+        return cur.rowcount
+
+
 def main(argv):
+    record = "--record" in argv
+    argv = [a for a in argv if a != "--record"]
     old, new, words = argv[0], argv[1], [w for w in argv[2].split(",") if w]
     procs = int(argv[3]) if len(argv) > 3 else 3
     files = sorted(str(p) for p in Path(config.RAW_ROOT).glob("*/*.jsonl"))
@@ -69,4 +80,9 @@ def main(argv):
            "raw_tokens_changed_without_word_unpinned": sum(r[7] for r in rows),
            "total_pinned": _D.get("tp"), "total_unpinned": _D.get("tu")}
     print(json.dumps(out, ensure_ascii=False))
+    if record:
+        n = record_missed(config.PG_DSN, new, out["changed_without_word_pinned"])
+        if n != 1:
+            print(f"bigram_audit_missed 寫入失敗：dict_releases 找到 {n} 列（dict_version={new}），應為 1", file=sys.stderr)
+            return 1
     return 0

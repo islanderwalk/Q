@@ -2,8 +2,24 @@ global: { scrape_interval: 5s, evaluation_interval: 5s }
 scrape_configs:
   - job_name: otelcol          # ES 與 PostgreSQL（經 OTel receiver）
     static_configs: [ { targets: ["otelcol:8889"] } ]
-  - job_name: wordcloud-api    # API：耗時分布、超過 180 秒次數
+  - job_name: es-exporter      # elasticsearch_exporter：叢集健康、磁碟水位、breaker、拒絕、SLM（rules/es.yml）
+    static_configs: [ { targets: ["es-exporter:9114"] } ]
+  - job_name: wordcloud-api    # API：耗時分布、超過 180 秒次數、錯誤原因
     static_configs: [ { targets: ["api:8080"] } ]
-  - job_name: seg-service      # 串流斷詞服務 v1／v2
+  - job_name: seg-service      # 串流斷詞服務 v1／v2（含積壓年齡、nack）
     static_configs: [ { targets: ["seg-v2:9108", "seg-v1:9108"] } ]
-rule_files: [ /etc/prometheus/alerts.yml ]
+  - job_name: seg-coverage     # ES 覆蓋與缺值檢查（P0-2）
+    static_configs: [ { targets: ["seg-coverage:9110"] } ]
+  - job_name: seg-recon        # 完整性四層對帳（渠道×月：原文湖／ES／有 v2／最新版）＋回補燃盡（剩餘、速率、attempts、awaiting_pm）
+    static_configs: [ { targets: ["seg-recon:9112"] } ]
+  - job_name: seg-quality      # 文字雲品質日報：洩漏率、地名拆分、整詞召回、金標召回與 McNemar、新詞暴增、RBO/JS（rules/quality.yml）
+    static_configs: [ { targets: ["seg-quality:9113"] } ]
+  - job_name: collector        # 採集器：每次請求的 outcome、篇數、延遲分段、首抓延遲、退避等級、robots 雜湊、YouTube 配額
+    static_configs: [ { targets: ["collector:9111"] } ]
+  - job_name: alloy            # 日誌代理自己的指標＋從日誌算的 crawl_log_lines_total（stage.metrics）
+    static_configs: [ { targets: ["alloy:12345"] } ]
+  - job_name: loki
+    static_configs: [ { targets: ["loki:3100"] } ]
+rule_files: [ /etc/prometheus/rules/*.yml ]   # 每個關注面一個檔：api、completeness、stream、slo（Sloth 產生）…
+alerting:                     # 告警送 Alertmanager → webhook → API /api/ops/alert → PM 頁（零成本通知管道）
+  alertmanagers: [ { static_configs: [ { targets: ["alertmanager:9093"] } ] } ]

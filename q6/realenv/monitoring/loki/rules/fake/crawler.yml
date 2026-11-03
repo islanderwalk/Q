@@ -1,0 +1,16 @@
+# Loki ruler（計畫書 P0 第 3 項）：把「每個請求一行」的日誌轉成指標（remote_write 進 Prometheus），並直接出告警。
+# 本機的採集器自己也有 /metrics；這組規則的對象是只留日誌的爬蟲（電腦端的爬蟲監測只有 Loki），同一套查詢改 container 標籤就能用。
+groups:
+  - name: q6-crawler-logs
+    interval: 1m
+    rules:
+      - record: crawl:requests:rate5m
+        expr: sum by (channel, outcome) (rate({service="collector"} | json | event="collect" [5m]))
+      - record: crawl:posts_parsed:rate5m
+        expr: sum by (channel) (sum_over_time({service="collector"} | json | event="collect" | unwrap posts_parsed [5m])) / 300
+      # 登入牆或 checkpoint 出現 ≥ 1 次就立即呼叫（提案值：計畫書 P0 第 3 項「checkpoint 或登出 ≥ 1 次立即呼叫」）
+      - alert: CrawlLoginWallFromLogs
+        expr: sum by (channel) (count_over_time({service="collector"} | json | event="collect" | outcome=~"login_wall|checkpoint" [5m])) >= 1
+        for: 0m
+        labels: { severity: page, source: loki }
+        annotations: { summary: "採集器被轉去登入頁或 checkpoint（{{ $labels.channel }}）：HTTP 200 不等於抓到" }

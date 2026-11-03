@@ -11,6 +11,8 @@ WORKDIR /app
 COPY code/segmenter.py /app/segmenter.py
 COPY code/dict/ /app/dict/
 COPY realenv/seg/qseg/ /app/qseg/
+COPY realenv/seg/quality/ /app/quality/
+COPY realenv/pg/live.sql /app/live.sql
 ARG SEG_BUILD=dev
 ENV SEG_BUILD=${SEG_BUILD}
 ENTRYPOINT ["python", "-m", "qseg"]

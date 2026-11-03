@@ -22,6 +22,16 @@ resource "google_sql_database_instance" "crawler_db" {
       name  = "cloudsql.iam_authentication"
       value = "on"
     }
+    # 連線池忘了 commit 的交易 60 秒後踢掉：回補 Job／API（psycopg_pool）一台掛住不會占光連線
+    database_flags {
+      name  = "idle_in_transaction_session_timeout"
+      value = "60000"
+    }
+    # 超過 1 秒的語句進 Cloud Logging：回補帳本、對帳、品質日報的查詢變慢看得到（本機是 Grafana 的 PG 面板）
+    database_flags {
+      name  = "log_min_duration_statement"
+      value = "1000"
+    }
 
     ip_configuration {
       ipv4_enabled    = false
@@ -58,6 +68,10 @@ locals {
     parser        = google_service_account.parser.email
     scheduler_app = google_service_account.scheduler_app.email
     backfill      = google_service_account.backfill.email
+    # Q6：斷詞服務（service_state 心跳、rerun_runs）、文字雲 API（回補帳本簽核、發版、採集控制）、採集器（collector_state）
+    seg           = google_service_account.seg.email
+    wordcloud_api = google_service_account.wordcloud_api.email
+    collector     = google_service_account.collector.email
   }
 }
 

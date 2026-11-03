@@ -6,7 +6,7 @@
 check "no_placeholder_images" {
   assert {
     condition = alltrue([
-      for image in [var.image_api, var.image_worker, var.image_parser, var.image_scheduler, var.image_backfill, var.image_ptt_crawl] :
+      for image in [var.image_api, var.image_worker, var.image_parser, var.image_scheduler, var.image_backfill, var.image_ptt_crawl, var.image_seg, var.image_wordcloud_api, var.image_collector] :
       !startswith(image, "us-docker.pkg.dev/cloudrun/container/")
     ])
     error_message = "仍有 image_* 使用 us-docker.pkg.dev/cloudrun/container/ 的示範映像。正式部署前必須改成 Artifact Registry 的實際映像，否則 parser 會把所有事件 ack 掉。"

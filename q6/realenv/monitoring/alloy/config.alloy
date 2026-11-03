@@ -1,0 +1,60 @@
+// Alloy（GCP 上對應 Ops Agent／Cloud Logging agent）：讀 compose 專案 qsearch-q6 所有容器的 stdout，
+// 把每行 JSON 的 event／severity／outcome／channel 解析成標籤（值都有限，不會爆量），送進 Loki；
+// 同時用 stage.metrics 在取樣前把採集器的 outcome 算成 counter（Prometheus 裡叫 loki_process_custom_crawl_log_lines_total），從 alloy:12345 抓。
+discovery.docker "q6" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.project=qsearch-q6"]
+  }
+}
+
+discovery.relabel "q6" {
+  targets = discovery.docker.q6.targets
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+loki.source.docker "q6" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.q6.output
+  forward_to = [loki.process.q6.receiver]
+  labels     = { job = "docker" }
+}
+
+loki.process "q6" {
+  forward_to = [loki.write.local.receiver]
+
+  stage.json {
+    expressions = { event = "event", severity = "severity", outcome = "outcome", channel = "channel" }
+  }
+  stage.labels {
+    values = { event = "", severity = "", outcome = "", channel = "" }
+  }
+  // 只數採集器的 collect 事件行（真實環境驗證：不加 match 會把 API 的每一行也算進去）。
+  // Alloy 會自動加前綴，Prometheus 裡的名字是 loki_process_custom_crawl_log_lines_total（標籤 channel／outcome／service）
+  stage.match {
+    selector = "{service=\"collector\", event=\"collect\"}"
+    stage.metrics {
+      metric.counter {
+        name        = "crawl_log_lines_total"
+        description = "採集器 collect 日誌行數（依 outcome／channel 標籤；在取樣前算，日誌被丟也不影響）"
+        source      = "outcome"
+        action      = "inc"
+      }
+    }
+  }
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

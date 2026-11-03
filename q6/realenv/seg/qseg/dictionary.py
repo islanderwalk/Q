@@ -60,16 +60,26 @@ class Dictionary:
     merges: dict
     user_words: frozenset
     pipeline: str
+    legacy_words: frozenset = None      # v0 與用：老化字典的詞集（沒有 jieba tokenizer）
+    legacy_maxlen: int = 8
 
     @property
     def sha(self) -> str:
-        return self.manifest["files"]["user.dict"][:16]
+        files = self.manifest["files"]
+        return files[("user.dict" if "user.dict" in files else "legacy.dict")][:16]
 
 
 def load(version: str = None, pipeline: str = None, base_url: str = None, pin_total: bool = True) -> Dictionary:
     pipeline = pipeline or config.PIPELINE
     d = fetch(version, base_url)
     manifest = json.loads((d / "manifest.json").read_text(encoding="utf-8"))
+    if pipeline == "v0":
+        # 舊系統替身：純字典最長匹配，不用 jieba、不用停用詞與合併規則（legacy.py）
+        from . import legacy
+        maxlen = int(manifest.get("algo", {}).get("maxlen", legacy.DEFAULT_MAXLEN))
+        return Dictionary(version=manifest["dict_version"], manifest=manifest, tokenizer=None,
+                          stopwords=frozenset(), soft_stopwords=frozenset(), merges={}, user_words=frozenset(),
+                          pipeline="v0", legacy_words=legacy.load_words(d / "legacy.dict", maxlen), legacy_maxlen=maxlen)
     tk = jieba.Tokenizer(dictionary=str(d / "base.dict"))
     tk.tmp_dir = str(CACHE)
     tk.initialize()

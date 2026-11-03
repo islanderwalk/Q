@@ -5,21 +5,6 @@
     "at": "2026-10-30T23:15:03.703Z"
   },
   {
-    "file": "prometheus/01_alerts.png",
-    "url": "http://localhost:9090/alerts",
-    "at": "2026-10-30T23:15:07.097Z"
-  },
-  {
-    "file": "prometheus/02_stream_lag_p95.png",
-    "url": "http://localhost:9090/query?g0.expr=histogram_quantile(0.95%2C%20sum%20by%20(le%2C%20pipeline)%20(rate(qseg_e2e_lag_seconds_bucket%5B5m%5D)))&g0.tab=graph&g0.range_input=1h",
-    "at": "2026-10-30T23:15:12.296Z"
-  },
-  {
-    "file": "prometheus/03_es_index_rate.png",
-    "url": "http://localhost:9090/query?g0.expr=rate(elasticsearch_node_operations_completed_total%7Boperation%3D%22index%22%7D%5B1m%5D)&g0.tab=graph&g0.range_input=1h",
-    "at": "2026-10-30T23:15:17.536Z"
-  },
-  {
     "file": "kibana/01_discover_v1_v2_terms.png",
     "url": "http://localhost:5601/app/discover#/?_g=(time:(from:'2026-10-01T00:00:00.000Z',to:now))&_a=(columns:!(channel,content,terms_v1,terms_v2,dict_version_v2,seg_ver_v2,seg_build_v2),dataSource:(dataViewId:posts,type:dataView),query:(language:kuery,query:'terms_v2:肥宅'))",
     "at": "2026-10-30T23:15:49.205Z"
@@ -37,56 +22,96 @@
   {
     "file": "pm/01_all_channels_all_time.png",
     "url": "http://localhost:8080/",
-    "at": "2026-10-30T23:16:30.307Z"
+    "at": "2026-11-02T21:44:25.948Z"
   },
   {
     "file": "pm/02_ptt_2026-10_pm_spot_check.png",
     "url": "http://localhost:8080/?from=2026-10-01",
-    "at": "2026-10-30T23:16:32.520Z"
+    "at": "2026-11-02T21:44:28.890Z"
   },
   {
     "file": "pm/03_keyword_kaohsiung.png",
     "url": "http://localhost:8080/?q=%E9%AB%98%E9%9B%84",
-    "at": "2026-10-30T23:16:34.725Z"
+    "at": "2026-11-02T21:44:31.696Z"
   },
   {
     "file": "pm/10_channel_facebook.png",
     "url": "http://localhost:8080/?channels=facebook",
-    "at": "2026-10-30T23:16:36.953Z"
+    "at": "2026-11-02T21:44:34.557Z"
   },
   {
     "file": "pm/10_channel_instagram.png",
     "url": "http://localhost:8080/?channels=instagram",
-    "at": "2026-10-30T23:16:39.179Z"
+    "at": "2026-11-02T21:44:37.333Z"
   },
   {
     "file": "pm/10_channel_youtube.png",
     "url": "http://localhost:8080/?channels=youtube",
-    "at": "2026-10-30T23:16:41.390Z"
+    "at": "2026-11-02T21:44:40.046Z"
   },
   {
     "file": "pm/10_channel_ptt.png",
     "url": "http://localhost:8080/?channels=ptt&from=2026-10-01",
-    "at": "2026-10-30T23:16:43.594Z"
+    "at": "2026-11-02T21:44:42.780Z"
   },
   {
     "file": "pm/10_channel_media.png",
     "url": "http://localhost:8080/?channels=media",
-    "at": "2026-10-30T23:16:45.814Z"
+    "at": "2026-11-02T21:44:45.373Z"
   },
   {
     "file": "pm/10_channel_threads.png",
     "url": "http://localhost:8080/?channels=threads",
-    "at": "2026-10-30T23:16:48.033Z"
+    "at": "2026-11-02T21:44:48.013Z"
   },
   {
     "file": "pm/20_posts_drawer_typhoon.png",
     "url": "http://localhost:8080/?from=2026-10-01&term=%E9%A2%B1%E9%A2%A8&seg=v2",
-    "at": "2026-10-30T23:16:51.293Z"
+    "at": "2026-11-02T21:44:51.745Z"
   },
   {
     "file": "pm/21_posts_drawer_new_word.png",
     "url": "http://localhost:8080/?term=%E8%82%A5%E5%AE%85&seg=v2",
-    "at": "2026-10-30T23:16:54.572Z"
+    "at": "2026-11-02T21:44:55.417Z"
+  },
+  {
+    "file": "pm/30_alerts_strip.png",
+    "url": "http://localhost:8080/",
+    "at": "2026-11-02T21:44:58.197Z"
+  },
+  {
+    "file": "grafana/01_dashboard_main.png",
+    "url": "http://localhost:3000/d/qsearch-q6/?orgId=1&from=1793656560000&to=1793657688119&kiosk",
+    "at": "2026-11-02T22:15:07.631Z"
+  },
+  {
+    "file": "grafana/02_dashboard_collect.png",
+    "url": "http://localhost:3000/d/qsearch-q6-collect/?orgId=1&from=1793656560000&to=1793657688119&kiosk",
+    "at": "2026-11-02T22:15:23.247Z"
+  },
+  {
+    "file": "grafana/03_alert_rules_from_prometheus.png",
+    "url": "http://localhost:3000/alerting/list?view=state&search=",
+    "at": "2026-11-02T22:15:29.653Z"
+  },
+  {
+    "file": "alertmanager/01_alerts.png",
+    "url": "http://localhost:9093/#/alerts",
+    "at": "2026-11-02T22:15:32.770Z"
+  },
+  {
+    "file": "prometheus/01_alerts.png",
+    "url": "http://localhost:9090/alerts",
+    "at": "2026-11-02T22:15:36.365Z"
+  },
+  {
+    "file": "prometheus/02_stream_lag_p95.png",
+    "url": "http://localhost:9090/query?g0.expr=histogram_quantile(0.95%2C%20sum%20by%20(le%2C%20pipeline)%20(rate(qseg_e2e_lag_seconds_bucket%5B5m%5D)))&g0.tab=graph&g0.range_input=1h",
+    "at": "2026-11-02T22:15:41.564Z"
+  },
+  {
+    "file": "prometheus/03_es_index_rate.png",
+    "url": "http://localhost:9090/query?g0.expr=rate(elasticsearch_node_operations_completed_total%7Boperation%3D%22index%22%7D%5B1m%5D)&g0.tab=graph&g0.range_input=1h",
+    "at": "2026-11-02T22:15:46.746Z"
   }
 ]
