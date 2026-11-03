@@ -289,7 +289,7 @@ class BigramIndex:
 
     這是記憶體內的示範（6,685 篇）。5 億篇的版本不另建索引：ES 的 `content.bigram` 欄位（cjk_bigram）
     就是同一個倒排索引，用 `match_phrase` 找「原文含這個字串」的文章，再用 PIT＋search_after 分頁重算
-    （q6/realenv/seg/qseg/rerun.py；42.5 萬篇實測 22,271 篇 8.6 秒）。"""
+    （q6/stack/seg/qseg/rerun.py；42.5 萬篇實測 22,271 篇 8.6 秒）。"""
 
     def __init__(self, docs: dict, tags: frozenset = None):
         self.docs = docs

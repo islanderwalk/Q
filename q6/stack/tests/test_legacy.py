@@ -1,5 +1,5 @@
 """v0 舊系統替身的純函式測試：逆向最長匹配、凍結字典的五個病徵、artifact 建版、教育部 xlsx 抽詞。
-不需要 ES／jieba／pyarrow。執行：PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider q6/realenv/tests"""
+不需要 ES／jieba／pyarrow。執行：PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider q6/stack/tests"""
 import io
 import json
 import sys

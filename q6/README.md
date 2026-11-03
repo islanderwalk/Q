@@ -20,12 +20,12 @@
 | 項目 | 位置 | 說明 |
 |---|---|---|
 | 正式答案（599 字，連空白與換行；(a)(b)(c)） | [`q6/answer/answer_600.txt`](answer/answer_600.txt) | 2026-10-31 依審查四點改寫，字數由 `code/tests/test_answer_length.py` 檢查；研究頁 [`q6/answer/research-page.html`](answer/research-page.html)（下載後用瀏覽器開，答案分頁與本檔相同） |
-| 架構圖 11 張 | [`q6/architecture/`](architecture) | 依子題分資料夾，真實環境的 2 張在 `architecture/realenv/`；原始檔 `architecture/src/arch_*.html`，用 Playwright 渲染成 PNG |
+| 架構圖 11 張 | [`q6/architecture/`](architecture) | 依子題分資料夾，整套系統實跑的 2 張在 `architecture/stack/`；原始檔 `architecture/src/arch_*.html`，用 Playwright 渲染成 PNG |
 | 佐證 21 張 | [`q6/evidence/`](evidence) | 官方文件／原始碼／論文用 Playwright 擷取後加黃框；VM 實測做成卡片；原始擷取在 `q6/evidence/src/crops/` |
 | PTT 雜訊截圖 6 張 | [`q6/evidence/playwright/`](evidence/playwright) | 01 短網址與地名、02 地名「鼓山區」、03 地名與電話、04 電話（已遮）、05 `tinyurl.com` 短網址與被推文換行切開的網址、06 `bit.ly` 短網址。沒有一張標助詞，也沒有一張證明「高雄市」被拆（jieba 預設字典本來就保留「高雄市」） |
 | 斷詞原型 | [`q6/code/`](code) | `segmenter.py`（新舊並行，`Segmenters.build(base_dict=…)` 可換主字典；`run_compare.py`、`kaohsiung_trace.py` 用 `--base-dict`）、`run_compare.py`、`kaohsiung_trace.py`（「高雄市」6→6 的證據：用 jieba 字典模擬的舊流程本來就沒拆）、`affected_demo.py`、`tests/`；結果 [`q6/code/RESULTS.md`](code/RESULTS.md)（jieba 內建字典與繁體 dict.txt.big 各一組對照）、估算 [`q6/code/PLAN.md`](code/PLAN.md) |
 | jieba 實驗 | [`q6/code/jieba_experiments/`](code/jieba_experiments) | 吞吐、dict.txt.big 覆蓋、加詞影響範圍、固定 total；輸出與 sha256 在 [`q6/data/jieba_experiments/`](data/jieba_experiments)；2026-10-30 在 Linux 重跑，除計時欄位外與 repo 版本相同（`rerun_linux.log`） |
-| 真實環境驗證 | [`q6/realenv/`](realenv) | 官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OTel／Prometheus／Grafana 全部在 Docker，零成本；42.5 萬篇 PTT 回補三輪、六渠道串流、PM A/B 文字雲頁。數字在 [`RESULTS.md`](realenv/RESULTS.md)，截圖在 [`q6/evidence/realenv/`](evidence/realenv) |
+| 整套系統實跑（Docker） | [`q6/stack/`](stack) | 官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OTel／Prometheus／Grafana 全部在 Docker，零成本；42.5 萬篇 PTT 回補三輪、六渠道串流、PM A/B 文字雲頁。數字在 [`RESULTS.md`](stack/RESULTS.md)，截圖在 [`q6/evidence/stack/`](evidence/stack) |
 
 ## 2026-10-31 審查四點的處理
 
@@ -36,7 +36,7 @@
 | 1. 重要詞召回 | 150 個標題的金標集，三組獨立的模型標註（不是人工），兩組以上同意算數（[`data/recall_eval/`](data/recall_eval)）；方括號改白名單、加單字保留名單、字典加「颱風假」 | 金標詞召回：舊流程 64.7%，10/30 版 74.4%，10/31 版 75.6%；審查舉的三個例子都留住 | 剩下的漏詞多是字典沒有的人名與新詞，以及 jieba 切成兩段的複合詞（例如改變世界、護樹團體），要靠新詞發現；樣本只有 150 題 |
 | 2. 三分鐘查詢路徑 | 文字雲用 ES terms 聚合，`doc_count` 是篇數；100 萬、300 萬篇實測（[`data/es_terms_scale/`](data/es_terms_scale)） | 300 萬篇全命中精確聚合 317 ms；抽樣 1% 14 ms，前 50 詞重疊 49/50 | 5 億篇是單節點線性外推（約 50 秒），沒在正式叢集量 |
 | 3. 版本 | 指紋涵蓋 jieba 版本、主字典、使用者字典、停用詞、標籤與單字名單、固定的 total、程式碼；原文另記 `content_sha`；PLAN 不再用 `dict_version` 當 ES external version | 測試 `test_fingerprint_covers_stopwords_base_dict_and_code` 等 | |
-| 4. 增量重跑 | 5 億篇規模用 ES `content.bigram` 的 `match_phrase` 加 PIT（`realenv/seg/qseg/rerun.py`）；「只影響含新詞的文件」改成以固定 total 為前提，預設固定 | 42.5 萬篇加「肥宅」定向重跑 22,271 篇 8.6 秒，不含字串的 0 篇變 | 全量重跑「離峰約 6 晚」的寫入上限是假設 |
+| 4. 增量重跑 | 5 億篇規模用 ES `content.bigram` 的 `match_phrase` 加 PIT（`stack/seg/qseg/rerun.py`）；「只影響含新詞的文件」改成以固定 total 為前提，預設固定 | 42.5 萬篇加「肥宅」定向重跑 22,271 篇 8.6 秒，不含字串的 0 篇變 | 全量重跑「離峰約 6 晚」的寫入上限是假設 |
 
 ## 依子題分類的素材
 
@@ -78,18 +78,18 @@
 | [`evidence-jieba-add-word-total.png`](evidence/c-consistency/evidence-jieba-add-word-total.png)、[`evidence-jieba-calc-logtotal.png`](evidence/c-consistency/evidence-jieba-calc-logtotal.png) | jieba 原始碼：`add_word` 會改 `total`，分數用 `log(total)` |
 | [`evidence-es-terms-exclude.png`](evidence/c-consistency/evidence-es-terms-exclude.png) | 軟停用詞放在查詢時的 terms exclude |
 
-## 真實環境驗證 — [`q6/realenv/`](realenv)
+## 整套系統實跑（Docker） — [`q6/stack/`](stack)
 
-把答案的設計整套跑起來：官方 ES 9.5.5＋3 個外掛、PostgreSQL 帳本、Pub/Sub 官方模擬器、斷詞服務與回補 Job（同一個映像）、文字雲 API 與 PM A/B 頁、Kibana、OTel／Prometheus／Grafana。GCP 元件與本機替身的對照、怎麼重跑在 [`realenv/README.md`](realenv/README.md)；全部數字與知識檔逐節對照在 [`realenv/RESULTS.md`](realenv/RESULTS.md)。
+把答案的設計整套跑起來：官方 ES 9.5.5＋3 個外掛、PostgreSQL 帳本、Pub/Sub 官方模擬器、斷詞服務與回補 Job（同一個映像）、文字雲 API 與 PM A/B 頁、Kibana、OTel／Prometheus／Grafana。GCP 元件與本機對應元件的對照、怎麼重跑在 [`stack/README.md`](stack/README.md)；全部數字與知識檔逐節對照在 [`stack/RESULTS.md`](stack/RESULTS.md)。
 
 | 圖／截圖 | 內容 |
 |---|---|
-| [`diagram-realenv-stack.png`](architecture/realenv/diagram-realenv-stack.png) | 每一層用什麼、對應哪個 GCP 元件、實際跑出什麼數字 |
-| [`diagram-sandbox-scenarios.png`](architecture/realenv/diagram-sandbox-scenarios.png) | 10 種情境：怎麼觸發、系統怎麼反應、實測 |
-| [`pm/`](evidence/realenv/pm) | PM A/B 文字雲頁：全期、首月抽查、關鍵字、六渠道各一張、點詞看原文 |
-| [`kibana/`](evidence/realenv/kibana)、[`grafana/`](evidence/realenv/grafana)、[`prometheus/`](evidence/realenv/prometheus) | 同一篇的 v1／v2 詞表、回補時段的查詢延遲與 ES 寫入、告警規則 |
+| [`diagram-stack.png`](architecture/stack/diagram-stack.png) | 每一層用什麼、對應哪個 GCP 元件、實際跑出什麼數字 |
+| [`diagram-sandbox-scenarios.png`](architecture/stack/diagram-sandbox-scenarios.png) | 10 種情境：怎麼觸發、系統怎麼反應、實測 |
+| [`pm/`](evidence/stack/pm) | PM A/B 文字雲頁：全期、首月抽查、關鍵字、六渠道各一張、點詞看原文 |
+| [`kibana/`](evidence/stack/kibana)、[`grafana/`](evidence/stack/grafana)、[`prometheus/`](evidence/stack/prometheus) | 同一篇的 v1／v2 詞表、回補時段的查詢延遲與 ES 寫入、告警規則 |
 | [`crawler_monitor_3h_panels.png`](evidence/crawl/grafana/crawler_monitor_3h_panels.png) | 六渠道爬蟲監測看板（2026-11-02 本機實跑，台灣時間 19:00–21:40）：每分鐘請求數依平台、狀態 2xx／4xx／5xx／失敗、API p95 依平台與 Pushgateway；Loki 收每個請求的紀錄，Pushgateway→Prometheus→Grafana 出指標 |
-| [`channels/`](evidence/realenv/channels) | 五個渠道（FB、IG、YouTube、Threads、媒體）的原始公開頁；PTT 的原文截圖在 [`playwright/`](evidence/playwright) |
+| [`channels/`](evidence/stack/channels) | 五個渠道（FB、IG、YouTube、Threads、媒體）的原始公開頁；PTT 的原文截圖在 [`playwright/`](evidence/playwright) |
 
 幾個關鍵數字：
 

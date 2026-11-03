@@ -55,7 +55,7 @@
 1. 候選：搜尋熱詞、客戶監測詞、地名庫、每週新詞發現。
 2. 審核後發 PR，附正例與反例句子。
 3. CI：金標回歸全過；估影響篇數（`affected_doc_ids`，bigram 索引先篩、子字串再驗）。
-4. 每週發版：`dict_version` 遞增，記錄 sha256。每篇輸出另帶 `seg_fingerprint`（jieba 版本、主字典、使用者字典、停用詞、標籤與單字保留名單、固定的 total、程式碼的 sha256）與原文的 `content_sha`；ES 文件的 `seg_ver` 是只能前進的數字，用 Painless 腳本 `seg_guard` 擋舊版覆寫（`q6/realenv/seg/qseg/es.py`），不是用 `dict_version` 當 ES external version：內容更新與字典更新是兩條獨立的版本線，混用會讓內容修正被字典版本擋掉。
+4. 每週發版：`dict_version` 遞增，記錄 sha256。每篇輸出另帶 `seg_fingerprint`（jieba 版本、主字典、使用者字典、停用詞、標籤與單字保留名單、固定的 total、程式碼的 sha256）與原文的 `content_sha`；ES 文件的 `seg_ver` 是只能前進的數字，用 Painless 腳本 `seg_guard` 擋舊版覆寫（`q6/stack/seg/qseg/es.py`），不是用 `dict_version` 當 ES external version：內容更新與字典更新是兩條獨立的版本線，混用會讓內容修正被字典版本擋掉。
 
 **實測影響範圍（6,685 篇 PTT 標題，`q6/code/affected_demo.py`）**
 
@@ -90,11 +90,11 @@
 | 只有 search analyzer 裡 `updateable: true` 的同義詞可以 reload | https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-indices-reload-search-analyzers |
 | jieba 使用者字典格式「詞 詞頻 詞性」、詞頻可省略；`add_word` 會累加 `total` | https://github.com/fxsjy/jieba （README、`jieba/__init__.py`） |
 
-本設計在 ES 外用 jieba 函式庫斷詞，結果寫入 `terms_v2`，所以不依賴 IK 熱更新；熱更新只影響之後才分析的文字，已寫入的 tokens 不會跟著變（`q6/realenv` 在 ES 9.5.5 單節點實測：IK 重載後舊文件的片語搜尋 22,088→0，`_update_by_query` 重分析後回到 22,271，見 `q6/realenv/results/es/ik_hot_reload.json`）。
+本設計在 ES 外用 jieba 函式庫斷詞，結果寫入 `terms_v2`，所以不依賴 IK 熱更新；熱更新只影響之後才分析的文字，已寫入的 tokens 不會跟著變（`q6/stack` 在 ES 9.5.5 單節點實測：IK 重載後舊文件的片語搜尋 22,088→0，`_update_by_query` 重分析後回到 22,271，見 `q6/stack/results/es/ik_hot_reload.json`）。
 
 ## 已知限制
 
 - 公司現行舊字典不在 repo，「舊」流程是用 jieba 字典模擬。
 - 語料只有 6,685 個標題；`articles.jsonl` 沒有內文。
-- ES 只在 `q6/realenv` 單節點實測（42.5 萬篇 p95、定向重跑 22,271 篇 8.6 秒；terms 聚合到 300 萬篇見 `q6/data/es_terms_scale/`）；正式叢集的寫入限速與離峰時數仍是假設，要先壓測。
+- ES 只在 `q6/stack` 單節點實測（42.5 萬篇 p95、定向重跑 22,271 篇 8.6 秒；terms 聚合到 300 萬篇見 `q6/data/es_terms_scale/`）；正式叢集的寫入限速與離峰時數仍是假設，要先壓測。
 - 與舊版本檔的差異見 `q6/code/RESULTS.md` 的「與既有說法的差異／修正」。

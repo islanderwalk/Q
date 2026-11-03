@@ -19,11 +19,11 @@
 
 ## 資料來源與頁面
 
-- 公開頁面：https://claude.ai/artifact/ESxb1xrXdAiT69ocVzbi43
+- 線上版：https://claude.ai/artifact/ESxb1xrXdAiT69ocVzbi43
 
 | 檔案 | 內容 |
 |---|---|
-| [`fb_q2_posts_table.html`](answer/fb_q2_posts_table.html) | Q2 公開頁面的原始 HTML（下載後用瀏覽器開啟） |
+| [`fb_q2_posts_table.html`](answer/fb_q2_posts_table.html) | Q2 線上版的原始 HTML（下載後用瀏覽器開啟） |
 
 ## Playwright 實抓證據 — [`q2/evidence/playwright/`](evidence/playwright)
 
@@ -41,13 +41,13 @@
 
 | 檔案 | 內容 |
 |---|---|
-| [`run_q2.py`](code/run_q2.py) | 在 PostgreSQL 16 建表、造 10 萬或 100 萬列（重複內文／隨機內文／真實中文語料）、建四種索引並量體積與查詢時間，結果寫到 [`data/`](data)；`--pg-bigm` 另外建真的 pg_bigm 索引 |
-| [`prepare_corpus.py`](code/prepare_corpus.py) | 把真實中文語料（PTT 八卦板問答、中文維基）切成每則 250 字，給 `--mode corpus` 用 |
+| [`run_q2.py`](code/run_q2.py) | 在 PostgreSQL 16 建表、造 10 萬或 100 萬列（重複內文／隨機內文／PTT 與維基語料）、建四種索引並量體積與查詢時間，結果寫到 [`data/`](data)；`--pg-bigm` 另外建 pg_bigm 擴充套件（Docker 編譯的 1.2 版）的索引 |
+| [`prepare_corpus.py`](code/prepare_corpus.py) | 把中文語料（PTT 八卦板問答、中文維基）切成每則 250 字，給 `--mode corpus` 用 |
 | [`probe_simple_gin.py`](code/probe_simple_gin.py) | 追 `simple` 索引在 Windows 多 43% 的原因，並在 Linux 重現 Windows 的數字 |
-| [`query_bench.py`](code/query_bench.py) | 用 2 到 4 字中文詞比較兩字詞索引、pg_trgm 與真的 pg_bigm 的結果數與查詢時間 |
+| [`query_bench.py`](code/query_bench.py) | 用 2 到 4 字中文詞比較兩字詞索引、pg_trgm 與 pg_bigm 擴充套件的結果數與查詢時間 |
 | [`run_pg_bigm.sh`](code/run_pg_bigm.sh) | 用 repo 的 `shared/infra/onprem/postgres-bigm/Dockerfile` 在官方 PostgreSQL 16.15 映像上編 pg_bigm，起容器跑 `run_q2.py --pg-bigm`，跑完刪容器 |
 | [`generic_plan_check.py`](code/generic_plan_check.py) | 查第一輪 pg_trgm 2 字詞 9.2 到 10 秒的原因：psycopg 自動 prepare 之後 PostgreSQL 改用 generic plan，計時與 EXPLAIN 看到的計畫不同 |
-| [`sql/`](code/sql) | 建表、造資料、建索引、量測、查詢的 SQL；`06_pg_bigm.sql` 是真的 pg_bigm |
+| [`sql/`](code/sql) | 建表、造資料、建索引、量測、查詢的 SQL；`06_pg_bigm.sql` 是 pg_bigm 擴充套件的索引 |
 | [`q2_model.py`](code/q2_model.py) | 估算模型（題目 (a)(b)(c) 的算式），與頁面 `const D` 的實測數字對照 |
 | [`tests/`](code/tests) | pytest 24 項（離線） |
-| [`RESULTS.md`](code/RESULTS.md) | 實測結論：Linux 100 萬列與原頁一致（simple 0%）；Windows 的 +43% 已重現到位元組；真實中文的兩字詞索引 947 MB 到 1,165 MB，是原頁 406 MB 的 2.3 到 2.9 倍；2 字詞查詢 pg_trgm 退回全表掃描 |
+| [`RESULTS.md`](code/RESULTS.md) | 實測結論：Linux 100 萬列與原頁一致（simple 0%）；Windows 的 +43% 已重現到位元組；PTT 與維基語料的兩字詞索引 947 MB 到 1,165 MB，是原頁 406 MB 的 2.3 到 2.9 倍；2 字詞查詢 pg_trgm 退回全表掃描 |

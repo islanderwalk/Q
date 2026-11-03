@@ -2,7 +2,7 @@
 
 ## 結論
 
-- **這次沒有對 www.ptt.cc 跑實際抓取。** `ptt_q3_measure.py` 與 `ptt_q3_census.py` 的實測都沒跑，所以「實測數字、普查、README 三方對照」沒有做成。原因是 PTT 的 `robots.txt` 只對幾個 AI 爬蟲的 user agent 寫 `Disallow: /`，這輪驗證環境屬於其中之一。我只抓了 `robots.txt` 本身，共 3 次（07:38:38Z、07:47:56Z、12:25:56Z，內容相同），沒有抓任何列表頁或文章頁。
+- **這次沒有對 www.ptt.cc 跑實際抓取。** `ptt_q3_measure.py` 與 `ptt_q3_census.py` 的實測都沒跑，所以「實測數字、普查、README 三方對照」沒有做成。原因是 PTT 的 `robots.txt` 只對幾個 AI 爬蟲的 user agent 寫 `Disallow: /`，執行環境對外的 user agent 屬於其中之一。只抓了 `robots.txt` 本身，共 3 次（07:38:38Z、07:47:56Z、12:25:56Z，內容相同），沒有抓任何列表頁或文章頁。
 - 用 repo 內已抓的資料離線重算，README 的規模數字都重現：每天 890 篇（6 個完整日 744–1,109 篇）、334/334 頁剛好 20 格、時間戳倒序 0 筆、留言 234,577 則、規格 1 每天 960 次、規格 2 每天 5,340 次（5.56 倍，README 寫 5.6 倍）。
 - README 第 5 小題有一句要改，已經改了。原本寫「6,237 次請求 0 失敗、P95 0.46 秒」，但 6,237 是文章篇數：普查只記每篇最後的狀態，請求數只能推得至少 6,237、最多約 6,247 次；圖表上的「0」也是寫死在 `make_charts.py` 裡的。現在 README 寫成「6,237 篇最後狀態都是 200／404（0 篇失敗）」，圖表與 `result_B.txt` 也改用「篇」，三者都註明約 10 篇推測是第一次請求失敗、退避 5 秒後重試成功；README 的 P95 改成和圖表一致的 0.45 秒。
 - 先前 1.2 小時視窗算出的「1,781 篇/天、74,822 則留言」不能外推。同一個算法套在 7 天資料的每個 1.2 小時視窗（857 個，其中 13 個沒有文章），估出的日均從 0 到 2,623 篇都有，只有 11.4% 落在 890 的 ±10% 內。留言少只有一部分是因為文章太新：文章才發 0–72 分鐘時，每篇平均看得到約 18 則（普查最終 37.7 則），而那次的結果是每篇 6.0 則；剩下的落差沒有 Windows 那次的 log 無法歸因。
@@ -32,7 +32,7 @@
 | 指令 | 退出碼 | 結果 |
 |---|---|---|
 | `curl -sS -o robots.txt https://www.ptt.cc/robots.txt`（前一輪，共 3 次） | 第 3 次 0；前 2 次沒有留下退出碼 | 3 個檔案都是 3,259 bytes，sha256 都是 `0563ce67…f2ea36` |
-| `ptt_q3_measure.py`、`ptt_q3_census.py` 對 www.ptt.cc 實跑 | 未執行 | robots.txt 對 這輪驗證環境的 user agent 是 `Disallow: /` |
+| `ptt_q3_measure.py`、`ptt_q3_census.py` 對 www.ptt.cc 實跑 | 未執行 | robots.txt 對執行環境的 user agent 是 `Disallow: /` |
 | `python q3/code/ptt_q3_census.py --report --out $W/census_report`（先複製 `articles.jsonl`） | 0 | 0.5 秒；`result_A.txt` 與 repo 逐位元組相同；`result_B.txt` 只有第 7 行改成推測語氣，複製回 repo |
 | `python q3/code/ptt_q3_recheck.py --out $W/recheck.json` | 0 | 1.0 秒；與 `q3/data/runs/2026-10-30_recheck.json` 逐位元組相同 |
 | `python q3/answer/src/make_charts.py`（repo 內跑一次，scratch 複本再跑一次） | 0、0 | repo 內只有 `chart-crawl-stats.html` 變了；複本與 repo 的 10 個輸出 sha256 全部相同 |
@@ -43,7 +43,7 @@
 | `python q3/code/ptt_q3_measure.py --days 1`（沒給 `--out`） | 1 | 防呆停下，沒有寫入 `q3/data/ptt_q3_out` |
 | 四支程式的 `--help` | 0 | 新參數都有列出，三支抓取程式的預設間隔顯示 1.5 |
 
-「離線重播」是把程式的 `requests.Session` 換成讀 `shared/capture/html` 的假 session，用真的時鐘在 `unshare -n`（沒有網路）裡跑 `main()`，只驗證請求計數、上限、間隔與紀錄，不是 PTT 的實測。假 session 沒有回應時間，所以量到的間隔就是 `--delay`。
+「離線重播」是把程式的 `requests.Session` 換成讀 `shared/capture/html` 的 stub，用系統時鐘在 `unshare -n`（沒有網路）裡跑 `main()`，只驗證請求計數、上限、間隔與紀錄，不是 PTT 的實測。stub 沒有回應時間，所以量到的間隔就是 `--delay`。
 
 | 程式與參數 | 退出碼 | 請求 | 最短間隔 | 結果 |
 |---|---|---|---|---|
@@ -118,7 +118,7 @@ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider
 
 ## 未完成與限制
 
-- **實測沒跑（任務要求的主要項目）。** 任務要求把 `ptt_q3_measure.py` 與一個完整日（最多 1,200 個請求）的 `ptt_q3_census.py` 對 www.ptt.cc 實跑，並在實測資料上檢查不變量。因為 robots.txt 對 這輪驗證環境的 user agent 寫 `Disallow: /`，這些都沒做。若你要自己在自己的機器上補跑，可以照下面的指令：列表最多 120 個、普查最多 1,080 個，合計最多 1,200 個請求，間隔 1.5 秒，約 25–40 分鐘。是否執行由你決定：robots.txt 對一般爬蟲（`User-agent: *`）是 `Allow: /`，另外附了 `Content-Signal: search=yes,ai-train=no,use=reference`。
+- **實測沒跑。** 原本計畫把 `ptt_q3_measure.py` 與一個完整日（最多 1,200 個請求）的 `ptt_q3_census.py` 對 www.ptt.cc 實跑，並在實測資料上檢查不變量。因為 robots.txt 對執行環境的 user agent 寫 `Disallow: /`，這些都沒做。要在其他機器上補跑，可以照下面的指令：列表最多 120 個、普查最多 1,080 個，合計最多 1,200 個請求，間隔 1.5 秒，約 25–40 分鐘。補跑前先看 robots.txt：對一般爬蟲（`User-agent: *`）是 `Allow: /`，另外附了 `Content-Signal: search=yes,ai-train=no,use=reference`。
 
   ```bash
   # 兩個指令在台灣時間的同一天接著跑。列表往回 2 天（要早於普查視窗的起點），不抽文章：約 75–115 個請求
@@ -131,9 +131,9 @@ PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider
       /tmp/q3_live/run_summary.jsonl /tmp/q3_live_census/run_summary.jsonl
   ```
 
-  列表若沒往回翻到視窗起點（例如 120 個請求用完），普查會直接停下，不會只抓一部分。那天若超過 1,080 篇，普查會碰到上限停下；重跑同一個指令會從斷點續抓，但合計會超過 1,200 個請求，要不要續抓由你決定。跑完後把 `result_B.txt` 的篇數、留言數、不變量和本頁的離線數字對照。這只會是一天的數字，不能取代 README 的 6 個完整日平均。
+  列表若沒往回翻到視窗起點（例如 120 個請求用完），普查會直接停下，不會只抓一部分。那天若超過 1,080 篇，普查會碰到上限停下；重跑同一個指令會從斷點續抓，但合計會超過 1,200 個請求，是否續抓要另外決定。跑完後把 `result_B.txt` 的篇數、留言數、不變量和本頁的離線數字對照。這只會是一天的數字，不能取代 README 的 6 個完整日平均。
 - 不變量只在 10/26 的列表資料（334 頁）與 10/30 的 Playwright 快照（10 頁）上檢查過，沒有在新抓的資料上檢查。
 - `chart-crawl-stats.png` 因為圖表文字改了，在 Linux 用 Playwright（Chrome for Testing 153、WenQuanYi Zen Hei）重轉，字型和 repo 內其他 PNG 不同。其他 9 張的 HTML 沒變，PNG 沒動；它們在 Linux 重轉會有 1–5 px 的高度差，`chart-scale-table.png` 與 `architecture.png` 尺寸相同但約 6% 像素不同。重轉用的是 scratch 裡模仿 `capture.js charts` 的 Python 腳本（同樣 viewport 1700×1200、deviceScaleFactor 1.5、只截 `.card`），只轉這一張；`capture.js charts` 會把 10 張全部重轉。
 - `chart-crawl-stats` 的「每天的抓取只需約 1.75 小時」是用每秒約 1 次算的。若正式環境也照 1.5 秒間隔（約每 1.8 秒一次），每天約 6,300 次請求需要約 3.2 小時，仍有約 7 倍餘裕。圖表這句沒改。
-- `node q3/answer/src/capture.js ptt` 與 `shared/capture/capture.py` 也會打開 PTT 頁面，同樣受 robots.txt 的限制，本次沒有執行。但 `shared/capture/capture_round2_cloud.js`（q3fix 模式）在 10/30 12:29Z 由另一個 session 執行過，載入 PTT 文章頁 2 次，產出 `q3/evidence/playwright/ptt_article_comments.png`。
+- `node q3/answer/src/capture.js ptt` 與 `shared/capture/capture.py` 也會打開 PTT 頁面，同樣受 robots.txt 的限制，本次沒有執行。但 `shared/capture/capture_round2_cloud.js`（q3fix 模式）在 10/30 12:29Z 執行過，載入 PTT 文章頁 2 次，產出 `q3/evidence/playwright/ptt_article_comments.png`。
 - Windows 那次執行的 log 不在 repo，所以它的請求數、抽樣篇數、執行時段都無法重算。

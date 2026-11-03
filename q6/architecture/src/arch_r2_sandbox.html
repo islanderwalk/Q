@@ -48,7 +48,7 @@ const rowH = 104, top0 = 0;
 renderDiagram({
   eyebrow: 'QSearch 筆試 · 第 6 題 · 沙盤推演（真實環境實測）',
   title: 'Q6 會碰到的 10 種情境：系統怎麼反應、實際跑出來的數字',
-  sub: '每列三欄：情境與觸發｜系統怎麼反應（設計）｜實測。前 9 列都在 q6/realenv 真的觸發過一次，第 10 列引用 PR #7 的 Terraform 結果；數字與日誌在 q6/realenv/results/，截圖在 q6/evidence/realenv/。',
+  sub: '每列三欄：情境與觸發｜系統怎麼反應（設計）｜實測。前 9 列都在 q6/stack 真的觸發過一次，第 10 列引用 PR #7 的 Terraform 結果；數字與日誌在 q6/stack/results/，截圖在 q6/evidence/stack/。',
   height: top0 + R.length * (rowH + 10) + 10,
   lanes: [], nodes: [], edges: [],
   blocks: [
@@ -56,6 +56,6 @@ renderDiagram({
       html: `<div class="row" style="height:${rowH}px"><div><b>${i + 1}. ${r[0]}</b><br><span class="k">觸發</span>${r[1]}</div><div>${r[2]}</div><div>${r[3]}</div></div>` }))
   ],
   footL: '環境：官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、OTel、Prometheus、Grafana；全部在容器內，零成本',
-  footR: 'q6/architecture/realenv/diagram-sandbox-scenarios.png'
+  footR: 'q6/architecture/stack/diagram-sandbox-scenarios.png'
 });
 </script></body></html>

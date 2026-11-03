@@ -133,7 +133,7 @@ def test_gold_file_matches_recall_eval_and_is_shipped():
     assert gold["titles"] == 150 and gold["gold_terms"] == 430 and gold["min_votes"] == 2 and len(gold["items"]) == 150
     ref = json.loads(read_text(REALENV.parent / "data" / "recall_eval" / "recall.json"))["gold"]
     assert {i["id"]: i["gold"] for i in gold["items"]} == ref                                        # 與 q6/code/recall_eval.py 同一份金標
-    assert "COPY realenv/seg/quality/ /app/quality/" in read_text(REALENV / "seg" / "Dockerfile")
+    assert "COPY stack/seg/quality/ /app/quality/" in read_text(REALENV / "seg" / "Dockerfile")
     assert quality.GOLD_PATH.name == "gold_150.json"
 
 

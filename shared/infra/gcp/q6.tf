@@ -1,5 +1,5 @@
 # Q6 文字雲：串流斷詞服務 v0／v1／v2、文字雲 API（PM A/B 頁）、真實來源採集器；Pub/Sub parsed-posts（含 DLQ）與 dict-releases；
-# 字典 artifact bucket。每一項都對應 q6/realenv/docker-compose.yml 與 scripts/setup.py 裡本機模擬器的同名主題／訂閱。
+# 字典 artifact bucket。每一項都對應 q6/stack/docker-compose.yml 與 scripts/setup.py 裡本機模擬器的同名主題／訂閱。
 # 只補 Terraform、離線 plan 與 terraform test；沒有 apply（零成本原則）。
 # Elasticsearch 在 Compute Engine VM（crawler-subnet 內的私有 IP，上面裝 Ops Agent），不在這個模組裡建：var.elasticsearch_url。
 

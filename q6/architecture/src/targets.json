@@ -8,6 +8,6 @@
  "arch_c1_same_artifact.html": "architecture/c-consistency/diagram-same-artifact.png",
  "arch_c2_change_tiers.html": "architecture/c-consistency/diagram-change-tiers.png",
  "arch_c3_release_sequence.html": "architecture/c-consistency/diagram-release-sequence.png",
- "arch_r1_realenv.html": "architecture/realenv/diagram-realenv-stack.png",
- "arch_r2_sandbox.html": "architecture/realenv/diagram-sandbox-scenarios.png"
+ "arch_r1_stack.html": "architecture/stack/diagram-stack.png",
+ "arch_r2_sandbox.html": "architecture/stack/diagram-sandbox-scenarios.png"
 }

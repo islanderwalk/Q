@@ -108,7 +108,7 @@ NODE_NOTE = {
                  "PTT 的 robots.txt 對一般爬蟲是 Allow: /，只對幾個 AI 爬蟲的 user agent 是 Disallow: /。"
                  "Threads 每帳號每輪一次 GraphQL POST（first=10），回最新 10 串的 code、全文、taken_at；doc_id 兩天出現 3 個值，會換，不能寫死。"
                  "FB 用 Graph API，要通過 Page Public Content Access 審核。",
-    # Q6 sandbox (q6/realenv/RESULTS.md, PR #8): local Docker, 42.5 萬 PTT posts
+    # Q6 sandbox (q6/stack/RESULTS.md, PR #8): local Docker, 42.5 萬 PTT posts
     "es": "QSearch 產品實際存貼文的地方：Q5、Q6 題目都寫到 ES，Q6 說約 5 億筆。Q4 的 Threads 貼文寫進這裡。"
           "Q5 要先改 mapping，新增 video_view_count 和 repost_count（long）。mapping 可以加欄位、不能改型別，型別錯了只能 reindex。"
           "Q6 新舊詞表並存：每篇同時有 terms_v1、terms_v2 與各自的 seg_ver，寫入一律經 Painless 腳本，版本只能往前。"

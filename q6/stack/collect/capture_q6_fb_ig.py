@@ -2,7 +2,7 @@
 """Q6 六渠道：Facebook、Instagram（含 Reels）公開貼文文字。雲端出口 IP 開 FB／IG 會被導去登入頁，所以在本機（住宅 IP）跑。
 
 用法：python capture_q6_fb_ig.py [輸出資料夾，預設 ./out] [FB 粉專清單，逗號分隔] [IG 帳號清單，逗號分隔；- 表示不跑]
-輸出：<out>/q6/channels/facebook.jsonl、instagram.jsonl（欄位同 q6/realenv/data/channels/*.jsonl）
+輸出：<out>/q6/channels/facebook.jsonl、instagram.jsonl（欄位同 q6/stack/data/channels/*.jsonl）
       <out>/q6/channels/fb_<page>.png、ig_<user>.png、capture_q6_log.txt
 規則（沿用 shared/capture/README.md）：只開未登入公開頁；同站兩次導覽間隔 ≥2 秒；每站載入 ≤30 次；
 不存 cookie、token、cursor、整頁 HTML，只存貼文文字與時間；登入視窗照實截下，不點擊；不用代理。

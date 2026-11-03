@@ -3,7 +3,7 @@
 name: qsearch-q6
 x-seg: &seg
   image: qsearch-seg:local
-  build: { context: .., dockerfile: realenv/seg/Dockerfile, network: host, args: { SEG_BUILD: "${SEG_BUILD:-local}" } }
+  build: { context: .., dockerfile: stack/seg/Dockerfile, network: host, args: { SEG_BUILD: "${SEG_BUILD:-local}" } }
   environment: &segenv
     ES_URL: http://es:9200
     DICT_BASE_URL: http://dictsrv

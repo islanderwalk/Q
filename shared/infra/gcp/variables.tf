@@ -152,13 +152,13 @@ variable "cloudbuild_service_account_id" {
 # --- Q6 文字雲（q6.tf）---
 variable "image_seg" {
   type        = string
-  description = "Q6 斷詞服務映像（q6/realenv/seg/Dockerfile；v0／v1／v2 同一個映像，PIPELINE 環境變數不同）。預設 hello 映像讓 plan 成立。"
+  description = "Q6 斷詞服務映像（q6/stack/seg/Dockerfile；v0／v1／v2 同一個映像，PIPELINE 環境變數不同）。預設 hello 映像讓 plan 成立。"
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 
 variable "image_wordcloud_api" {
   type        = string
-  description = "Q6 文字雲 API ＋ PM A/B 頁映像（q6/realenv/api/Dockerfile）。"
+  description = "Q6 文字雲 API ＋ PM A/B 頁映像（q6/stack/api/Dockerfile）。"
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 

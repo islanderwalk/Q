@@ -35,4 +35,18 @@
 - [Q5 新指標上線的全鏈路時間估算](q5/)
 - [Q6 文字雲斷詞 Pipeline 重建](q6/)
 
+Q6 另有 [`q6/stack/`](q6/stack/)：整套系統的 Docker 組態與實跑紀錄（官方 Elasticsearch 9.5.5、PostgreSQL 16、Pub/Sub 模擬器、斷詞服務、文字雲 API 與 PM A/B 頁、Prometheus／Grafana／Loki／Alertmanager 監控），`run.sh` 一鍵啟動。
+
 共用程式碼與 infra 在 [`shared/`](shared/)：[GCP Terraform 與 parser 服務](shared/infra/gcp/)・[地端 docker compose](shared/infra/onprem/)・[Playwright 截圖腳本](shared/capture/)・[題目原文與合併答案](shared/docs/)
+
+### 佐證截圖
+
+| 題目 | 位置 | 內容 |
+|---|---|---|
+| Q2 | [`q2/evidence/playwright/`](q2/evidence/playwright/) | FB 粉專與單則貼文：Page ID、內嵌的絕對發文時間、資料中心 IP 被導去登入頁 |
+| Q3 | [`q3/evidence/playwright/`](q3/evidence/playwright/)、[`q3/answer/`](q3/answer/) | PTT 看板索引、文章與推文、over18 關卡；各小題的量測圖表 |
+| Q4 | [`q4/evidence/`](q4/evidence/) | Threads 個人頁、桌機與手機版、GraphQL 回應、貼文網址 |
+| Q5 | [`q5/evidence/`](q5/evidence/) | IG Reels 的 `play_count` 與單支頁、Threads 轉發數漂移；回補資料流 |
+| Q6 | [`q6/evidence/`](q6/evidence/) | PTT 斷詞雜訊、回補／字典／一致性各子題；[`stack/`](q6/evidence/stack/) 是整套系統的 PM A/B 頁、Grafana／Prometheus／Alertmanager／Kibana 與六渠道公開頁截圖 |
+
+每張截圖的主張、來源網址與截取時間列在 [`shared/capture/capture_manifest.json`](shared/capture/capture_manifest.json) 與各題 README。

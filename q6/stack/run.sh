@@ -28,7 +28,7 @@ case "${1:-}" in
     $PY dict/build_artifact.py "$DL/dict.txt.big" runtime/dictsrv $R.1 $R.3 $R.4 $R.5 $R.6 $R.2   # 最後一個是 current
     $PY dict/build_legacy.py runtime/dictsrv qsearch-q6-legacy-2019.12.31.1 --moe "$DL/moe_revised_words.txt" --jieba-tw "$DL/jieba_tw_dict.txt"   # v0 舊系統替身字典
     docker build --network host -t qsearch-es:9.5.5 es
-    (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$(git rev-parse --short HEAD)" -t qsearch-seg:local -f realenv/seg/Dockerfile .)
+    (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$(git rev-parse --short HEAD)" -t qsearch-seg:local -f stack/seg/Dockerfile .)
     docker build --network host "${secret[@]}" -t qsearch-wordcloud-api:local -f api/Dockerfile .
     ;;
   up)
@@ -86,7 +86,7 @@ case "${1:-}" in
     $PY scripts/summarize_probe.py results/latency_probe.jsonl results/backfill/phases.jsonl results/latency_probe_summary.json
     ;;
   shots)
-    node scripts/screenshots.js ../evidence/realenv "$(( ($(date +%s) - 3600) * 1000 ))" "$(( $(date +%s) * 1000 ))"
+    node scripts/screenshots.js ../evidence/stack "$(( ($(date +%s) - 3600) * 1000 ))" "$(( $(date +%s) * 1000 ))"
     ;;
   slo)
     docker run --rm -v "$PWD/monitoring:/w:ro" ghcr.io/slok/sloth:v0.11.0 generate --default-slo-period 28d -i /w/slo/wordcloud-api.yml > monitoring/rules/slo.yml   # 容器非 root，寫不進掛載目錄，改接 stdout

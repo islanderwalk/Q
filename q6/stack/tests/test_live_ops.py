@@ -1,5 +1,5 @@
 """即時操作（PM 頁資料工程端）的純函式測試：不需要 ES／PostgreSQL／Pub/Sub。
-執行：PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider q6/realenv/tests"""
+執行：PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider q6/stack/tests"""
 import json
 import sys
 from datetime import date

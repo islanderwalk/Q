@@ -150,7 +150,7 @@
 
 **雜訊觀察**：RSS 摘要是編輯過的新聞導言，網址 0 篇、電話 0 篇，是 4 個渠道裡最乾淨的。
 
-## 截圖（`q6/evidence/realenv/channels/`，1440×900，非整頁，未登入）
+## 截圖（`q6/evidence/stack/channels/`，1440×900，非整頁，未登入）
 
 | 檔案 | 網址 | 狀態 |
 |---|---|---|
@@ -163,10 +163,10 @@
 - PTT 的雜訊截圖本來就在 `q6/evidence/playwright/`，這次沒有重拍。
 - 截圖紀錄在 `screenshots.json`。
 
-## 程式（`q6/realenv/collect/`）
+## 程式（`q6/stack/collect/`）
 
 ```bash
-cd q6/realenv/collect
+cd q6/stack/collect
 python3 collect_ptt.py --used-before 0      # 論壇
 python3 collect_threads.py --used-before 0  # Threads（不支援快取，不留 HTML）
 python3 collect_youtube.py --used-before 0  # YouTube
@@ -197,5 +197,5 @@ node screenshots.js [名稱…]                 # 截圖（Node Playwright）
 | Instagram | @cnanews_tw、@pts.news、@ftvnews、@nasa | 48（每個帳號 12 篇） | post 26、reel 22 | 4 | 沒有：未登入的主頁 JSON 不帶發文時間，`month` 會是 `unknown` |
 
 - IG 的 Reels 頁未登入時是 0 篇；`reel` 是從主頁 12 篇裡 `product_type = clips` 判斷出來的。
-- Facebook 未登入只拿到每頁最上面 1 篇，所以 Facebook 樣本偏少；NASA 那篇是英文，剛好測到英文虛詞（and、of、in）會進文字雲，見 `q6/realenv/RESULTS.md`。
-- 截圖：`q6/evidence/realenv/channels/fb_*.png`、`ig_*.png`。
+- Facebook 未登入只拿到每頁最上面 1 篇，所以 Facebook 樣本偏少；NASA 那篇是英文，剛好測到英文虛詞（and、of、in）會進文字雲，見 `q6/stack/RESULTS.md`。
+- 截圖：`q6/evidence/stack/channels/fb_*.png`、`ig_*.png`。

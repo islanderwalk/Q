@@ -465,7 +465,7 @@ if a.obs:
     # 7 觀測: one band across the bottom of the 整合 diagram, two rows. Row 1: crawler/collector request logs, crawler and
     # collector metrics, service metrics, ES cluster health. Row 2: completeness reconciliation, quality daily report,
     # Grafana dashboards + Alertmanager → PM page. Local stand-ins (Loki+Alloy / Prometheus / elasticsearch_exporter /
-    # Grafana / Alertmanager in Docker, q6/realenv, all run end to end on 2026-11-02) carry the GCP product they map to in the
+    # Grafana / Alertmanager in Docker, q6/stack, all run end to end on 2026-11-02) carry the GCP product they map to in the
     # title; the monitoring itself has no Terraform. Nodes join the 抓取 (2) and 分析 (5) stages so the stage buttons and
     # the 依題目 lights keep working; no edges, the band reads as "everything above reports here".
     OBS_Y, OBS_H, NODE_W, GAP, ROW_Y = 636, 170, 240, 30, (670, 740)
@@ -497,7 +497,7 @@ if a.obs:
         ("obs-grafana", "n new", "Grafana＋Alertmanager", "2 張看板 90 面板 · 告警 66 條 → PM 頁", 5, ["5", "6"], 1,
          "主看板 9 層 69 面板依資料流排：客戶 SLO（3 分鐘燃燒率、28 天錯誤預算）→ PM 頁 RUM → 完整性對帳 → 串流積壓 → 字典發版收斂 → 回補燃盡 → 品質日報 → ES 健康 → 平台（PostgreSQL、日誌、監控自身）；採集看板 6 列 21 面板（結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身）。看板 JSON 由程式產生、進版控。告警 66 條（含 Sloth 產生的 SLO 燃燒率）加 30 條記錄規則，每條都有 for、嚴重度（page／warn／ticket）與摘要；Alertmanager 以 webhook 送到文字雲 API，PM A/B 頁頂部直接顯示正在響的告警（零成本通知管道，Email／Telegram 另加 receiver 即可）。2026-11-02 真環境端對端跑過：Prometheus → Alertmanager → PM 橫幅，firing 與 resolved 都收到。GCP 對應 Cloud Monitoring 的看板與告警政策，或 Managed Service for Prometheus 直接載入同一份規則檔。截圖在 Q6 分頁。沒有 Terraform。",
          {"gcp": ["Cloud Monitoring"], "tone": "direct", "st": "未寫 Terraform", "onprem": "Grafana 12.1.1＋Alertmanager v0.28.1（Docker）",
-          "diff": "看板 JSON 可以直接版本控制（q6/realenv/monitoring/grafana）；雲端告警政策要寫成 google_monitoring_alert_policy，或用 Managed Service for Prometheus 載入同一份規則檔，目前都沒有。"}),
+          "diff": "看板 JSON 可以直接版本控制（q6/stack/monitoring/grafana）；雲端告警政策要寫成 google_monitoring_alert_policy，或用 Managed Service for Prometheus 載入同一份規則檔，目前都沒有。"}),
     ]
     V = D["variants"]["int"]
     for nid, cls, label, s_, stage, q, row, note, dep in OBS:

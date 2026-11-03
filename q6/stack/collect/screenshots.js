@@ -1,7 +1,7 @@
 // Q6 真實渠道：每種「還沒有截圖」的來源各拍一張未登入截圖（1440×900，非整頁）。
 // PTT、Threads 個人頁在 repo 已有截圖（q6/evidence/playwright、q4/evidence/playwright），
 // 這裡的 Threads 是本次用到的台灣帳號 @pts.news。不登入、不存 cookie（每張用新的 context，結束即丟）。
-// 用法：node q6/realenv/collect/screenshots.js [名稱…]（不給名稱＝全部；結果併入 screenshots.json）
+// 用法：node q6/stack/collect/screenshots.js [名稱…]（不給名稱＝全部；結果併入 screenshots.json）
 // 2026-10-31 01:39 第一次：YouTube 影片頁 /watch?v=9qqyUi2Npmc 回 429 並轉到 google.com/sorry（reCAPTCHA），
 // 不繞過；該張改名 youtube_watch_429_recaptcha.png 留作失敗紀錄，改拍公開頻道頁。
 // Threads 未登入會跳「透過 Threads 暢所欲言」登入邀請框：按 Esc 關掉（不登入）再拍。
@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const { chromium } = require('playwright');
 
-const OUT = path.resolve(__dirname, '../../evidence/realenv/channels');
+const OUT = path.resolve(__dirname, '../../evidence/stack/channels');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 const SHOTS = [
   { name: 'youtube_pnnpts_channel', url: 'https://www.youtube.com/@PNNPTS/videos', wait: 6000 },

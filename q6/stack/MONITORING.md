@@ -10,7 +10,7 @@
 | Alertmanager | v0.28.1 | 告警 → webhook `POST /api/ops/alert` → `live_events(kind=alert)` → PM 頁頂部橫幅與事件流（零成本通知管道；Email／Telegram／Discord 另加 receiver 即可）。所有嚴重度 `repeat_interval: 1h`，PM 頁把超過 `ALERT_STALE_SECONDS`（預設 2 小時 10 分）沒再收到的告警視為過期不顯示，所以 webhook 漏掉 resolved 時橫幅最多殘留一輪 | `monitoring/alertmanager/alertmanager.yml` |
 | Sloth | v0.11.0 | 由 `monitoring/slo/wordcloud-api.yml` 產生多視窗燃燒率規則 `rules/slo.yml`（**產生檔，不要手改**；`./run.sh slo` 重算） | 28 天；SLO-1 ≤180 秒 99%、SLO-2 未命中快取 ≤10 秒 95% |
 | Loki ＋ Alloy | 3.5.3 ／ v1.10.0 | 收所有容器的 JSON 日誌（docker 標籤 → `service`）；Alloy 只對 `{service="collector", event="collect"}` 的行（`stage.match`）在取樣前算 `loki_process_custom_crawl_log_lines_total`（Alloy 會加 `loki_process_custom_` 前綴）；Loki ruler 把採集日誌轉成 `crawl:requests:rate5m` 並出 `CrawlLoginWallFromLogs` | `monitoring/alloy/config.alloy`、`monitoring/loki/` |
-| elasticsearch_exporter | v1.9.0 | 叢集狀態、磁碟水位、breaker、thread pool 拒絕、JVM、SLM 快照 | `docker-compose.yml` `es-exporter`（9114） |
+| elasticsearch_exporter | v1.9.0 | 叢集狀態、磁碟水位、breaker、執行緒池拒絕、JVM、SLM 快照 | `docker-compose.yml` `es-exporter`（9114） |
 | Grafana | 12.1.1 | 兩張看板（`build_dashboard.py` 產生、進版控）：主看板 9 層 69 面板、採集看板 6 列 21 面板；變數 seg／pipeline／channel／feed；註記來自 `live_events` | `monitoring/grafana/` |
 | 自寫 RUM | `web/rum.js` | PM 頁的 LCP／CLS／INP、JS 錯誤、瀏覽器端 API 往返、首次出雲、丟詞、雲上篇數≠抽屜 → `POST /api/rum` | 不裝 Faro SDK；GCP 上可換 Faro → Alloy `faro.receiver`，指標名不變 |
 
@@ -36,25 +36,25 @@ P1 裡已順手做的：PM 頁 RUM（`web.yml` 7 條；主看板 ②）、ES slo
 ## 怎麼重算
 
 ```bash
-cd q6/realenv
+cd q6/stack
 ./run.sh slo                              # 改 monitoring/slo/wordcloud-api.yml 後重產 rules/slo.yml（Sloth）
 python monitoring/grafana/build_dashboard.py   # 改面板後重產 dashboards/*.json（Grafana 由 provisioning 讀檔）
 docker run --rm -v "$PWD/monitoring:/w:ro" --entrypoint sh quay.io/prometheus/prometheus:v3.5.0 -c "promtool check rules /w/rules/*.yml && promtool check config /w/prometheus.yml"
 docker compose exec -T pg psql -U qsearch -d qsearch -v ON_ERROR_STOP=1 < pg/migrate_p0.sql   # 既有 volume 補新表（recon_daily、quality_daily、release_outbox 等；可重複執行）
-python -m pytest -q -p no:cacheprovider q6/realenv/tests q6/code/tests     # 從 repo 根跑
+python -m pytest -q -p no:cacheprovider q6/stack/tests q6/code/tests     # 從 repo 根跑
 ```
 
 打開：Grafana http://127.0.0.1:3000（`QSearch Q6 文字雲`、`QSearch Q6 採集`）、Prometheus http://127.0.0.1:9090/alerts、Alertmanager http://127.0.0.1:9093、Loki 由 Grafana 的 Explore 查、PM 頁 http://127.0.0.1:8080（頂部橫幅＝正在響的告警）。
 
 ## 測試在哪裡
 
-`q6/code/tests/test_p0_*.py`：API SLO 與快取、採集 outcome 字彙與首抓延遲、四層對帳、Job 閘門、發版收斂（seg_guard、429、tombstone、outbox）、品質日報純函式（RBO／JS／McNemar／暴增）、RUM、設定一致性（每條告警與每個面板引用的指標都在程式裡定義；看板 SQL 只讀 `pg/init.sql`、`pg/live.sql` 建的表；每條告警有 `for` 與 `summary`；每個 job 有 Down 規則）。離線檢查：promtool 96 條規則、看板 99 條 PromQL 逐條用 promtool 解析、12 條看板 SQL 在真的 PostgreSQL 16 schema 上執行過。
+`q6/code/tests/test_p0_*.py`：API SLO 與快取、採集 outcome 字彙與首抓延遲、四層對帳、Job 閘門、發版收斂（seg_guard、429、tombstone、outbox）、品質日報純函式（RBO／JS／McNemar／暴增）、RUM、設定一致性（每條告警與每個面板引用的指標都在程式裡定義；看板 SQL 只讀 `pg/init.sql`、`pg/live.sql` 建的表；每條告警有 `for` 與 `summary`；每個 job 有 Down 規則）。離線檢查：promtool 96 條規則、看板 99 條 PromQL 逐條用 promtool 解析、12 條看板 SQL 在 PostgreSQL 16 的實際 schema 上執行過。
 
-## 真實環境驗證（2026-11-02，雲端容器，全部本機 Docker）
+## 整套系統實跑（2026-11-02，Linux 容器，全部本機 Docker）
 
-同一個容器（4 核心、15 GB RAM）把整套從頭跑一次：`./run.sh up` → `seed`（v0／v1）→ `backfill`（G1／G2／G3 三道閘門通過）→ `live` → `stream`（六渠道 267 篇全部有 v1 與 v2）→ 真實採集（PTT、中央社、公視；容器對外要經代理，用 `docker-compose.ca.yml` 把宿主機 CA 掛進採集器）→ 告警鏈 Prometheus → Alertmanager → `POST /api/ops/alert` → PM 頁橫幅（firing 與 resolved 都收到，`pm/30_alerts_strip.png`）→ SLM `daily-posts` 手動執行 SUCCESS → Grafana 兩張看板由 provisioning 讀到、Loki 收到 19 個服務的日誌、品質日報與四層對帳的指標都是真算出來的。結束時 Prometheus 96 條規則（66 告警＋30 記錄）健康、11 個 job 全部 up。截圖在 `../evidence/realenv/{pm,grafana,alertmanager,prometheus}/`。
+同一個容器（4 核心、15 GB RAM）把整套從頭跑一次：`./run.sh up` → `seed`（v0／v1）→ `backfill`（G1／G2／G3 三道閘門通過）→ `live` → `stream`（六渠道 267 篇全部有 v1 與 v2）→ 來源採集（PTT、中央社、公視；容器對外要經代理，用 `docker-compose.ca.yml` 把宿主機 CA 掛進採集器）→ 告警鏈 Prometheus → Alertmanager → `POST /api/ops/alert` → PM 頁橫幅（firing 與 resolved 都收到，`pm/30_alerts_strip.png`）→ SLM `daily-posts` 手動執行 SUCCESS → Grafana 兩張看板由 provisioning 讀到、Loki 收到 19 個服務的日誌、品質日報與四層對帳的指標都由實跑資料算出。結束時 Prometheus 96 條規則（66 告警＋30 記錄）健康、11 個 job 全部 up。截圖在 `../evidence/stack/{pm,grafana,alertmanager,prometheus}/`。
 
-### 真環境抓到並修掉的 14 個問題
+### 實跑抓到並修掉的 14 個問題
 
 | # | 現象（離線測試看不到） | 修正 |
 |---|---|---|
@@ -71,14 +71,14 @@ python -m pytest -q -p no:cacheprovider q6/realenv/tests q6/code/tests     # 從
 | 11 | Alloy 指標名多了 `loki_process_custom_` 前綴而且把所有行都算進去 | `stage.match` 只算採集日誌；面板與規則改用 `loki_process_custom_crawl_log_lines_total` |
 | 12 | `metric or vector(0)` 產生沒有標籤的幻影序列，`time() - …` 規則永遠成立 | 統一 `(time() - (max(metric) or vector(0))) > N`；`test_p0_configs_consistency.py` 禁止舊寫法 |
 | 13 | 冷啟動第一次抓到的舊文被算成首抓延遲，直接 page | 第一次成功不算 lag（`lag_skipped_first_success`） |
-| 14 | 沒流量時 SLI 0/0＝NaN，Sloth 的 4 週 `sum_over_time` 整段 NaN，錯誤預算面板空白 | SLO 規格的分母加 `> 0`（沒流量就沒樣本）；Prometheus 改用具名 volume `promdata` 並重建 TSDB |
+| 14 | 沒有請求時 SLI 0/0＝NaN，Sloth 的 4 週 `sum_over_time` 整段 NaN，錯誤預算面板空白 | SLO 規格的分母加 `> 0`（沒有請求就沒樣本）；Prometheus 改用具名 volume `promdata` 並重建 TSDB |
 
-### 驗證結束時仍在響的告警（都是真的，不是誤報）
+### 實跑結束時仍在響的告警（各有實際原因，不是誤報）
 
 | 告警 | 原因 |
 |---|---|
-| `ElasticsearchDiskHigh`／`DiskCritical` | 容器磁碟用了 94%（整台雲端容器的固定配額，不是 ES 寫滿） |
-| `ReconUnknownMonthDocs`、`SegPublishedAtMissing{channel="instagram"}` | Instagram 的 48 篇真實樣本沒有 `published_at`（頁面沒給時間），四層對帳歸到「月份不明」 |
+| `ElasticsearchDiskHigh`／`DiskCritical` | 容器磁碟用了 94%（整台 Linux 容器的固定配額，不是 ES 寫滿） |
+| `ReconUnknownMonthDocs`、`SegPublishedAtMissing{channel="instagram"}` | Instagram 的 48 篇公開頁樣本沒有 `published_at`（頁面沒給時間），四層對帳歸到「月份不明」 |
 | `QualityWholeWordRecallLow` | 整詞召回 0.925 < 提案值 0.99（金標 150 題裡有地名被拆） |
 | `ElasticsearchSnapshotStale` | SLM 每日排程還沒到第一次自動執行（手動執行的那次 SUCCESS） |
 
@@ -92,8 +92,8 @@ python -m pytest -q -p no:cacheprovider q6/realenv/tests q6/code/tests     # 從
 
 ## 已知限制與沒做的
 
-- YouTube 走 Data API v3 `playlistItems.list`，要 `YOUTUBE_API_KEY`（或 `YOUTUBE_API_KEY_FILE`）；沒有金鑰就 `skipped`，不假裝有抓。Facebook／Instagram／Threads 沒有公開 feed，只有抓過的真實樣本可重播；刪文 tombstone 只有逐頁抓的爬蟲才看得到，feed 採集器看不到。
+- YouTube 走 Data API v3 `playlistItems.list`，要 `YOUTUBE_API_KEY`（或 `YOUTUBE_API_KEY_FILE`）；沒有金鑰就記 `skipped`。Facebook／Instagram／Threads 沒有公開 feed，只有抓過的公開頁樣本可重播；刪文 tombstone 只有逐頁抓的爬蟲才看得到，feed 採集器看不到。
 - 影子比對（P0 第 6 項）只有表與程式，沒有排程與面板。新詞暴增要「今天」有文章才有東西（本機語料到採集時間為止）。
 - `rules/slo.yml` 是 Sloth 產生檔；`alerts.yml` 已拆成依關注面的 `rules/*.yml`。
 - 每月一個 ES 索引＋別名（回補與查詢分開）只評估沒做：單節點單索引 3 分片在 50 萬篇下夠用，5 億篇才需要。
-- 舊的 `P0_NOTES.md`（PR #15 的 23 項審查判定）已併進這裡與程式註解；全文在 git 歷史（a5a2c95 之前）。
+- 舊的 `P0_NOTES.md`（23 項審查判定）已併進這裡與程式註解；全文在 git 歷史。

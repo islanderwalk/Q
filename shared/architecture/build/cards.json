@@ -662,11 +662,11 @@
    "沙盤抓到並修掉的實作問題：PM 首月還沒簽就讓其他 45 個分區跑完；字典版本不符時同一分區被重領 130,281 次；seg_ver 直接串數字會讓 2026.10.30.10 大過 2026.11.01.1，補零後 update_by_query 遷移 424,887 篇花 22.3 秒；API 把軟停用詞清單當 Latin-1 解碼，之前其實沒生效。",
    "沙盤這份資料 ES 和 PostgreSQL 的前 50 詞完全一樣，全期 ES 74 ms、PostgreSQL 1,579 ms，文字雲聚合放 ES；ES 的 terms 聚合有分片誤差（預設上限 9,497），5 億筆時要調 shard_size 再驗。",
    "沙盤限制：ES 單節點、0 副本，和斷詞程式擠同一台 4 核心，延遲只能當相對比較；每篇平均 29 字，比答案假設的 300 字短很多；問答的時間是合成的，只用來切月份；Pub/Sub 是官方模擬器；PM 簽核和字典豁免都用指令模擬；回補只有 PTT，其他五渠道各 4–61 篇。",
-   "監控（2026-11-02 照監控計畫書做完，並在同一個 Docker 環境從頭端對端跑過）：Prometheus 96 條規則（66 條告警加 30 條記錄規則）、Grafana 主看板 9 層 69 面板與採集看板 6 列 21 面板、Alertmanager 以 webhook 送到 PM A/B 頁頂部橫幅。十項 P0：3 分鐘 SLO 燃燒率（Sloth 多視窗：28 天 99% 的查詢成功且在 180 秒內，1 小時 14.4 倍或 6 小時 6 倍呼叫，1 天 3 倍或 3 天 1 倍開單）、完整性對帳（原文湖、ES、有 v2、最新 v2、已刪、帳本逐月，每小時）、採集產出率與軟封鎖（登入牆 1 次就 page、產出率比 7 天前同時段掉一半）、首抓延遲（p95 45 分鐘警告、60 分鐘 page）、積壓與 DLQ、影子比對與版本覆蓋、字典發版收斂、回補燃盡、品質日報（金標召回、整詞召回、RBO）、ES 健康；門檻都是提案值，要用第一週實測校正。真環境抓到並修掉 14 個離線測試看不到的問題（例如 ES 對空陣列 exists 為 false、沒流量時 SLI 0/0 讓錯誤預算變 NaN、沒金鑰的 feed 被判死），結束時仍在響的 4 組告警都是真的（q6/realenv/MONITORING.md）。爬蟲端另有一面看板：Loki 收每個請求的狀態碼與延遲，Pushgateway→Prometheus 出每分鐘請求數、2xx／4xx／5xx／失敗、API p95（依平台）；2026-11-02 六渠道本機實跑時延遲一有尖峰就自動拉長間隔，沒有硬停。一張圖最下面的「7 觀測」帶把這些對到 Cloud Logging 與 Cloud Monitoring。",
+   "監控（2026-11-02 照監控計畫書做完，並在同一個 Docker 環境從頭端對端跑過）：Prometheus 96 條規則（66 條告警加 30 條記錄規則）、Grafana 主看板 9 層 69 面板與採集看板 6 列 21 面板、Alertmanager 以 webhook 送到 PM A/B 頁頂部橫幅。十項 P0：3 分鐘 SLO 燃燒率（Sloth 多視窗：28 天 99% 的查詢成功且在 180 秒內，1 小時 14.4 倍或 6 小時 6 倍呼叫，1 天 3 倍或 3 天 1 倍開單）、完整性對帳（原文湖、ES、有 v2、最新 v2、已刪、帳本逐月，每小時）、採集產出率與軟封鎖（登入牆 1 次就 page、產出率比 7 天前同時段掉一半）、首抓延遲（p95 45 分鐘警告、60 分鐘 page）、積壓與 DLQ、影子比對與版本覆蓋、字典發版收斂、回補燃盡、品質日報（金標召回、整詞召回、RBO）、ES 健康；門檻都是提案值，要用第一週實測校正。真環境抓到並修掉 14 個離線測試看不到的問題（例如 ES 對空陣列 exists 為 false、沒流量時 SLI 0/0 讓錯誤預算變 NaN、沒金鑰的 feed 被判死），結束時仍在響的 4 組告警都是真的（q6/stack/MONITORING.md）。爬蟲端另有一面看板：Loki 收每個請求的狀態碼與延遲，Pushgateway→Prometheus 出每分鐘請求數、2xx／4xx／5xx／失敗、API p95（依平台）；2026-11-02 六渠道本機實跑時延遲一有尖峰就自動拉長間隔，沒有硬停。一張圖最下面的「7 觀測」帶把這些對到 Cloud Logging 與 Cloud Monitoring。",
    "GCP 的 terraform plan：共用模組（PR #7）涵蓋回補 Job、GCS、Pub/Sub 與 Cloud SQL；2026-11-02 再補 q6.tf：斷詞服務 v0／v1／v2、文字雲 API、採集器的 Cloud Run 與 service account、parsed-posts 與 dict-releases 主題與訂閱、字典 bucket、YouTube 金鑰 secret、第二個 NAT 固定 IP、Cloud SQL 逾時旗標，離線 plan 147 to add、terraform test 37 passed；ES VM 與監控的告警政策仍不在 Terraform；沒有 apply。沙盤圖第 10 列引用的是 PR #7 的 plan，不是在沙盤觸發的。",
    "舊字典檔不在 repo。6,685 標題對照和沙盤的 v1 都是用 jieba 模擬舊流程，正式對照要用公司那份字典。6,685 標題已用 dict.txt.big 重跑：前 50 詞停用詞 14 降到 0；但「蔣萬安」被切成「蔣」「萬安」，換主字典要配人名詞條。",
    "「高雄市」整詞 6 次沒變，因為模擬的舊流程本來就沒拆。被拆的是不帶「市」的「高雄」：125 篇標題舊流程拆 115 篇，新流程 0 篇（內建字典）與 1 篇（dict.txt.big），但仍有 33／19 篇黏成「高雄為」這類非字典詞。單字「高」222 降到 0（內建字典；dict.txt.big 是 172 降到 0），是因為 segmenter.py 丟掉長度小於 2 的詞。",
-   "Playwright 實抓短網址 3 種網域（reurl.cc、tinyurl.com、bit.ly）與 1 例電話；地名被拆要靠斷詞器輸出證明，不能靠截圖。沙盤的原始公開頁截圖有 FB、IG、YouTube、Threads、媒體五個渠道（q6/evidence/realenv/channels/），PTT 的在 q6/evidence/playwright/。"
+   "Playwright 實抓短網址 3 種網域（reurl.cc、tinyurl.com、bit.ly）與 1 例電話；地名被拆要靠斷詞器輸出證明，不能靠截圖。沙盤的原始公開頁截圖有 FB、IG、YouTube、Threads、媒體五個渠道（q6/evidence/stack/channels/），PTT 的在 q6/evidence/playwright/。"
   ],
   "verify": [
    "pytest q6/code/tests：28 passed、退出碼 0（10/31 依審查加 5 項，原本 23；q6/code/RESULTS.md、shared/docs/python.md）；第一輪在 Windows 是 9 passed。",
@@ -674,8 +674,8 @@
    "wordcloud_q6_verify.py 在沙盒 VM 重跑（Python 3.13.17、jieba 0.42.1）：262,611 字/秒，誤變 52 篇降到 0 篇。記錄在 q6/data/jieba_experiments/verify.log；log 結尾為「完成」，沒有記退出碼。",
    "以 sha256sum 核對 results.json、results2.json、results3.json，三份都與 results.sha256 一致。",
    "以 git ls-tree 核對 PR #8（2f2e648）：q6/ 有 11 張架構圖、21 張佐證、30 張沙盤截圖，卡片引用的圖都在。",
-   "沙盤數字直接讀 q6/realenv/results/ 原始檔核對：latency_probe.jsonl 3,727 筆、最慢 396.9 ms、超過 180 秒 0 筆；final_ledger.json 46 個分區全部 passed（第 2 輪 34、第 3 輪 12，其中 2 個帶 G2 豁免）；41_targeted_rerun_r5.log 22,271 篇 8.56 秒；redelivery_and_dlq.json 兩條訂閱的 DLQ 各 1 則、投遞 5 次。核對時沒有重跑 Docker。",
-   "監控真環境驗證（2026-11-02，同一個雲端容器的 Docker）：seed→回補→live→六渠道串流→真實採集（PTT、中央社、公視）→告警鏈→SLM 快照從頭跑一次；Prometheus 96 條規則全部健康、11 個 job 全部 up；告警經 Alertmanager webhook 進 PM 頁橫幅（firing 與 resolved 都收到）；pytest q6/realenv/tests 與 q6/code/tests 共 168 passed（退出碼 0）。結束時仍在響的 4 組告警都查過原因：整台容器磁碟 94%、Instagram 樣本沒有 published_at、整詞召回 0.925 低於提案門檻 0.99、SLM 首次排程還沒到。",
+   "沙盤數字直接讀 q6/stack/results/ 原始檔核對：latency_probe.jsonl 3,727 筆、最慢 396.9 ms、超過 180 秒 0 筆；final_ledger.json 46 個分區全部 passed（第 2 輪 34、第 3 輪 12，其中 2 個帶 G2 豁免）；41_targeted_rerun_r5.log 22,271 篇 8.56 秒；redelivery_and_dlq.json 兩條訂閱的 DLQ 各 1 則、投遞 5 次。核對時沒有重跑 Docker。",
+   "監控真環境驗證（2026-11-02，同一個雲端容器的 Docker）：seed→回補→live→六渠道串流→真實採集（PTT、中央社、公視）→告警鏈→SLM 快照從頭跑一次；Prometheus 96 條規則全部健康、11 個 job 全部 up；告警經 Alertmanager webhook 進 PM 頁橫幅（firing 與 resolved 都收到）；pytest q6/stack/tests 與 q6/code/tests 共 168 passed（退出碼 0）。結束時仍在響的 4 組告警都查過原因：整台容器磁碟 94%、Instagram 樣本沒有 published_at、整詞召回 0.925 低於提案門檻 0.99、SLM 首次排程還沒到。",
    "terraform（shared/infra/gcp）：第一輪對真實 project plan 70 to add；第二輪離線 plan 102 to add、terraform test 30 passed；第三輪（2026-11-02，q6.tf）離線 plan 147 to add、terraform test 37 passed；未 apply。ES VM 與監控告警政策不在 Terraform。",
    "Playwright 實抓 PTT Kaohsiung 板 4 張、3 篇文章（03 與 04 同篇），未登入。記錄在 shared/capture/capture_manifest.json 與 shared/docs/playwright.md。",
    "Playwright 第二輪（10/30）：PTT 省錢板補拍 tinyurl.com、bit.ly 短網址與被換行切斷的網址；加上既有 reurl.cc，短網址至少 3 種網域。",
@@ -684,19 +684,19 @@
   "todo": "沙盤只證明流程跑得通：QSearch 真實 ES（約 5 億筆）的寫入速度與 3 分鐘查詢還沒量；回補只跑 PTT，其他五渠道各只有 4–61 篇；PM 簽核與字典豁免用指令模擬，還沒有真 PM 驗收；正式對照要用公司的舊字典；告警門檻都是提案值，要用第一週實測校正，影子比對只有表沒有排程；ES VM 與監控告警政策不在 Terraform（斷詞服務、文字雲 API、採集器、parsed-posts、字典 bucket 已在 q6.tf，只做離線 plan），GCP 沒有 apply；45 工作天仍是估算。",
   "figures": [
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_main.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_main.png",
     "cap": "Q6 主看板（真環境，台灣時間 2026-11-03 05:56–06:14，Prometheus 重建後的 19 分鐘）：9 層依資料流排：① 客戶 SLO（3 分鐘燃燒率、28 天錯誤預算）② PM 頁 RUM ③ 完整性對帳（原文湖 vs ES，逐月）④ 串流積壓 ⑤ 字典發版收斂 ⑥ 回補燃盡 ⑦ 品質日報 ⑧ ES 健康 ⑨ PostgreSQL、日誌與監控自身。「No data」是這段時間沒發生的事（沒有回補、沒有發版）"
    },
    {
-    "path": "q6/evidence/realenv/grafana/02_dashboard_collect.png",
+    "path": "q6/evidence/stack/grafana/02_dashboard_collect.png",
     "cap": "Q6 採集看板（同一時段）：結果分類（11 種 outcome）、產出率與欄位填充、首抓延遲與逾期目標、帳號預算與退避、延遲分段、監控自身；表格是每個來源最後一次請求，以及逾期沒抓的來源（三個 YouTube feed 因沒有金鑰而 skipped，不算死）"
    },
    {
-    "path": "q6/evidence/realenv/pm/30_alerts_strip.png",
+    "path": "q6/evidence/stack/pm/30_alerts_strip.png",
     "cap": "PM A/B 頁頂部的告警橫幅：Alertmanager webhook 真的送進來的 firing 告警，顯示嚴重度、摘要與時間；超過兩小時沒再收到的告警自動視為過期"
    },
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_backfill_window.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_backfill_window.png",
     "cap": "回補看板（本機沙盤，台灣時間 10/31 06:31–07:13）：文字雲查詢 p95、ES 寫入、回補吞吐、串流延遲放在同一條時間軸；超過 180 秒的查詢 0 筆，46 個分區全部通過。OTel→Prometheus→Grafana，GCP 對應 Cloud Monitoring"
    },
    {
@@ -706,25 +706,25 @@
   ],
   "evidence": [
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_main.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_main.png",
     "cap": "Q6 主看板（真環境，2026-11-02）：客戶 SLO 燃燒率、PM 頁 RUM、完整性對帳、串流積壓、發版收斂、回補燃盡、品質日報、ES 健康、平台，9 層 69 面板",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/grafana/02_dashboard_collect.png",
+    "path": "q6/evidence/stack/grafana/02_dashboard_collect.png",
     "cap": "Q6 採集看板（真環境，2026-11-02）：結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身，6 列 21 面板",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/architecture/realenv/diagram-sandbox-scenarios.png",
+    "path": "q6/architecture/stack/diagram-sandbox-scenarios.png",
     "cap": "本機沙盤 10 種情境：怎麼觸發、系統怎麼反應、實測數字；第 10 列的 terraform plan 是共用 GCP 模組（PR #7），不含 Q6 的斷詞服務、parsed-posts、ES 與字典 bucket",
     "priority": 1,
     "platform": "diagram"
    },
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_backfill_window.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_backfill_window.png",
     "cap": "沙盤回補時段（台灣時間 10/31 06:31–07:13）：查詢 p95、ES 寫入在同一條時間軸，回補吞吐只看得到第 3 輪；超過 180 秒的查詢 0 筆，46 個分區全部通過",
     "priority": 1,
     "platform": "other"
@@ -736,7 +736,7 @@
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/pm/01_all_channels_all_time.png",
+    "path": "q6/evidence/stack/pm/01_all_channels_all_time.png",
     "cap": "真實環境 PM A/B 頁（即時湖 6,662 篇，2026-11-02 重拍）：左 v0 舊系統重現（依題目線索推論的替身：凍結於 2019-12-31 的字典＋逆向最長匹配，不清洗不過濾）標出停用詞 16、數字／電話 3、網址殘片 1、單字 20；右 terms_v2（渠道清洗 → jieba＋使用者字典 → 過濾，48 個軟停用詞在查詢時排除）前 60 詞沒有雜訊",
     "priority": 1,
     "platform": "other"
@@ -756,31 +756,31 @@
   ],
   "evidence_all": [
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_main.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_main.png",
     "cap": "Q6 主看板（真環境，2026-11-02）：客戶 SLO 燃燒率、PM 頁 RUM、完整性對帳、串流積壓、發版收斂、回補燃盡、品質日報、ES 健康、平台，9 層 69 面板",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/grafana/02_dashboard_collect.png",
+    "path": "q6/evidence/stack/grafana/02_dashboard_collect.png",
     "cap": "Q6 採集看板（真環境，2026-11-02）：結果分類、產出率、首抓延遲、退避與配額、延遲分段、監控自身，6 列 21 面板",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/pm/30_alerts_strip.png",
+    "path": "q6/evidence/stack/pm/30_alerts_strip.png",
     "cap": "PM A/B 頁的告警橫幅：Alertmanager webhook 送進來的 firing 告警（嚴重度、摘要、時間）",
     "priority": 2,
     "platform": "other"
    },
    {
-    "path": "q6/architecture/realenv/diagram-sandbox-scenarios.png",
+    "path": "q6/architecture/stack/diagram-sandbox-scenarios.png",
     "cap": "本機沙盤 10 種情境：怎麼觸發、系統怎麼反應、實測數字；第 10 列的 terraform plan 是共用 GCP 模組（PR #7），不含 Q6 的斷詞服務、parsed-posts、ES 與字典 bucket",
     "priority": 1,
     "platform": "diagram"
    },
    {
-    "path": "q6/evidence/realenv/grafana/01_dashboard_backfill_window.png",
+    "path": "q6/evidence/stack/grafana/01_dashboard_backfill_window.png",
     "cap": "沙盤回補時段（台灣時間 10/31 06:31–07:13）：查詢 p95、ES 寫入在同一條時間軸，回補吞吐只看得到第 3 輪；超過 180 秒的查詢 0 筆，46 個分區全部通過",
     "priority": 1,
     "platform": "other"
@@ -792,19 +792,19 @@
     "platform": "other"
    },
    {
-    "path": "q6/evidence/realenv/pm/01_all_channels_all_time.png",
+    "path": "q6/evidence/stack/pm/01_all_channels_all_time.png",
     "cap": "真實環境 PM A/B 頁（即時湖 6,662 篇，2026-11-02 重拍）：左 v0 舊系統重現（依題目線索推論的替身：凍結於 2019-12-31 的字典＋逆向最長匹配，不清洗不過濾）標出停用詞 16、數字／電話 3、網址殘片 1、單字 20；右 terms_v2（渠道清洗 → jieba＋使用者字典 → 過濾，48 個軟停用詞在查詢時排除）前 60 詞沒有雜訊",
     "priority": 1,
     "platform": "other"
    },
    {
-    "path": "q6/architecture/realenv/diagram-realenv-stack.png",
+    "path": "q6/architecture/stack/diagram-stack.png",
     "cap": "本機沙盤架構：每層對應的 GCP 元件與本機替身、實測數字；圖上 Q6 元件都沒有 Terraform，GCP 沒有 apply、0 元",
     "priority": 2,
     "platform": "diagram"
    },
    {
-    "path": "q6/evidence/realenv/kibana/01_discover_v1_v2_terms.png",
+    "path": "q6/evidence/stack/kibana/01_discover_v1_v2_terms.png",
     "cap": "沙盤 Kibana：同一篇同時有 terms_v1（肥／宅）和 terms_v2（肥宅），seg_ver_v2 是 22026103005",
     "priority": 2,
     "platform": "other"
@@ -1019,6 +1019,6 @@
     "priority": 1
    }
   ],
-  "src": "來源：q6/README.md、q6/code/RESULTS.md、q6/realenv/RESULTS.md 與 results/（PR #8）、shared/infra/gcp/README.md、shared/capture/capture_manifest.json。"
+  "src": "來源：q6/README.md、q6/code/RESULTS.md、q6/stack/RESULTS.md 與 results/（PR #8）、shared/infra/gcp/README.md、shared/capture/capture_manifest.json。"
  }
 }

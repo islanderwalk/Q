@@ -6,7 +6,7 @@
 - **第二輪（2026-10-30，雲端容器，沒有 GCP 憑證）**：補了 32 個資源（Cloud Tasks OIDC、每站限速佇列、Q3 的 PTT 每小時 Job、Cloud SQL 強化與 IAM 登入、Secret Manager、DLQ 不過期等）。
   fmt／validate 退出碼 0；**離線 plan `Plan: 102 to add`**（所有可選開關打開時 109）；`terraform test` **30 passed**；tflint 0 issues。細節見「第二輪驗證」。
 - **新增的 32 個資源還沒有對真實專案 plan 過**（容器沒有憑證）。要確認，請在有登入的本機重跑 `terraform plan`，預期是 `Plan: 102 to add`。
-- **第三輪（2026-11-02，雲端容器，沒有 GCP 憑證；Q6 文字雲）**：把 `q6/realenv` 在本機 Docker 跑通的 Q6 元件補成 Terraform（`q6.tf`：斷詞服務 v0／v1／v2、文字雲 API ＋ PM A/B 頁、真實來源採集器、Pub/Sub parsed-posts／dict-releases、字典 bucket、YouTube 金鑰 secret），並依監控計畫書補第二個固定出口 IP、NAT 動態配埠與錯誤日誌、Cloud SQL 兩個逾時／慢查詢旗標。
+- **第三輪（2026-11-02，雲端容器，沒有 GCP 憑證；Q6 文字雲）**：把 `q6/stack` 在本機 Docker 跑通的 Q6 元件補成 Terraform（`q6.tf`：斷詞服務 v0／v1／v2、文字雲 API ＋ PM A/B 頁、真實來源採集器、Pub/Sub parsed-posts／dict-releases、字典 bucket、YouTube 金鑰 secret），並依監控計畫書補第二個固定出口 IP、NAT 動態配埠與錯誤日誌、Cloud SQL 兩個逾時／慢查詢旗標。
   fmt／validate 退出碼 0；**離線 plan `Plan: 147 to add`**（基準 102，+45，沒有刪改既有資源；可選全開 153）；`terraform test` **37 passed**。細節見「第三輪驗證」。這 45 個資源同樣還沒對真實專案 plan 過。
 - **沒有 apply。** 沒有啟用任何 API、沒有建立任何雲端資源。
 - 映像檔全部用 `us-docker.pkg.dev/cloudrun/container/hello`（job 為 `.../job`），所以 plan 不需要先 build 映像。
@@ -27,7 +27,7 @@
 | `shared/infra/gcp/scheduler_tasks.tf` | Cloud Scheduler crawl-tick（每 15 分鐘）與 ptt-crawl-hourly（呼叫 Job 的 `:run` API）、Cloud Tasks ×5（crawl-fb／yt／news，加上每站限速的 crawl-ptt 1 rps、crawl-threads 20 rps）、enqueuer 權限與完整 OIDC 鏈（actAs、Cloud Tasks 服務代理、run.invoker） |
 | `shared/infra/gcp/storage.tf` | 原始資料 GCS bucket（統一權限、public access 強制擋、30 天轉 COLDLINE）、Artifact Registry `crawler` |
 | `shared/infra/gcp/sql.tf` | Cloud SQL PostgreSQL 15、ENTERPRISE edition、私有 IP、資料庫 `crawler`；flag `cloudsql.enable_pg_bigm`、`idle_in_transaction_session_timeout`（60 秒）、`log_min_duration_statement`（1 秒）、`cloudsql.iam_authentication`；`ssl_mode = ENCRYPTED_ONLY`；每日備份＋PITR 7 天；4 個 runtime SA 的 IAM 資料庫使用者與 `cloudsql.client`／`instanceUser`；IAM 資料庫使用者 7 個（含 Q6 的 seg／wordcloud_api／collector） |
-| `shared/infra/gcp/q6.tf` | Q6 文字雲：Cloud Run `qsearch-seg-v0／v1／v2`（internal、min 1、streaming pull、Direct VPC 只導私有網段）、`qsearch-wordcloud-api`（timeout 190 秒、min 1）、`qsearch-collector`（單實例、egress ALL_TRAFFIC 走 NAT 固定 IP）；3 個 runtime SA 與最小權限；Pub/Sub `qsearch-parsed-posts`（保留 7 天）＋ DLQ、`qsearch-dict-releases`、pull 訂閱（5 次進 DLQ、退避 10 秒～10 分、不過期）；字典 bucket（版本化、private）；YouTube 金鑰 secret（只建容器）；Q6 SA 的 ES API key 與 Cloud SQL 權限。每一項對應 `q6/realenv/docker-compose.yml` 與 `scripts/setup.py` 的本機同名主題／訂閱 |
+| `shared/infra/gcp/q6.tf` | Q6 文字雲：Cloud Run `qsearch-seg-v0／v1／v2`（internal、min 1、streaming pull、Direct VPC 只導私有網段）、`qsearch-wordcloud-api`（timeout 190 秒、min 1）、`qsearch-collector`（單實例、egress ALL_TRAFFIC 走 NAT 固定 IP）；3 個 runtime SA 與最小權限；Pub/Sub `qsearch-parsed-posts`（保留 7 天）＋ DLQ、`qsearch-dict-releases`、pull 訂閱（5 次進 DLQ、退避 10 秒～10 分、不過期）；字典 bucket（版本化、private）；YouTube 金鑰 secret（只建容器）；Q6 SA 的 ES API key 與 Cloud SQL 權限。每一項對應 `q6/stack/docker-compose.yml` 與 `scripts/setup.py` 的本機同名主題／訂閱 |
 | `shared/infra/gcp/bq.tf` | BigQuery `sentiment_analytics`、分區表 `ingest_events`（欄位對應 Avro）、Pub/Sub BQ 訂閱所需權限 |
 | `shared/infra/gcp/secrets.tf` | Secret Manager：住宅代理帳密（worker 可讀）、Elasticsearch API key（parser、backfill 可讀）；**只建容器，不在 Terraform 放密碼值** |
 | `shared/infra/gcp/cloudbuild.tf` | Cloud Build trigger：1st gen（`github_owner` 留空時不建立，legacy）與 2nd gen `repository_event_config`＋`service_account`（`cloudbuild_repository_id` 留空時不建立） |
@@ -96,7 +96,7 @@ GKE 可選模組（另開 root，需先 apply 主模組）：`cd shared/infra/gc
 | Q6 事件：Pub/Sub qsearch-parsed-posts（保留 7 天）＋ DLQ、qsearch-dict-releases | `google_pubsub_topic.parsed_posts`、`parsed_posts_dlq`、`dict_releases`、`google_pubsub_subscription.parsed_posts_seg[*]`（pull、5 次進 DLQ、退避 10 秒～10 分、不過期）、`dict_releases_seg_v2`、`parsed_posts_dlq_inspect`、服務代理的 DLQ 權限 `parsed_posts_dlq_publisher`／`parsed_posts_seg_dlq_ack[*]` | Q6 |
 | Q6 字典 artifact：GCS `<project>-qsearch-dict`（版本化、private；本機 dictsrv 的替身） | `google_storage_bucket.dict_artifacts` | Q6 |
 | Q6 的 Cloud SQL 與 ES 權限 | `google_sql_user.iam_sa["seg" / "wordcloud_api" / "collector"]` 與對應 `sql_client`／`sql_instance_user`、`google_secret_manager_secret_iam_member.q6_es_api_key_access[*]` | Q6 |
-| Q6 監控：Prometheus／Alertmanager／Grafana／Loki | 沒有 Terraform。本機全套在 `q6/realenv/monitoring/`（66 條告警、30 條記錄規則、兩張看板），GCP 對應（Cloud Monitoring／Managed Service for Prometheus）見 `q6/realenv/MONITORING.md` | Q6 |
+| Q6 監控：Prometheus／Alertmanager／Grafana／Loki | 沒有 Terraform。本機全套在 `q6/stack/monitoring/`（66 條告警、30 條記錄規則、兩張看板），GCP 對應（Cloud Monitoring／Managed Service for Prometheus）見 `q6/stack/MONITORING.md` | Q6 |
 | legacy GCE（可選） | `google_compute_region_instance_group_manager.crawler_legacy`、`google_compute_firewall.legacy_health_check`（count） | — |
 
 **未覆蓋的架構節點（沒有 Terraform）：** session refresher 與 Firestore session 池、Elasticsearch 本體（Compute Engine VM，`var.elasticsearch_url` 指向它的私有 IP；只建了 API key 的 Secret）、Redis／Memorystore、Vector DB、Data Layer／Analytics／Export API、Digest／Search。Secret Manager 與 Job DB 的連線權限已在第二輪補上。見下方「未覆蓋」一節。
@@ -158,7 +158,7 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 
 ## 第三輪驗證（2026-11-02，雲端容器，沒有 GCP 憑證；Q6 文字雲）
 
-把 `q6/realenv` 在本機 Docker 實跑過的 Q6 元件補成 Terraform（`q6.tf`），並依 Q6 監控計畫書調整網路與 Cloud SQL：第二個固定出口 IP（一個 IP 只有 64,512 個埠、被封鎖時有退路）、NAT 動態配埠 1,024–8,192 與 ERRORS_ONLY 日誌、`idle_in_transaction_session_timeout`＝60 秒、`log_min_duration_statement`＝1 秒。與第二輪一樣只做 fmt／validate／離線 plan／`terraform test`，**沒有 apply、沒有建立任何雲端資源**。Terraform 與 provider 版本同第二輪。
+把 `q6/stack` 在本機 Docker 實跑過的 Q6 元件補成 Terraform（`q6.tf`），並依 Q6 監控計畫書調整網路與 Cloud SQL：第二個固定出口 IP（一個 IP 只有 64,512 個埠、被封鎖時有退路）、NAT 動態配埠 1,024–8,192 與 ERRORS_ONLY 日誌、`idle_in_transaction_session_timeout`＝60 秒、`log_min_duration_statement`＝1 秒。與第二輪一樣只做 fmt／validate／離線 plan／`terraform test`，**沒有 apply、沒有建立任何雲端資源**。Terraform 與 provider 版本同第二輪。
 
 | 步驟 | 指令 | 退出碼 | 結果 |
 |---|---|---|---|
@@ -235,12 +235,12 @@ Terraform v1.17.1 linux_amd64、google／google-beta v8.9.0。`TF_DATA_DIR`、pl
 - **browser Deployment**：HPA 的目標，不在 26 片段內。需要另外的 manifest 或 kubernetes_deployment，否則 HPA apply 會失敗。
 - **session 池（Firestore）、session refresher**：架構 A／B／C 的控制面。（帳密的 Secret Manager 第二輪已補，只建容器不放值。）
 - **Job DB 的資料表**：連線權限（IAM 使用者、`cloudsql.client`）已補，但 schema 與冪等表（`UNIQUE(event_id)`）沒有寫；地端版的 inbox 表 DDL 可直接參考 `shared/infra/onprem/app/qsearch_onprem/common.py`（`ingest_events`）。
-- **Elasticsearch 本體**：Q6 實測版是 Compute Engine VM 上的單節點 ES 9.5.5（`q6/realenv/README.md`），本模組只有 API key 的 Secret 與 `var.elasticsearch_url`（VM 的私有 IP），VM、磁碟、Ops Agent 都沒有 Terraform。另一個選項是 Elastic Cloud root（`elastic/ec` provider，已在暫存目錄 validate 通過，未併入）；mapping 變更不是 Terraform 的工作。
+- **Elasticsearch 本體**：Q6 實測版是 Compute Engine VM 上的單節點 ES 9.5.5（`q6/stack/README.md`），本模組只有 API key 的 Secret 與 `var.elasticsearch_url`（VM 的私有 IP），VM、磁碟、Ops Agent 都沒有 Terraform。另一個選項是 Elastic Cloud root（`elastic/ec` provider，已在暫存目錄 validate 通過，未併入）；mapping 變更不是 Terraform 的工作。
 - **Redis／Memorystore、Vector DB、Data Layer／Analytics／Export API、Digest／Search**：架構 int.txt 與 QSearch 官方圖有，但沒有 Terraform。
 - **pg_bigm 的 `CREATE EXTENSION`**：flag 已設，extension 要在資料庫裡建（migration 的工作）。
 - **parse.completed 主題、audit 的 consumer**：lab 有，本模組沒有。
 - **映像建置**：Cloud Build trigger 只有 crawler-api；parser、worker、scheduler、backfill、ptt-crawl、Q6 的 seg／wordcloud-api／collector 沒有建置資源，`image_*` 只能指向已存在的映像。
-- **監控與告警**（未確認訊息數、最舊訊息年齡、DLQ 數、Q6 的 66 條告警與兩張看板）：沒有 Terraform。本機版是 `q6/realenv/monitoring/` 的 Prometheus／Alertmanager／Grafana／Loki；搬到 GCP 要另寫 `google_monitoring_alert_policy`（或 Managed Service for Prometheus 的規則）與通知管道。
+- **監控與告警**（未確認訊息數、最舊訊息年齡、DLQ 數、Q6 的 66 條告警與兩張看板）：沒有 Terraform。本機版是 `q6/stack/monitoring/` 的 Prometheus／Alertmanager／Grafana／Loki；搬到 GCP 要另寫 `google_monitoring_alert_policy`（或 Managed Service for Prometheus 的規則）與通知管道。
 
 ## 待使用者決定
 

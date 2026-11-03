@@ -6,7 +6,7 @@ import types
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]          # .../q6/code/tests → repo 根
-REALENV = ROOT / "q6" / "realenv"
+REALENV = ROOT / "q6" / "stack"
 SEG = REALENV / "seg"
 API = REALENV / "api"
 MON = REALENV / "monitoring"

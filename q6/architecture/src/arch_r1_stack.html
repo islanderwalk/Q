@@ -2,9 +2,9 @@
 <html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
 <body><script>
 renderDiagram({
-  eyebrow: 'QSearch 筆試 · 第 6 題 · 真實環境驗證（q6/realenv）',
+  eyebrow: 'QSearch 筆試 · 第 6 題 · 真實環境驗證（q6/stack）',
   title: '每一層都跑過真的程式：官方映像＋同介面替身，零成本',
-  sub: '與總覽圖同一套架構，GCP 託管服務換成官方模擬器或同介面替身（標籤寫「替身」）；方塊裡的數字都是這次在容器裡實測的結果，對應 q6/realenv/RESULTS.md。',
+  sub: '與總覽圖同一套架構，GCP 託管服務換成官方模擬器或同介面替身（標籤寫「替身」）；方塊裡的數字都是這次在容器裡實測的結果，對應 q6/stack/RESULTS.md。',
   height: 910,
   lanes: [
     { x: 0, y: 0, w: 1030, h: 172, label: '① 字典 artifact：r1 → r6 共 6 版' },
@@ -60,6 +60,6 @@ renderDiagram({
     { from: 'dict', to: 'es', sides: ['top', 'top'], fromT: 0.5, toT: 0.5, route: 'points', points: [[650, 18], [1285, 18]], dashed: true, color: 'accent', label: 'IK 遠端字典：切版後 8–58 秒生效', labelAt: [1160, 18] }
   ],
   footL: '全部在雲端容器內執行：官方映像（Elasticsearch、Kibana、PostgreSQL、Pub/Sub 模擬器、OTel、Prometheus、Grafana）＋本 repo 程式',
-  footR: 'q6/architecture/realenv/diagram-realenv-stack.png'
+  footR: 'q6/architecture/stack/diagram-stack.png'
 });
 </script></body></html>

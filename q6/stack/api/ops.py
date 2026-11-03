@@ -1,4 +1,4 @@
-"""PM 頁「資料工程端」的真實操作，給 app.py 與 collector.py 用；不依賴 fastapi，可單獨測（q6/realenv/tests）。
+"""PM 頁「資料工程端」的真實操作，給 app.py 與 collector.py 用；不依賴 fastapi，可單獨測（q6/stack/tests）。
 
 - 字典發版：從 artifact 的 current 版複製一份、加詞、逐檔算 sha256、寫 manifest，再原子切換 current
   （GCS 上就是改 current 物件）。不需要 dict.txt.big：主字典就在 current 版的 base.dict 裡。
