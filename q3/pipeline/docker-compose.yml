@@ -1,0 +1,112 @@
+# Q3 PTT 八卦板全文搜尋 ETL pipeline：本機零成本版本。
+# 架構和答案一致，只是雲端服務換成本機對應的東西：
+#   Cloud Scheduler + Cloud Run Job → crawler（常駐，每小時第 5 分跑一輪）
+#   GCS（原始 HTML）                 → gcs（fake-gcs-server）
+#   BigQuery                         → bigquery（goccy/bigquery-emulator，同一套 SQL）
+#   Cloud Run 查詢 API               → search（http://127.0.0.1:8300）
+#   Cloud Monitoring                 → pushgateway + prometheus + grafana（http://127.0.0.1:3300）
+# 所有 port 只綁 127.0.0.1。資料放在 named volume，重開機、重建容器都不會掉。
+name: q3pipe
+
+x-app-env: &app-env
+  Q3_BQ_ENDPOINT: http://bigquery:9050
+  Q3_PROJECT: qsearch-q3
+  Q3_DATASET: ptt
+  Q3_RAW_BACKEND: gcs
+  STORAGE_EMULATOR_HOST: http://gcs:4443
+  TZ: Asia/Taipei
+
+services:
+  bigquery:
+    image: ghcr.io/goccy/bigquery-emulator:0.8.1
+    command: ["--project=qsearch-q3", "--dataset=ptt", "--database=/data/bigquery.db", "--port=9050", "--grpc-port=9060"]
+    environment:
+      # 模擬器的 SQL 解析器跑在 WASM 裡，記憶體要等 Go 的 GC 才釋放；預設門檻下實測幾分鐘就長到 2 GB 然後當掉，
+      # 調低 GC 門檻後不會一路長到當掉；7 天全量寫完約 0.9 GB，重啟後降回 0.1 GB（資料在 volume 裡）。
+      GOGC: "20"
+      GOMEMLIMIT: 600MiB
+    volumes:
+      - bigquery-data:/data
+    ports:
+      - "127.0.0.1:9050:9050"
+    restart: unless-stopped
+
+  gcs:
+    image: fsouza/fake-gcs-server:1.52.2
+    command: ["-scheme", "http", "-port", "4443", "-backend", "filesystem", "-filesystem-root", "/data",
+              "-external-url", "http://gcs:4443"]
+    volumes:
+      - gcs-data:/data
+    ports:
+      - "127.0.0.1:4443:4443"
+    restart: unless-stopped
+
+  crawler:
+    build: .
+    image: q3pipe:local
+    command: ["loop"]
+    environment:
+      <<: *app-env
+      Q3_PUSHGATEWAY: pushgateway:9091
+      Q3_MIN_INTERVAL_S: ${Q3_MIN_INTERVAL_S:-1.0}
+      Q3_DRILL_FAIL_BATCHES: ${Q3_DRILL_FAIL_BATCHES:-}   # 故障演練才設，見 README
+      Q3_DRILL_REGRESSION: ${Q3_DRILL_REGRESSION:-}       # 整輪還原演練才設，見 README
+    depends_on: [bigquery, gcs, pushgateway]
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+  search:
+    build: .
+    image: q3pipe:local
+    command: ["serve"]
+    environment:
+      <<: *app-env
+    ports:
+      - "127.0.0.1:8300:8300"
+    depends_on: [bigquery]
+    restart: unless-stopped
+
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    user: "0"
+    command: ["--persistence.file=/data/pushgateway.db", "--persistence.interval=1m"]
+    volumes:
+      - pushgateway-data:/data
+    ports:
+      - "127.0.0.1:9391:9091"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus",
+              "--storage.tsdb.retention.time=30d"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9390:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/q3-ptt-search.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3300:3000"
+    depends_on: [prometheus]
+    restart: unless-stopped
+
+volumes:
+  bigquery-data:
+  gcs-data:
+  pushgateway-data:
+  prometheus-data:

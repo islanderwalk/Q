@@ -36,10 +36,10 @@
 | `seg/qseg/` | 斷詞映像：`service`（串流；v2 另訂閱發版控制訊息 `control.py`，每台輪詢 manifest 收斂）、`job`（回補）、`rerun`（定向重跑）、`impact`（影響範圍地面真值）、`shadow`（影子比對）、`coverage`（覆蓋與缺值）、`recon`（四層對帳＋回補燃盡＋發版收斂）、`quality`（品質日報；金標在 `seg/quality/gold_150.json`）、`approve`／`baseline`、`seed` |
 | `api/`、`web/` | 文字雲 API（FastAPI；`/api/ops/alert` 收 Alertmanager、`/api/rum` 收 PM 頁 RUM）、PM A/B 頁面（無外部套件；`rum.js` 自寫 RUM）、資料工程端操作（`ops.py`：發版（outbox）、簽核、重播、限速）、來源採集器（`collector.py`＋`feeds.json`：每次請求記 outcome，YouTube 走 Data API） |
 | `pg/init.sql`、`pg/live.sql`、`pg/migrate_p0.sql` | 帳本、控制表、批次紀錄、發版紀錄、影子比對、對帳 `recon_daily`、品質 `quality_daily`、`posts_terms`；即時操作用的 `rerun_runs`、`service_state`、`live_events`（含告警）、`collector_state`、`release_outbox`；既有 volume 用 `migrate_p0.sql` 補表 |
-| `tests/` | 即時操作的純函式測試（發版、版本號、feed 解析、原文湖解析）：`pytest -p no:cacheprovider q6/stack/tests` |
+| `tests/` | 即時操作的純函式測試（發版、版本號、feed 解析、原文湖解析、歷史爬蟲橋、樣本的發文時間）：`pytest -p no:cacheprovider q6/stack/tests` |
 | `monitoring/` | OTel Collector、Prometheus（`rules/*.yml`；`slo/` 是 Sloth 規格）、Alertmanager、Loki＋Alloy、Grafana 資料來源與兩張儀表板（`grafana/build_dashboard.py` 產生：主看板 9 層、採集看板 6 列） |
 | `collect/` | 六渠道樣本的抓取程式；`data/channels/` 是抓到的資料與紀錄 |
-| `scripts/` | 準備原文、建索引與訂閱、送串流、各項實驗、延遲探針、截圖 |
+| `scripts/` | 準備原文、建索引與訂閱、送串流、各項實驗、延遲探針、截圖；`fix_sample_es.py` 把已入庫的樣本對上補好的發文時間（check／apply／rollback） |
 | `results/` | 每次實測的日誌與 JSON（`backfill/`、`es/`、`stream/`、延遲探針） |
 | `runtime/` | 執行時產生的字典 artifact 與原文（不進 git） |
 

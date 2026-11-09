@@ -7,6 +7,8 @@
 規則（沿用 shared/capture/README.md）：只開未登入公開頁；同站兩次導覽間隔 ≥2 秒；每站載入 ≤30 次；
 不存 cookie、token、cursor、整頁 HTML，只存貼文文字與時間；登入視窗照實截下，不點擊；不用代理。
 文字從頁面內嵌 JSON（script[type=application/json]）走訪取得：FB 取 message.text，IG 取 caption.text。
+IG 未登入的內嵌 JSON 不帶 taken_at：published_at 改由 shortcode 推算（fill_ig_published_at.py 的 shortcode_time），
+抄進 data/channels 後再跑 fill_ig_published_at.py，登入爬取的副本有的換成精確時間，逐列來源寫進 _meta。
 """
 import json
 import sys
@@ -15,6 +17,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+from fill_ig_published_at import shortcode_time   # 同一個資料夾
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -128,7 +132,8 @@ def run(browser):
                 st = "reel" if (p["product_type"] == "clips" or sub == "reel") else "post"
                 ig.append({"post_id": f"ig-{p['code']}", "channel": "instagram", "sub_type": st, "source": f"@{user}",
                            "url": f"https://www.instagram.com/{'reel' if st == 'reel' else 'p'}/{p['code']}/",
-                           "published_at": iso(p["taken_at"]), "fetched_at": now_iso(), "text": p["text"], "collect_method": "inline_json"})
+                           "published_at": iso(p["taken_at"]) or shortcode_time(p["code"]), "fetched_at": now_iso(), "text": p["text"],
+                           "collect_method": "inline_json"})
     ctx.close()
     return fb, ig
 

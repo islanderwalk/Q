@@ -194,8 +194,24 @@ node screenshots.js [名稱…]                 # 截圖（Node Playwright）
 | 渠道 | 來源 | 篇數 | sub_type | 含網址 | published_at |
 |---|---|---:|---|---:|---|
 | Facebook | 中央社、公視新聞網、民視新聞、NASA 粉專 | 4（每頁未登入只給 1 篇） | post 4 | 2 | 2026-10-30 05:45 ~ 2026-10-31 01:30 |
-| Instagram | @cnanews_tw、@pts.news、@ftvnews、@nasa | 48（每個帳號 12 篇） | post 26、reel 22 | 4 | 沒有：未登入的主頁 JSON 不帶發文時間，`month` 會是 `unknown` |
+| Instagram | @cnanews_tw、@pts.news、@ftvnews、@nasa | 48（每個帳號 12 篇） | post 26、reel 22 | 4 | 2026-04-26 22:28 ~ 2026-10-30 22:43（抓取時沒有，事後補上，見下一節） |
 
 - IG 的 Reels 頁未登入時是 0 篇；`reel` 是從主頁 12 篇裡 `product_type = clips` 判斷出來的。
 - Facebook 未登入只拿到每頁最上面 1 篇，所以 Facebook 樣本偏少；NASA 那篇是英文，剛好測到英文虛詞（and、of、in）會進文字雲，見 `q6/stack/RESULTS.md`。
 - 截圖：`q6/evidence/stack/channels/fb_*.png`、`ig_*.png`。
+
+### Instagram 的 `published_at`（2026-11-04 補）
+
+未登入主頁的內嵌 JSON 不帶 `taken_at`，抓下來的 48 篇 `published_at` 全是 null，重播進 ES 後 `month` 是 `unknown`（`SegPublishedAtMissing`、`ReconUnknownMonthDocs` 因此一直在響）。之後用兩個來源補上；只動 `published_at`，其他 8 個欄位、列的順序、CRLF 換行都沒變。
+
+| 來源 | 篇數 | 做法 |
+|---|---:|---|
+| 登入爬取的副本 `q6/data/meta-login/instagram_clean.jsonl`（2026-11-01，1,134 列，`post_id` 是 `in-<shortcode>`，每列都有 `taken_at` 轉成的時間） | 43 | shortcode（`url` 最後一段）相同就照抄，到秒 |
+| shortcode 推算（副本裡沒有的 5 篇，都是 @nasa） | 5 | shortcode 以 base64url（`A-Z a-z 0-9 - _`）解成 media id，`ms = (id >> 23) + 1314220021721`，捨去毫秒、轉 +08:00 |
+
+- 推算法的驗證：副本 1,134 列都拿推算值和 `published_at` 比，1,064 列差在 60 秒內、1,128 列在 1 小時內，中位數 −26 秒（推算值偏早，應是 media id 在開始上傳時就產生）。差超過 1 小時的 6 列全是推算值比較早，最多早 17.9 小時（先上傳、隔一段時間才發）；推算值比較晚的最多晚 16 分鐘（1 列）。
+- 照這個誤差範圍，5 篇推算的（2026-10-06 ~ 10-30 04:28）都還在 10 月，月份不會歸錯。
+- 補完的月份：2026-04 1 篇（@cnanews_tw 的聲明 `ig-DXmSYkXGOI9`）、2026-10 47 篇。
+- 逐列的來源（`loggedin_crawl`／`shortcode`）、43 篇各自的推算差值與上面的驗證數字在 `_meta/instagram_published_at.json`，由 `collect/fill_ig_published_at.py` 產生，重跑結果相同。
+- 重抓時：`capture_q6_fb_ig.py` 遇到沒有 `taken_at` 就先寫推算值；抄進 `data/channels/` 後跑 `python3 fill_ig_published_at.py`，副本有的換成精確值並重寫 `_meta`。
+- `post_id` 仍是 `ig-<shortcode>`。歷史爬蟲寫的是 `in-<shortcode>`，`api/crawl_bridge.py` 送進 ES 前換成 `ig-`（FB `fa-` → `fb-`、Threads `th-` → 不加前綴），同一篇才不會有兩份文件。

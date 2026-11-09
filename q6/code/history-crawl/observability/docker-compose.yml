@@ -1,0 +1,44 @@
+name: crawlobs
+# Every port is bound to 127.0.0.1 only: Grafana runs with anonymous Admin, so nothing here may be reachable from the LAN.
+services:
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    command: ["--persistence.file=/data/pushgateway.metrics", "--persistence.interval=1m"]
+    user: "0"  # the named volume is root-owned
+    volumes:
+      - pgwdata:/data
+    ports: ["127.0.0.1:9091:9091"]
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    # Remote-write receiver: ../backfill.py writes minutes Prometheus missed (stack down while a crawler ran) back with
+    # their original timestamps. The first four flags are the image defaults, which an explicit command replaces.
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus",
+              "--web.console.libraries=/usr/share/prometheus/console_libraries", "--web.console.templates=/usr/share/prometheus/consoles",
+              "--storage.tsdb.retention.time=60d", "--web.enable-remote-write-receiver"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports: ["127.0.0.1:9090:9090"]
+    restart: unless-stopped
+  loki:
+    image: grafana/loki:3.2.0
+    command: -config.file=/etc/loki/loki-config.yml
+    user: "0"
+    volumes:
+      - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+      - lokidata:/tmp/loki
+    ports: ["127.0.0.1:3100:3100"]
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["127.0.0.1:3000:3000"]
+    restart: unless-stopped
+volumes: {promdata: {}, lokidata: {}, pgwdata: {}}

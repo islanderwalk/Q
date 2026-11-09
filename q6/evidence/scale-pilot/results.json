@@ -1,0 +1,55 @@
+{
+  "description": "Q6 規模試跑：公開語料文字重抽樣灌入 Elasticsearch scale_pilot_main，量測灌入速度與每篇磁碟用量，推算 5 億篇的容量需求。",
+  "run_window_utc": "斷詞完成 2026-10-31T21:29Z；灌入首筆進度 21:46:20Z；STOP 停止 21:59:50Z；索引量測 22:01:37Z",
+  "environment": {
+    "es": "單節點 Elasticsearch（WSL2 Docker），index scale_pilot_main，3 primary shards、0 replicas、refresh_interval=-1",
+    "wsl_mem_total_mb": 7595,
+    "wsl_mem_available_mb_during_load": 1079,
+    "load_avg_during_load": "10~12",
+    "c_drive_free_gib_at_start": 199.22,
+    "c_drive_free_gib_at_stop": 198.56
+  },
+  "build_sources": {
+    "sources": 425167,
+    "unique_texts": 421900,
+    "by_origin": {
+      "gossiping_qa": 418202,
+      "ptt_title_7d": 6685,
+      "stack:ptt.jsonl": 48,
+      "stack:instagram.jsonl": 48,
+      "stack:threads.jsonl": 61,
+      "stack:media.jsonl": 61,
+      "stack:youtube.jsonl": 45,
+      "stack:facebook.jsonl": 4,
+      "stack:hist_youtube_2026-10.jsonl": 13
+    },
+    "channels": {"ptt": 424935, "instagram": 48, "threads": 61, "media": 61, "youtube": 58, "facebook": 4},
+    "avg_terms": {"v0_standard_like": 20.97, "v1_dict_2026.10.30.1": 16.91, "v2_dict_2026.10.30.2": 8.41},
+    "avg_chars": 29.3,
+    "vocab_size": 340650,
+    "dict_v1": "qsearch-q6-2026.10.30.1",
+    "dict_v2": "qsearch-q6-2026.10.30.2",
+    "seg_seconds": 257.1,
+    "seg_src_per_sec": 1653.4,
+    "seg_rate_curve_src_per_sec": {"50000": 3189, "100000": 2987, "150000": 2130, "200000": 1849, "250000": 1633, "300000": 1601, "350000": 1677, "400000": 1620},
+    "total_seconds": 406.8,
+    "sources_pkl_mb": 155.1,
+    "keyword_check": {"keyword": "中國", "in_v2_vocab": true, "sources_with_keyword": 13718}
+  },
+  "load": {
+    "target": 1000000,
+    "progress_snapshots": [
+      {"utc": "2026-10-31T21:46:20Z", "loaded": 10000, "docs_per_sec": 4841.3},
+      {"utc": "2026-10-31T21:48:03Z", "loaded": 45000, "docs_per_sec": 429.7},
+      {"utc": "2026-10-31T21:55:55Z", "loaded": 95000, "docs_per_sec": 164.7}
+    ],
+    "stopped": {"utc": "2026-10-31T21:59:50Z", "reason": "STOP 檔案存在（灌入中 300000）"},
+    "index_after_stop": {"utc": "2026-10-31T22:01:37Z", "docs_count": 283388, "store_size_mb": 538.7, "primary_shards": 3, "replicas": 0, "cluster_health": "green"}
+  },
+  "extrapolation": {
+    "bytes_per_doc_kb": 1.99,
+    "docs_500m_store_gb": 950,
+    "c_drive_free_gb": 199,
+    "note": "未 force_merge、未計 replica；1.99 KB/doc 是 refresh 後的 store.size ÷ docs.count。5 億篇約 950 GB，超過單機可用空間約 4.8 倍。"
+  }
+}

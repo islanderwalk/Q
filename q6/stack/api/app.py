@@ -22,6 +22,7 @@ import sys
 import threading
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,6 +53,8 @@ CONTROL_SUB = os.environ.get("CONTROL_SUBSCRIPTION", "dict-releases-seg-v2")
 SAMPLES = Path(os.environ.get("CHANNEL_SAMPLES", str(Path(__file__).resolve().parent / "data" / "channels")))
 LIVE_SQL = Path(os.environ.get("LIVE_SQL", str(Path(__file__).resolve().parent / "live.sql")))
 SLA_MS = 180_000
+COMPARE_DEADLINE_S = SLA_MS / 1000 + 5       # PM 頁兩欄合計的上限：超過就回 JSON 504，瀏覽器一定收到回應，不會只看到連線中斷
+COMPARE_POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix="compare")   # 兩欄同時查（原本一欄查完才查下一欄）
 ES_CONNECT_TIMEOUT_S = float(os.environ.get("ES_CONNECT_TIMEOUT_S", "3"))
 ES_SEARCH_TIMEOUT = os.environ.get("ES_SEARCH_TIMEOUT", "170s")        # ES 查詢自己的 timeout：比 SLA 早一點回 timed_out=true，當壞查詢（partial）
 CACHE_TTL_CLOSED_S = int(os.environ.get("CACHE_TTL_CLOSED_S", "86400"))  # 已結束日期範圍：只會因回補／重跑而變（世代號失效）
@@ -564,8 +567,14 @@ def api_compare(a: str = "v0", b: str = "v2", q: str = "", channels: str = "", d
     if a not in ("v0", "v1", "v2") or b not in ("v0", "v1", "v2"):
         raise HTTPException(400, "a／b 只能是 v0／v1／v2")
     ch = _channels(channels)
-    ra = wordcloud(a, q, ch, date_from, date_to, size, bool(soft), bool(merge))
-    rb = wordcloud(b, q, ch, date_from, date_to, size, bool(soft), bool(merge))
+    # 兩欄同時查：快取沒命中時，總耗時是較慢的那一欄，不是兩欄相加；合計超過上限就回 504（JSON），不讓連線一直掛著
+    fa, fb = (COMPARE_POOL.submit(wordcloud, s, q, ch, date_from, date_to, size, bool(soft), bool(merge)) for s in (a, b))
+    end = time.monotonic() + COMPARE_DEADLINE_S
+    try:
+        ra = fa.result(timeout=max(0.0, end - time.monotonic()))
+        rb = fb.result(timeout=max(0.0, end - time.monotonic()))
+    except FutureTimeout:
+        raise HTTPException(504, f"兩欄文字雲 {COMPARE_DEADLINE_S:.0f} 秒內沒算完")
     ta = {x["term"]: (i + 1, x["count"]) for i, x in enumerate(ra["buckets"])}
     tb = {x["term"]: (i + 1, x["count"]) for i, x in enumerate(rb["buckets"])}
     rows = []

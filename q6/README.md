@@ -26,6 +26,9 @@
 | 斷詞原型 | [`q6/code/`](code) | `segmenter.py`（新舊並行，`Segmenters.build(base_dict=…)` 可換主字典；`run_compare.py`、`kaohsiung_trace.py` 用 `--base-dict`）、`run_compare.py`、`kaohsiung_trace.py`（「高雄市」6→6 的證據：用 jieba 字典模擬的舊流程本來就沒拆）、`affected_demo.py`、`tests/`；結果 [`q6/code/RESULTS.md`](code/RESULTS.md)（jieba 內建字典與繁體 dict.txt.big 各一組對照）、估算 [`q6/code/PLAN.md`](code/PLAN.md) |
 | jieba 實驗 | [`q6/code/jieba_experiments/`](code/jieba_experiments) | 吞吐、dict.txt.big 覆蓋、加詞影響範圍、固定 total；輸出與 sha256 在 [`q6/data/jieba_experiments/`](data/jieba_experiments)；2026-10-30 在 Linux 重跑，除計時欄位外與 repo 版本相同（`rerun_linux.log`） |
 | 登入帳號重爬 60 張 | [`q6/evidence/meta-login/`](evidence/meta-login) | 2026-11-01 用登入帳號的 Chrome profile 把 Facebook 4、Instagram 8、Threads 3 個目標頁再爬一次：Facebook 4 → 65、Instagram 48 → 1,134、Threads 59 → 588 篇，登入牆 0 次；每頁有頁面與 F12 Network 截圖各 2 張，加上 cookie → API → JSON → 欄位的證據鏈；頭像、通知數、分頁標題已模糊 |
+| 登入重爬的程式、證據鏈圖與資料 | [`q6/code/meta-login/`](code/meta-login)、[`q6/evidence/meta-login/chain/`](evidence/meta-login/chain)、[`q6/data/meta-login/`](data/meta-login) | 六個步驟的程式（登入、只讀爬取、F12 補拍、遮罩、比較、證據頁）；三個平台的證據鏈圖與未登入 vs 登入比較；Instagram 已移除混入的推薦貼文 |
+| 六渠道歷史爬蟲（2023-01 起） | [`q6/code/history-crawl/`](code/history-crawl)、[`q6/evidence/history-crawl/`](evidence/history-crawl) | PTT 9 板、YouTube 7 頻道、FB／IG／Threads 登入重送 GraphQL cursor；自適應節流與 checkpoint；10 張執行中截圖、Grafana 看板、遙測統計；欄位與痛點 [`fields-and-painpoints.md`](evidence/history-crawl/fields-and-painpoints.md) |
+| 規模試跑 | [`q6/code/scale-pilot/`](code/scale-pilot)、[`q6/evidence/scale-pilot/`](evidence/scale-pilot) | 單機 ES 灌入 28.3 萬篇、538.7 MB（約 1.99 KB／篇），5 億篇外推約 950 GB，單機磁碟放不下；查詢延遲這次沒量到 |
 | 整套系統實跑（Docker） | [`q6/stack/`](stack) | 官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OTel／Prometheus／Grafana 全部在 Docker，零成本；42.5 萬篇 PTT 回補三輪、六渠道串流、PM A/B 文字雲頁。數字在 [`RESULTS.md`](stack/RESULTS.md)，截圖在 [`q6/evidence/stack/`](evidence/stack) |
 
 ## 2026-10-31 審查四點的處理

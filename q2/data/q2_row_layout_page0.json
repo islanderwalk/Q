@@ -1,0 +1,248 @@
+{
+ "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+ "source": "heap_page_items(get_raw_page('fb_posts', 0)) lp = 1；pg_column_size 取同一列 ctid (0,1)",
+ "page0": {
+  "lower": 56,
+  "upper": 832,
+  "free_bytes": 776,
+  "line_pointers": [
+   {
+    "lp": 1,
+    "lp_off": 7272,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 2,
+    "lp_off": 6352,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 3,
+    "lp_off": 5432,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 4,
+    "lp_off": 4512,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 5,
+    "lp_off": 3592,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 6,
+    "lp_off": 2672,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 7,
+    "lp_off": 1752,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   },
+   {
+    "lp": 8,
+    "lp_off": 832,
+    "lp_len": 920,
+    "t_hoff": 24,
+    "natts": 14
+   }
+  ]
+ },
+ "row": {
+  "lp": 1,
+  "lp_off": 7272,
+  "lp_len": 920,
+  "header_bytes_t_hoff": 24,
+  "natts": 14,
+  "header_fields": {
+   "t_xmin": "734",
+   "t_xmax": "0",
+   "t_cid_or_xvac": 12,
+   "t_ctid": "(0,1)",
+   "t_infomask2": 14,
+   "t_infomask": 2306,
+   "note": "xmin 4 + xmax 4 + cid 4 + ctid 6 + infomask2 2 + infomask 2 + hoff 1 = 23 B，補 1 B 到 24 B"
+  },
+  "page_name": "fanpage-07920",
+  "post_id_chars": 31,
+  "computed_total": 920,
+  "pg_column_size_row": 920
+ },
+ "columns": [
+  {
+   "column": "post_id",
+   "type": "text",
+   "align": 4,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 24,
+   "bytes": 32,
+   "length_header_bytes": 1,
+   "pg_column_size": 32
+  },
+  {
+   "column": "page_id",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 56,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "page_name",
+   "type": "text",
+   "align": 4,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 64,
+   "bytes": 14,
+   "length_header_bytes": 1,
+   "pg_column_size": 14
+  },
+  {
+   "column": "created_time",
+   "type": "timestamp with time zone",
+   "align": 8,
+   "pad_before": 2,
+   "pad_bytes_hex": "00 00",
+   "start_in_row": 80,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "message",
+   "type": "text",
+   "align": 4,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 88,
+   "bytes": 754,
+   "length_header_bytes": 4,
+   "pg_column_size": 754
+  },
+  {
+   "column": "like_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 6,
+   "pad_bytes_hex": "00 00 00 00 00 00",
+   "start_in_row": 848,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "love_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 856,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "wow_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 864,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "haha_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 872,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "sad_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 880,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "angry_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 888,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "care_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 896,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "reactions_total",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 904,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  },
+  {
+   "column": "share_cnt",
+   "type": "bigint",
+   "align": 8,
+   "pad_before": 0,
+   "pad_bytes_hex": "",
+   "start_in_row": 912,
+   "bytes": 8,
+   "length_header_bytes": 0,
+   "pg_column_size": 8
+  }
+ ],
+ "checks": {
+  "computed_total_equals_lp_len": true,
+  "every_column_matches_pg_column_size": true,
+  "padding_is_zero_bytes": true
+ }
+}

@@ -1,0 +1,155 @@
+{
+ "captured_at": "2026-11-04T02:58:43+00:00",
+ "dashboard_range": "now-3h → now",
+ "shots": [
+  {
+   "file": "drill-dashboard-full.png",
+   "what": "看板全頁（now-3h 到現在）"
+  },
+  {
+   "file": "drill-panel-02.png",
+   "what": "新文章多久可搜尋：最久等待（分鐘）",
+   "panel_id": 2
+  },
+  {
+   "file": "drill-panel-03.png",
+   "what": "留言新鮮度：最久沒重抓（小時）",
+   "panel_id": 3
+  },
+  {
+   "file": "drill-panel-04.png",
+   "what": "每日不變量檢查",
+   "panel_id": 4
+  },
+  {
+   "file": "drill-panel-05.png",
+   "what": "上一輪結果",
+   "panel_id": 5
+  },
+  {
+   "file": "drill-panel-06.png",
+   "what": "距上一輪結束",
+   "panel_id": 6
+  },
+  {
+   "file": "drill-panel-08.png",
+   "what": "可搜尋文章",
+   "panel_id": 8
+  },
+  {
+   "file": "drill-panel-09.png",
+   "what": "留言",
+   "panel_id": 9
+  },
+  {
+   "file": "drill-panel-10.png",
+   "what": "已標記刪文（404）",
+   "panel_id": 10
+  },
+  {
+   "file": "drill-panel-11.png",
+   "what": "待抓佇列",
+   "panel_id": 11
+  },
+  {
+   "file": "drill-panel-13.png",
+   "what": "每分鐘請求數（依種類）",
+   "panel_id": 13
+  },
+  {
+   "file": "drill-panel-14.png",
+   "what": "PTT 回應時間",
+   "panel_id": 14
+  },
+  {
+   "file": "drill-panel-15.png",
+   "what": "過去 24 小時請求數",
+   "panel_id": 15
+  },
+  {
+   "file": "drill-panel-17.png",
+   "what": "退避等待",
+   "panel_id": 17
+  },
+  {
+   "file": "drill-panel-18.png",
+   "what": "每小時入庫",
+   "panel_id": 18
+  },
+  {
+   "file": "drill-panel-20.png",
+   "what": "每小時寫入批次",
+   "panel_id": 20
+  },
+  {
+   "file": "drill-panel-21.png",
+   "what": "過去 24 小時整輪還原",
+   "panel_id": 21
+  },
+  {
+   "file": "drill-panel-22.png",
+   "what": "新文入庫延遲（發文到可搜尋）",
+   "panel_id": 22
+  },
+  {
+   "file": "drill-panel-24.png",
+   "what": "過去 24 小時新增留言：依文章發文第幾天",
+   "panel_id": 24
+  },
+  {
+   "file": "drill-panel-25.png",
+   "what": "每小時重抓篇數：依發文第幾天",
+   "panel_id": 25
+  },
+  {
+   "file": "drill-panel-27.png",
+   "what": "① 單次請求失敗（非 200／404）",
+   "panel_id": 27
+  },
+  {
+   "file": "drill-panel-28.png",
+   "what": "② 事後刪文 404",
+   "panel_id": 28
+  },
+  {
+   "file": "drill-panel-29.png",
+   "what": "③ 「檔案過大」被截斷的文章（7 天內）",
+   "panel_id": 29
+  },
+  {
+   "file": "drill-panel-31.png",
+   "what": "上次不變量檢查",
+   "panel_id": 31
+  },
+  {
+   "file": "drill-panel-32.png",
+   "what": "推文數吻合比例（輔助）",
+   "panel_id": 32
+  },
+  {
+   "file": "drill-panel-33.png",
+   "what": "查詢 API",
+   "panel_id": 33
+  },
+  {
+   "file": "drill-panel-34.png",
+   "what": "過去 24 小時 BigQuery 掃描量",
+   "panel_id": 34
+  },
+  {
+   "file": "drill-search-1.png",
+   "what": "搜尋頁：颱風",
+   "keyword": "颱風",
+   "meta": "50 篇文章（貼文命中 40、留言命中 76）· 18399 ms · 掃描 50.5 kB"
+  },
+  {
+   "file": "drill-search-1-api.png",
+   "what": "查詢 API 回傳的 JSON：颱風（limit=3）",
+   "keyword": "颱風"
+  },
+  {
+   "file": "drill-prometheus-alerts.png",
+   "what": "Prometheus 告警規則與目前狀態"
+  }
+ ]
+}

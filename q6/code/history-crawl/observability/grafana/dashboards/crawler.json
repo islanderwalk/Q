@@ -1,0 +1,605 @@
+{
+ "uid": "crawler-monitor",
+ "title": "爬蟲監測",
+ "tags": [
+  "crawler"
+ ],
+ "timezone": "Asia/Taipei",
+ "refresh": "30s",
+ "time": {
+  "from": "now-3h",
+  "to": "now"
+ },
+ "schemaVersion": 39,
+ "panels": [
+  {
+   "id": 13,
+   "type": "stat",
+   "title": "爬蟲狀態（看門狗每 2 分鐘回報）",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 18,
+    "h": 5
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     },
+     "expr": "max by (crawler) (crawler_up{job=\"watchdog\"})",
+     "legendFormat": "{{crawler}}",
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "noValue": "看門狗沒回報",
+     "mappings": [
+      {
+       "type": "value",
+       "options": {
+        "1": {
+         "text": "執行中",
+         "color": "green"
+        },
+        "2": {
+         "text": "跑完，等下一輪",
+         "color": "blue"
+        },
+        "0": {
+         "text": "停止",
+         "color": "red"
+        }
+       }
+      }
+     ],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       },
+       {
+        "color": "blue",
+        "value": 2
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value_and_name",
+    "orientation": "horizontal",
+    "justifyMode": "center"
+   }
+  },
+  {
+   "id": 14,
+   "type": "stat",
+   "title": "看門狗上次回報（秒前）",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 18,
+    "y": 0,
+    "w": 6,
+    "h": 5
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     },
+     "expr": "time() - max(watchdog_heartbeat_seconds{job=\"watchdog\"})",
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "decimals": 0,
+     "noValue": "看門狗沒回報",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 300
+       },
+       {
+        "color": "red",
+        "value": 600
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none"
+   }
+  },
+  {
+   "id": 1,
+   "title": "每分鐘請求數（依平台）",
+   "type": "timeseries",
+   "datasource": {
+    "type": "loki",
+    "uid": "crawl_loki"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "sum by (platform) (count_over_time({job=~\"$job\",kind=\"trace\"}[1m]))",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "crawl_loki"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 2,
+   "title": "狀態分佈 2xx/3xx/4xx/5xx/failed",
+   "type": "timeseries",
+   "datasource": {
+    "type": "loki",
+    "uid": "crawl_loki"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 5,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "sum by (status_class) (count_over_time({job=~\"$job\",kind=\"trace\"}[1m]))",
+     "legendFormat": "{{status_class}}",
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "crawl_loki"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "stacking": {
+       "mode": "normal"
+      },
+      "drawStyle": "bars",
+      "fillOpacity": 80
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 3,
+   "title": "API p95 延遲 ms（依平台）",
+   "type": "timeseries",
+   "datasource": {
+    "type": "loki",
+    "uid": "crawl_loki"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 13,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "quantile_over_time(0.95, {job=~\"$job\",kind=\"trace\",api=\"true\"} | json | latency_ms != \"\" | unwrap latency_ms [1m]) by (platform)",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "crawl_loki"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 4,
+   "title": "API p95（Pushgateway，每分鐘）",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 13,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "crawl_api_p95_ms{job=~\"$job\"}",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {
+     "unit": "ms"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 5,
+   "title": "每分鐘新貼文",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 21,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "crawl_new_posts_per_min{job=~\"$job\"}",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 6,
+   "title": "累計貼文（依目標）",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 21,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "crawl_posts_total{job=~\"$job\"}",
+     "legendFormat": "{{platform}}/{{target}}",
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 7,
+   "title": "目前間隔秒數",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 21,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "crawl_delay_seconds{job=~\"$job\"}",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 8,
+   "title": "退避等級 backoff level",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 29,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "crawl_backoff_level{job=~\"$job\"}",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 9,
+   "title": "Session 狀態（1=正常 0=異常）",
+   "type": "stat",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "crawl_prom"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 29,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "crawl_session_ok{job=~\"$job\"}",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "crawl_prom"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {
+     "mappings": [
+      {
+       "type": "value",
+       "options": {
+        "1": {
+         "text": "OK",
+         "color": "green"
+        },
+        "0": {
+         "text": "異常",
+         "color": "red"
+        }
+       }
+      }
+     ],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 10,
+   "title": "非 200 狀態碼（每分鐘）",
+   "type": "timeseries",
+   "datasource": {
+    "type": "loki",
+    "uid": "crawl_loki"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 29,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "expr": "sum by (platform) (count_over_time({job=~\"$job\",kind=\"trace\",status_class=~\"4xx|5xx|failed\"}[1m]))",
+     "legendFormat": "{{platform}}",
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "crawl_loki"
+     }
+    }
+   ],
+   "options": {},
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 11,
+   "title": "事件：session / 異常 / 截圖 / 完成",
+   "type": "logs",
+   "datasource": {
+    "type": "loki",
+    "uid": "crawl_loki"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 37,
+    "w": 24,
+    "h": 12
+   },
+   "targets": [
+    {
+     "expr": "{job=~\"$job\",kind=\"event\"}",
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "crawl_loki"
+     }
+    }
+   ],
+   "options": {
+    "showTime": true,
+    "wrapLogMessage": true,
+    "sortOrder": "Descending"
+   },
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 12,
+   "title": "非 200 請求明細",
+   "type": "logs",
+   "datasource": {
+    "type": "loki",
+    "uid": "crawl_loki"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 49,
+    "w": 24,
+    "h": 10
+   },
+   "targets": [
+    {
+     "expr": "{job=~\"$job\",kind=\"trace\",status_class=~\"4xx|5xx|failed\"}",
+     "refId": "A",
+     "datasource": {
+      "type": "loki",
+      "uid": "crawl_loki"
+     }
+    }
+   ],
+   "options": {
+    "showTime": true,
+    "wrapLogMessage": true,
+    "sortOrder": "Descending"
+   },
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  }
+ ],
+ "templating": {
+  "list": [
+   {
+    "name": "job",
+    "type": "custom",
+    "query": "meta_crawl,youtube_api,ptt_crawl",
+    "multi": true,
+    "includeAll": true,
+    "allValue": ".+",
+    "current": {
+     "text": "All",
+     "value": "$__all"
+    },
+    "options": []
+   }
+  ]
+ }
+}

@@ -162,6 +162,29 @@ def test_manifest_poller_swaps_once_when_current_is_newer(monkeypatch):
     assert control.MANIFEST_POLL_SEC == 15
 
 
+def test_release_redelivered_after_done_does_not_overwrite_status(monkeypatch):
+    """重跑超過 ack 期限、同一則發版訊息又送來一次：服務已在新版，只有還是 queued 的那一列才記 skipped，done 不會被蓋掉。"""
+    executed = []
+
+    class Conn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, sql, params=()):
+            executed.append((sql, list(params)))
+    monkeypatch.setattr(control, "_pg", lambda: Conn())
+    control.handle_release({"dict_version": V_NEW, "words": ["台中"], "run_id": 7}, control.SegState(D(V_NEW)), es=None)
+    (sql, params), = executed
+    assert sql.startswith("UPDATE rerun_runs SET status=%s") and sql.endswith("WHERE id=%s AND status = ANY(%s)")
+    assert params[0] == "skipped" and params[-2:] == [7, ["queued"]]
+    executed.clear()
+    control.set_run(7, status="done")                       # 一般的進度更新不加條件
+    assert executed[0][0].endswith("WHERE id=%s") and executed[0][1][-1] == 7
+
+
 def test_handle_release_uses_load_and_swap_and_counts_source():
     src = read_text(SEG / "qseg" / "control.py")
     assert 'load_and_swap(state, msg["dict_version"], source="control"' in src

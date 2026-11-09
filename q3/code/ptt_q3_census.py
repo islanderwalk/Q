@@ -325,6 +325,8 @@ def _group(recs, keyf):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # 繁中 Windows 的 cp950 印不出 ≥、≈，導向檔案時會中斷
+        sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="QSearch 第 3 題補強驗證")
     ap.add_argument("--index", default=str(Path(__file__).resolve().parents[1] / "data" / "ptt_q3_out" / "index_entries.csv"))
     ap.add_argument("--sample", default=str(Path(__file__).resolve().parents[1] / "data" / "ptt_q3_out" / "article_sample.json"))

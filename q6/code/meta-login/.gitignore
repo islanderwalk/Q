@@ -1,0 +1,8 @@
+profile/
+evidence/
+loggedin/
+anon/
+site/
+login_status.json
+*.log
+__pycache__/

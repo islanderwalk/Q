@@ -2,7 +2,7 @@
 給 Prometheus 抓。這是 Cloud Run Job 定時查 ES 的本機版；GCP 上同一段查詢改由排程 Job 推到 Cloud Monitoring 自訂指標。
 
 - 未斷詞：fetched_at 落在 now-1h～now-15m 之間、且沒有 seg_ver_v2 的文章數。排除最近 15 分鐘（還在串流途中）與 1 小時前的（那是 P0-4 積壓的範圍）。
-- published_at 缺值：沒有 published_at 欄位的文章數（IG 48/48 缺值：已對本機 data/channels/instagram.jsonl 核對，未對 ES 驗證）。
+- published_at 缺值：沒有 published_at 欄位的文章數（IG 樣本原本 48/48 缺值，2026-11-04 已補上，見 data/channels/COLLECTION.md）。
 - A/B 覆蓋：有 terms_v2 的文章數 ÷ 該渠道文章數。分母是「該渠道全部文章」，不是驗收範圍（驗收範圍未定義，見 MONITORING.md）。
 
 用法：python -m qseg coverage [--once] [--interval 60]；預設常駐並在 COVERAGE_PORT（預設 9110）提供 /metrics。

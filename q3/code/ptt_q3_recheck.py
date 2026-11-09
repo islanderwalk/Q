@@ -18,6 +18,7 @@ import bisect
 import csv
 import json
 import statistics
+import sys
 from collections import Counter
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -124,6 +125,8 @@ def young_windows(ok, ts_sorted, first_end, last_end, hours=1.2, step_s=600):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # 繁中 Windows 的 cp950 印不出 ≥、≈，導向檔案時會中斷
+        sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="QSearch 第 3 題：離線重算 README 的數字")
     ap.add_argument("--index", default=str(DATA / "ptt_q3_out" / "index_entries.csv"))
     ap.add_argument("--census", default=str(DATA / "ptt_q3_census_out" / "articles.jsonl"))
