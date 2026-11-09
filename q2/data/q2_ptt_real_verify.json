@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-11-06T10:39:42+08:00",
+  "db": "q2_ptt",
+  "source": "q2_ptt.ptt_articles（status=200、body 非空、published_at 非空）→ fb_posts",
+  "load": {
+    "ran": true,
+    "seconds": 2.1,
+    "sql": "q2/code/sql/ptt_q2_load.sql"
+  },
+  "reference": {
+    "source": "q2/code/RESULTS.md 第三節（未重新量測）",
+    "ptt_1m_bigram_gin_bytes_per_row": 947,
+    "ptt_1m_bigram_bytes_per_posting": 3.8,
+    "ptt_1m_avg_content_bytes": 680,
+    "repeat_1m_bigram_bytes_per_posting": 1.63,
+    "repeat_1m_avg_content_bytes": 754
+  },
+  "source_counts": {
+    "ptt_articles_total": 138,
+    "status_404": 5,
+    "usable_status200_nonempty_body": 133,
+    "excluded_null_published_at": 0,
+    "loaded_into_fb_posts": 131
+  },
+  "sample": {
+    "n": 131,
+    "avg_chars_W": 836.6,
+    "avg_bytes": 1769.73,
+    "avg_bytes_per_char": 2.115,
+    "cjk_char_share": 0.5084,
+    "nonascii_char_share": 0.5577,
+    "avg_post_id_chars": 33.79,
+    "avg_pg_column_size_message": 1528.1,
+    "avg_row_bytes_pg_column_size": 1698.99,
+    "avg_row_bytes_rows_under_2032": 1084.76,
+    "measured_other_bytes_row_minus_message": 170.89,
+    "W_minus_250": 586.6,
+    "page_count_boards_as_pages": 9
+  },
+  "distribution": {
+    "chars_p50": 646.0,
+    "chars_p90": 1515.0,
+    "chars_p99": 4717.099999999984,
+    "bytes_p50": 1372.0,
+    "bytes_p90": 3313.0,
+    "bytes_p99": 9592.09999999998,
+    "chars_min": 132,
+    "chars_max": 6734,
+    "rows_over_toast_threshold_est": 46,
+    "share_over_toast_threshold_est": 0.3511,
+    "toast_threshold_message_bytes": 1864,
+    "rows_compressed_message": 21,
+    "share_compressed_message": 0.1603,
+    "rows_heap_tuple_over_2032": 42
+  },
+  "pages": {
+    "blocks": 14,
+    "rows_per_page_avg_full_pages": 9.92,
+    "rows_per_page_min_full": 5,
+    "rows_per_page_max_full": 15,
+    "rows_per_page_mode_full": 7,
+    "rows_per_page_avg_all": 9.36,
+    "rows_per_page_formula_est": 3,
+    "rows_per_page_formula_est_with_measured_bytes": 4
+  },
+  "sizes": {
+    "heap_bytes": 114688,
+    "toast_bytes": 139264,
+    "toast_total_bytes_with_index": 180224,
+    "btree_page_id_bytes": 16384,
+    "bigram_gin_bytes": 1908736,
+    "total_relation_bytes": 2244608,
+    "distinct_postings": 70677,
+    "posting_occurrences_N_times_W_minus_1": 109463.0
+  },
+  "comparison": [
+    {
+      "item": "每列大小（頁面公式，3·W）",
+      "unit": "B",
+      "est": 2677.8,
+      "meas": 1699.0,
+      "err_pct": 57.6
+    },
+    {
+      "item": "每列大小（公式，內文改用實測位元組）",
+      "unit": "B",
+      "est": 1937.7,
+      "meas": 1699.0,
+      "err_pct": 14.0
+    },
+    {
+      "item": "每頁列數",
+      "unit": "列/頁",
+      "est": 3,
+      "meas": 9.92,
+      "err_pct": -69.8
+    },
+    {
+      "item": "表 heap（不含 TOAST）",
+      "unit": "B",
+      "est": 360448,
+      "meas": 114688,
+      "err_pct": 214.3
+    },
+    {
+      "item": "表 heap + TOAST（公式沒算 TOAST）",
+      "unit": "B",
+      "est": 360448,
+      "meas": 253952,
+      "err_pct": 41.9
+    },
+    {
+      "item": "粉絲頁 ID btree",
+      "unit": "B",
+      "est": 1273,
+      "meas": 16384,
+      "err_pct": -92.2
+    },
+    {
+      "item": "中文全文 bigram GIN（分母 N·(W−1)）",
+      "unit": "B",
+      "est": 178425,
+      "meas": 1908736,
+      "err_pct": -90.7
+    },
+    {
+      "item": "每個 posting（分母 N·(W−1)）",
+      "unit": "B/posting",
+      "est": 1.63,
+      "meas": 17.437,
+      "err_pct": -90.7
+    },
+    {
+      "item": "每個 posting（分母 = 每列不重複兩字詞數）",
+      "unit": "B/posting",
+      "est": 1.63,
+      "meas": 27.006,
+      "err_pct": -94.0
+    }
+  ],
+  "formula": {
+    "row": "OTHER 164 + text；text = 3·W + (1 或 4 B 長度標頭)",
+    "slot": "ceil(row/8)·8 + 4",
+    "perPage": "floor(8168 / slot)",
+    "table": "ceil(N / perPage) · 8192",
+    "btree": "(6·N + 40·粉絲頁數) / 0.9",
+    "gin": "N · (W − 1) · 1.63",
+    "target_page_example": {
+      "N": 1000000,
+      "W": 250,
+      "row": 918,
+      "table_bytes": 1024000000
+    }
+  },
+  "status": "ok_small_sample",
+  "caveats": [
+    "樣本只有 131 則，每頁列數、索引體積的誤差都還不穩定，不能下結論。",
+    "公式假設每列未壓縮、全部放進頁裡。超過約 2 KB 的列，PostgreSQL 會先壓縮內文，壓完還大就搬到 TOAST 表，列內只留約 18 B 的指標。所以 (a) 的 heap 估計會高估這些長文的占用，但 TOAST 表另外占空間，公式沒有算。(a) 的總量要看「表 heap + TOAST」那一列。",
+    "PTT 內文的字數很散（p50 646 字、p99 4717 字），超過 TOAST 門檻的比例 35.11%。頁面的 (a) 把所有列當成同一個長度（每列 W 字），長文比例不為零時，平均字數會被拉高，而且 250 字的假設不一定貼近真實貼文。",
+    "(c) 的 1.63 B/posting 是重複段落的合成資料量出來的。PTT 真實文字在 RESULTS.md 量到的是約 3.80 B/posting，所以用真實文字時，全文索引會比頁面的估計高很多。這次的實測數字要和這個參考值一起看。",
+    "每個 posting 的 B 數會隨資料量下降（posting list 越長，壓縮越好），小樣本量到的值通常偏高，不能線性外推到 100 萬則。",
+    "(b) 的 40 B·粉絲頁數 那一項，這次把每個 PTT 看板當成一個粉絲頁，粉絲頁數很少，所以這一項幾乎可以忽略。btree 只有 6 B·N 那一項有意義；實測時 btree 會做重複鍵壓縮，所以實際可能比估計小。",
+    "post_id 實測平均 33.79 字（頁面 schema 註解寫 31 字），會讓 OTHER 略有不同；實測的 OTHER 已列在上面。"
+  ]
+}

@@ -17,6 +17,7 @@ const dt = iso => iso ? new Date(iso).toLocaleString('zh-TW', { hour12: false })
 const ago = iso => { if (!iso) return '—'; const s = Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000)); return s < 60 ? `${s} 秒前` : s < 3600 ? `${Math.round(s / 60)} 分前` : `${(s / 3600).toFixed(1)} 小時前`; };
 let last = null, token = null, lastChange = null, polling = false, running = false, fullLedger = false, watchRun = null;
 let runCtl = null, ledgerSig = null;
+let stale = false, retryAt = 0, fails = 0;   // stale：資料變了或上次沒查到、還沒重查成功；retryAt：沒查到之後下一次自動重查的最早時間
 const rum = window.rum || { api() {}, render() {}, firstCloud() {}, mismatch() {} };
 const prev = { v1: null, v2: null };
 
@@ -26,7 +27,7 @@ async function api(path, opts) {
   try {
     const r = await fetch(path, opts);
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.detail || r.statusText);
+    if (!r.ok) throw Object.assign(new Error(j.detail || r.statusText || `HTTP ${r.status}`), { status: r.status });
     ok = true;
     return j;
   } finally {
@@ -94,10 +95,13 @@ function dropped(seg, res) {
 }
 
 async function run(fromPoll) {
-  if (running && fromPoll) return;        // 自動重查不打斷使用者正在等的查詢
-  if (runCtl) runCtl.abort();             // 使用者再按查詢：中止上一次（最長 180 秒），不用等它跑完
+  if (running && fromPoll) return;        // 自動重查不打斷使用者正在等的查詢（期間資料又變了：stale 留著，這次查完下一輪輪詢再查）
+  if (runCtl) runCtl.abort();             // 使用者再按查詢：中止上一次，不用等它跑完
   const ctl = new AbortController();
   runCtl = ctl;
+  stale = false;
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, 200000);   // API 兩欄並行、185 秒內一定回應；200 秒還沒回應就當沒查到，照常重查
   running = true; $('go').disabled = true;
   const t0 = performance.now();
   try {
@@ -105,6 +109,7 @@ async function run(fromPoll) {
     const r = await api('/api/compare?' + params({ a: left, b: 'v2' }), { signal: ctl.signal });
     if (runCtl !== ctl) return;           // 已經被更新的查詢取代
     last = r;
+    fails = 0;
     banner(null);
     const hl1 = changes('v1', r.a.buckets), hl2 = changes('v2', r.b.buckets);
     const pal1 = [css('--v1'), css('--muted'), css('--text')], pal2 = [css('--accent'), css('--text'), '#0e7490', '#7c3aed', '#b45309'];
@@ -126,9 +131,16 @@ async function run(fromPoll) {
     $('foot').textContent = `request_id ${left}=${r.a.request_id} v2=${r.b.request_id}｜瀏覽器端總耗時 ${Math.round(performance.now() - t0)} ms｜` +
       `新版詞表 doc_count_error_upper_bound=${r.b.doc_count_error_upper_bound}｜ES 狀態 token=${r.state_token}`;
   } catch (e) {
-    if (e.name === 'AbortError') return;
-    banner('查不到文字雲：' + e.message);
+    if (e.name === 'AbortError' && !timedOut) return;   // 被使用者的新查詢取代
+    if (runCtl !== ctl) return;
+    // 沒查到（連線中斷、API 回錯、逾時）：標成 stale，由 2 秒一次的輪詢自動重查，不必等資料再變或使用者再按
+    fails += 1;
+    const wait = Math.min(60, 5 * 2 ** (fails - 1));   // 5、10、20、40、60 秒
+    stale = true; retryAt = Date.now() + wait * 1000;
+    const why = timedOut ? '200 秒沒有回應' : e.status ? `API 回 ${e.status}：${e.message}` : `連線中斷、沒收到回應（${e.message}）`;
+    banner(`查不到文字雲（${t(new Date().toISOString())}）：${why}；${wait} 秒後自動重查`);
   } finally {
+    clearTimeout(timer);
     if (runCtl === ctl) { running = false; $('go').disabled = false; runCtl = null; }
   }
 }
@@ -306,7 +318,8 @@ async function status() {
     if (s.es && s.es.ok === false) banner(s.es.error);
     const changed = token !== null && s.token !== token;
     token = s.token;
-    if (changed) { lastChange = new Date(); if ($('auto').checked && s.es.ok) run(true); }
+    if (changed) { lastChange = new Date(); stale = true; }
+    if (stale && $('auto').checked && s.es.ok && !running && Date.now() >= retryAt) run(true);   // 資料變了、或上次沒查到（依 5、10、20…秒間隔）就重查
     $('live').classList.toggle('changed', !!lastChange && Date.now() - lastChange < 3000);
     $('live-text').textContent = `每 2 秒讀一次｜${s.es.ok ? 'ES 連線正常' : 'ES 無法查詢'}｜最後變化 ${lastChange ? t(lastChange.toISOString()) : '—'}`;
   } catch (e) {

@@ -1,5 +1,5 @@
 """P0 監控測試共用的對應元件。本機沒有 prometheus_client 時才安裝最小對應元件（只支援 Counter／Gauge／Histogram 的 labels、inc、set、observe），
-有裝 prometheus_client 就用它。讀數一律走 metric.labels(...)._value.get()，兩種實作都成立。
+有裝 prometheus_client 就用它。讀數一律走 metric.labels(...)._value.get()（Histogram 的總和走 ._sum.get()），兩種實作都成立。
 不碰網路、不碰 GCP、不碰 ES；ES 用測試內的假物件。"""
 import sys
 import types
@@ -25,6 +25,7 @@ class _Val:
 class _Child:
     def __init__(self):
         self._value = _Val()
+        self._sum = self._value      # Histogram 的觀察值總和（prometheus_client 本體 讀 ._sum.get()）；對應元件的 observe 本來就是累加
 
     def inc(self, amount=1):
         self._value.v += amount

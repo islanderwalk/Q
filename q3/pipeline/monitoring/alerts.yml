@@ -1,0 +1,41 @@
+# 只對「結果」告警（答案第 5 題）：單次請求失敗與延遲、事後刪文 404、檔案過大截斷都只記錄在看板上，不告警。
+groups:
+  - name: q3-ptt-search
+    rules:
+      - alert: Q3NewPostsNotSearchable
+        expr: q3_unsearchable_oldest_minutes > 360
+        for: 10m
+        labels: {severity: page}
+        annotations:
+          summary: "規格 1：有新文章發文超過 6 小時還不能搜尋"
+      - alert: Q3CommentsStale
+        expr: q3_comment_staleness_max_hours > 24
+        for: 30m
+        labels: {severity: page}
+        annotations:
+          summary: "規格 2：7 天內有文章超過 24 小時沒有重抓留言"
+      - alert: Q3InvariantFailed
+        expr: q3_verify_ok == 0
+        labels: {severity: page}
+        annotations:
+          summary: "每日不變量檢查失敗：填滿的列表頁不是 20 格、有文章沒入庫、或時間戳倒序"
+      - alert: Q3VerifyNotRun
+        expr: time() - q3_verify_last_run_timestamp_seconds > 26 * 3600
+        labels: {severity: ticket}
+        annotations:
+          summary: "超過 26 小時沒有跑不變量檢查"
+      - alert: Q3CrawlerDown
+        expr: time() - push_time_seconds{job="q3_crawler"} > 180
+        labels: {severity: page}
+        annotations:
+          summary: "抓取程序 3 分鐘沒有回報（程序停了或卡住）"
+      - alert: Q3RunNotFinishing
+        expr: time() - q3_run_last_finished_timestamp_seconds > 2 * 3600 and q3_run_in_progress == 0
+        labels: {severity: page}
+        annotations:
+          summary: "超過 2 小時沒有跑完一輪"
+      - alert: Q3RunRolledBackOrBlocked
+        expr: q3_run_status{status=~"rolled_back|gate_blocked|failed"} == 1
+        labels: {severity: ticket}
+        annotations:
+          summary: "上一輪被品質檢查擋下、整輪還原或失敗；下一輪會先用一小批試探"

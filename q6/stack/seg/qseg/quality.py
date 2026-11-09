@@ -3,15 +3,20 @@
 
 每個渠道（抽樣最近 QUALITY_WINDOW 內、有 terms_v2 的 QUALITY_SAMPLE 篇）：
 - 洩漏率：詞表裡有網址殘片（job.url_leaks，看原文）、電話狀數字、純數字、硬停用詞的篇數 ÷ 抽樣篇數（與回補 G2 同一套定義）
-- 必不可拆詞被切開的篇數比例（pipeline.must_keep_split，用目前字典重算斷點）；其中「地名」（使用者字典裡以縣市區鄉鎮村里結尾的詞）另計
+- 必不可拆詞被切開的篇數比例（pipeline.must_keep_split，用目前字典重算斷點）；其中「地名」（使用者字典裡以縣市區鄉鎮村里結尾的詞）另計；
+  被切開的地方留例子（post_id、詞、切法、清洗後原文前後 10 字，每渠道最多 QUALITY_SPLIT_EXAMPLES 筆）：quality_daily.split_examples 與日誌 quality_splits
 - 前 50 詞：對昨天的 RBO（p=0.9，外推）與 JS 散度（排名與分布有沒有大變）；v1 對 v2 的 RBO（A/B 距離）
 全庫：
-- 查詢詞整詞召回：該詞原封不動成為 token 的篇數 ÷ content.bigram 片語比對篇數（≥ QUALITY_MIN_DOCS 篇才算）；詞來自 dict_releases.added_words、
-  金標裡的使用者字典詞、QUALITY_PROBES
+- 查詢詞整詞召回：content.bigram 片語比對（≥ QUALITY_MIN_DOCS 篇才算）的篇數裡，沒有確實被切開的比例；詞來自 dict_releases.added_words、
+  金標裡的使用者字典詞、QUALITY_PROBES。口徑與 must_keep_split 一致：片語有、terms_v2 沒有的「漏網」文章每詞隨機抽 QUALITY_MISS_SAMPLE 篇
+  用目前字典重斷，只有 split 算漏，交集型歧義（台北／市長）、在更長的詞裡（台北市立）、詞表過期都不算（估計方法見 whole_word）。
+  原始口徑（Σ整詞 ÷ Σ片語）留在 whole_word_worst 每個詞的 recall_raw 與日誌 quality_daily 的 whole_word_recall_raw
 - 150 題金標召回（seg/quality/gold_150.json，與 q6/code/recall_eval.py 同一份）：v0／v1／v2 各算，v1→v2、v0→v2 做 McNemar 精確檢定
 - 新詞暴增：今天 terms_v2 前 300 名對前 7 天平均 z > 3 且今天 ≥ QUALITY_SURGE_MIN 篇；整詞率 < 50% 的標成 fragment（新詞被切碎，該進字典）
 
 用法：python -m qseg quality [--once] [--interval 86400]。門檻都是提案值，寫在 monitoring/rules/quality.yml。
+唯讀診斷：python -m qseg quality --diagnose [--seed YYYYMMDD] [--examples 5]：同一套查詢與抽樣，印出每個詞的漏網分類與例子、
+各渠道被切開的詞與上下文；不建表、不寫 PG／ES、不更新 /metrics（diagnose）。
 """
 import json
 import math
@@ -32,9 +37,17 @@ SURGE_Z = float(os.environ.get("QUALITY_SURGE_Z", "3"))
 TOP_N = int(os.environ.get("QUALITY_TOP_N", "50"))
 PROBES = [w.strip() for w in os.environ.get("QUALITY_PROBES", "").split(",") if w.strip()]
 GOLD_PATH = Path(os.environ.get("QUALITY_GOLD", str(Path(__file__).resolve().parent.parent / "quality" / "gold_150.json")))
+# 整詞召回的漏網抽樣：漏最多的 MISS_WORDS 個詞、每詞最多 MISS_SAMPLE 篇，ES 每天最多多抓 MISS_WORDS × MISS_SAMPLE 篇原文
+MISS_SAMPLE = int(os.environ.get("QUALITY_MISS_SAMPLE", "200"))
+MISS_WORDS = int(os.environ.get("QUALITY_MISS_WORDS", "20"))
+EXAMPLES = int(os.environ.get("QUALITY_SPLIT_EXAMPLES", "20"))     # 每個渠道最多記幾筆被切開的例子
+CONTEXT = 10                                                         # 例子帶清洗後原文前後各幾個字
 TZ = timezone(timedelta(hours=8))          # 台灣（無日光節約）；ES 的 date_histogram 也用 +08:00 切日
 PLACE_RE = re.compile(r".{1,5}[縣市區鄉鎮村里]$")
 LEAK_KINDS = ("url", "phone", "number", "stopword", "must_keep_split")
+# 漏網文章用目前字典重斷後的分類（miss_kind），只有 split 算漏；順序就是判斷的優先序
+MISS_KINDS = ("stale", "split", "overlap", "inside", "filtered", "absent")
+WORST_LOG_KEYS = ("word", "phrase", "whole", "recall_raw", "misses", "sampled", "kinds", "split_est", "recall")   # 日誌只放這幾欄，例子看 PG
 PHONE_RE = re.compile(r"^[0-9][0-9\-]{6,}$")
 NUMBER_RE = re.compile(r"^[0-9]+$")
 
@@ -53,6 +66,7 @@ CREATE TABLE IF NOT EXISTS quality_daily (
   computed_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (day, channel)
 );
+ALTER TABLE quality_daily ADD COLUMN IF NOT EXISTS split_examples jsonb;   -- 被切開的必不可拆詞例子（每渠道最多 20 筆）；舊表跑日報時自己補欄
 """
 
 
@@ -143,25 +157,63 @@ def leak_flags(content: str, terms: list, stopwords, url_leaks) -> dict:
             "stopword": any(t in stopwords for t in terms)}
 
 
-def channel_stats(docs: list, dic, url_leaks, segment_checked) -> dict:
-    """一個渠道的抽樣統計。docs: [{content, terms_v2}]。must_keep_split／地名用目前字典重算斷點。"""
+def cut_of(toks: list, i: int, j: int) -> str:
+    """蓋到原文 [i, j) 的那幾個詞用／接起來：鳳山／區、辦好／市多、台北／市長。"""
+    return "／".join(t for t, s, e in toks if s < j and e > i)
+
+
+def context_of(text: str, i: int, j: int) -> str:
+    return re.sub(r"\s+", " ", text[max(0, i - CONTEXT): j + CONTEXT])
+
+
+def split_examples(post_id, clean: str, toks: list, bad: list, places, freq=None) -> list:
+    """被切開的必不可拆詞 → 例子：每個詞取第一處 split（pipeline.occurrence_kind），附切法 cut 與清洗後原文前後 CONTEXT 字。
+    freq：斷詞器的詞頻表（pipeline.dict_freq），與 must_keep_split 同一條規則。"""
+    from .pipeline import occurrences
+    out = []
+    for w in bad:
+        i = next((i for i, k in occurrences(clean, toks, w, freq) if k == "split"), None)
+        if i is not None:
+            j = i + len(w)
+            out.append({"post_id": post_id, "word": w, "place": w in places, "cut": cut_of(toks, i, j), "context": context_of(clean, i, j)})
+    return out
+
+
+def pick_examples(examples: list, k: int = None) -> list:
+    """最多 k 筆（預設 EXAMPLES）：每個詞先各取一筆再輪下一輪，同一輪地名優先，不會被同一個詞佔滿。"""
+    k = EXAMPLES if k is None else k
+    seen, keyed = {}, []
+    for n, e in enumerate(examples):
+        r = seen.get(e["word"], 0)
+        seen[e["word"]] = r + 1
+        keyed.append(((r, not e.get("place"), n), e))
+    return [e for _, e in sorted(keyed, key=lambda x: x[0])[:k]]
+
+
+def channel_stats(docs: list, dic, url_leaks, segment_detail, examples: int = None) -> dict:
+    """一個渠道的抽樣統計。docs: [{post_id, content, terms_v2}]。must_keep_split／地名用目前字典重算斷點：
+    segment_detail(dic, 渠道, 原文) 回傳 (清洗後原文, 斷點, 詞表, 被切開的詞)，被切開的地方留例子（最多 examples 筆，預設 EXAMPLES）。"""
+    from .pipeline import dict_freq
     n = len(docs)
     counts = {k: 0 for k in LEAK_KINDS}
     places = place_words(dic.user_words)
     place_docs = place_split = 0
+    found = []
     for d in docs:
         content, terms = d.get("content") or "", d.get("terms_v2") or []
         for k, v in leak_flags(content, terms, dic.stopwords, url_leaks).items():
             counts[k] += v
-        _, bad = segment_checked(dic, d.get("channel", ""), content)
+        clean, toks, _, bad = segment_detail(dic, d.get("channel", ""), content)
         if bad:
             counts["must_keep_split"] += 1
+            found += split_examples(d.get("post_id"), clean, toks, bad, places, dict_freq(dic))
         if any(w in content for w in places):
             place_docs += 1
             if any(w in places for w in bad):
                 place_split += 1
     out = {"docs_sampled": n, "place_docs": place_docs, "place_split": place_split,
-           "place_split_ratio": round(place_split / place_docs, 5) if place_docs else None}
+           "place_split_ratio": round(place_split / place_docs, 5) if place_docs else None,
+           "split_docs": counts["must_keep_split"], "split_examples": pick_examples(found, examples)}
     for k in LEAK_KINDS:
         out[k] = round(counts[k] / n, 5) if n else None
     return out
@@ -186,25 +238,87 @@ def surges(buckets: list, today: str) -> list:
     return sorted(out, key=lambda x: -x["z"])
 
 
-def whole_word(aggs: dict, min_docs: int = None) -> dict:
-    """filters 聚合 → 每個詞的整詞召回；片語比對 ≥ min_docs 篇的詞才算。回傳 micro recall、詞數、最差 10 個。"""
+def miss_kind(word: str, clean: str, toks: list, terms: list, freq=None):
+    """一篇漏網文章（片語比對有、ES 的 terms_v2 沒有 word）用目前字典重斷後是哪一類，回傳 (分類, 代表那一處的起點或 None)。
+    stale＝目前字典會留住 word（ES 的詞表是舊字典斷的或還沒斷，交給定向重跑與對帳）；split＝有一處確實被切開，算漏；
+    overlap＝交集型歧義（台北／市長）；inside＝整段在更長的詞裡（台北市立）；filtered＝剛好一個詞卻被過濾；
+    absent＝清洗後原文沒有這個詞（網址、#／@ 標記、PTT 標頭與引言行被清掉）。split／overlap／inside 與 must_keep_split 同一條規則
+    （freq：斷詞器的詞頻表 pipeline.dict_freq）。"""
+    from .pipeline import occurrences
+    occ = occurrences(clean, toks, word, freq)
+    if word in terms:
+        return "stale", next((i for i, k in occ if k == "whole"), occ[0][0] if occ else None)
+    for kind in ("split", "overlap", "inside", "whole"):
+        i = next((i for i, k in occ if k == kind), None)
+        if i is not None:
+            return ("filtered" if kind == "whole" else kind), i
+    return "absent", None
+
+
+def probe_rows(words: list, responses: list, min_docs: int = None) -> list:
+    """msearch 回應 → 每個詞的片語篇數與整詞篇數；片語比對 ≥ min_docs 篇的詞才算，查詢失敗的詞跳過。"""
     min_docs = MIN_DOCS if min_docs is None else min_docs
     rows = []
-    for w, b in aggs["probe"]["buckets"].items():
-        phrase, whole = b["doc_count"], b["whole"]["doc_count"]
-        if phrase >= min_docs:
-            rows.append({"word": w, "phrase": phrase, "whole": whole, "recall": round(whole / phrase, 4)})
-    tp, tw = sum(r["phrase"] for r in rows), sum(r["whole"] for r in rows)
-    return {"recall": round(tw / tp, 5) if tp else None, "words": len(rows), "worst": sorted(rows, key=lambda r: r["recall"])[:10]}
+    for w, r in zip(words, responses):
+        if "error" in r:
+            continue
+        phrase, whole = r["hits"]["total"]["value"], r["aggregations"]["whole"]["doc_count"]
+        if phrase >= max(min_docs, 1):
+            rows.append({"word": w, "phrase": phrase, "whole": whole})
+    return rows
+
+
+def adjusted_rows(rows: list, samples: dict = None) -> list:
+    """每個詞補上原始口徑 recall_raw、漏網篇數 misses、抽樣篇數 sampled 與分類 kinds、估計真漏 split_est、調整後 recall。"""
+    out = []
+    for r in rows:
+        r = dict(r)
+        misses = r["phrase"] - r["whole"]
+        s = (samples or {}).get(r["word"])
+        r.update(recall_raw=round(r["whole"] / r["phrase"], 4), misses=misses, sampled=0)
+        if misses and s and s["n"]:
+            r.update(sampled=s["n"], kinds=s["kinds"], split_est=round(misses * s["kinds"].get("split", 0) / s["n"], 1), exact=s["n"] >= misses)
+            if s["examples"].get("split"):
+                r["split_examples"] = s["examples"]["split"]
+        else:
+            r["split_est"] = float(misses)          # 沒有漏網，或沒抽到樣本：照原始口徑全部算漏（保守）
+        r["recall"] = round(1 - r["split_est"] / r["phrase"], 4)
+        out.append(r)
+    return out
+
+
+def _split_var(r: dict) -> float:
+    """估計真漏的變異數（不放回簡單隨機抽樣：M²·(1 − n/M)·p(1 − p)/(n − 1)）；沒抽樣或抽完全部時是 0。"""
+    m, n = r["misses"], r["sampled"]
+    if n < 2 or n >= m:
+        return 0.0
+    p = r["kinds"].get("split", 0) / n
+    return m * m * (1 - n / m) * p * (1 - p) / (n - 1)
+
+
+def whole_word(rows: list, samples: dict = None) -> dict:
+    """整詞召回（micro）：recall＝1 − Σ估計真漏 ÷ Σ片語；原始口徑 recall_raw＝Σ整詞 ÷ Σ片語（改口徑前的數字）。
+    漏網文章（片語有、terms_v2 沒有）每詞隨機抽 n 篇用目前字典重斷（miss_samples）：只有 split 算漏，其餘分類（miss_kind）都不算。
+    估計真漏＝漏網篇數 × 抽到的 split 篇數 ÷ n：簡單隨機抽樣的展開估計，不偏；n 等於漏網篇數時就是精確值。
+    分母固定，所以 recall 也不偏；se 是它的標準誤。samples 沒有的詞（沒抽、超過 MISS_WORDS、查詢失敗）照原始口徑全部算漏，只會偏低。"""
+    rows = adjusted_rows(rows, samples)
+    tp = sum(r["phrase"] for r in rows)
+    if not tp:
+        return {"recall": None, "recall_raw": None, "se": None, "words": 0, "sampled": 0, "worst": []}
+    return {"recall": round(1 - sum(r["split_est"] for r in rows) / tp, 5), "recall_raw": round(sum(r["whole"] for r in rows) / tp, 5),
+            "se": round(math.sqrt(sum(_split_var(r) for r in rows)) / tp, 5), "words": len(rows), "sampled": sum(r["sampled"] for r in rows),
+            "worst": sorted(rows, key=lambda r: (r["recall"], r["recall_raw"]))[:10]}
 
 
 # ---------- ES 查詢 ----------
 def sample_body(channel: str, seed: int) -> dict:
-    return {"size": SAMPLE, "_source": ["channel", "content", "terms_v2"],
+    """渠道抽樣。只有 filter 的 bool 分數是 0，function_score 預設 boost_mode=multiply 會把亂數乘成 0、退回索引順序，
+    所以要 replace：分數直接用 random_score，前 SAMPLE 篇才是隨機抽樣。"""
+    return {"size": SAMPLE, "_source": ["post_id", "channel", "content", "terms_v2"],
             "query": {"function_score": {"query": {"bool": {"filter": [{"term": {"channel": channel}}, {"exists": {"field": "terms_v2"}},
                                                                         {"range": {"fetched_at": {"gte": f"now-{WINDOW}"}}}],
                                                              "must_not": [{"exists": {"field": "deleted_at"}}]}},
-                                         "random_score": {"seed": seed, "field": "_seq_no"}}}}
+                                         "random_score": {"seed": seed, "field": "_seq_no"}, "boost_mode": "replace"}}}
 
 
 def top_body(channel: str, field: str) -> dict:
@@ -215,13 +329,25 @@ def top_body(channel: str, field: str) -> dict:
 
 
 def probe_bodies(words: list, field: str = "terms_v2", extra_filter: list = None) -> dict:
-    """filters 子聚合每個詞的 term 條件不同，不能共用：改用 msearch 一詞一個小查詢（size 0，兩個 filter 聚合）。"""
+    """filters 子聚合每個詞的 term 條件不同，不能共用：改用 msearch 一詞一個小查詢（size 0，兩個 filter 聚合）。
+    track_total_hits：片語篇數取 hits.total，預設超過 1 萬篇就只回 10000（而整詞篇數是聚合、沒有上限），召回會被算錯。"""
     lines = []
     for w in words:
         q = {"bool": {"filter": [{"match_phrase": {"content.bigram": w}}] + (extra_filter or []), "must_not": [{"exists": {"field": "deleted_at"}}]}}
         lines.append({})
-        lines.append({"size": 0, "query": q, "aggs": {"whole": {"filter": {"term": {field: w}}}}})
+        lines.append({"size": 0, "track_total_hits": True, "query": q, "aggs": {"whole": {"filter": {"term": {field: w}}}}})
     return lines
+
+
+def miss_body(word: str, seed: int, size: int = None) -> dict:
+    """整詞召回的漏網文章（片語比對有、terms_v2 沒有這個詞；與 probe_bodies 同一組條件）隨機抽 size 篇。
+    random_score 固定種子（與渠道抽樣同一個，按日期）：同一天重跑或 --diagnose 抽到同一批（_seq_no 在文章改寫時會換，改寫過的會變）；
+    boost_mode=replace（理由見 sample_body），
+    隨機排序取前 size 篇＝不放回的簡單隨機抽樣，whole_word 的展開估計才不偏。"""
+    return {"size": MISS_SAMPLE if size is None else size, "_source": ["post_id", "channel", "content", "dict_version_v2"],
+            "query": {"function_score": {"query": {"bool": {"filter": [{"match_phrase": {"content.bigram": word}}],
+                                                             "must_not": [{"term": {"terms_v2": word}}, {"exists": {"field": "deleted_at"}}]}},
+                                         "random_score": {"seed": seed, "field": "_seq_no"}, "boost_mode": "replace"}}}
 
 
 def surge_body(days: int = 8) -> dict:
@@ -238,13 +364,47 @@ def msearch(es, lines: list) -> list:
     return r.json()["responses"]
 
 
-def whole_word_from_msearch(words: list, responses: list, min_docs: int = None) -> dict:
-    aggs = {"probe": {"buckets": {}}}
-    for w, r in zip(words, responses):
-        if "error" in r:
+def whole_word_from_msearch(words: list, responses: list, min_docs: int = None, samples: dict = None) -> dict:
+    return whole_word(probe_rows(words, responses, min_docs), samples)
+
+
+def raw_context(content: str, word: str):
+    i = content.find(word)
+    return context_of(content, i, i + len(word)) if i >= 0 else None
+
+
+def miss_samples(es, dic, rows: list, seed: int, segment_detail, keep: int = 3) -> dict:
+    """漏網文章抽樣重斷：漏最多的 MISS_WORDS 個詞各查一次（miss_body，最多 MISS_SAMPLE 篇），逐篇 miss_kind。
+    ES 成本上限 MISS_WORDS 次查詢、MISS_WORDS × MISS_SAMPLE 篇原文。回傳 {詞: {"n": 抽到幾篇, "kinds": {分類: 篇數},
+    "examples": {分類: [最多 keep 筆]}, "dict_versions": {這些文章 terms_v2 的字典版本: 篇數}}}。"""
+    from .pipeline import dict_freq
+    freq = dict_freq(dic)
+    todo = sorted((r for r in rows if r["phrase"] > r["whole"]), key=lambda r: r["whole"] - r["phrase"])[:MISS_WORDS]
+    out = {}
+    for r in todo:
+        w = r["word"]
+        try:
+            hits = es.req("POST", f"/{es.index}/_search?request_cache=false", miss_body(w, seed), timeout=300)["hits"]["hits"]
+        except Exception as e:   # 抽不到就當沒抽樣：這個詞照原始口徑算漏（保守），整份日報照跑
+            log("quality_miss_sample_failed", "WARNING", word=w, error=str(e)[:200])
             continue
-        aggs["probe"]["buckets"][w] = {"doc_count": r["hits"]["total"]["value"], "whole": {"doc_count": r["aggregations"]["whole"]["doc_count"]}}
-    return whole_word(aggs, min_docs)
+        kinds, examples, versions = {}, {}, {}
+        for h in hits:
+            src = h.get("_source") or {}
+            content = src.get("content") or ""
+            clean, toks, terms, _ = segment_detail(dic, src.get("channel", ""), content)
+            kind, i = miss_kind(w, clean, toks, terms, freq)
+            kinds[kind] = kinds.get(kind, 0) + 1
+            dv = src.get("dict_version_v2") or "(none)"
+            versions[dv] = versions.get(dv, 0) + 1
+            ex = examples.setdefault(kind, [])
+            if len(ex) < keep:
+                j = None if i is None else i + len(w)
+                ex.append({"post_id": src.get("post_id"), "channel": src.get("channel"), "dict_version": src.get("dict_version_v2"),
+                           "cut": cut_of(toks, i, j) if i is not None else None,
+                           "context": context_of(clean, i, j) if i is not None else raw_context(content, w)})
+        out[w] = {"n": len(hits), "kinds": {k: kinds[k] for k in MISS_KINDS if k in kinds}, "examples": examples, "dict_versions": versions}
+    return out
 
 
 # ---------- 一天一次 ----------
@@ -282,9 +442,28 @@ def prev_top(conn, channel: str, today):
     return row[0] if row else None
 
 
+def list_channels(es) -> list:
+    return [b["key"] for b in es.req("POST", f"/{es.index}/_search?request_cache=false",
+                                     {"size": 0, "aggs": {"ch": {"terms": {"field": "channel", "size": 20}}}}, timeout=120)["aggregations"]["ch"]["buckets"]]
+
+
+def channel_docs(es, ch: str, seed: int) -> list:
+    hits = es.req("POST", f"/{es.index}/_search?request_cache=false", sample_body(ch, seed), timeout=300)["hits"]["hits"]
+    return [dict(h["_source"], channel=ch) for h in hits]
+
+
+def whole_word_live(es, dic, words: list, seed: int, segment_detail, keep: int = 3):
+    """查詢詞 → (整詞召回, 每詞片語／整詞篇數, 漏網抽樣)；run_once 與 diagnose 共用。"""
+    if not words:
+        return whole_word([]), [], {}
+    rows = probe_rows(words, msearch(es, probe_bodies(words)))
+    samples = miss_samples(es, dic, rows, seed, segment_detail, keep=keep)
+    return whole_word(rows, samples), rows, samples
+
+
 def run_once(es, conn, dicts: dict = None, gold_items: list = None) -> dict:
     from .job import url_leaks
-    from .pipeline import segment, segment_checked
+    from .pipeline import segment, segment_detail
     t0 = time.perf_counter()
     dicts = dicts or load_dicts()
     dic = dicts["v2"]
@@ -292,14 +471,10 @@ def run_once(es, conn, dicts: dict = None, gold_items: list = None) -> dict:
     today = datetime.now(TZ).date()
     if conn is not None:
         conn.execute(DDL)
-    channels = [b["key"] for b in es.req("POST", f"/{es.index}/_search?request_cache=false",
-                                         {"size": 0, "aggs": {"ch": {"terms": {"field": "channel", "size": 20}}}}, timeout=120)["aggregations"]["ch"]["buckets"]]
     rows = {}
     seed = int(today.strftime("%Y%m%d"))
-    for ch in channels:
-        hits = es.req("POST", f"/{es.index}/_search?request_cache=false", sample_body(ch, seed), timeout=300)["hits"]["hits"]
-        docs = [dict(h["_source"], channel=ch) for h in hits]
-        st = channel_stats(docs, dic, url_leaks, segment_checked)
+    for ch in list_channels(es):
+        st = channel_stats(channel_docs(es, ch, seed), dic, url_leaks, segment_detail)
         top2 = [{"term": b["key"], "count": b["doc_count"]} for b in es.req("POST", f"/{es.index}/_search?request_cache=false", top_body(ch, "terms_v2"), timeout=300)["aggregations"]["top"]["buckets"]]
         top1 = [{"term": b["key"], "count": b["doc_count"]} for b in es.req("POST", f"/{es.index}/_search?request_cache=false", top_body(ch, "terms_v1"), timeout=300)["aggregations"]["top"]["buckets"]]
         prev = prev_top(conn, ch, today)
@@ -308,9 +483,11 @@ def run_once(es, conn, dicts: dict = None, gold_items: list = None) -> dict:
                   js_prev=js_divergence({t["term"]: t["count"] for t in prev}, {t["term"]: t["count"] for t in top2}) if prev else None,
                   rbo_v1v2=rbo([t["term"] for t in top1], [t["term"] for t in top2]))
         rows[ch] = st
+        if st["split_examples"]:   # QualityLeak（must_keep_split）／QualityPlaceSplit 響了，從這行就看得到是哪篇、哪個詞、怎麼切
+            log("quality_splits", "WARNING", day=str(today), channel=ch, docs_sampled=st["docs_sampled"], split_docs=st["split_docs"],
+                place_split=st["place_split"], place_docs=st["place_docs"], examples=st["split_examples"])
     # 全庫：整詞召回、金標、McNemar、新詞暴增
-    words = probe_words(conn, dic, gold_items)
-    ww = whole_word_from_msearch(words, msearch(es, probe_bodies(words))) if words else {"recall": None, "words": 0, "worst": []}
+    ww, _, _ = whole_word_live(es, dic, probe_words(conn, dic, gold_items), seed, segment_detail)
     gold = {}
     for p, d in dicts.items():
         gold[p] = gold_recall(lambda t, d=d: segment(d, "ptt", t), gold_items) if gold_items else None
@@ -334,7 +511,8 @@ def run_once(es, conn, dicts: dict = None, gold_items: list = None) -> dict:
         save(conn, today, dic.version, rows, all_row)
     publish(rows, all_row)
     log("quality_daily", day=str(today), dict_version=dic.version, channels=len(rows), docs_sampled=all_row["docs_sampled"],
-        whole_word_recall=ww["recall"], whole_word_words=ww["words"],
+        whole_word_recall=ww["recall"], whole_word_recall_raw=ww["recall_raw"], whole_word_se=ww["se"], whole_word_words=ww["words"],
+        whole_word_sampled=ww["sampled"], whole_word_worst=[{k: r.get(k) for k in WORST_LOG_KEYS} for r in ww["worst"]],
         gold_recall={p: (g["recall"] if g else None) for p, g in gold.items()}, mcnemar=mc,
         surges=len(sg), fragments=sum(1 for s in sg if s.get("fragment")), seconds=round(time.perf_counter() - t0, 1))
     return {"channels": rows, "all": all_row}
@@ -344,15 +522,16 @@ def save(conn, today, dict_version: str, rows: dict, all_row: dict) -> None:
     j = lambda x: json.dumps(x, ensure_ascii=False) if x is not None else None
     for ch, r in rows.items():
         conn.execute("""INSERT INTO quality_daily (day, channel, dict_version, sample_window, docs_sampled, leak_url, leak_phone, leak_number, leak_stopword,
-                          must_keep_split, place_docs, place_split, place_split_ratio, top_v2, top_v1, rbo_prev, js_prev, rbo_v1v2, computed_at)
-                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,now())
+                          must_keep_split, place_docs, place_split, place_split_ratio, top_v2, top_v1, rbo_prev, js_prev, rbo_v1v2, split_examples, computed_at)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,now())
                         ON CONFLICT (day, channel) DO UPDATE SET dict_version=EXCLUDED.dict_version, sample_window=EXCLUDED.sample_window, docs_sampled=EXCLUDED.docs_sampled,
                           leak_url=EXCLUDED.leak_url, leak_phone=EXCLUDED.leak_phone, leak_number=EXCLUDED.leak_number, leak_stopword=EXCLUDED.leak_stopword,
                           must_keep_split=EXCLUDED.must_keep_split, place_docs=EXCLUDED.place_docs, place_split=EXCLUDED.place_split,
                           place_split_ratio=EXCLUDED.place_split_ratio, top_v2=EXCLUDED.top_v2, top_v1=EXCLUDED.top_v1, rbo_prev=EXCLUDED.rbo_prev,
-                          js_prev=EXCLUDED.js_prev, rbo_v1v2=EXCLUDED.rbo_v1v2, computed_at=now()""",
+                          js_prev=EXCLUDED.js_prev, rbo_v1v2=EXCLUDED.rbo_v1v2, split_examples=EXCLUDED.split_examples, computed_at=now()""",
                      (today, ch, dict_version, WINDOW, r["docs_sampled"], r["url"], r["phone"], r["number"], r["stopword"], r["must_keep_split"],
-                      r["place_docs"], r["place_split"], r["place_split_ratio"], j(r["top_v2"]), j(r["top_v1"]), r["rbo_prev"], r["js_prev"], r["rbo_v1v2"]))
+                      r["place_docs"], r["place_split"], r["place_split_ratio"], j(r["top_v2"]), j(r["top_v1"]), r["rbo_prev"], r["js_prev"], r["rbo_v1v2"],
+                      j(r.get("split_examples"))))
     ww, gold = all_row["whole_word"], all_row["gold"]
     conn.execute("""INSERT INTO quality_daily (day, channel, dict_version, sample_window, docs_sampled, whole_word_recall, whole_word_words, whole_word_worst,
                       gold_recall, mcnemar, surges, computed_at)
@@ -386,7 +565,71 @@ def publish(rows: dict, all_row: dict) -> None:
     metrics.QUALITY_OK.set(time.time())
 
 
+def _counts(d: dict) -> str:
+    return "、".join(f"{k} {v}" for k, v in d.items()) or "—"
+
+
+def diagnose(es, dic, conn, gold_items: list, seed: int, out=print, keep: int = 5) -> dict:
+    """唯讀診斷（--diagnose）：與 run_once 同一套查詢、抽樣（同一天同一個種子）與重斷，但不建表、不寫 PG／ES、不更新 /metrics。
+    印出每個查詢詞的片語／整詞篇數與漏網分類（每類 keep 個例子），以及每個渠道抽樣裡被切開的必不可拆詞（地名另標）與上下文。"""
+    from .job import url_leaks
+    from .pipeline import segment_detail
+    words = probe_words(conn, dic, gold_items)
+    ww, base, samples = whole_word_live(es, dic, words, seed, segment_detail, keep=keep)
+    out(f"== 文字雲品質診斷（唯讀：不建表、不寫 PG／ES、不更新 /metrics）　字典 {dic.version}　種子 {seed} ==")
+    out(f"查詢詞 {len(words)} 個，片語比對 ≥ {MIN_DOCS} 篇的 {ww['words']} 個；漏網文章每詞隨機抽 {MISS_SAMPLE} 篇（最多 {MISS_WORDS} 個詞），用目前字典重斷")
+    out(f"整詞召回：原始口徑 {ww['recall_raw']} → 調整後 {ww['recall']}（標準誤 {ww['se']}，抽樣 {ww['sampled']} 篇；告警門檻 0.99）")
+    out("分類：split＝確實被切開（算漏）　overlap＝交集型歧義，例如 台北／市長（允許）　inside＝在更長的詞裡，例如 台北市立　"
+        "stale＝目前字典會留住（ES 的詞表是舊字典斷的或還沒斷）　filtered＝整詞但被過濾　absent＝清洗後原文沒有這個詞")
+    for r in sorted(adjusted_rows(base, samples), key=lambda r: (r["recall"], r["recall_raw"])):
+        out(f"-- {r['word']}　片語 {r['phrase']}　整詞 {r['whole']}（原始 {r['recall_raw']}）　漏網 {r['misses']}　抽 {r['sampled']} 篇："
+            f"{_counts(r.get('kinds') or {})}　→ 估計真漏 {r['split_est']}　調整後 {r['recall']}")
+        s = samples.get(r["word"])
+        if s:
+            out(f"   漏網文章 terms_v2 的字典版本：{_counts(s['dict_versions'])}")
+            for k in MISS_KINDS:
+                for e in s["examples"].get(k, []):
+                    out(f"   {k:<8} {e['post_id']}（{e['channel']}）　{e['cut'] or '—'}　「{e['context'] or ''}」")
+    out(f"== 洩漏與地名抽樣（每渠道最多 {SAMPLE} 篇、fetched_at ≥ now-{WINDOW}、種子 {seed}；與日報同一套 must_keep_split）==")
+    chans = {}
+    for ch in list_channels(es):
+        st = channel_stats(channel_docs(es, ch, seed), dic, url_leaks, segment_detail, examples=10 ** 6)
+        chans[ch] = st
+        n = st["docs_sampled"]
+        leaks = _counts({k: round((st[k] or 0) * n) for k in LEAK_KINDS})
+        out(f"-- {ch}　抽樣 {n} 篇　洩漏篇數：{leaks}　地名被切開 {st['place_split']}／含地名 {st['place_docs']}")
+        for e in st["split_examples"]:
+            out(f"   {'地名 ' if e['place'] else ''}{e['word']}　{e['cut']}　「{e['context']}」　{e['post_id']}")
+    return {"whole_word": ww, "rows": base, "samples": samples, "channels": chans}
+
+
+def diagnose_main(args) -> int:
+    """PG 用 default_transaction_read_only 連線（只讀 dict_releases.added_words 當查詢詞）；ES 只發 _search 與 _msearch。"""
+    import psycopg
+
+    from . import dictionary
+    from .es import ES
+
+    seed = int(args[args.index("--seed") + 1]) if "--seed" in args else int(datetime.now(TZ).strftime("%Y%m%d"))
+    keep = int(args[args.index("--examples") + 1]) if "--examples" in args else 5
+    dic = dictionary.load(pipeline="v2")
+    conn = None
+    try:
+        conn = psycopg.connect(config.PG_DSN, autocommit=True, connect_timeout=10, options="-c default_transaction_read_only=on")
+    except Exception as e:   # 連不上 PG 也能診斷，只是少了 dict_releases 的加詞
+        print(f"（PG 連不上，查詢詞只用金標與 QUALITY_PROBES：{str(e)[:200]}）")
+    try:
+        diagnose(ES(), dic, conn, load_gold(), seed, keep=keep)
+    finally:
+        if conn is not None:
+            conn.close()
+    return 0
+
+
 def main(args):
+    if "--diagnose" in args:
+        return diagnose_main(args)
+
     import psycopg
 
     from .es import ES

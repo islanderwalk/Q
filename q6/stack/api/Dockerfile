@@ -13,4 +13,5 @@ COPY pg/live.sql /app/live.sql
 COPY web/ /app/web/
 COPY data/channels/ /app/data/channels/
 EXPOSE 8080
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
+# keep-alive 75 秒（uvicorn 預設 5 秒）：用戶端重用閒置超過 5 秒的連線時，伺服器若剛好關掉，那次請求會變成連線中斷
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log", "--timeout-keep-alive", "75"]

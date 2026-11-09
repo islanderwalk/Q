@@ -278,7 +278,7 @@ PG 也有倒排索引，找文章不慢；慢在把每篇的詞展開再分組�
 | §13.5 | 回補自己回報進度、checkpoint 可靠保存 | `backfill_batches`、帳本 | 每 500 篇一筆；被砍後從 3,000 接續 |
 | §13.6 | 指標放同一時間軸 | Grafana | `grafana/01_dashboard_backfill_window.png` |
 | §13.7 | 告警和自動減速是兩件事 | G3 `canary_after` | 告警只通知；自動降速 3,000 → 1,500 → 750 |
-| §15.3 | 數值要附抓取時間 | `data/channels/` | 每篇有 `fetched_at`；IG 未登入拿不到 `published_at` 就留空，不補 |
+| §15.3 | 數值要附抓取時間 | `data/channels/` | 每篇有 `fetched_at`；IG 未登入拿不到 `published_at`，2026-11-04 補上：43 篇取自登入爬取的 `taken_at`、5 篇由 shortcode 推算，逐列來源在 `_meta/instagram_published_at.json`（不是合成時間） |
 
 ## 14. 沙盤推演
 

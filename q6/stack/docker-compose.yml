@@ -124,6 +124,14 @@ services:
     ports: [ "9111:9111" ]
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_started } }
 
+  crawl-bridge:       # 歷史爬蟲 → 文字雲（api/crawl_bridge.py）：唯讀掛爬蟲輸出目錄，新追加的行接著送進 ES 本體 ＋ parsed-posts；CRAWL_DIR 指宿主機的爬蟲輸出
+    profiles: [ "bridge" ]
+    image: qsearch-wordcloud-api:local
+    command: [ "python", "crawl_bridge.py" ]
+    environment: { <<: *apienv, BRIDGE_SINCE: "${BRIDGE_SINCE:-}", BRIDGE_POLL_SEC: "${BRIDGE_POLL_SEC:-60}" }
+    volumes: [ "./api/crawl_bridge.py:/app/crawl_bridge.py:ro", "${CRAWL_DIR:-./runtime/crawl}:/crawl:ro" ]
+    depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_started } }
+
   es-exporter:        # elasticsearch_exporter（計畫書 P0 第 10 項）：叢集狀態、磁碟水位、breaker、thread pool 拒絕、SLM 快照成功／失敗
     image: quay.io/prometheuscommunity/elasticsearch-exporter:v1.9.0
     command: [ "--es.uri=http://es:9200", "--es.all", "--es.indices", "--es.shards", "--collector.clustersettings", "--collector.slm", "--collector.snapshots", "--es.timeout=30s" ]   # v1.9.0 的旗標是 --collector.*（舊的 --es.cluster_settings／--es.slm 已移除，容器會直接退出）

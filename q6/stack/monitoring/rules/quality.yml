@@ -18,18 +18,20 @@ groups:
         expr: qseg_quality_leak_ratio > 0
         for: 1h
         labels: { severity: warn }
-        annotations: { summary: "{{ $labels.channel }} 抽樣有 {{ $value | humanizePercentage }} 的文章詞表洩漏（{{ $labels.kind }}）：過濾規則失效或字典回歸" }
+        annotations: { summary: "{{ $labels.channel }} 抽樣有 {{ $value | humanizePercentage }} 的文章詞表洩漏（{{ $labels.kind }}）：過濾規則失效或字典回歸（must_keep_split 的 post_id、詞、切法看 quality_daily.split_examples 或日誌 quality_splits）" }
       - alert: QualityPlaceSplit
         expr: qseg_quality_place_split_ratio > 0
         for: 1h
         labels: { severity: warn }
-        annotations: { summary: "{{ $labels.channel }} 含地名的抽樣文章有 {{ $value | humanizePercentage }} 地名被切開（例如 鳳山區 → 鳳山／區）" }
-      # 整詞召回 < 99% → warn（計畫書）
+        annotations: { summary: "{{ $labels.channel }} 含地名的抽樣文章有 {{ $value | humanizePercentage }} 地名被切開（例如 鳳山區 → 鳳山／區；quality_daily.split_examples 裡 place 為 true 的那幾筆）" }
+      # 整詞召回 < 99% → warn（計畫書）。口徑與 must_keep_split 一致：片語有、terms_v2 沒有的漏網文章每詞隨機抽 QUALITY_MISS_SAMPLE（預設 200）篇用目前字典重斷，
+      # 只有確實被切開（split）才算漏；交集型歧義（台北／市長）、在更長的詞裡（台北市立）、詞表過期（對帳與定向重跑處理）不算。
+      # 原始口徑（Σ整詞 ÷ Σ片語）留在 whole_word_worst 每個詞的 recall_raw 與 quality_daily 日誌的 whole_word_recall_raw
       - alert: QualityWholeWordRecallLow
         expr: qseg_quality_whole_word_recall < 0.99 and on () qseg_quality_whole_word_words > 0
         for: 1h
         labels: { severity: warn }
-        annotations: { summary: "查詢詞整詞召回 {{ $value | humanizePercentage }} < 99%：有查詢詞在部分文章被切碎（quality_daily.whole_word_worst 看是哪些詞）" }
+        annotations: { summary: "查詢詞整詞召回 {{ $value | humanizePercentage }} < 99%：有查詢詞在部分文章確實被切開（交集型歧義不算）；quality_daily.whole_word_worst 看是哪些詞，每個詞的 split_examples 是怎麼切的、recall_raw 是原始口徑" }
       # 150 題金標召回：10/31 版 75.6%（95% CI 71.3–79.8）；掉到 CI 下界以下 → ticket
       - alert: QualityGoldRecallDrop
         expr: qseg_quality_gold_recall{pipeline="v2"} < 0.71 and on () qseg_quality_gold_recall{pipeline="v2"} > 0

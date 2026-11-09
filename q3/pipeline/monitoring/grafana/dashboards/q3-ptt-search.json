@@ -1,0 +1,2219 @@
+{
+ "uid": "q3-ptt-search",
+ "title": "Q3 PTT 八卦板全文搜尋 ETL",
+ "tags": [
+  "q3",
+  "ptt"
+ ],
+ "timezone": "Asia/Taipei",
+ "schemaVersion": 39,
+ "version": 1,
+ "editable": false,
+ "graphTooltip": 1,
+ "refresh": "30s",
+ "time": {
+  "from": "now-6h",
+  "to": "now"
+ },
+ "fiscalYearStartMonth": 0,
+ "liveNow": false,
+ "templating": {
+  "list": []
+ },
+ "annotations": {
+  "list": []
+ },
+ "links": [
+  {
+   "title": "搜尋頁",
+   "type": "link",
+   "url": "http://127.0.0.1:8300/",
+   "targetBlank": true,
+   "icon": "external link"
+  }
+ ],
+ "panels": [
+  {
+   "type": "row",
+   "title": "1. 兩條資料規格與結果（只有這一區會告警）",
+   "id": 1,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 0
+   },
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "title": "新文章多久可搜尋：最久等待（分鐘）",
+   "id": 2,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "列表上已出現、還沒入庫的 7 天內文章裡，發文最久的那篇等了幾分鐘。規格 1：6 小時（360 分鐘）內要能搜尋。",
+   "gridPos": {
+    "h": 5,
+    "w": 6,
+    "x": 0,
+    "y": 1
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_unsearchable_oldest_minutes)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "m",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 300
+       },
+       {
+        "color": "#d64545",
+        "value": 360
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "留言新鮮度：最久沒重抓（小時）",
+   "id": 3,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "7 天內可搜尋文章裡，距離上次抓取最久的那篇。規格 2：每天至少更新一次（24 小時）。重抓門檻是 23 小時。",
+   "gridPos": {
+    "h": 5,
+    "w": 6,
+    "x": 6,
+    "y": 1
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_comment_staleness_max_hours)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "h",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 22
+       },
+       {
+        "color": "#d64545",
+        "value": 24
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "decimals": 1
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "每日不變量檢查",
+   "id": 4,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "填滿的列表頁恰好 20 格、每格是刪文佔位或已入庫、相鄰文章 ID 時間戳不倒序。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 12,
+    "y": 1
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify_ok) and on() (max(q3_verify_last_run_timestamp_seconds) > 0)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#8a8f98",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "noValue": "還沒跑：第一輪結束後跑第一次",
+     "mappings": [
+      {
+       "type": "value",
+       "options": {
+        "0": {
+         "text": "失敗",
+         "color": "#d64545"
+        },
+        "1": {
+         "text": "通過",
+         "color": "#2e9e5b"
+        }
+       }
+      }
+     ]
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "上一輪結果",
+   "id": 5,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "ok＝完整；partial＝有單篇失敗或沒讀完，下一輪自動補；gate_blocked＝品質檢查擋下；rolled_back＝整輪還原；failed＝程式錯誤或連續兩批寫不進去，這輪先停、下一輪補。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 16,
+    "y": 1
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max by (status) (q3_run_status) == 1",
+     "legendFormat": "{{status}}",
+     "refId": "A",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "vector(1) unless on() count(q3_run_status)",
+     "legendFormat": "第一輪還在跑",
+     "refId": "B",
+     "range": false,
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "partial"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#e8833a"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "gate_blocked"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#e8833a"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "rolled_back"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#e8833a"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "failed"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#d64545"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "第一輪還在跑"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#8a8f98"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "name",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "距上一輪結束",
+   "id": 6,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "每小時第 5 分跑一輪；第一次回補 7 天約 2 小時。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 20,
+    "y": 1
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "time() - (max(q3_run_last_finished_timestamp_seconds) > 0)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 5400
+       },
+       {
+        "color": "#d64545",
+        "value": 7200
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "noValue": "第一輪還在跑",
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "row",
+   "title": "2. 資料量（7 天內）",
+   "id": 7,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 6
+   },
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "title": "可搜尋文章",
+   "id": 8,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "答案估算：7 天 6,237 篇（每天約 890 篇）。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 0,
+    "y": 7
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_window_posts)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#3d7bd9",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "留言",
+   "id": 9,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "答案估算：7 天 234,577 則。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 4,
+    "y": 7
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_window_comments)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#3d7bd9",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "已標記刪文（404）",
+   "id": 10,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "首抓之後才被刪的文章：重抓拿到 404 時標記，不再出現在搜尋結果，但舊內容保留。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 8,
+    "y": 7
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_window_deleted_posts)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#8a8f98",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "待抓佇列",
+   "id": 11,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "新文：列表上看到但還沒入庫；重抓：7 天內超過 23 小時沒抓。停機多久，下一輪都會從這兩個佇列自動補。",
+   "gridPos": {
+    "h": 5,
+    "w": 12,
+    "x": 12,
+    "y": 7
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_backlog_new_posts)",
+     "legendFormat": "新文還沒入庫",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_backlog_refresh_posts)",
+     "legendFormat": "該重抓還沒重抓",
+     "refId": "B",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "row",
+   "title": "3. 抓取（單一 worker，每秒最多 1 次）",
+   "id": 12,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 12
+   },
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "title": "每分鐘請求數（依種類）",
+   "id": 13,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "list＝列表頁、article_new＝首抓、article_refresh＝重抓。紅線＝每分鐘 60 次（每秒 1 次的上限）。",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 13
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum by (kind) (rate(q3_http_requests_total[2m])) * 60",
+     "legendFormat": "{{kind}}",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "line+area"
+      },
+      "axisSoftMin": 0
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "transparent",
+        "value": null
+       },
+       {
+        "color": "#d64545",
+        "value": 60
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "PTT 回應時間",
+   "id": 14,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "F12 實測單篇約 300 ms。",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 13
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(q3_http_latency_seconds_bucket[5m])))",
+     "legendFormat": "p50",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(q3_http_latency_seconds_bucket[5m])))",
+     "legendFormat": "p95",
+     "refId": "B",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "過去 24 小時請求數",
+   "id": 15,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "答案估算每天 6,300 次（首抓 890＋列表 70＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。",
+   "gridPos": {
+    "h": 5,
+    "w": 6,
+    "x": 0,
+    "y": 21
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_http_requests_total[24h]))",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#3d7bd9",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "text",
+   "title": "對照",
+   "id": 16,
+   "gridPos": {
+    "h": 5,
+    "w": 6,
+    "x": 6,
+    "y": 21
+   },
+   "options": {
+    "mode": "markdown",
+    "content": "**答案的估算**\n\n每日 **6,300** 次 ＝ 首抓 890 ＋ 列表 70 ＋ 重抓 890 × 6\n\n尖峰小時約 **450** 次 → 以每秒 1 次約 7.5 分鐘跑完\n\n規格 2（每天重抓）主導成本：5,340 對 960，約 **5.6 倍**"
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "退避等待",
+   "id": 17,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "429／5xx／連線錯誤會退避 5、10 秒（有 Retry-After 照它），連續 3 次失敗整體暫停 5 分鐘。0＝正常。",
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 12,
+    "y": 21
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_backoff_seconds)",
+     "legendFormat": "等待秒數",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "每小時入庫",
+   "id": 18,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "",
+   "gridPos": {
+    "h": 8,
+    "w": 6,
+    "x": 18,
+    "y": 21
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_posts_new_total[1h])) or vector(0)",
+     "legendFormat": "新文",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_posts_refreshed_total[1h])) or vector(0)",
+     "legendFormat": "重抓",
+     "refId": "B",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_posts_deleted_total[1h])) or vector(0)",
+     "legendFormat": "標記刪文",
+     "refId": "C",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "row",
+   "title": "4. 寫入與自動 rollback",
+   "id": 19,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 29
+   },
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "title": "每小時寫入批次",
+   "id": 20,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "committed＝整批落地；rolled_back＝寫入中途失敗、已照 before-image 還原（下一輪補抓）；gate_blocked＝品質檢查不過，整批沒寫。",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 30
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum by (result) (increase(q3_batches_total[1h]))",
+     "legendFormat": "{{result}}",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "bars",
+      "lineWidth": 2,
+      "fillOpacity": 60,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "normal"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     },
+     "decimals": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "committed"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#2e9e5b"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "rolled_back"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#e8833a"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "gate_blocked"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#d64545"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "過去 24 小時整輪還原",
+   "id": 21,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "整輪結束後比對：可搜尋文章大減、空白暴增、刪文暴增、留言總數下降，就把這一輪全部還原。",
+   "gridPos": {
+    "h": 5,
+    "w": 4,
+    "x": 12,
+    "y": 30
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_run_rollbacks_total[24h]))",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 1
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "新文入庫延遲（發文到可搜尋）",
+   "id": 22,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "紅線＝規格 1 的 360 分鐘。第一次回補 7 天時延遲會很長，之後每小時一輪。",
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 16,
+    "y": 30
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(q3_ingest_lag_minutes_bucket[1h])))",
+     "legendFormat": "p50",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(q3_ingest_lag_minutes_bucket[1h])))",
+     "legendFormat": "p95",
+     "refId": "B",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "m",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "line+area"
+      },
+      "axisSoftMin": 0
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "transparent",
+        "value": null
+       },
+       {
+        "color": "#d64545",
+        "value": 360
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "row",
+   "title": "5. 重抓的邊際效益（答案第 3、6 題）",
+   "id": 23,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 38
+   },
+   "panels": []
+  },
+  {
+   "type": "bargauge",
+   "title": "過去 24 小時新增留言：依文章發文第幾天",
+   "id": 24,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "答案第 6 題：第 2–6 天的重抓每天 4,450 次，只多 0.76% 留言。這張圖用實際入庫的留言數驗證。",
+   "gridPos": {
+    "h": 9,
+    "w": 12,
+    "x": 0,
+    "y": 39
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"first\"}[24h])) or vector(0)",
+     "legendFormat": "首抓（第 0 天）",
+     "refId": "A",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"0\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 0 天",
+     "refId": "B",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"1\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 1 天",
+     "refId": "C",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"2\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 2 天",
+     "refId": "D",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"3\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 3 天",
+     "refId": "E",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"4\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 4 天",
+     "refId": "F",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"5\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 5 天",
+     "refId": "G",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"6\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 6 天",
+     "refId": "H",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_comments_new_total{fetch=\"refresh\",age_day=\"7\"}[24h])) or vector(0)",
+     "legendFormat": "重抓：第 7 天",
+     "refId": "I",
+     "range": false,
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "#3d7bd9"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#3d7bd9",
+        "value": null
+       }
+      ]
+     },
+     "min": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "horizontal",
+    "displayMode": "basic",
+    "showUnfilled": true,
+    "valueMode": "text",
+    "namePlacement": "left",
+    "sizing": "auto",
+    "minVizHeight": 16,
+    "maxVizHeight": 28,
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "每小時重抓篇數：依發文第幾天",
+   "id": 25,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "",
+   "gridPos": {
+    "h": 9,
+    "w": 12,
+    "x": 12,
+    "y": 39
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum by (age_day) (increase(q3_posts_refreshed_total[1h]))",
+     "legendFormat": "第 {{age_day}} 天",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "bars",
+      "lineWidth": 2,
+      "fillOpacity": 60,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "normal"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "row",
+   "title": "6. 只記錄、不告警（答案第 5 題決定不監控的三件事）",
+   "id": 26,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 48
+   },
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "title": "① 單次請求失敗（非 200／404）",
+   "id": 27,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "失敗的網址下一輪會補，只對結果（規格是否達成）告警。",
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 0,
+    "y": 49
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum by (status) (increase(q3_http_requests_total{status!~\"200|404\"}[1h]))",
+     "legendFormat": "{{status}}",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "bars",
+      "lineWidth": 2,
+      "fillOpacity": 60,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "② 事後刪文 404",
+   "id": 28,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "first＝第一次抓就 404；refresh＝重抓時才發現被刪。答案普查：0.2%（下限）。",
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 8,
+    "y": 49
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum by (when) (increase(q3_posts_deleted_total[1h]))",
+     "legendFormat": "{{when}}",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "bars",
+      "lineWidth": 2,
+      "fillOpacity": 60,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "③ 「檔案過大」被截斷的文章（7 天內）",
+   "id": 29,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "網頁版本身就拿不到被截掉的留言；答案普查 6,224 篇中 2 篇。",
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 16,
+    "y": 49
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_window_truncated_posts)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#8a8f98",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "row",
+   "title": "7. 每日不變量明細與查詢 API",
+   "id": 30,
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 57
+   },
+   "panels": []
+  },
+  {
+   "type": "bargauge",
+   "title": "上次不變量檢查",
+   "id": 31,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "",
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 0,
+    "y": 58
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify{check=\"pages_checked\"})",
+     "legendFormat": "檢查頁數",
+     "refId": "A",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify{check=\"pages_not_20\"})",
+     "legendFormat": "不是 20 格的頁",
+     "refId": "B",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify{check=\"missing_ids\"})",
+     "legendFormat": "列表有、沒入庫",
+     "refId": "C",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify{check=\"out_of_order_pairs\"})",
+     "legendFormat": "時間戳倒序的對數",
+     "refId": "D",
+     "range": false,
+     "instant": true
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify{check=\"nrec_checked\"})",
+     "legendFormat": "推文數比對篇數",
+     "refId": "E",
+     "range": false,
+     "instant": true
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "#3d7bd9"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#3d7bd9",
+        "value": null
+       }
+      ]
+     },
+     "min": 0,
+     "noValue": "還沒跑：第一輪結束後跑第一次"
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "horizontal",
+    "displayMode": "basic",
+    "showUnfilled": true,
+    "valueMode": "text",
+    "namePlacement": "left",
+    "sizing": "auto",
+    "minVizHeight": 16,
+    "maxVizHeight": 28,
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "推文數吻合比例（輔助）",
+   "id": 32,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "列表上的推文數和文章內「推−噓」換算值相同的比例，檢查解析有沒有算錯。只比列表快照和文章抓取時間相差 30 分鐘內的；舊的列表頁之後不會重讀，文章每天重抓後推文數本來就會變，拿來比沒有意義。",
+   "gridPos": {
+    "h": 8,
+    "w": 4,
+    "x": 8,
+    "y": 58
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "max(q3_verify{check=\"nrec_agree_ratio\"})",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#8a8f98",
+        "value": null
+       },
+       {
+        "color": "#2e9e5b",
+        "value": 0.9
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "noValue": "還沒跑：第一輪結束後跑第一次",
+     "mappings": [
+      {
+       "type": "range",
+       "options": {
+        "from": 0,
+        "to": 0.8999,
+        "result": {
+         "color": "#e8833a"
+        }
+       }
+      }
+     ],
+     "decimals": 1
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "timeseries",
+   "title": "查詢 API",
+   "id": 33,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "貼文和留言分開查，再依文章合併；留言先找出命中的最新幾篇（預設 50 篇），只展開這幾篇的留言。",
+   "gridPos": {
+    "h": 8,
+    "w": 8,
+    "x": 12,
+    "y": 58
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(q3_search_latency_seconds_bucket[5m]))) > 0",
+     "legendFormat": "p95 延遲",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(q3_search_latency_seconds_bucket[5m]))) > 0",
+     "legendFormat": "p50 延遲",
+     "refId": "B",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 12,
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none"
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "axisSoftMin": 0
+     },
+     "noValue": "這段時間還沒有查詢"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "title": "過去 24 小時 BigQuery 掃描量",
+   "id": 34,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "抓取、檢查、查詢合計。每月前 1 TB 免費。本機用的 BigQuery 模擬器回報的掃描量不是 GCP 的計費算法（GCP 依讀到的欄位大小計，每個查詢至少 10 MB），這裡只看趨勢。",
+   "gridPos": {
+    "h": 8,
+    "w": 4,
+    "x": 20,
+    "y": 58
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "(sum(increase(q3_bigquery_bytes_processed_total[24h])) or vector(0)) + (sum(increase(q3_search_bytes_processed_total[24h])) or vector(0))",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "decbytes",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#3d7bd9",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  }
+ ]
+}

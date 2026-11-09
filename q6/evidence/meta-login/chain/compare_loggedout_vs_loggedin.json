@@ -1,0 +1,377 @@
+{
+ "facebook": {
+  "logged_out": {
+   "posts": 4,
+   "earliest": "2026-10-30T05:45:00+08:00",
+   "latest": "2026-11-01T05:15:01+08:00",
+   "field_fill": {
+    "post_id": 4,
+    "url": 4,
+    "published_at": 4,
+    "text": 4,
+    "author": 0,
+    "like_count": 0,
+    "comment_count": 0,
+    "play_count": 0,
+    "sub_type": 4
+   },
+   "per_source": {
+    "cnanewstaiwan": 1,
+    "PNNPTS": 1,
+    "ftvnews53": 1,
+    "NASA": 1
+   }
+  },
+  "logged_in": {
+   "posts": 65,
+   "earliest": "2026-10-30T03:40:42+08:00",
+   "latest": "2026-10-31T22:00:07+08:00",
+   "field_fill": {
+    "post_id": 65,
+    "url": 60,
+    "published_at": 60,
+    "text": 65,
+    "author": 0,
+    "like_count": 0,
+    "comment_count": 0,
+    "play_count": 0,
+    "sub_type": 65
+   },
+   "per_source": {
+    "cnanewstaiwan": 56,
+    "PNNPTS": 4,
+    "NASA": 5
+   }
+  },
+  "overlap_by_text": 3,
+  "only_logged_out": 1,
+  "only_logged_in": 62,
+  "loggedin_pages": [
+   {
+    "platform": "facebook",
+    "target": "cnanewstaiwan",
+    "url": "https://www.facebook.com/cnanewstaiwan",
+    "status": 200,
+    "final_url": "https://www.facebook.com/cnanewstaiwan",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 57,
+    "posts": 56,
+    "earliest": "2026-10-30T10:20:27+08:00",
+    "latest": "2026-10-31T22:00:07+08:00",
+    "with_timestamp": 54,
+    "devtools_window_shot": false
+   },
+   {
+    "platform": "facebook",
+    "target": "PNNPTS",
+    "url": "https://www.facebook.com/PNNPTS",
+    "status": 200,
+    "final_url": "https://www.facebook.com/pnnpts/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 19,
+    "posts": 4,
+    "earliest": "2026-10-31T21:10:00+08:00",
+    "latest": "2026-10-31T21:50:01+08:00",
+    "with_timestamp": 3,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "facebook",
+    "target": "ftvnews53",
+    "url": "https://www.facebook.com/ftvnews53",
+    "status": 200,
+    "final_url": "https://www.facebook.com/ftvnews53",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 11,
+    "posts": 0,
+    "earliest": null,
+    "latest": null,
+    "with_timestamp": 0,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "facebook",
+    "target": "NASA",
+    "url": "https://www.facebook.com/NASA",
+    "status": 200,
+    "final_url": "https://www.facebook.com/NASA",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 17,
+    "posts": 5,
+    "earliest": "2026-10-30T03:40:42+08:00",
+    "latest": "2026-10-30T05:45:00+08:00",
+    "with_timestamp": 3,
+    "devtools_window_shot": true
+   }
+  ]
+ },
+ "instagram": {
+  "logged_out": {
+   "posts": 48,
+   "earliest": null,
+   "latest": null,
+   "field_fill": {
+    "post_id": 48,
+    "url": 48,
+    "published_at": 0,
+    "text": 48,
+    "author": 0,
+    "like_count": 0,
+    "comment_count": 0,
+    "play_count": 0,
+    "sub_type": 48
+   },
+   "per_source": {
+    "@cnanews_tw": 12,
+    "@pts.news": 12,
+    "@ftvnews": 12,
+    "@nasa": 12
+   }
+  },
+  "logged_in": {
+   "posts": 1134,
+   "earliest": "2026-04-06T00:42:38+08:00",
+   "latest": "2026-10-31T22:33:30+08:00",
+   "field_fill": {
+    "post_id": 1134,
+    "url": 1134,
+    "published_at": 1134,
+    "text": 1134,
+    "author": 1134,
+    "like_count": 1134,
+    "comment_count": 1134,
+    "play_count": 0,
+    "sub_type": 1134
+   },
+   "per_source": {
+    "cnanews_tw": 312,
+    "pts.news": 312,
+    "ftvnews": 312,
+    "nasa": 198
+   }
+  },
+  "overlap_by_text": 44,
+  "only_logged_out": 4,
+  "only_logged_in": 1089,
+  "loggedin_pages": [
+   {
+    "platform": "instagram",
+    "target": "cnanews_tw",
+    "url": "https://www.instagram.com/cnanews_tw/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/cnanews_tw/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 44,
+    "posts": 315,
+    "earliest": "2026-04-26T22:28:33+08:00",
+    "latest": "2026-10-31T19:18:20+08:00",
+    "with_timestamp": 315,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "cnanews_tw_reels",
+    "url": "https://www.instagram.com/cnanews_tw/reels/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/cnanews_tw/reels/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 44,
+    "posts": 2,
+    "earliest": "2026-10-17T21:02:47+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 2,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "pts.news",
+    "url": "https://www.instagram.com/pts.news/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/pts.news/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 45,
+    "posts": 315,
+    "earliest": "2026-05-26T18:31:28+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 315,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "pts.news_reels",
+    "url": "https://www.instagram.com/pts.news/reels/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/pts.news/reels/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 46,
+    "posts": 3,
+    "earliest": "2026-10-17T21:02:47+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 3,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "ftvnews",
+    "url": "https://www.instagram.com/ftvnews/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/ftvnews/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 44,
+    "posts": 315,
+    "earliest": "2026-10-17T21:02:47+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 315,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "ftvnews_reels",
+    "url": "https://www.instagram.com/ftvnews/reels/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/ftvnews/reels/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 43,
+    "posts": 2,
+    "earliest": "2026-10-17T21:02:47+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 2,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "nasa",
+    "url": "https://www.instagram.com/nasa/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/nasa/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 44,
+    "posts": 314,
+    "earliest": "2026-04-05T23:32:01+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 314,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "instagram",
+    "target": "nasa_reels",
+    "url": "https://www.instagram.com/nasa/reels/",
+    "status": 200,
+    "final_url": "https://www.instagram.com/nasa/reels/",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 43,
+    "posts": 2,
+    "earliest": "2026-10-17T21:02:47+08:00",
+    "latest": "2026-11-01T01:00:01+08:00",
+    "with_timestamp": 2,
+    "devtools_window_shot": true
+   }
+  ]
+ },
+ "threads": {
+  "logged_out": {
+   "posts": 59,
+   "earliest": "2026-10-12T17:14:22+08:00",
+   "latest": "2026-11-01T05:23:36+08:00",
+   "field_fill": {
+    "post_id": 59,
+    "url": 59,
+    "published_at": 59,
+    "text": 59,
+    "author": 0,
+    "like_count": 0,
+    "comment_count": 0,
+    "play_count": 0,
+    "sub_type": 59
+   },
+   "per_source": {
+    "@cnanews_tw": 11,
+    "@pts.news": 26,
+    "@ftvnews": 22
+   }
+  },
+  "logged_in": {
+   "posts": 588,
+   "earliest": "2026-08-31T20:00:45+08:00",
+   "latest": "2026-11-01T06:00:27+08:00",
+   "field_fill": {
+    "post_id": 588,
+    "url": 0,
+    "published_at": 588,
+    "text": 588,
+    "author": 588,
+    "like_count": 588,
+    "comment_count": 0,
+    "play_count": 0,
+    "sub_type": 588
+   },
+   "per_source": {
+    "cnanews_tw": 177,
+    "pts.news": 222,
+    "ftvnews": 189
+   }
+  },
+  "overlap_by_text": 20,
+  "only_logged_out": 39,
+  "only_logged_in": 557,
+  "loggedin_pages": [
+   {
+    "platform": "threads",
+    "target": "cnanews_tw",
+    "url": "https://www.threads.com/@cnanews_tw",
+    "status": 200,
+    "final_url": "https://www.threads.com/@cnanews_tw",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 91,
+    "posts": 177,
+    "earliest": "2026-08-31T20:00:45+08:00",
+    "latest": "2026-10-31T21:00:43+08:00",
+    "with_timestamp": 177,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "threads",
+    "target": "pts.news",
+    "url": "https://www.threads.com/@pts.news",
+    "status": 200,
+    "final_url": "https://www.threads.com/@pts.news",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 93,
+    "posts": 222,
+    "earliest": "2026-10-21T11:58:48+08:00",
+    "latest": "2026-10-31T15:28:08+08:00",
+    "with_timestamp": 222,
+    "devtools_window_shot": true
+   },
+   {
+    "platform": "threads",
+    "target": "ftvnews",
+    "url": "https://www.threads.com/@ftvnews",
+    "status": 200,
+    "final_url": "https://www.threads.com/@ftvnews",
+    "scrolls": 25,
+    "login_wall_hits": 0,
+    "api_responses": 111,
+    "posts": 189,
+    "earliest": "2026-10-31T14:57:01+08:00",
+    "latest": "2026-11-01T06:00:27+08:00",
+    "with_timestamp": 189,
+    "devtools_window_shot": true
+   }
+  ]
+ }
+}

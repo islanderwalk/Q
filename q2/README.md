@@ -13,7 +13,7 @@
 
 ## 正式答案 — [`answer/answer_600.txt`](answer/answer_600.txt)
 
-交卷用的正式答案，585 字（上限 600 字，不含算式；python len，空白與換行都算），算式附在同一檔的「【算式】」段。字數由 `code/tests/test_q2_answer_length.py` 檢查。六題合併版見 [`shared/docs/submission.md`](../shared/docs/submission.md)。
+交卷用的正式答案，590 字（上限 600 字，不含算式；python len，空白與換行都算），算式附在同一檔的「【算式】」段。字數由 `code/tests/test_q2_answer_length.py` 檢查。六題合併版見 [`shared/docs/submission.md`](../shared/docs/submission.md)。
 
 ---
 
@@ -24,6 +24,7 @@
 | 檔案 | 內容 |
 |---|---|
 | [`fb_q2_posts_table.html`](answer/fb_q2_posts_table.html) | Q2 線上版的原始 HTML（下載後用瀏覽器開啟） |
+| [`build_tip_images.py`](answer/build_tip_images.py) | 把 `evidence/` 的截圖裁成小圖嵌進上面的頁面：總覽圖滑過 page_id、creation_time、7 種心情、page_name 時顯示 NASA 這則貼文的畫面與 F12 截圖 |
 
 ## Playwright 實抓證據 — [`q2/evidence/playwright/`](evidence/playwright)
 
@@ -37,6 +38,19 @@
 
 第一輪截圖由 `shared/capture/capture.py` 產生；第二輪（住宅 IP 與雲端 IP 對照）見 [`shared/docs/playwright-round2.md`](../shared/docs/playwright-round2.md)。主張、結果與更正見 `shared/capture/capture_manifest.json`。
 
+## F12 欄位對照（登入後單則貼文） — [`q2/evidence/f12/`](evidence/f12)
+
+貼文表每個欄位都有三份對照：畫面截圖、DevTools 搜尋到的位置、JSON 路徑。總表見 [`evidence/f12/README.md`](evidence/f12/README.md)，值與路徑見 [`fb_post_fields.json`](evidence/f12/fb_post_fields.json)。
+
+| 檔案 | 佐證什麼 |
+|---|---|
+| [`fb_post_annotated.png`](evidence/f12/fb_post_annotated.png) | 粉專名稱、發文時間、內文、分享數 1,406 在畫面上的位置。這則貼文設定 `HIDE_COUNTS`，畫面只有心情圖示，沒有數字 |
+| [`fb_post_time_tooltip.png`](evidence/f12/fb_post_time_tooltip.png) | 滑過發文時間顯示「2026年10月30日 星期五上午5:45」，對應 `creation_time` 1793310300 |
+| [`fb_post_reactions_dialog.png`](evidence/f12/fb_post_reactions_dialog.png) | 心情對話框列出七種心情的名稱，但不列數字。數字在 GraphQL `CometUFIReactionsDialogQuery` 的回應裡 |
+| `fb_f12_<欄位>.png`（17 張） | 貼文 ID、Page ID、profile ID、名稱、時間、內文、心情總數、分享數、七種心情，各自在頁面內嵌 JSON 裡的搜尋結果 |
+
+重跑腳本：[`code/capture_f12_fields.py`](code/capture_f12_fields.py)。
+
 ## 程式與實測 — [`code/`](code)
 
 | 檔案 | 內容 |
@@ -48,6 +62,7 @@
 | [`run_pg_bigm.sh`](code/run_pg_bigm.sh) | 用 repo 的 `shared/infra/onprem/postgres-bigm/Dockerfile` 在官方 PostgreSQL 16.15 映像上編 pg_bigm，起容器跑 `run_q2.py --pg-bigm`，跑完刪容器 |
 | [`generic_plan_check.py`](code/generic_plan_check.py) | 查第一輪 pg_trgm 2 字詞 9.2 到 10 秒的原因：psycopg 自動 prepare 之後 PostgreSQL 改用 generic plan，計時與 EXPLAIN 看到的計畫不同 |
 | [`sql/`](code/sql) | 建表、造資料、建索引、量測、查詢的 SQL；`06_pg_bigm.sql` 是 pg_bigm 擴充套件的索引 |
+| [`row_layout.py`](code/row_layout.py) | 讀第 0 頁第 1 則的原始 bytes，逐欄列出起點、長度、對齊補了幾個 byte（補的都是 00），對照 `pg_column_size`；輸出 [`q2_row_layout_page0.json`](data/q2_row_layout_page0.json)：列標頭 24 B、貼文 ID 32、粉專 ID 8、粉專名稱 14、補 2、發文時間 8、內文 754、補 6、9 個數字欄 72，合計 920 B |
 | [`q2_model.py`](code/q2_model.py) | 估算模型（題目 (a)(b)(c) 的算式），與頁面 `const D` 的實測數字對照 |
 | [`tests/`](code/tests) | pytest 24 項（離線） |
 | [`RESULTS.md`](code/RESULTS.md) | 實測結論：Linux 100 萬列與原頁一致（simple 0%）；Windows 的 +43% 已重現到位元組；PTT 與維基語料的兩字詞索引 947 MB 到 1,165 MB，是原頁 406 MB 的 2.3 到 2.9 倍；2 字詞查詢 pg_trgm 退回全表掃描 |

@@ -77,7 +77,8 @@ RERUN_RUNS = Gauge("qseg_rerun_runs", "rerun_runs 各狀態的筆數（最近 7 
 QUALITY_SAMPLED = Gauge("qseg_quality_docs_sampled", "品質日報抽樣篇數（最近 QUALITY_WINDOW 內、有 terms_v2）", ["channel"])
 QUALITY_LEAK = Gauge("qseg_quality_leak_ratio", "抽樣裡詞表有洩漏的篇數比例（kind=url／phone／number／stopword／must_keep_split）", ["channel", "kind"])
 QUALITY_PLACE = Gauge("qseg_quality_place_split_ratio", "原文含地名（使用者字典裡縣市區鄉鎮村里結尾的詞）的抽樣篇數中，地名被切開的比例", ["channel"])
-QUALITY_WHOLE = Gauge("qseg_quality_whole_word_recall", "查詢詞整詞召回（整詞成為 token 的篇數 ÷ 片語比對篇數，micro 平均；目標 ≥ 99%）")
+QUALITY_WHOLE = Gauge("qseg_quality_whole_word_recall", "查詢詞整詞召回（片語比對篇數裡沒有確實被切開的比例，micro 平均；漏網文章抽樣用目前字典重斷，"
+                      "交集型歧義不算漏，與 must_keep_split 同一條規則；目標 ≥ 99%）")
 QUALITY_WHOLE_WORDS = Gauge("qseg_quality_whole_word_words", "整詞召回算了幾個詞（片語比對 ≥ QUALITY_MIN_DOCS 篇）")
 QUALITY_GOLD = Gauge("qseg_quality_gold_recall", "150 題金標詞召回（嚴格比對；q6/code/recall_eval.py 同一份金標）", ["pipeline"])
 QUALITY_MCNEMAR_P = Gauge("qseg_quality_mcnemar_p", "金標召回配對檢定的 p 值（精確二項式；pair=v1_v2／v0_v2）", ["pair"])

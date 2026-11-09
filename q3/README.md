@@ -106,6 +106,20 @@
 | [`ptt_article_top.png`](evidence/playwright/ptt_article_top.png) | 文章網址帶發文時間（`M.{unix}.A.{hex}`），留言與內文在同一頁；這篇留言 203 則 |
 | [`ptt_article_comments.png`](evidence/playwright/ptt_article_comments.png) | 每則留言都有推噓、帳號、內容、IP 與時間，parser 依這些欄位拆成資料列。這張是 10/30 20:29（+08）重拍、遮掉帳號與 IP 的版本，留言 261 則：推 150、噓 10、→ 101（同一篇在 01:51 拍 `ptt_article_top.png` 時是 203 則：推 108、噓 7、→ 88） |
 
+## F12 Network 截圖 — [`q3/evidence/f12/`](evidence/f12)
+
+用瀏覽器開發者工具（F12 → Network）觀察 over18 確認頁、最新頁與置底分隔線、填滿的列表頁 20 格、文章頁、刪文 404、翻頁，共 7 張。每張對應哪個爬蟲設計，見 [`evidence/f12/README.md`](evidence/f12/README.md)；同一批頁面的原始 HTML 是 pipeline 解析測試的資料。
+
+---
+
+## 可以直接跑的 pipeline — [`q3/pipeline/`](pipeline)
+
+照第 2 題的架構寫成的程式：每小時一輪的排程、單 worker 每秒最多 1 次的抓取、原始 HTML 存 GCS、MERGE 進 BigQuery、查詢 API 與搜尋頁、每日不變量檢查、Prometheus 告警與 Q3 專用的 Grafana 看板。GCP 服務換成本機容器，`docker compose up -d --build` 就能跑，不花錢。
+
+停機或抓取失敗後怎麼自動回補、寫壞時怎麼自動 rollback（每批寫入前的品質檢查、每批的 before-image、整輪的回歸檢查），以及 6 個故障注入的端到端測試，見 [`pipeline/README.md`](pipeline/README.md)。
+
+在本機常駐運行時拍的 Q3 看板、搜尋頁與告警截圖（常駐運行、第一次回補、兩層故障演練、模擬器重啟後的搜尋）在 [`evidence/grafana/`](evidence/grafana)，每組怎麼看見 [`evidence/grafana/README.md`](evidence/grafana/README.md)。
+
 ---
 
 ## 程式與資料 — [`code/`](code)、[`data/`](data)

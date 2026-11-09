@@ -188,6 +188,8 @@ def fmt_stats(xs, unit="", digits=3):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # 繁中 Windows 的 cp950 印不出 ≥、≈，導向檔案時會中斷
+        sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="PTT 看板爬蟲與量測")
     ap.add_argument("--board", default="Gossiping")
     ap.add_argument("--pages", type=int, default=5, help="往回爬幾頁列表")

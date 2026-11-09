@@ -5302,7 +5302,7 @@
   {
    "type": "stat",
    "title": "查詢詞整詞召回",
-   "description": "整詞成為 token 的篇數 ÷ 片語比對篇數；< 99% warn（QualityWholeWordRecallLow）",
+   "description": "片語比對篇數裡沒有確實被切開的比例（漏網文章抽樣用目前字典重斷，交集型歧義如 台北／市長 不算漏；原始口徑是 whole_word_worst 的 recall_raw）；< 99% warn（QualityWholeWordRecallLow）",
    "datasource": {
     "type": "prometheus",
     "uid": "prom"
@@ -5880,7 +5880,7 @@
   {
    "type": "table",
    "title": "品質日報（最近 7 天）",
-   "description": "channel='(all)' 那一列放整詞召回、金標、McNemar、暴增；whole_word_worst／surges 的明細在表的 jsonb 欄",
+   "description": "channel='(all)' 那一列放整詞召回、金標、McNemar、暴增；whole_word_worst／surges／split_examples（被切開的詞與上下文）的明細在表的 jsonb 欄",
    "datasource": {
     "type": "grafana-postgresql-datasource",
     "uid": "pg"
