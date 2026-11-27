@@ -1,0 +1,316 @@
+{
+ "file": "instagram.jsonl",
+ "sources": {
+  "loggedin_crawl": "q6/data/meta-login/instagram_clean.jsonl：shortcode 相同的列照抄 published_at（taken_at 轉 +08:00，到秒）",
+  "shortcode": "media id = shortcode 以 base64url（ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_）解碼；ms = (id >> 23) + 1314220021721；捨去毫秒、轉 +08:00",
+  "page": "抓取時頁面本身就有的時間（未登入主頁有給 taken_at 才會有）"
+ },
+ "counts": {
+  "loggedin_crawl": 43,
+  "shortcode": 5
+ },
+ "by_month": {
+  "2026-04": 1,
+  "2026-10": 47
+ },
+ "validation": {
+  "rows": 1134,
+  "within_60s": 1064,
+  "within_1h": 1128,
+  "median_s": -26.3,
+  "beyond_1h_s": [
+   -64331,
+   -48134,
+   -35588,
+   -10469,
+   -7812,
+   -5230
+  ],
+  "later_by_over_60s": 1
+ },
+ "rows": [
+  {
+   "post_id": "ig-DXmSYkXGOI9",
+   "published_at": "2026-04-26T22:28:33+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -1
+  },
+  {
+   "post_id": "ig-DfHRgPMAHgw",
+   "published_at": "2026-10-30T17:35:59+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -26
+  },
+  {
+   "post_id": "ig-DfHHMVwGWf3",
+   "published_at": "2026-10-30T16:05:27+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-DfG_2ePkulR",
+   "published_at": "2026-10-30T15:01:57+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -39
+  },
+  {
+   "post_id": "ig-DfFPBS7E_x9",
+   "published_at": "2026-10-29T22:35:22+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-DfD_eF6iSJo",
+   "published_at": "2026-10-29T11:00:15+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-DfCDLfRCZWJ",
+   "published_at": "2026-10-28T16:54:40+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -29
+  },
+  {
+   "post_id": "ig-DfBwJFlk2YR",
+   "published_at": "2026-10-28T14:07:49+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-DfBh8RqiVNH",
+   "published_at": "2026-10-28T12:04:15+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -31
+  },
+  {
+   "post_id": "ig-De_mAf8kVA-",
+   "published_at": "2026-10-27T18:01:17+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -30
+  },
+  {
+   "post_id": "ig-De_IRYYEtmd",
+   "published_at": "2026-10-27T13:41:31+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -34
+  },
+  {
+   "post_id": "ig-De9nx3TExx9",
+   "published_at": "2026-10-26T23:37:48+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -1
+  },
+  {
+   "post_id": "ig-DfGzcFqmV-H",
+   "published_at": "2026-10-30T13:13:27+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -37
+  },
+  {
+   "post_id": "ig-DfGi7uCk-cW",
+   "published_at": "2026-10-30T10:48:36+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-DfCfeGHihiN",
+   "published_at": "2026-10-28T21:03:50+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -147
+  },
+  {
+   "post_id": "ig-DfCKxwCD2j3",
+   "published_at": "2026-10-28T18:01:06+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -32
+  },
+  {
+   "post_id": "ig-DfB9GIgFN_l",
+   "published_at": "2026-10-28T16:01:27+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -26
+  },
+  {
+   "post_id": "ig-DfBzOYNj1Td",
+   "published_at": "2026-10-28T14:35:19+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -33
+  },
+  {
+   "post_id": "ig-De--ExgjDLX",
+   "published_at": "2026-10-27T12:12:16+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -25
+  },
+  {
+   "post_id": "ig-De9lAeeAQHu",
+   "published_at": "2026-10-26T23:13:34+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-De9gg06AQjd",
+   "published_at": "2026-10-26T22:34:18+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-De9cIpwgRPF",
+   "published_at": "2026-10-26T21:56:02+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-De9Z7z5AZj9",
+   "published_at": "2026-10-26T21:36:49+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-De9UnOigcOc",
+   "published_at": "2026-10-26T20:50:19+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-De-wyNvE5cP",
+   "published_at": "2026-10-27T10:15:44+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -1
+  },
+  {
+   "post_id": "ig-DfH0nAsjUgC",
+   "published_at": "2026-10-30T22:43:03+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -45
+  },
+  {
+   "post_id": "ig-DfH0KqQDmdY",
+   "published_at": "2026-10-30T22:39:04+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -38
+  },
+  {
+   "post_id": "ig-DfHvzGujejt",
+   "published_at": "2026-10-30T22:00:17+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -1
+  },
+  {
+   "post_id": "ig-DfHiELmDJLW",
+   "published_at": "2026-10-30T20:00:17+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -1
+  },
+  {
+   "post_id": "ig-DfHZblSiVdL",
+   "published_at": "2026-10-30T18:45:27+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -38
+  },
+  {
+   "post_id": "ig-DfHZRNRAUIA",
+   "published_at": "2026-10-30T18:44:04+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -40
+  },
+  {
+   "post_id": "ig-DfHUVOlDeA6",
+   "published_at": "2026-10-30T18:00:16+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -1
+  },
+  {
+   "post_id": "ig-DfHIyOdjt9Y",
+   "published_at": "2026-10-30T16:19:59+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -37
+  },
+  {
+   "post_id": "ig-DfHGouDAnWn",
+   "published_at": "2026-10-30T16:00:37+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -2
+  },
+  {
+   "post_id": "ig-DfHGQ3bDYdy",
+   "published_at": "2026-10-30T15:57:57+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -37
+  },
+  {
+   "post_id": "ig-DfHF93RCXt7",
+   "published_at": "2026-10-30T15:55:14+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -30
+  },
+  {
+   "post_id": "ig-DeTUk4sDSp-",
+   "published_at": "2026-10-10T23:15:02+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -35589
+  },
+  {
+   "post_id": "ig-DeJ28eTxo4s",
+   "published_at": "2026-10-06T21:09:48+08:00",
+   "basis": "shortcode"
+  },
+  {
+   "post_id": "ig-DeAYvsnn4la",
+   "published_at": "2026-10-03T04:52:45+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": 0
+  },
+  {
+   "post_id": "ig-DfHyVL-F1uT",
+   "published_at": "2026-10-30T22:22:29+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -5
+  },
+  {
+   "post_id": "ig-DfF3eqGSKKc",
+   "published_at": "2026-10-30T04:28:54+08:00",
+   "basis": "shortcode"
+  },
+  {
+   "post_id": "ig-DfDOxLEm-5w",
+   "published_at": "2026-10-29T03:54:41+08:00",
+   "basis": "shortcode"
+  },
+  {
+   "post_id": "ig-DfCo97ZlL5F",
+   "published_at": "2026-10-28T22:24:30+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -8
+  },
+  {
+   "post_id": "ig-DfAWBERlz3A",
+   "published_at": "2026-10-28T01:00:23+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -5
+  },
+  {
+   "post_id": "ig-De9piNJlwES",
+   "published_at": "2026-10-26T23:53:14+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -7
+  },
+  {
+   "post_id": "ig-De53dIfl0QR",
+   "published_at": "2026-10-26T06:30:00+08:00",
+   "basis": "loggedin_crawl",
+   "shortcode_delta_s": -64332
+  },
+  {
+   "post_id": "ig-De7XCa_TJ4h",
+   "published_at": "2026-10-26T02:33:01+08:00",
+   "basis": "shortcode"
+  },
+  {
+   "post_id": "ig-De5mVMikVB-",
+   "published_at": "2026-10-25T10:08:10+08:00",
+   "basis": "shortcode"
+  }
+ ]
+}

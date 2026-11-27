@@ -70,12 +70,13 @@ CREATE TABLE IF NOT EXISTS collector_state (
 -- 計畫書 P0 第 3 項：成功時間、退避等級、outcome 與延遲要留在表裡（失敗不再更新 last_ok_at；重啟後接著退避）
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS last_ok_at timestamptz;
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS backoff_level integer NOT NULL DEFAULT 0;
-ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS outcome text;              -- ok／empty／not_modified／login_wall／content_unavailable／rate_limited／forbidden／server_error／network_error／parse_error／skipped
+ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS outcome text;              -- ok／empty／not_modified／login_wall／content_unavailable／rate_limited／forbidden／quota_exceeded／server_error／network_error／parse_error／skipped
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS final_url text;            -- 有轉址才有（登入牆看這裡）
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS posts_parsed integer;
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS ttfb_ms numeric;
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS total_ms numeric;
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS robots text;               -- allow／disallow／unknown（只看 User-agent: * 的 Disallow）
+ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS method text;               -- 最近一次怎麼抓：feed＝RSS／Atom、api＝YouTube Data API；抓法換了，重啟時當成新的 feed（退避、ETag、上次成功從頭開始）
 CREATE TABLE IF NOT EXISTS collector_robots (
   host text PRIMARY KEY,
   sha text NOT NULL,                          -- robots.txt 內容 sha256 前 16 碼；"none"＝沒有 robots.txt

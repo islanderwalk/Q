@@ -1,0 +1,355 @@
+{
+ "scenes": [
+  {
+   "id": "mapping",
+   "title": "ES mapping：加新欄位",
+   "steps": [
+    {
+     "id": "m1",
+     "title": "建立只有 post_id 的 strict index",
+     "note": "舊 mapping：dynamic 設 strict，沒宣告的欄位一律拒絕。",
+     "code": "r = requests.put(f\"{ES}/{IDX}\", json={\n    \"settings\": {\"number_of_shards\": 1, \"number_of_replicas\": 0},\n    \"mappings\": {\"dynamic\": \"strict\",\n                 \"properties\": {\"post_id\": {\"type\": \"keyword\"}}}})\nfor pid in (\"T-0001\", \"T-0002\", \"T-0003\"):\n    requests.put(f\"{ES}/{IDX}/_doc/{pid}?refresh=true\", json={\"post_id\": pid})",
+     "status": 200,
+     "ms": 2099,
+     "resp": {
+      "acknowledged": true,
+      "shards_acknowledged": true,
+      "index": "q5art-threads"
+     },
+     "docs_before": {
+      "T-0001": null
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001"
+      }
+     }
+    },
+    {
+     "id": "m2",
+     "title": "爬蟲在 mapping 還沒加欄位時寫入",
+     "note": "新欄位沒宣告，被 strict mapping 擋下，文件沒被改動。",
+     "code": "r = requests.post(f\"{ES}/{IDX}/_update/T-0001\", json={\"doc\": {\n    \"text_post_app_info\": {\"repost_count\": 20},\n    \"counts_at\": {\"repost_count\": T2}}})",
+     "status": 400,
+     "ms": 7,
+     "resp": {
+      "error": {
+       "root_cause": [
+        {
+         "type": "strict_dynamic_mapping_exception",
+         "reason": "[1:33] mapping set to strict, dynamic introduction of [counts_at] within [_doc] is not allowed"
+        }
+       ],
+       "type": "strict_dynamic_mapping_exception",
+       "reason": "[1:33] mapping set to strict, dynamic introduction of [counts_at] within [_doc] is not allowed"
+      },
+      "status": 400
+     },
+     "docs_before": {
+      "T-0001": {
+       "post_id": "T-0001"
+      }
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001"
+      }
+     }
+    },
+    {
+     "id": "m3",
+     "title": "update mapping 加新欄位（不 reindex）",
+     "note": "三個計數用 long；每欄時間戳用 date＋epoch_millis。",
+     "code": "FIELDS = (\"repost_count\", \"quote_count\", \"reshare_count\")\nr = requests.put(f\"{ES}/{IDX}/_mapping\", json={\"properties\": {\n    \"text_post_app_info\": {\"properties\": {f: {\"type\": \"long\"} for f in FIELDS}},\n    \"counts_at\": {\"properties\": {f: {\"type\": \"date\", \"format\": \"epoch_millis\"}\n                                 for f in FIELDS}}}})",
+     "status": 200,
+     "ms": 318,
+     "resp": {
+      "acknowledged": true
+     },
+     "docs_before": {
+      "T-0001": {
+       "post_id": "T-0001"
+      }
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "crawler",
+   "title": "爬蟲寫入：計數＋counts_at",
+   "steps": [
+    {
+     "id": "c1",
+     "title": "寫入整數計數，同時寫該欄的 counts_at",
+     "note": "計數和抓取時間在同一個 update 裡寫，T2 是這次抓取時間（epoch 毫秒）。",
+     "code": "r = requests.post(f\"{ES}/{IDX}/_update/T-0001?refresh=true\", json={\"doc\": {\n    \"text_post_app_info\": {\"repost_count\": 20},\n    \"counts_at\": {\"repost_count\": T2}}})",
+     "status": 200,
+     "ms": 84,
+     "resp": {
+      "_index": "q5art-threads",
+      "_id": "T-0001",
+      "result": "updated",
+      "forced_refresh": true
+     },
+     "docs_before": {
+      "T-0001": {
+       "post_id": "T-0001"
+      }
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000
+       },
+       "text_post_app_info": {
+        "repost_count": 20
+       }
+      }
+     }
+    },
+    {
+     "id": "c2",
+     "title": "畫面沒顯示數字：null 保留成 null",
+     "note": "JSON null 是一次觀測，不是 0；一樣記下抓取時間。",
+     "code": "r = requests.post(f\"{ES}/{IDX}/_update/T-0002?refresh=true\", json={\"doc\": {\n    \"text_post_app_info\": {\"repost_count\": None},\n    \"counts_at\": {\"repost_count\": T2}}})",
+     "status": 200,
+     "ms": 77,
+     "resp": {
+      "_index": "q5art-threads",
+      "_id": "T-0002",
+      "result": "updated",
+      "forced_refresh": true
+     },
+     "docs_before": {
+      "T-0002": {
+       "post_id": "T-0002"
+      }
+     },
+     "docs": {
+      "T-0002": {
+       "post_id": "T-0002",
+       "counts_at": {
+        "repost_count": 1777680000000
+       },
+       "text_post_app_info": {
+        "repost_count": null
+       }
+      }
+     }
+    },
+    {
+     "id": "c3",
+     "title": "counts_at 寫成 ISO 字串",
+     "note": "mapping 是 date＋epoch_millis，字串在寫入時就被擋下。",
+     "code": "r = requests.post(f\"{ES}/{IDX}/_update/T-0001\", json={\"doc\": {\n    \"counts_at\": {\"repost_count\": \"2026-05-02T00:00:00Z\"}}})",
+     "status": 400,
+     "ms": 7,
+     "resp": {
+      "error": {
+       "root_cause": [
+        {
+         "type": "document_parsing_exception",
+         "reason": "[1:49] failed to parse field [counts_at.repost_count] of type [date] in document with id 'T-0001'. Preview of field's value: '2026-05-02T00:00:00Z'"
+        }
+       ],
+       "type": "document_parsing_exception",
+       "reason": "[1:49] failed to parse field [counts_at.repost_count] of type [date] in document with id 'T-0001'. Preview of field's value: '2026-05-02T00:00:00Z'",
+       "caused_by": {
+        "type": "illegal_argument_exception",
+        "reason": "failed to parse date field [2026-05-02T00:00:00Z] with format [epoch_millis]",
+        "caused_by": {
+         "type": "date_time_parse_exception",
+         "reason": "Failed to parse with all enclosed parsers"
+        }
+       }
+      },
+      "status": 400
+     },
+     "docs_before": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000
+       },
+       "text_post_app_info": {
+        "repost_count": 20
+       }
+      }
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000
+       },
+       "text_post_app_info": {
+        "repost_count": 20
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "backfill",
+   "title": "回補：逐欄時間戳保護",
+   "steps": [
+    {
+     "id": "b1",
+     "title": "回補送出（線上 repost 已有 T2 的新值）",
+     "note": "合併後：repost 取 T1 的 10、quote／reshare 取 T3 的 3。腳本逐欄比對 counts_at。",
+     "code": "values = {\"repost_count\": 10, \"quote_count\": 3, \"reshare_count\": 3}\nat     = {\"repost_count\": T1, \"quote_count\": T3, \"reshare_count\": T3}\nr = requests.post(f\"{ES}/{IDX}/_update/T-0001?refresh=true\", json={\"script\": {\n    \"lang\": \"painless\", \"source\": GUARD_SCRIPT,\n    \"params\": {\"obj\": \"text_post_app_info\", \"values\": values, \"at\": at}}})",
+     "status": 200,
+     "ms": 69,
+     "resp": {
+      "_index": "q5art-threads",
+      "_id": "T-0001",
+      "result": "updated",
+      "forced_refresh": true
+     },
+     "docs_before": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000
+       },
+       "text_post_app_info": {
+        "repost_count": 20
+       }
+      }
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000,
+        "reshare_count": 1777766400000,
+        "quote_count": 1777766400000
+       },
+       "text_post_app_info": {
+        "repost_count": 20,
+        "reshare_count": 3,
+        "quote_count": 3
+       }
+      }
+     }
+    },
+    {
+     "id": "b2",
+     "title": "同一批重跑",
+     "note": "每欄的線上時間戳都不比回補舊，整個 noop，什麼都不寫。",
+     "code": "r = requests.post(f\"{ES}/{IDX}/_update/T-0001?refresh=true\", json={\"script\": {\n    \"lang\": \"painless\", \"source\": GUARD_SCRIPT,\n    \"params\": {\"obj\": \"text_post_app_info\", \"values\": values, \"at\": at}}})",
+     "status": 200,
+     "ms": 6,
+     "resp": {
+      "_index": "q5art-threads",
+      "_id": "T-0001",
+      "result": "noop"
+     },
+     "docs_before": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000,
+        "reshare_count": 1777766400000,
+        "quote_count": 1777766400000
+       },
+       "text_post_app_info": {
+        "repost_count": 20,
+        "reshare_count": 3,
+        "quote_count": 3
+       }
+      }
+     },
+     "docs": {
+      "T-0001": {
+       "post_id": "T-0001",
+       "counts_at": {
+        "repost_count": 1777680000000,
+        "reshare_count": 1777766400000,
+        "quote_count": 1777766400000
+       },
+       "text_post_app_info": {
+        "repost_count": 20,
+        "reshare_count": 3,
+        "quote_count": 3
+       }
+      }
+     }
+    },
+    {
+     "id": "b3",
+     "title": "對照：只有整篇一個時間戳的寫法",
+     "note": "這不是交卷的設計。T-0003 先由爬蟲寫 repost=20（T2），再用整篇 T3 回補。",
+     "code": "requests.put(f\"{ES}/{IDX}-naive/_doc/T-0003?refresh=true\", json={\n    \"post_id\": \"T-0003\", \"crawled_at\": T2,\n    \"text_post_app_info\": {\"repost_count\": 20}})\nr = requests.post(f\"{ES}/{IDX}-naive/_update/T-0003?refresh=true\", json={\"script\": {\n    \"lang\": \"painless\", \"source\": NAIVE,\n    \"params\": {\"values\": {\"repost_count\": 10, \"quote_count\": 3, \"reshare_count\": 3}, \"at\": T3}}})",
+     "status": 200,
+     "ms": 2970,
+     "resp": {
+      "_index": "q5art-threads-naive",
+      "_id": "T-0003",
+      "result": "updated",
+      "forced_refresh": true
+     },
+     "docs_before": {
+      "T-0003": null
+     },
+     "docs": {
+      "T-0003": {
+       "post_id": "T-0003",
+       "crawled_at": 1777766400000,
+       "text_post_app_info": {
+        "repost_count": 10,
+        "reshare_count": 3,
+        "quote_count": 3
+       }
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "es": {
+  "version": "9.5.5",
+  "build_hash": "48acba663b09",
+  "lucene": "10.5.1",
+  "url": "http://127.0.0.1:19205",
+  "recorded_at": "2026-11-15T15:59:15+00:00",
+  "T": {
+   "T1": 1777593600000,
+   "T2": 1777680000000,
+   "T3": 1777766400000
+  }
+ },
+ "mapping_counts_at": {
+  "q5art-threads": {
+   "mappings": {
+    "properties": {
+     "counts_at": {
+      "properties": {
+       "quote_count": {
+        "type": "date",
+        "format": "epoch_millis"
+       },
+       "repost_count": {
+        "type": "date",
+        "format": "epoch_millis"
+       },
+       "reshare_count": {
+        "type": "date",
+        "format": "epoch_millis"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "guard_script": "def src = ctx._source; def t = src; if (params.obj != null) { if (!(src[params.obj] instanceof Map)) { src[params.obj] = new HashMap(); } t = src[params.obj]; } if (!(src.counts_at instanceof Map)) { src.counts_at = new HashMap(); } boolean changed = false; for (def f : params.values.keySet()) { def cur = src.counts_at[f]; if (cur != null && !(cur instanceof Number)) { throw new IllegalArgumentException('counts_at.' + f + ' is not epoch_millis'); } if (cur == null || cur < params.at[f]) { t[f] = params.values[f]; src.counts_at[f] = params.at[f]; changed = true; } } if (!changed) { ctx.op = 'noop'; }",
+ "naive_script": "if (ctx._source.crawled_at != null && ctx._source.crawled_at >= params.at) { ctx.op = 'noop'; } else { for (def f : params.values.keySet()) { ctx._source.text_post_app_info[f] = params.values[f]; } ctx._source.crawled_at = params.at; }"
+}

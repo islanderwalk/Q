@@ -13,6 +13,13 @@ groups:
         for: 15m
         labels: { severity: page }
         annotations: { summary: "有文章超過 15 分鐘仍未斷詞（seg_ver_v2 缺），共 {{ $value }} 篇" }
+      # 漏斷詞（不限時間）：上一條只看 1 小時內，串流漏掉的文章過了 1 小時就看不到、告警自己解除（2026-11-08 的 566 篇就是這樣）。
+      # 這一條要補完才會解除：PIPELINE=<版> python -m qseg fill
+      - alert: SegUnsegmentedStale
+        expr: sum by (pipeline) (qseg_coverage_unsegmented_stale_docs) > 0
+        for: 30m
+        labels: { severity: warn }
+        annotations: { summary: "{{ $labels.pipeline }} 有 {{ $value }} 篇抓到超過 15 分鐘仍沒斷詞（不限時間）；用 PIPELINE={{ $labels.pipeline }} python -m qseg fill 補" }
       # 覆蓋檢查本身停擺（超過 10 分鐘沒有成功一次，或從未成功）
       - alert: SegCoverageStale
         # max() 先把 instance 標籤去掉再 or vector(0)：端對端驗證抓到「metric or vector(0)」會把有標籤的序列和無標籤的 0 都留下，

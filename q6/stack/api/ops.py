@@ -21,6 +21,18 @@ WORD_RE = re.compile(r"^[A-Za-z0-9㐀-䶿一-鿿豈-﫿]{1,20}$")
 CHANNELS = ("facebook", "instagram", "youtube", "ptt", "media", "threads")
 BASE_KEYS = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at", "author")
 DICT_FILES = ("base.dict", "user.dict", "stopwords.txt", "soft_stopwords.txt", "merges.tsv", "synonyms.txt", "ik_ext.dic", "ik_stop.dic")
+PROMO_FILE = "promo_lines.tsv"       # 宣傳句清單（seg/qseg/promo.py）：有的版本才有，PM 頁發版時原封不動帶到下一版
+OPTIONAL_FILES = (PROMO_FILE,)
+# 下面四條要與斷詞那邊一字不差（q6/code/segmenter.py 的 URL_RE、SHORT_URL_RE；seg/qseg/promo.py 的 _CJK_RUN、_ASCII_RUN）。
+# 這支檔只用標準函式庫、不能 import 斷詞程式，所以照抄一份；tests/test_promo.py 逐句比對兩邊挑出來的片語。
+_PROMO_URL = re.compile(r"(?:https?://|www\.)\S+", re.I)
+_PROMO_SHORT = re.compile(
+    r"\b(?:bit\.ly|t\.co|goo\.gl|tinyurl\.com|reurl\.cc|lihi\d?\.com|pse\.is|xurl\.es|ppt\.cc|youtu\.be)/\S*", re.I)
+_PROMO_CJK = re.compile(r"[一-鿿]{2,}")
+_PROMO_WORD = re.compile(r"[0-9A-Za-z一-鿿]")
+PROMO_MIN_WORD_CHARS = 4
+_PROMO_SINCE = re.compile(r"^.+-(\d{4})\.(\d{2})\.(\d{2})\.(\d{1,2})$")   # 與 seg/qseg/promo.py 的 _SINCE_RE 同一條規則
+_PROMO_ASCII = re.compile(r"[A-Za-z0-9]+(?:['’][A-Za-z0-9]+)*(?: [A-Za-z0-9]+(?:['’][A-Za-z0-9]+)*)*")
 
 
 def now_iso() -> str:
@@ -84,6 +96,55 @@ def list_versions(root: Path) -> list:
     return sorted(out, key=lambda x: x["seg_ver"])
 
 
+def promo_probe(sentence: str) -> str:
+    """與 seg/qseg/promo.py 的 probe 同一個挑法（tests/test_promo.py 逐句比對兩邊結果）：
+    最長的一段中文字（至少兩個字）；沒有中文就用最長的一段英數字（至少三個字元，轉小寫）。"""
+    s = " ".join(_PROMO_SHORT.sub(" ", _PROMO_URL.sub(" ", sentence)).split())
+    runs = _PROMO_CJK.findall(s)
+    if runs:
+        return max(runs, key=len)
+    runs = [r for r in _PROMO_ASCII.findall(s) if len(r) >= 3]
+    return max(runs, key=len).lower() if runs else ""
+
+
+def promo_pending_filter(lines, current=None):
+    """PM 頁用：回傳 (ES 條件 或 None, 清單句數)。條件＝「原文可能含清單裡某一句、而且斷詞版本比開始收那一句的字典版本舊」，
+    也就是定向重跑（seg/qseg/rerun.py 的 promo_scope）還沒處理到的貼文；重跑完就是 0 篇。
+    current＝現在上線的字典版本：版本門檻不超過它（與 promo_scope 的 min(target, since) 同一個算法），
+    否則清單裡第三欄寫了比現在還新的版本時，頁面會一直顯示重跑也清不掉的篇數。"""
+    groups, n = {}, 0
+    cap = None if current is None else seg_ver("v2", current)
+    for raw in lines:
+        raw = raw.lstrip("﻿").rstrip("\r\n")     # 檔頭的 BOM 不算渠道名的一部分
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        cols = raw.split("\t")
+        if len(cols) != 3:
+            raise ValueError(f"{PROMO_FILE}：要寫成「渠道<TAB>句子<TAB>從哪一版字典開始收」：{raw[:60]!r}")
+        if not cols[0].strip():
+            raise ValueError(f"{PROMO_FILE}：第一欄（渠道）不能空白：{raw[:60]!r}")
+        key = " ".join(_PROMO_SHORT.sub(" ", _PROMO_URL.sub(" ", cols[1])).split())
+        if len(_PROMO_WORD.findall(key)) < PROMO_MIN_WORD_CHARS:   # 與 seg/qseg/promo.py 的 MIN_WORD_CHARS 同一條規則
+            raise ValueError(f"{PROMO_FILE}：句子去掉網址後不到 {PROMO_MIN_WORD_CHARS} 個字，太短會誤刪正文：{cols[1][:60]!r}")
+        since = cols[2].strip()
+        m = _PROMO_SINCE.match(since)
+        # 每一行都驗（不只驗挑得出片語的那幾行）：載入字典時會擋的版本寫法，這裡也要擋
+        if not m or not (1 <= int(m[2]) <= 12 and 1 <= int(m[3]) <= 31):
+            raise ValueError(f"{PROMO_FILE}：第三欄要是字典版本（例 qsearch-q6-2026.11.12.1）：{since[:60]!r}")
+        n += 1
+        p = promo_probe(cols[1])
+        if p:
+            groups.setdefault((since, cols[0].strip()), set()).add(p)
+    def floor(since):
+        v = seg_ver("v2", since)
+        return v if cap is None else min(cap, v)
+
+    clauses = [{"bool": {"filter": [{"term": {"channel": ch}}, {"range": {"seg_ver_v2": {"lt": floor(since)}}}],
+                         "should": [{"match_phrase": {"content.bigram": p}} for p in sorted(ps)], "minimum_should_match": 1}}
+               for (since, ch), ps in sorted(groups.items())]
+    return ({"bool": {"should": clauses, "minimum_should_match": 1}} if clauses else None), n
+
+
 def validate_words(words) -> list:
     """接受 ["詞", {"word":..,"freq":..,"pos":..}, ["詞", 20, "n"]]，回傳 [(詞, 詞頻, 詞性)]；去重、最多 50 個。"""
     out, seen = [], set()
@@ -141,6 +202,7 @@ def _base_freq(base_dict: Path, words: set) -> dict:
 
 def build_release(root: Path, words: list, note: str = "", requested_by: str = "") -> dict:
     """從 current 版建下一版：複製全部檔案、使用者字典加詞（詞頻不低於主字典）、IK 擴充字典同步加詞、寫 manifest。
+    current 版有宣傳句清單就原封不動帶過去（清單要改走人工審核後的發版，不在 PM 頁改）。
     不切 current（讓呼叫端在發出控制訊息前後決定）。回傳新版 manifest。"""
     cur = read_manifest(root)
     cur_v = cur["dict_version"]
@@ -149,7 +211,8 @@ def build_release(root: Path, words: list, note: str = "", requested_by: str = "
     if out.exists():
         raise FileExistsError(f"{new_v} 已存在")
     out.mkdir(parents=True)
-    for name in DICT_FILES:
+    names = DICT_FILES + tuple(name for name in OPTIONAL_FILES if name in cur.get("files", {}))
+    for name in names:
         shutil.copyfile(src / name, out / name)
     entries = _entries((src / "user.dict").read_text(encoding="utf-8").splitlines())
     floor = _base_freq(src / "base.dict", {w for w, _, _ in words})
@@ -160,7 +223,7 @@ def build_release(root: Path, words: list, note: str = "", requested_by: str = "
         added.append([w, f_, pos])
     (out / "user.dict").write_text("".join(f"{w} {f_} {pos}".rstrip() + "\n" for w, (f_, pos) in entries.items()), encoding="utf-8")
     (out / "ik_ext.dic").write_text("\n".join(entries) + "\n", encoding="utf-8")
-    files = {name: sha256_file(out / name) for name in DICT_FILES}
+    files = {name: sha256_file(out / name) for name in names}
     manifest = {
         "dict_version": new_v, "note": note or f"PM 頁發版：加 {len(added)} 個詞", "base_dict": cur.get("base_dict"),
         "total_pinned": cur["total_pinned"], "user_words": len(entries), "files": files,

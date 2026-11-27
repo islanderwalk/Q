@@ -33,28 +33,90 @@ def _dedupe(tokens):
     return out
 
 
-def must_keep_split(text: str, toks: list, words) -> list:
+def _bounds(toks: list):
+    return {s for _, s, _ in toks}, {s: e for _, s, e in toks}
+
+
+def occurrence_kind(i: int, j: int, starts: set, tok_at: dict, in_dict=None) -> str:
+    """原文 [i, j) 這一處被怎麼切（must_keep_split 與品質日報共用同一條規則）：
+    whole＝剛好一個詞；inside＝整段在更長的詞裡面、沒有內部斷點（「台北市立」）；
+    overlap＝交集型歧義，允許：起點是斷點、最後一段往右跨出去（「台北市長」→ 台北／市長）；
+      或剛好跨在兩個詞中間、兩個詞各往外跨出去，而且兩個都是字典裡的詞（鏈狀交集型歧義，「大台北市區」→ 大台北／市區）。
+      in_dict(起, 迄) 判斷那一段是不是字典詞，沒給就不放行後面這一種；
+    split＝不允許：左邊的詞吃進來、右邊只剩碎片（辦好／市多），兩邊往外跨但有一邊不是字典詞（jieba 用 HMM 猜的，搶輝／達來），
+      碎成三段以上，或整個切在詞裡面（鳳山／區）。"""
+    internal = [b for b in starts if i < b < j]
+    if not internal:
+        return "whole" if i in starts and tok_at[i] == j else "inside"
+    last = max(internal)
+    if tok_at[last] > j:
+        if i in starts:
+            return "overlap"
+        left = max((s for s in starts if s < i), default=None)
+        if (len(internal) == 1 and in_dict is not None and left is not None and tok_at[left] == last
+                and in_dict(left, last) and in_dict(last, tok_at[last])):
+            return "overlap"
+    return "split"
+
+
+def dict_freq(dic):
+    """斷詞器的詞頻表（jieba FREQ：詞 → 詞頻，字首補 0），給 occurrence_kind 判斷字典詞；沒有斷詞器（v0、測試的假字典）回 None。"""
+    return getattr(getattr(dic, "tokenizer", None), "FREQ", None)
+
+
+def _in_dict(text: str, freq):
+    # 詞頻 > 0 才算字典詞：HMM 猜出來的詞不在 FREQ，字首只補 0
+    return None if freq is None else (lambda s, e: freq.get(text[s:e], 0) > 0)
+
+
+def occurrences(text: str, toks: list, word: str, freq=None) -> list:
+    """word 在 text 每一處的 (起點, 被怎麼切)。freq：斷詞器的詞頻表（dict_freq）。"""
+    starts, tok_at = _bounds(toks)
+    in_dict = _in_dict(text, freq)
+    out, i = [], text.find(word)
+    while i != -1:
+        out.append((i, occurrence_kind(i, i + len(word), starts, tok_at, in_dict)))
+        i = text.find(word, i + 1)
+    return out
+
+
+def must_keep_split(text: str, toks: list, words, freq=None) -> list:
     """必不可拆詞被切開了嗎？（看斷點位置，不是只看「有沒有一個詞包含它」）
 
     允許：詞的起點是斷點，且最後一個內部斷點開始的那個詞往右跨出去（交集型歧義，例如「台北市長」→ 台北／市長、
-    「台中市民」→ 台中／市民，這是對的）。
-    不允許：左邊的詞吃進來（「辦好市多」→ 辦好／市多），或整個切在詞裡面（「鳳山區」→ 鳳山／區）。"""
+    「台中市民」→ 台中／市民，這是對的）；或剛好跨在兩個字典詞中間、兩邊都往外跨（「大台北市區」→ 大台北／市區）。
+    不允許：左邊的詞吃進來（「辦好市多」→ 辦好／市多）、跨在 HMM 猜出來的詞上（「搶輝達來」→ 搶輝／達來），
+    或整個切在詞裡面（「鳳山區」→ 鳳山／區）。任何一處是 split 就算這個詞被切開（occurrence_kind）。
+    freq：斷詞器的詞頻表（dict_freq）；沒給的話跨在兩個詞中間一律算切開。"""
     hits = [w for w in words if w in text]
     if not hits:
         return []
-    starts = {s for _, s, _ in toks}
-    tok_at = {s: e for _, s, e in toks}
+    starts, tok_at = _bounds(toks)
+    in_dict = _in_dict(text, freq)
     bad = []
     for w in hits:
         i = text.find(w)
         while i != -1:
-            j = i + len(w)
-            internal = [b for b in starts if i < b < j]
-            if internal and not (i in starts and tok_at[max(internal)] > j):
+            if occurrence_kind(i, i + len(w), starts, tok_at, in_dict) == "split":
                 bad.append(w)
                 break
             i = text.find(w, i + 1)
     return bad
+
+
+def segment_detail(dic, channel: str, text: str):
+    """v2 斷詞的完整過程：(清洗後原文, jieba 斷點 [(詞, 起, 迄)], 詞表, 被切開的必不可拆詞)。
+    品質日報要看「切在哪裡」才用這個；一般斷詞走 segment_checked。"""
+    clean = normalize(channel, text, getattr(dic, "promo_rules", None))   # 宣傳句清單跟著字典版本走；這一版沒帶就和以前一樣
+    toks = list(dic.tokenizer.tokenize(clean, HMM=True))
+    out = []
+    for t, _, _ in toks:
+        t = t.strip()
+        if ASCII_RE.match(t):
+            t = t.lower()
+        if sg._keep_new(t, dic.stopwords):
+            out.append(t)
+    return clean, toks, _dedupe(out), must_keep_split(clean, toks, dic.user_words, dict_freq(dic))
 
 
 def segment_checked(dic, channel: str, text: str):
@@ -64,16 +126,8 @@ def segment_checked(dic, channel: str, text: str):
         return legacy.tokens(text or "", dic.legacy_words, dic.legacy_maxlen), []
     if dic.pipeline == "v1":
         return _dedupe(t for t in (x.strip() for x in dic.tokenizer.lcut(text or "", HMM=False)) if t), []
-    clean = normalize(channel, text)
-    toks = list(dic.tokenizer.tokenize(clean, HMM=True))
-    out = []
-    for t, _, _ in toks:
-        t = t.strip()
-        if ASCII_RE.match(t):
-            t = t.lower()
-        if sg._keep_new(t, dic.stopwords):
-            out.append(t)
-    return _dedupe(out), must_keep_split(clean, toks, dic.user_words)
+    _, _, terms, bad = segment_detail(dic, channel, text)
+    return terms, bad
 
 
 def segment(dic, channel: str, text: str) -> list:
@@ -84,20 +138,27 @@ def month_of(published_at: str) -> str:
     return (published_at or "")[:7] or "unknown"
 
 
+def content_sha(text: str) -> str:
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
+
+
 def base_doc(post: dict) -> dict:
     """文章本體欄位（parser 寫入的部分）。斷詞欄位不在這裡，由各版斷詞服務各寫各的。"""
     keys = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at", "author")
     doc = {k: post.get(k) for k in keys}
     doc["content"] = post.get("text") or post.get("content") or ""
-    doc["content_sha"] = hashlib.sha256(doc["content"].encode("utf-8")).hexdigest()[:16]   # 同一版斷詞下原文改了也看得出來（api/ops.py 同一定義）
+    doc["content_sha"] = content_sha(doc["content"])   # 同一版斷詞下原文改了也看得出來（api/ops.py 同一定義）
     doc["month"] = month_of(post.get("published_at"))
     return doc
 
 
-def seg_fields(dic, terms: list) -> dict:
+def seg_fields(dic, terms: list, text: str) -> dict:
+    """text＝拿去斷詞的那一份原文。seg_sha_<版> 記它的雜湊，seg_guard 拿來和 ES 的 content_sha 比：
+    不一樣＝斷的是舊原文，不寫；一樣但和上次斷詞的不一樣＝改文，同一版也要重寫詞表。"""
     f = dic.pipeline
     return {
         f"terms_{f}": terms,
+        f"seg_sha_{f}": content_sha(text),
         f"seg_ver_{f}": seg_ver(f, dic.version),
         f"dict_version_{f}": dic.version,
         f"seg_build_{f}": config.SEG_BUILD,

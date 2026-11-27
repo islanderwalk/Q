@@ -1,4 +1,4 @@
-# 採集器（計畫書 P0 第 3、4 項）：產出率與軟封鎖、首抓延遲、退避、robots 變更、服務掛掉保護。門檻都是提案值。
+# 採集器（計畫書 P0 第 3、4 項）：產出率與軟封鎖、首抓延遲、退避、YouTube 配額、robots 變更、服務掛掉保護。門檻都是提案值。
 groups:
   - name: q6-collector
     rules:
@@ -27,10 +27,17 @@ groups:
         annotations: { summary: "feed 超過 15 分鐘沒有成功抓取（{{ $labels.feed }}）" }
       - alert: CollectorFeedDead
         # 停用的 feed（沒有 YouTube API key、COLLECT_SKIP）不算：端對端驗證時三個 YouTube feed 因為沒有 key 被判成 dead
-        expr: (time() - collector_last_ok_timestamp_seconds) > 3600 and on (feed) collector_feed_enabled == 1
+        # YouTube 當日配額用完也不算：來源沒壞，是配額要等歸零（改由下面的 CollectorYoutubeQuotaExhausted 提醒）
+        expr: (time() - collector_last_ok_timestamp_seconds) > 3600 and on (feed) collector_feed_enabled == 1 unless on (feed) collector_youtube_quota_exhausted == 1
         for: 5m
         labels: { severity: page }
         annotations: { summary: "feed 超過 1 小時沒有成功抓取（{{ $labels.feed }}）：退避中也算，來源可能已經封鎖或改版" }
+      # YouTube Data API 每日 10,000 單位與歷史爬蟲共用同一把金鑰；用完時採集器自己排到太平洋時間午夜歸零後再抓 → 只 warn
+      - alert: CollectorYoutubeQuotaExhausted
+        expr: max by (feed) (collector_youtube_quota_exhausted) == 1
+        for: 5m
+        labels: { severity: warn }
+        annotations: { summary: "YouTube Data API 當日配額用完（{{ $labels.feed }}）：太平洋時間午夜（台灣 16:00）歸零後自動恢復；配額與歷史爬蟲共用，先看爬蟲當天用了多少" }
       # 產出率低於 7 天前同時段的 50% 持續 30 分鐘 → page（計畫書 P0 第 3 項；分母至少 1 篇／小時才比，避免深夜 0 除）
       - alert: CollectorYieldDrop
         expr: |
@@ -40,17 +47,20 @@ groups:
         for: 30m
         labels: { severity: page }
         annotations: { summary: "渠道產出率低於 7 天前同時段的一半（{{ $labels.channel }}）" }
-      # 首抓延遲 p95 > 45 分鐘 warn、> 60 分鐘 page；只算發文 24 小時內的新文章（計畫書 P0 第 4 項）
+      # 首抓延遲 p95 > 45 分鐘 warn、> 60 分鐘 page；只算發文 24 小時內的新文章（計畫書 P0 第 4 項）。
+      # 看「我們這邊」collector_detect_lag_seconds（抓到 − 上一次成功檢查）：發文到抓到的總延遲 collector_first_seen_lag_seconds
+      # 還包含來源晚上架，只放看板。端對端驗證：中央社經 feedburner 的條目晚 15 分鐘到將近 3 小時才出現在 RSS、一出現 5 分鐘內就抓到，
+      # 拿總延遲告警，page 會為來源端的事響好幾個小時。輪詢停了的當下另有 CollectorFeedStale／CollectorFeedDead
       - alert: CollectorFirstSeenLagHigh
-        expr: histogram_quantile(0.95, sum by (le, channel) (rate(collector_first_seen_lag_seconds_bucket[1h]))) > 2700
+        expr: histogram_quantile(0.95, sum by (le, channel) (rate(collector_detect_lag_seconds_bucket[1h]))) > 2700
         for: 15m
         labels: { severity: warn }
-        annotations: { summary: "首抓延遲 p95 超過 45 分鐘（{{ $labels.channel }}）" }
+        annotations: { summary: "首抓延遲 p95 超過 45 分鐘（{{ $labels.channel }}；我們這邊：上一次成功檢查到抓到）：看退避與輪詢間隔" }
       - alert: CollectorFirstSeenLagCritical
-        expr: histogram_quantile(0.95, sum by (le, channel) (rate(collector_first_seen_lag_seconds_bucket[1h]))) > 3600
+        expr: histogram_quantile(0.95, sum by (le, channel) (rate(collector_detect_lag_seconds_bucket[1h]))) > 3600
         for: 15m
         labels: { severity: page }
-        annotations: { summary: "首抓延遲 p95 超過 60 分鐘（{{ $labels.channel }}）" }
+        annotations: { summary: "首抓延遲 p95 超過 60 分鐘（{{ $labels.channel }}；我們這邊：上一次成功檢查到抓到）" }
       - alert: CollectorRobotsChanged
         expr: increase(collector_robots_changed_total[1d]) > 0
         for: 0m

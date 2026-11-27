@@ -1,17 +1,18 @@
 """回補 Job 的計畫書修正：G1 比不重複 post_id、G2 比例門檻、認領 attempts < 3、心跳背景執行緒、G3 限速回升。
-只測純函式與 SQL 字串；不連 ES／PG（ES 用假物件）。"""
+只測純函式與假帳本（FakeLedger）；不連 ES／PG。"""
 import json
 import sys
 import threading
 
 import pytest
 
-from _p0_fakes import SEG, ensure_prometheus_client
+from _p0_fakes import SEG, FakeLedger, ensure_prometheus_client
 
 ensure_prometheus_client()
 if str(SEG) not in sys.path:
     sys.path.insert(0, str(SEG))
 job = pytest.importorskip("qseg.job")
+ledger = pytest.importorskip("qseg.ledger")
 
 
 def test_load_partition_lines_dedupes_post_id_first_wins(tmp_path):
@@ -32,30 +33,42 @@ def test_g2_ratio_threshold_replaces_zero_tolerance():
     assert job.g2_pass(job.g2_ratios({"phone_like": 0}, {}, 0))  # 空分區不會除以 0
 
 
-def test_claim_sql_skips_exhausted_partitions_and_marks_them_failed():
-    import inspect
-    src = inspect.getsource(job.claim)
-    assert "attempts < %s" in src and "EXHAUST_SQL" in src
-    assert "attempts >= %s" in job.EXHAUST_SQL and "status='failed'" in job.EXHAUST_SQL and "attempts_exhausted" in job.EXHAUST_SQL
+def test_claim_hands_exhausted_partitions_to_failed_first_and_uses_max_attempts():
+    # 領的規則在 ledger.py（認領條件、渠道規則、CAS，見下一個測試）；job.claim 只負責：先把用盡 attempts 的轉 failed，再用 MAX_ATTEMPTS 領
+    class Exhausted(FakeLedger):
+        def exhaust(self, max_attempts, stale_sec=120):
+            self.calls.append(("exhaust", max_attempts))
+            return [("ptt/2026-09", 3)]
+    led = Exhausted()
+    assert job.claim(led, None) is None
+    assert led.calls[0] == ("exhaust", 3)
+    assert led.calls[1][:2] == ("claim", 3) and led.calls[1][3] is None
     assert job.config.MAX_ATTEMPTS == 3
 
 
-def test_heartbeat_thread_beats_on_its_own_connection(monkeypatch):
-    executed = []
+def test_ledger_claim_queries_skip_exhausted_and_use_the_stale_window():
+    lg = ledger.Ledger("http://fake-es:9200", "backfill_ledger")
+    assert {"range": {"attempts": {"lt": 3}}} in lg._claimable_query(3, 120)["bool"]["filter"]
+    assert {"range": {"attempts": {"gte": 3}}} in lg._exhausted_query(3, 120)["bool"]["filter"]
+    assert ledger.STALE_SEC == 120 and ledger.CLAIM_ROUNDS == 50
 
-    class Conn:
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
-        def execute(self, sql, params=()): executed.append((sql, params))
-    monkeypatch.setattr(job.psycopg, "connect", lambda dsn, **k: Conn())
-    hb = job.Heartbeat("dsn", "ptt/2026-10", interval=0.05)
-    hb.start()
+
+def test_heartbeat_thread_beats_on_its_own_ledger_instance(monkeypatch):
     import time
+    made = []
+
+    def factory(url, index, *a, **k):
+        made.append(FakeLedger(url, index))
+        return made[-1]
+    monkeypatch.setattr(job, "Ledger", factory)
+    outer = FakeLedger()
+    hb = job.Heartbeat(outer, "ptt/2026-10", interval=0.05)
+    hb.start()
     time.sleep(0.3)
     hb.stop()
     hb.join(2)
-    assert hb.beats >= 2 and all("heartbeat_at=now()" in s and p == ("ptt/2026-10",) for s, p in executed)
-    assert "status='running'" in executed[0][0]
+    assert hb.beats >= 2 and hb.led is made[0] and hb.led is not outer   # 自己的帳本實例，不和主執行緒共用
+    assert all(c == ("heartbeat", "ptt/2026-10") for c in hb.led.calls)
     assert job.HEARTBEAT_SEC == 20
 
 

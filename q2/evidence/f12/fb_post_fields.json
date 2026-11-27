@@ -1,0 +1,357 @@
+{
+  "post_url": "https://www.facebook.com/NASA/posts/pfbid02i7hXRsxkXQbb9mvtxBb5jCBdb4pk8xitpnP3cCZF6C56PXk5SNU8sfuwEobZzV5zl",
+  "captured_at": "2026-11-04 23:47 – 2026-11-05 00:09（UTC+8）",
+  "snapshot": "document-embedded 的值取自第 2 次載入（2026-11-04 23:56）；dialog_graphql 的值取自 2026-11-05 00:06 再次開啟心情對話框的回應",
+  "path_note": "path 從 <script type=\"application/json\"> 解析後的根物件起算；鍵名、層級照原樣，陣列索引為這次載入的位置，FB 改版或換頁時索引可能不同，取值時要以鍵名比對",
+  "fields": [
+    {
+      "field": "貼文 ID",
+      "key": "post_id",
+      "value": "1671214107707292",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.post_id",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "畫面上不顯示",
+      "f12_shot": "fb_f12_post_id.png"
+    },
+    {
+      "field": "粉專 ID（Page ID）",
+      "key": "page_id",
+      "value": "54971236771",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.context_layout.story.comet_sections.actor_photo.story.actors[0].delegate_page.id",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "畫面上不顯示",
+      "f12_shot": "fb_f12_page_id.png",
+      "note": "對外的粉絲專頁 ID；和下面的 profile ID 不同，「粉絲頁 ID」欄位存這個"
+    },
+    {
+      "field": "粉專 ID（貼文擁有者 profile ID）",
+      "key": "profile_id",
+      "value": "100044561550831",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.feedback.owning_profile.id",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "畫面上不顯示",
+      "f12_shot": "fb_f12_profile_id.png",
+      "note": "owning_profile.__typename = \"User\"；新版粉專在貼文資料裡以 profile 身分出現"
+    },
+    {
+      "field": "粉專名稱",
+      "key": "page_name",
+      "value": "NASA - National Aeronautics and Space Administration",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.feedback.owning_profile.name",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "貼文標頭可見",
+      "screen_shot": "fb_post_annotated.png",
+      "f12_shot": "fb_f12_page_name.png"
+    },
+    {
+      "field": "發文時間",
+      "key": "creation_time",
+      "value": 1793310300,
+      "value_readable": "2026-10-30 05:45:00 UTC+8",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.creation_time",
+      "also_at": [
+        "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.context_layout.story.comet_sections.metadata[0].story.creation_time"
+      ],
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "標頭顯示「10月30日上午5:45」；滑過顯示「2026年10月30日 星期五上午5:45」",
+      "screen_shot": "fb_post_time_tooltip.png",
+      "f12_shot": "fb_f12_creation_time.png"
+    },
+    {
+      "field": "內文",
+      "key": "message",
+      "value": "Welcome to the Artemis Accords, Vietnam 🇻🇳\n\nVietnam has become the 78th nation to sign the Artemis Accords, and in doing so, support the safe and sustainable exploration of space. https://go.nasa.gov/4BvnGSZ",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.content.story.comet_sections.message.story.message.text",
+      "also_at": [
+        "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.content.story.comet_sections.message_container.story.message.text"
+      ],
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "貼文本文可見",
+      "screen_shot": "fb_post_annotated.png",
+      "f12_shot": "fb_f12_message.png"
+    },
+    {
+      "field": "心情總數",
+      "key": "reaction_count",
+      "value": 27063,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.adaptive_ufi_action_renderers[0].feedback.reaction_count.count",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "不顯示（HIDE_COUNTS），只有圖示",
+      "screen_shot": "fb_post_annotated.png",
+      "f12_shot": "fb_f12_reaction_count.png",
+      "check": "七種心情相加 18961+7510+377+121+79+9+6 = 27063，和總數一致"
+    },
+    {
+      "field": "心情顯示設定",
+      "key": "reaction_display_strategy",
+      "value": "HIDE_COUNTS",
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.adaptive_ufi_action_renderers[0].feedback.reaction_display_config.reaction_display_strategy",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "畫面只顯示心情圖示，不顯示任何數字",
+      "f12_shot": "fb_f12_reaction_display_strategy.png"
+    },
+    {
+      "field": "分享數",
+      "key": "share_count",
+      "value": 1406,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.adaptive_ufi_action_renderers[2].feedback.share_count.count",
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "screen": "動作列顯示「1,406」",
+      "screen_shot": "fb_post_annotated.png",
+      "f12_shot": "fb_f12_share_count.png"
+    },
+    {
+      "field": "心情：讚",
+      "key": "reaction_like",
+      "reaction_id": "1635855486666999",
+      "value": 18961,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[0].reaction_count",
+      "also": {
+        "i18n_reaction_count": "1.8 萬",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[0].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_like.png",
+      "dialog_graphql": {
+        "value": 18965,
+        "reduced": "1.8 萬",
+        "path": "data.node.top_reactions.summary[0].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    },
+    {
+      "field": "心情：大心",
+      "key": "reaction_love",
+      "reaction_id": "1678524932434102",
+      "value": 7510,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[1].reaction_count",
+      "also": {
+        "i18n_reaction_count": "7,510",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[1].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_love.png",
+      "dialog_graphql": {
+        "value": 7510,
+        "reduced": "7,510",
+        "path": "data.node.top_reactions.summary[1].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    },
+    {
+      "field": "心情：加油",
+      "key": "reaction_care",
+      "reaction_id": "613557422527858",
+      "value": 377,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[2].reaction_count",
+      "also": {
+        "i18n_reaction_count": "377",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[2].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_care.png",
+      "dialog_graphql": {
+        "value": 377,
+        "reduced": "377",
+        "path": "data.node.top_reactions.summary[2].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    },
+    {
+      "field": "心情：哇",
+      "key": "reaction_wow",
+      "reaction_id": "478547315650144",
+      "value": 121,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[3].reaction_count",
+      "also": {
+        "i18n_reaction_count": "121",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[3].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_wow.png",
+      "dialog_graphql": {
+        "value": 121,
+        "reduced": "121",
+        "path": "data.node.top_reactions.summary[3].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    },
+    {
+      "field": "心情：哈",
+      "key": "reaction_haha",
+      "reaction_id": "115940658764963",
+      "value": 79,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[4].reaction_count",
+      "also": {
+        "i18n_reaction_count": "79",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[4].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_haha.png",
+      "dialog_graphql": {
+        "value": 79,
+        "reduced": "79",
+        "path": "data.node.top_reactions.summary[4].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    },
+    {
+      "field": "心情：怒",
+      "key": "reaction_angry",
+      "reaction_id": "444813342392137",
+      "value": 9,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[5].reaction_count",
+      "also": {
+        "i18n_reaction_count": "9",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[5].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_angry.png",
+      "dialog_graphql": {
+        "value": 9,
+        "reduced": "9",
+        "path": "data.node.top_reactions.summary[5].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    },
+    {
+      "field": "心情：嗚",
+      "key": "reaction_sad",
+      "reaction_id": "908563459236466",
+      "value": 6,
+      "path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[6].reaction_count",
+      "also": {
+        "i18n_reaction_count": "6",
+        "label_path": "require[0][3][0].__bbox.require[96][3][1].__bbox.result.data.node_v2.comet_sections.feedback.story.story_ufi_container.story.feedback_context.feedback_target_with_context.comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[6].node.localized_name"
+      },
+      "source": {
+        "type": "document-embedded",
+        "where": "貼文頁 HTML 第 241 行的 <script type=\"application/json\">，ScheduledServerJS → RelayPrefetchedStreamCache 的預載查詢結果",
+        "json_root": "該 script 內容 JSON.parse 後的物件"
+      },
+      "f12_shot": "fb_f12_reaction_sad.png",
+      "dialog_graphql": {
+        "value": 6,
+        "reduced": "6",
+        "path": "data.node.top_reactions.summary[6].reaction_count",
+        "source": {
+          "type": "graphql",
+          "friendly_name": "CometUFIReactionsDialogQuery",
+          "doc_id": "28949165141359436",
+          "where": "點開心情圖示後的 POST /api/graphql/ 回應"
+        },
+        "f12_shot": "fb_f12_reactions_dialog_graphql.png"
+      },
+      "screen": "對話框分頁與「更多」選單只列名稱，不列數字",
+      "screen_shot": "fb_post_reactions_dialog.png"
+    }
+  ]
+}

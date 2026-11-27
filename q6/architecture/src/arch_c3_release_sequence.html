@@ -14,7 +14,7 @@ renderDiagram({
     { id: 'r1', x: 20, y: 48, w: 270, tag: 'T0', title: '發版', sub: 'CI 全過；manifest 記下變更詞與預估篇數' },
     { id: 'r2', x: 320, y: 48, w: 270, tag: 'T0 ＋ 數分鐘', title: '串流換版', sub: 'worker 滾動重啟、載入 vN；新文章 = 新 seg_ver' },
     { id: 'r3', x: 620, y: 48, w: 270, tag: 'T0 ＋ 約 1 小時', title: '圈出受影響文件', sub: 'BigQuery：含任一變更字串、且 seg_ver < vN' },
-    { id: 'r4', x: 920, y: 48, w: 270, tag: '當晚離峰', title: '限速重跑', sub: '同一個批次 job 跑 doc_id 清單；條件寫入' },
+    { id: 'r4', x: 920, y: 48, w: 270, tag: '發版後', title: '定向重跑', sub: '同一個批次 job 跑 doc_id 清單；條件寫入' },
     { id: 'r5', x: 1220, y: 48, w: 280, cls: 'accent', tag: '收斂檢查', title: '發版完成', sub: '含變更字串且 seg_ver < vN 的篇數 = 0；抽樣不含字串的文件重算，差異 = 0' },
 
     { id: 'm1', x: 20, y: 300, w: 280, cls: 'small', title: '影子比對差異 > 0', sub: '批次與串流的版本或設定漂移' },

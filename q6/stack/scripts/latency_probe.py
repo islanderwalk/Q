@@ -1,11 +1,12 @@
 """查詢延遲探針：回補進行中，PM 文字雲的查詢會不會變慢？
 
-輪流打 API（cache=0，ES request_cache 也關）四種範圍，每筆記下當下的回補狀態（PG 帳本：限速、跑中分區數），
+輪流打 API（cache=0，ES request_cache 也關）四種範圍，每筆記下當下的回補狀態（限速與暫停讀 PG backfill_control；跑中分區數讀 ES 帳本 backfill_ledger），
 寫成 JSON Lines，事後依「閒置／不限速回補／限速回補」分組算 p50／p95。只讀 terms_v1（回補不動它），量的是寫入對查詢的干擾。
 
 用法：python latency_probe.py <輸出.jsonl> [秒數=600] [間隔秒=0.5]
 """
 import json
+import pathlib
 import sys
 import time
 import urllib.parse
@@ -13,8 +14,12 @@ import urllib.request
 
 import psycopg
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "seg"))
+from qseg.ledger import Ledger  # noqa: E402
+
 API = "http://localhost:8080/api/wordcloud"
 PG = "postgresql://qsearch:qsearch@localhost:55433/qsearch"
+ES = "http://localhost:9200"
 SCOPES = {
     "all": {},
     "1y": {"date_from": "2025-10-30"},
@@ -27,6 +32,7 @@ def main():
     out, secs = sys.argv[1], float(sys.argv[2]) if len(sys.argv) > 2 else 600
     gap = float(sys.argv[3]) if len(sys.argv) > 3 else 0.5
     conn = psycopg.connect(PG, autocommit=True)
+    led = Ledger(ES)
     end = time.time() + secs
     names = list(SCOPES)
     i = 0
@@ -39,9 +45,10 @@ def main():
             r = json.load(urllib.request.urlopen(f"{API}?{qs}", timeout=300))
             wall = (time.perf_counter() - t0) * 1000
             rps, paused = conn.execute("SELECT max_docs_per_sec, paused FROM backfill_control WHERE id=1").fetchone()
-            running = conn.execute("SELECT count(*) FROM backfill_ledger WHERE status='running' AND heartbeat_at > now() - interval '30 seconds'").fetchone()[0]
+            running = led.running_count(30)
             f.write(json.dumps({"ts": time.time(), "scope": name, "wall_ms": round(wall, 1), "es_took_ms": r["es_took_ms"],
-                                "total_docs": r["total_docs"], "max_docs_per_sec": rps, "paused": paused, "running": running}) + "\n")
+                                "total_docs": r["total_docs"], "max_docs_per_sec": rps, "paused": paused,
+                                "running": running}) + "\n")
             f.flush()
             time.sleep(gap)
 

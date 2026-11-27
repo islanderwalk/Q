@@ -103,6 +103,9 @@
       "seg_at_v0": {
         "type": "date"
       },
+      "seg_sha_v0": {
+        "type": "keyword"
+      },
       "terms_v1": {
         "type": "keyword"
       },
@@ -117,6 +120,9 @@
       },
       "seg_at_v1": {
         "type": "date"
+      },
+      "seg_sha_v1": {
+        "type": "keyword"
       },
       "terms_v2": {
         "type": "keyword",
@@ -133,6 +139,9 @@
       },
       "seg_at_v2": {
         "type": "date"
+      },
+      "seg_sha_v2": {
+        "type": "keyword"
       }
     }
   }

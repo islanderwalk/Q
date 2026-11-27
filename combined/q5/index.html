@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>新指標上線 Q5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f8;--surface:#fff;--fg:#17202b;--muted:#5a6676;--line:#dbe2ea;
+  --accent:#2b55c8;--accent-soft:#e5ebfb;--code-bg:#eef1f6;
+  --ok:#1b8a4c;--ok-soft:#e2f4ea;--bad:#c93636;--bad-soft:#fbe6e6;--warn:#a96a00;--warn-soft:#fbf0dc;
+  --de:#3b74e0;--be:#8257d8;--fe:#d4478f;--all:#64748b;
+  --mod:#e8892f;--mod-soft:#fdebd9;--new:#2f9e5b;--new-soft:#ddf3e5;--keep:#8c96a3;--keep-soft:#eef1f5;
+  --shadow:0 1px 2px rgba(20,30,50,.06),0 4px 14px rgba(20,30,50,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f141b;--surface:#171e27;--fg:#e6ebf2;--muted:#9aa6b5;--line:#2a3441;
+  --accent:#7d9dff;--accent-soft:#1d2848;--code-bg:#1f2731;
+  --ok:#4cc38a;--ok-soft:#14301f;--bad:#ff7d7d;--bad-soft:#3a1a1a;--warn:#f0b44c;--warn-soft:#352812;
+  --de:#6b9bff;--be:#a688ff;--fe:#ff7ab8;--all:#94a3b8;
+  --mod:#f0a35a;--mod-soft:#3a2614;--new:#5bcf8a;--new-soft:#15301f;--keep:#8792a0;--keep-soft:#1f2731;
+  --shadow:none;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f141b;--surface:#171e27;--fg:#e6ebf2;--muted:#9aa6b5;--line:#2a3441;
+  --accent:#7d9dff;--accent-soft:#1d2848;--code-bg:#1f2731;
+  --ok:#4cc38a;--ok-soft:#14301f;--bad:#ff7d7d;--bad-soft:#3a1a1a;--warn:#f0b44c;--warn-soft:#352812;
+  --de:#6b9bff;--be:#a688ff;--fe:#ff7ab8;--all:#94a3b8;
+  --mod:#f0a35a;--mod-soft:#3a2614;--new:#5bcf8a;--new-soft:#15301f;--keep:#8792a0;--keep-soft:#1f2731;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 "Noto Sans TC",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+code,.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em}
+code{background:var(--code-bg);padding:1px 5px;border-radius:4px;word-break:break-all}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 72px}
+nav.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav.top .in{max-width:860px;margin:0 auto;padding:10px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.top a{flex:none;text-decoration:none;color:var(--muted);font-size:13px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+nav.top a:hover,nav.top a.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+header.hero{padding:40px 0 8px}
+.eyebrow{font:600 12px/1 "Space Grotesk","Noto Sans TC",sans-serif;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+h1{font:700 30px/1.3 "Space Grotesk","Noto Sans TC",sans-serif;margin:10px 0 8px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 20px;max-width:680px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.stat b{display:block;font:700 24px/1.2 "Space Grotesk",sans-serif;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
+section{margin-top:40px}
+h2{font:700 21px/1.35 "Space Grotesk","Noto Sans TC",sans-serif;margin:0 0 12px;display:flex;gap:10px;align-items:baseline}
+h2 .tag{font:600 13px/1 "JetBrains Mono",monospace;color:var(--accent);background:var(--accent-soft);padding:4px 8px;border-radius:6px}
+h3{font-size:15px;margin:0}
+p{margin:.5em 0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.qbox{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:14px 18px;box-shadow:var(--shadow)}
+.qbox ul{margin:8px 0;padding-left:20px}
+.qbox ol{list-style:none;padding:0;margin:10px 0 0}
+.qbox ol li{padding:6px 0;border-top:1px dashed var(--line)}
+.qbox ol li b{color:var(--accent);font-family:"JetBrains Mono",monospace;margin-right:6px}
+.limit{margin-top:10px;font-size:13px;color:var(--muted)}
+.answer{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:10px;padding:12px 16px;margin:0 0 14px}
+.answer .lab{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px}
+.answer .txt{margin:0}
+.answer{position:relative}
+.alias-tip{outline:3px solid #e60000;outline-offset:2px;border-radius:3px;cursor:help}
+.alias-pop{display:none;position:absolute;left:8px;right:8px;top:calc(100% + 6px);z-index:30;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:12px 14px;font-size:13px;line-height:1.55;max-height:70vh;overflow:auto}
+.answer:has(.alias-tip:hover) .alias-pop,.answer:has(.alias-tip:focus) .alias-pop,.alias-pop:hover{display:block}
+.alias-pop table{border-collapse:collapse;width:100%;margin:0 0 10px}.alias-pop th,.alias-pop td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.cy{display:grid}.cy>div{grid-area:1/1;opacity:0;animation:cy 12s infinite}.cy>div:nth-child(2){animation-delay:4s}.cy>div:nth-child(3){animation-delay:8s}
+@keyframes cy{0%{opacity:0}4%,30%{opacity:1}34%,100%{opacity:0}}
+.cy .stcode{margin:6px 0 0}.cy .cap{font-size:12px;color:var(--muted);margin:6px 0 0}
+@media (prefers-reduced-motion:reduce){.cy{display:block}.cy>div{opacity:1;animation:none;margin-top:12px}}
+.alias-pop code{font-size:12px}.alias-pop figure{margin:10px 0 0}.alias-pop img{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;display:block}.alias-pop figcaption{font-size:12px;color:var(--muted);margin-top:4px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:14px 0;box-shadow:var(--shadow);overflow:hidden}
+.panel-h{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.panel-h .sub{font-size:12.5px;color:var(--muted)}
+.panel-b{padding:14px 16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:inherit;font-size:13px;border:0;background:var(--surface);color:var(--muted);padding:5px 11px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:#fff}
+button.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:5px 12px;border-radius:8px;cursor:pointer}
+button.btn:hover{border-color:var(--accent);color:var(--accent)}
+button.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.ctrl{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-bottom:12px}
+.ctrl label{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.ctrl output{font-family:"JetBrains Mono",monospace;color:var(--fg);min-width:3.5em}
+input[type=range]{accent-color:var(--accent);width:150px}
+input[type=number]{font:inherit;font-family:"JetBrains Mono",monospace;font-size:13px;width:52px;padding:2px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:"JetBrains Mono",monospace;font-size:12.5px}
+.tblwrap{overflow-x:auto}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--ok-soft);color:var(--ok)}.p-bad{background:var(--bad-soft);color:var(--bad)}.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-mod{background:var(--mod-soft);color:var(--mod)}.p-new{background:var(--new-soft);color:var(--new)}.p-keep{background:var(--keep-soft);color:var(--keep)}
+.r-DE{color:var(--de)}.r-BE{color:var(--be)}.r-FE{color:var(--fe)}.r-ALL{color:var(--all)}
+.callout{border-radius:8px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+.callout.ok{background:var(--ok-soft)}.callout.bad{background:var(--bad-soft)}.callout.warn{background:var(--warn-soft)}.callout.info{background:var(--code-bg)}
+/* (a) flow */
+/* gantt */
+.gantt{position:relative;font-size:12.5px}
+.grow{display:grid;grid-template-columns:150px 54px 1fr;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.grow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:20px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(var(--day) - 1px),var(--line) calc(var(--day) - 1px),var(--line) var(--day));border-radius:4px}
+.bar{position:absolute;top:2px;height:16px;border-radius:4px;opacity:.9}
+.ghead{display:grid;grid-template-columns:150px 54px 1fr;gap:8px;font-size:11px;color:var(--muted)}
+.ghead .days{display:flex}
+.ghead .days span{flex:1;text-align:left;padding-left:3px}
+.eq{font-family:"JetBrains Mono",monospace}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+/* guard */
+.docs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.doc{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--bg)}
+.doc h4{margin:0 0 6px;font-size:13px;color:var(--muted)}
+.doc table td{padding:4px 6px}
+.flash{animation:fl 1.2s ease}
+@keyframes fl{0%{background:var(--warn-soft)}100%{background:transparent}}
+.log{font-family:"JetBrains Mono",monospace;font-size:12px;background:var(--code-bg);border-radius:8px;padding:8px 10px;margin-top:10px;min-height:2.4em;white-space:pre-wrap}
+/* latency */
+.lat{position:relative;height:74px;margin:6px 0 4px}
+.lat .axis{position:absolute;left:0;right:0;top:44px;border-top:1px solid var(--muted)}
+.lat .band{position:absolute;top:18px;height:26px;background:color-mix(in srgb,var(--accent) 28%,transparent);border:1px solid var(--accent);border-radius:4px}
+.lat .mk{position:absolute;top:8px;bottom:18px;border-left:2px dashed}
+.lat .mk span{position:absolute;top:-4px;left:4px;font-size:11px;white-space:nowrap}
+.lat .tick{position:absolute;top:48px;font-size:10.5px;color:var(--muted);transform:translateX(-50%)}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.kv div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.kv b{display:block;font:700 18px/1.2 "Space Grotesk",sans-serif;font-variant-numeric:tabular-nums}
+.kv span{font-size:11.5px;color:var(--muted)}
+ol.steps{padding-left:22px;margin:6px 0}
+ol.steps li{margin:4px 0;font-size:14px}
+dl.terms{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0}
+dl.terms dt{font-weight:600}
+dl.terms dd{margin:0;color:var(--muted)}
+.note{margin-top:28px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:640px){
+  h1{font-size:24px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stats .stat:last-child{grid-column:span 2}
+  .docs{grid-template-columns:1fr}
+  .grow,.ghead{grid-template-columns:96px 40px 1fr;gap:5px}
+  .kv{grid-template-columns:1fr 1fr}
+  dl.terms{grid-template-columns:1fr}
+  dl.terms dd{margin-bottom:6px}
+}
+.dflow{display:grid;grid-template-columns:minmax(0,470px) minmax(0,1fr);gap:18px;align-items:start}
+#dsvg{width:100%;height:auto;display:block}
+#dsvg text{font-family:inherit}
+#dsvg .nm{font-size:13px;font-weight:600;fill:var(--fg);text-anchor:middle}
+#dsvg .tg{font-size:10.5px;font-weight:700;text-anchor:middle}
+#dsvg .el{font-size:11px;fill:var(--muted)}
+#dsvg .gl{font-size:11px;font-weight:700}
+#dsvg .ed{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linejoin:round}
+#dsvg .ed.ds{stroke-dasharray:5 4}
+#dsvg .ar{fill:var(--muted)}
+#dsvg .gp{stroke-width:1}
+#dsvg .gp.keep{fill:var(--keep-soft);stroke:var(--line)}
+#dsvg .gp.DE{fill:var(--de);fill-opacity:.1;stroke:var(--de);stroke-opacity:.35}
+#dsvg .gp.BE{fill:var(--be);fill-opacity:.1;stroke:var(--be);stroke-opacity:.35}
+#dsvg .gp.FE{fill:var(--fe);fill-opacity:.1;stroke:var(--fe);stroke-opacity:.35}
+#dsvg .bx{fill:var(--surface);stroke:var(--keep);stroke-width:1.5}
+#dsvg .nd.mod .bx{fill:var(--mod-soft);stroke:var(--mod)}
+#dsvg .nd.new .bx{fill:var(--new-soft);stroke:var(--new)}
+#dsvg .nd.keep .bx{stroke-dasharray:5 3}
+#dsvg .nd{cursor:pointer;outline:none}
+#dsvg .nd:hover .bx{stroke-width:2.5}
+#dsvg .nd.sel .bx,#dsvg .nd:focus-visible .bx{stroke:var(--accent);stroke-width:3}
+.ddetail{position:sticky;top:64px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg);font-size:14px;min-height:90px}
+.ddetail h4{margin:0 0 6px;font-size:16px}
+.ddetail{max-height:calc(100vh - 80px);overflow:auto}
+.dshot{margin:12px 0 0}.dshot img{width:100%;height:auto;border:1px solid var(--line);border-radius:8px;display:block}.dshot img{cursor:zoom-in}.dshot img.big{position:fixed;inset:64px auto auto 50%;transform:translateX(-50%);width:auto;max-width:94vw;max-height:calc(100vh - 80px);z-index:50;cursor:zoom-out;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}.dshot figcaption{font-size:12px;color:var(--muted);margin-top:6px}
+.stp{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.stchips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.stchips button{font:inherit;font-size:12px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--muted);cursor:pointer}
+.stchips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.stbody{animation:stin .35s ease}
+@keyframes stin{from{opacity:0}to{opacity:1}}
+.stcode{margin:0 0 8px;padding:10px 12px;background:var(--code-bg);border-radius:8px;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.stcode mark{background:transparent;color:inherit;outline:2px solid #e60000;outline-offset:1px;border-radius:3px}
+.stbody .dshot{margin:0 0 8px}
+@media (prefers-reduced-motion:reduce){.stbody{animation:none}}
+@media (max-width:760px){.dflow{grid-template-columns:1fr}.ddetail{top:auto;bottom:8px;z-index:5;box-shadow:var(--shadow)}}
+</style>
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a href="#q">題目</a><a href="#a">(a) 資料流</a><a href="#b">(b) 工時</a><a href="#c">(c) 回補</a><a href="#d">(d) SLA</a><a href="#terms">名詞</a>
+</div></nav>
+<div class="wrap">
+
+<section id="q">
+  <h2><span class="tag">Q5</span>題目</h2>
+  <div class="qbox">
+    <p><b>新指標上線的全鏈路時間估算。</b>客戶希望在平台上看到 Instagram Reels 的觀看數（<code>video_view_count</code>）和 Threads 貼文的轉發數（<code>repost_count</code>）。調查發現：</p>
+    <ul>
+      <li>爬蟲端其實已經抓到這些欄位，只是從未寫入 Elasticsearch。</li>
+      <li>要全部新增支援的層級：爬蟲寫入 → ES mapping 更新 → Data Layer API 新增欄位 → Backend Analytics API 回傳 → Export Service 匯出 → 前端顯示。</li>
+      <li>產品端期望指標延遲不超過 1 小時（文章發佈 1 小時後，數據應可被查詢）。</li>
+      <li>歷史資料：IG <code>video_view_count</code> 起始日為 2026/5/1；Threads 的轉發數和分享數過去已有爬取但未寫入 ES。</li>
+    </ul>
+    <ol>
+      <li><b>(a)</b>畫出（或文字描述）從「爬蟲已有原始資料」到「使用者在前端看到數據」的完整資料流圖，標示每一個需要修改的元件。</li>
+      <li><b>(b)</b>逐層估算每個環節的開發工時。1 位資料工程師＋1 位後端＋1 位前端可平行作業，從開工到上線的 calendar days 是多少？關鍵路徑在哪？</li>
+      <li><b>(c)</b>Threads 轉發數與分享數過去已爬取但未寫入 ES，回補（backfill）流程怎麼設計？風險有哪些（欄位名不一致、原始資料缺漏、回補期間寫入負載影響線上查詢）？</li>
+      <li><b>(d)</b>「指標延遲不超過 1 小時」的瓶頸最可能在哪個環節？怎麼監控 SLA 是否達標？</li>
+    </ol>
+    <div class="limit">上限 600 字 · 交卷全文 <span id="totalcnt" class="mono">—</span> 字</div>
+  </div>
+</section>
+
+<!-- (a) -->
+<section id="a">
+  <h2><span class="tag">(a)</span>資料流：六層全改，另加兩個新元件</h2>
+
+  <div class="panel">
+    <div class="panel-h"><h3>資料流圖</h3><span class="sub">點框看這層要改什麼</span></div>
+    <div class="panel-b">
+      <div class="dflow">
+        <svg id="dsvg" viewBox="0 0 520 1225" role="group" aria-label="Q5 資料流圖：從爬蟲到前端，標示要修改與新增的元件"></svg>
+        <div class="ddetail" id="ddetail" aria-live="polite"></div>
+      </div>
+      <div class="legend">
+        <span class="pill p-mod">修改</span><span class="pill p-new">新增</span><span class="pill p-keep">不改</span>
+        <span class="small muted">負責：<b class="r-DE">DE</b> 資料工程 · <b class="r-BE">BE</b> 後端 · <b class="r-FE">FE</b> 前端</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- (b) -->
+<section id="b">
+  <h2><span class="tag">(b)</span>工時與關鍵路徑</h2>
+  <div class="answer"><div class="lab"><span>交卷原文</span><span data-cnt="b"></span></div><p class="txt" data-ans="b"></p></div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>排程甘特圖</h3><span class="sub">每角色一人、做完才接下一件（finish-to-start）；可改工時</span></div>
+    <div class="panel-b">
+      <div class="ctrl">
+        <button class="btn" id="reset-h">工時重設</button>
+      </div>
+      <div class="ghead"><span>工作</span><span>工時</span><div class="days" id="gdays"></div></div>
+      <div class="gantt" id="gantt"></div>
+      <p class="small" id="total-out" style="margin:10px 0 0"></p>
+    </div>
+  </div>
+
+</section>
+
+<!-- (c) -->
+<section id="c">
+  <h2><span class="tag">(c)</span>回補：逐欄時間戳，舊值蓋不掉新值</h2>
+  <div class="answer"><div class="lab"><span>交卷原文</span><span data-cnt="c"></span></div><p class="txt" data-ans="c"></p></div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>時間戳保護模擬</h3><span class="sub">同一篇：線上已有 T2，回補帶 T1、T3 兩次抓取（T1 &lt; T2 &lt; T3）</span></div>
+    <div class="panel-b">
+      <div class="ctrl">
+        <div class="seg" id="g-mode"><button data-v="post">整篇一個時間戳（上一版）</button><button data-v="field" class="on">每欄一個時間戳（交卷版）</button></div>
+        <button class="btn pri" id="g-send">送出回補</button><button class="btn" id="g-reset">重設</button>
+      </div>
+      <div class="docs">
+        <div class="doc"><h4>回補輸入（GCS 兩次抓取 → 合併）</h4>
+          <table><thead><tr><th>欄位</th><th>T1</th><th>T3</th><th>合併後</th></tr></thead><tbody id="g-in"></tbody></table>
+        </div>
+        <div class="doc"><h4>線上 ES 文件</h4>
+          <table><thead><tr><th>欄位</th><th class="num">值</th><th>時間戳</th></tr></thead><tbody id="g-es"></tbody></table>
+        </div>
+      </div>
+      <div class="log" id="g-log">按「送出回補」看腳本怎麼處理；再按一次就是重跑。</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>分區關卡：欄位改名要在哪裡擋</h3><span class="sub">合成資料 3,521 次抓取；不知道＝key 不存在或型別錯</span></div>
+    <div class="panel-b">
+      <div class="ctrl">
+        <label><input type="checkbox" id="rename"> 把 05-11 那週的欄位改名（別名表沒有）</label>
+        <label>門檻 <input type="range" id="thr" min="5" max="50" step="1" value="20"><output id="thr-o">20%</output></label>
+      </div>
+      <div class="tblwrap"><table id="part-tbl"><thead><tr><th>分區</th><th class="num">抓取</th><th class="num">repost</th><th class="num">quote</th><th class="num">reshare</th><th>結果</th></tr></thead><tbody></tbody></table></div>
+      <div class="callout" id="part-out"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>流程八步</h3><span class="sub">完整版在 b-c-d.md</span></div>
+    <div class="panel-b">
+      <ol class="steps">
+        <li><b>盤點</b>：抽樣掃 GCS 歷史 JSON 的所有 key 組合，建別名表；<code>quality.json</code> 列出每個分區的 key 與次數。</li>
+        <li><b>Mapping</b>：update mapping 在現有 index 加欄位與 <code>counts_at.&lt;欄位&gt;</code>，加新欄位不需 reindex。</li>
+        <li><b>切批</b>：平台 × 週，每批獨立 bulk 檔（500 篇、5 MB 上限），附 sha256。</li>
+        <li><b>合併</b>：同一篇多次抓取，每欄取「有值」的最新一次；null 算有值，缺 key 算不知道。</li>
+        <li><b>寫入</b>：bulk <code>update</code>＋painless 腳本，逐欄比 <code>counts_at</code>，較舊就不動；一欄都沒寫就是 noop。</li>
+        <li><b>限速</b>：每秒請求數上限、離峰；429／5xx 隨機指數退避，只重送被拒的筆。不改線上 <code>refresh_interval</code>。</li>
+        <li><b>核對</b>：壞行 &gt;1%、整檔壞、任一分區某欄不知道 &gt;20% 就停（退出碼 3）；送出後抽 1% 讀回比對。</li>
+        <li><b>續跑</b>：送完一檔記進 <code>sent.json</code>，中斷後只送沒送完的檔。</li>
+      </ol>
+      <p class="small muted">另一條路是建新 index＋reindex＋alias 切換：要整份複製、暫時兩倍空間，只有既有欄位要改型別時才划算。</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>題目點名的三個風險</h3></div>
+    <div class="panel-b tblwrap">
+      <table>
+        <thead><tr><th style="width:32%">風險</th><th>對策</th></tr></thead>
+        <tbody>
+          <tr><td>歷史欄位名不一致</td><td>盤點後補別名表、統計每個舊名用了幾次；同一筆兩個名稱值不同記 <code>alias_conflict</code> 不寫入。別名表沒有的新名稱會被分區關卡擋下（上面那張表）。</td></tr>
+          <tr><td>原始資料缺漏</td><td>某次抓取少了 key 記為不知道，不蓋掉其他次的值；全部都缺就不寫，前端顯示「—」，不補 0。只接受 JSON 整數，「萬」字串當不知道。</td></tr>
+          <tr><td>回補寫入負載影響線上查詢</td><td>限速、批次上限、離峰；不改 refresh 與副本數（那會讓爬蟲新寫入查不到，直接違反 SLA）；監控 ES 查詢 P95 與 429 次數。</td></tr>
+          <tr><td>回補蓋掉線上較新的值</td><td>逐欄時間戳保護（上面的模擬）；爬蟲寫入也要帶同一個 <code>counts_at</code>，列為 (b) 第 1、2 項的驗收條件。</td></tr>
+          <tr><td>「轉發數」與 IG 觀看數的定義</td><td>只存分量（repost、quote），畫面值在 Data Layer 算；IG 實抓只看到 <code>play_count</code>，上線前與 PM 確認（(b) 第 9 項）。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="small muted">驗證：39 項 pytest 通過；ES 8.19 與 9.5 各跑 21 項檢查全過，第一輪 ok 1,940／noop 20，整份重送 1,960 筆全是 noop。</p>
+</section>
+
+<!-- (d) -->
+<section id="d">
+  <h2><span class="tag">(d)</span>SLA：瓶頸在抓取頻率，不在寫入</h2>
+  <div class="answer"><div class="lab"><span>交卷原文</span><span data-cnt="d"></span></div><p class="txt" data-ans="d"></p></div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>首次可見延遲模擬</h3><span class="sub">貼文在兩次輪詢間隨機發布 → 等下一次抓取 ＋ 寫入鏈路</span></div>
+    <div class="panel-b">
+      <div class="ctrl">
+        <label>輪詢間隔 <input type="range" id="poll" min="5" max="120" step="5" value="60"><output id="poll-o">60 分</output></label>
+        <label>寫入鏈路（GCS→Pub/Sub→ES→refresh） <input type="range" id="pipe" min="0" max="20" step="1" value="2"><output id="pipe-o">2 分</output></label>
+      </div>
+      <div class="lat" id="lat"></div>
+      <div class="kv">
+        <div><b id="k-p95">—</b><span>P95 延遲</span></div>
+        <div><b id="k-max">—</b><span>最壞情況</span></div>
+        <div><b id="k-hit">—</b><span>1 小時內可見</span></div>
+        <div><b id="k-st">—</b><span>告警狀態</span></div>
+      </div>
+      <div class="callout" id="lat-out"></div>
+      <p class="small muted">模型：發布時間在輪詢間隔內均勻分布，延遲＝距下次抓取的時間＋寫入鏈路。所以 P95 ≈ 0.95 × 間隔＋鏈路，最壞＝間隔＋鏈路。限速造成的 Pub/Sub 積壓會直接加在鏈路上。</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>監控指標</h3></div>
+    <div class="panel-b tblwrap">
+      <table>
+        <thead><tr><th>指標</th><th>計算</th><th>告警</th></tr></thead>
+        <tbody>
+          <tr><td>首次可見延遲</td><td>ES 寫入時間 − <code>published_at</code>（每篇記在文件裡）</td><td><span class="pill p-warn">P95 &gt; 45 分 警告</span> <span class="pill p-bad">P95 &gt; 60 分 呼叫</span></td></tr>
+          <tr><td>首次抓取達成率</td><td>1 小時內被抓到的新文章 ÷ 新文章總數</td><td><span class="pill p-warn">&lt; 95%</span></td></tr>
+          <tr><td>爬蟲週期</td><td>每帳號的抓取週期與耗時</td><td><span class="pill p-warn">&gt; 30 分</span></td></tr>
+          <tr><td>Pub/Sub 積壓</td><td>最舊未確認訊息的年齡</td><td><span class="pill p-warn">&gt; 10 分</span></td></tr>
+          <tr><td>ES 寫入錯誤率</td><td>bulk 單筆失敗比例（noop 不算）</td><td><span class="pill p-warn">&gt; 0.1%</span></td></tr>
+          <tr><td>refresh 設定</td><td><code>index.refresh_interval</code> 被改成 -1 或 &gt; 1 分</td><td><span class="pill p-warn">任一</span></td></tr>
+          <tr><td>金絲雀帳號</td><td>固定幾個帳號，每小時檢查新貼文是否 60 分內出現</td><td><span class="pill p-warn">任一失敗</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="terms">
+  <h2><span class="tag">名詞</span>這頁用到的詞</h2>
+  <div class="panel"><div class="panel-b">
+    <dl class="terms">
+      <dt>關鍵路徑／關鍵鏈</dt><dd>從開工到上線最長的一串先後工作；上面任何一件延誤，上線就延誤。這題把「同一人手上的下一件」也算成先後關係。</dd>
+      <dt>總浮時</dt><dd>一件工作最多能晚多久完成，而不延後整個專案。</dd>
+      <dt>API 契約</dt><dd>先講好 API 的欄位名與格式；FE 拿到契約就能用假資料開工，不必等 BE 做完。</dd>
+      <dt>counts_at</dt><dd>每個計數欄位各自的抓取時間（epoch 毫秒）。回補腳本拿它判斷誰比較新。</dd>
+      <dt>painless／noop</dt><dd>painless 是 ES 內建的腳本語言；腳本判斷不用寫時回 noop，文件完全不動。</dd>
+      <dt>refresh_interval</dt><dd>ES 多久把新寫入變成可查詢。大量匯入時常調大或關掉，但在線上 index 這樣做，新貼文就查不到。</dd>
+      <dt>alias</dt><dd>指向某個 index 的別名；建新 index 後切 alias，查詢端不用改名。</dd>
+      <dt>play_count／video_view_count</dt><dd>題目寫 video_view_count，實抓 IG Reels 只看到 play_count；兩者是否同一定義要和 PM 確認。</dd>
+      <dt>quote_count</dt><dd>Threads 的引用數。畫面上的「轉發」＝轉發（repost）＋引用（quote）。</dd>
+      <dt>金絲雀帳號</dt><dd>固定幾個會定期發文的帳號，用來端到端驗證新貼文是否準時出現。</dd>
+    </dl>
+  </div></div>
+  <p class="note">資料來源：交卷原文 q5/answer/answer_600.txt；工時與排程 q5/code/schedule/schedule.py（本頁用 JS 重算同一套規則，預設值與 schedule.log 一致）；回補驗證 q5/code/RESULTS.md；Threads 與 IG 實抓 q5/evidence/。T1／T2／T3 範例取自 RESULTS 的 demo_checks 指令 #20、#21。</p>
+</section>
+</div>
+
+<script>
+const ANS={
+a:"見 architecture/ 資料流圖：題目六層（爬蟲寫入到前端顯示）都要改，另加回補 Job 與 SLA 監控。",
+b:"工時（小時）：mapping 6、爬蟲寫入 12、回補 16、Data Layer 8、Analytics 10、Export 6、前端 10、整合監控 8、驗收 4。關鍵路徑是 DE 一人依序做 mapping、爬蟲、回補、整合，再接全員驗收，共 46 小時；BE、FE 先定 API 契約再平行，浮時至少 16 小時。46÷8＝5.75 天，加 30% 審查取 8 天，加 1 天緩衝共 9 工作天，週一開工約 11 個日曆天。",
+c:"先盤點 GCS 各期 key 建別名表。依平台×週切批；同篇多次抓取，每欄取有值的最新一次，缺 key 不算、null 不補 0。對線上 index 做 bulk 部分更新，每欄附抓取時間，腳本只在較新時寫入，舊值蓋不掉新值，重跑全是 noop；爬蟲寫入也附同一時間戳。壞行超過 1%、整檔壞掉、任一分區某欄讀不到超過 20%（多半是改名）就停。限速、離峰、不改 refresh，只重送被拒的筆。",
+d:"瓶頸在爬蟲抓取頻率：輪詢間隔 60 分鐘時最壞會超標，寫入只要秒到分鐘。監控首次可見延遲 P95（超過 45 分鐘警告）、1 小時內抓到的比例、Pub/Sub 積壓、refresh 設定，並用金絲雀帳號每小時驗證。"
+};
+const len=s=>Array.from(s).length;
+document.querySelectorAll('[data-ans]').forEach(el=>el.textContent=ANS[el.dataset.ans]);
+(()=>{const el=document.querySelector('[data-ans="c"]'),ph='先盤點 GCS 各期 key 建別名表';
+ if(!el||!el.textContent.startsWith(ph))return;
+ const rest=el.textContent.slice(ph.length).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ el.innerHTML=`<span class="alias-tip" tabindex="0">${ph}</span>${rest}<span class="alias-pop" role="tooltip"><b>別名表要對的就是這兩種名字（滑過紅框看，手機點一下）</b>
+ <table><tr><th></th><th>IG 觀看數</th><th>Threads 轉發／引用／分享</th></tr>
+ <tr><th>現在名（我們 2026-10-29、10-30 實抓）</th><td><code>play_count</code></td><td><code>text_post_app_info.repost_count</code>／<code>quote_count</code>／<code>reshare_count</code></td></tr>
+ <tr><th>別的版本、別的來源用過的名（公開程式碼查到）</th><td><code>video_view_count</code>、<code>view_count</code>、<code>video_play_count</code></td><td>公開程式碼只查到現在這組名；camelCase 舊名（例如 repostCount）沒有證據，只是假設</td></tr></table>
+ <span class="muted small">表中第二列只證明同一個數字在不同版本、不同來源確實叫過不同名字；我們 GCS 的舊檔實際用哪個，要靠這一步「先盤點」掃過才知道。</span>
+ <figure><img src="alias/A-instaloader-c.png" alt="instaloader 原始碼"><figcaption>instaloader（公開程式庫）：video_view_count 4.2.6 版加入，video_play_count 4.14.3 版才加，同一個「觀看數」前後換了名。</figcaption></figure>
+ <figure><img src="alias/B-instagrapi-c.png" alt="instagrapi 原始碼"><figcaption>instagrapi（公開程式庫）：同一個數字同時接受 view_count／play_count 與 video_view_count／video_play_count 兩套名，缺一套就讀另一套。</figcaption></figure>
+ <figure><img src="alias/D-4cat-c.png" alt="4cat 原始碼"><figcaption>4cat（公開程式庫）：Threads 的轉發／引用在 text_post_app_info.repost_count／quote_count，與我們實抓的名一致。</figcaption></figure></span>`;})();
+(()=>{const el=document.querySelector('[data-ans="d"]'),ph='金絲雀帳號每小時驗證';
+ if(!el||!el.textContent.includes(ph))return;
+ const [a,b]=el.textContent.split(ph);
+ el.innerHTML=`${a}<span class="alias-tip" tabindex="0">${ph}</span>${b}<span class="alias-pop" role="tooltip"><b>金絲雀每小時驗證：ES 實際跑一遍（滑過看，手機點一下；示範資料）</b>
+ <span class="cy"><div><b>① 這一小時進 ES 的金絲雀貼文</b><figure><img src="live/canary-discover.png" alt="Kibana Discover 金絲雀貼文"><figcaption>Kibana Discover：寫入時就算好 <code>lag_min</code>（寫入時間 − 發文時間），IG 那篇 23 分、Threads A 那篇 41 分。<b>Threads B 這一小時沒有任何貼文。</b></figcaption></figure></div>
+ <div><b>② 每小時一次的查詢</b><figure><img src="live/canary-devtools.png" alt="Dev Tools 聚合查詢"><figcaption>Dev Tools：這一小時內按帳號分組，取各帳號最大的 <code>lag_min</code>。只回來 2 個帳號，預期是 3 個。</figcaption></figure></div>
+ <div><b>③ 檢查與結果</b><pre class="stcode">ACCOUNTS = ["canary_ig_a", "canary_th_a", "canary_th_b"]
+lag = {a: seen.get(a) for a in ACCOUNTS}   # 沒出現＝None
+<mark>bad = [a for a, v in lag.items() if v is None or v &gt; 60]</mark>
+
+lag  {"canary_ig_a": 23, "canary_th_a": 41, "canary_th_b": <mark>null</mark>}
+bad  [<mark>'canary_th_b'</mark>]   →  ALERT</pre><p class="cap">缺貼文或超過 60 分任一個就警告；這裡 canary_th_b 缺貼文，所以告警。程式在 <code>q5/code/backfill/canary_demo.py</code>。</p></div></span></span>`;})();
+document.querySelectorAll('[data-cnt]').forEach(el=>el.textContent=len(ANS[el.dataset.cnt])+' 字');
+const full=['a','b','c','d'].map(k=>'('+k+')\n'+ANS[k]).join('\n')+'\n';
+document.getElementById('totalcnt').textContent=len(full);
+const fmt=n=>n.toLocaleString('en-US');
+function seg(id,cb){const el=document.getElementById(id);el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset.v);});}
+
+/* ---------- (a) 資料流圖（SVG，可點） ---------- */
+const NODES={
+ sch:{n:'排程',k:'keep',o:'既有',d:'定時觸發爬蟲，不用改。',t:null},
+ cr:{n:'爬蟲',k:'keep',o:'既有',d:'已經抓到 IG <code>play_count</code> 與 Threads 的 repost／quote／reshare，只是從沒寫進 ES。抓取本身不用改；但抓取頻率是 (d) SLA 的瓶頸。',t:null},
+ gcs:{n:'原始資料 GCS',k:'keep',o:'既有',d:'每次抓取的原始 JSON 都留著，是歷史回補的唯一來源。各期 key 名稱可能不同，回補前要先盤點。',t:null},
+ w:{n:'爬蟲寫入',k:'mod',o:'DE',d:'讀 JSON 整數、null 保留成 null，寫進新欄位；每次寫計數同時寫該欄的 <code>counts_at</code>（抓取時間）。和回補走同一支寫入腳本，回補的時間戳保護才成立。',t:2},
+ bf:{n:'回補程式',k:'new',o:'DE',d:'從 GCS 讀歷史抓取，每欄取有值的最新一次，bulk 部分更新進線上 index；只在較新時寫入，重跑全是 noop。IG 從 2026/5/1 起、Threads 從有爬取時起。',t:3},
+ es:{n:'Elasticsearch',k:'mod',o:'DE',d:'加 <code>video_view_count</code>、<code>text_post_app_info.repost_count／quote_count／reshare_count</code> 與每欄的 <code>counts_at.*</code>（date、epoch_millis）。update mapping 加新欄位不需 reindex；index 是 <code>dynamic: strict</code> 時沒先加欄位，寫入會被 400 擋下。',t:1},
+ dl:{n:'Data Layer API',k:'mod',o:'BE',d:'查詢帶出新欄位；「轉發數」畫面值（repost＋quote）在這層計算，ES 只存分量。欄位名與契約先定，FE 才能平行開工。',t:4},
+ an:{n:'Backend Analytics API',k:'mod',o:'BE',d:'回傳新指標，支援加總、排序、平均；null 不參與加總，不當 0。',t:5},
+ ex:{n:'Export Service',k:'mod',o:'BE',d:'匯出檔加欄位，附指標定義說明（轉發數＝repost＋quote、IG 觀看數的來源欄位）。',t:6},
+ fe:{n:'前端畫面',k:'mod',o:'FE',d:'新欄位顯示與排序；null 顯示「—」；萬位格式無條件捨去（12,716 → 1.2 萬）。',t:7},
+ mon:{n:'SLA 監控',k:'new',o:'DE',d:'首次可見延遲 P95、1 小時內抓到的比例、Pub/Sub 積壓、refresh 設定、金絲雀帳號。和端到端整合一起做。',t:8}
+};
+// id:[x,y,w,h]
+const POS={sch:[165,105,190,46],cr:[165,190,190,46],gcs:[165,270,190,46],w:[40,400,190,46],bf:[290,400,190,46],es:[150,500,220,56],
+ dl:[165,680,190,46],an:[165,770,190,46],ex:[250,880,180,46],fe:[165,1030,190,46],mon:[20,1160,170,46]};
+const GRP=[['keep',110,90,300,240,'既有・不改',118,102,'#8c96a3'],['DE',20,380,480,210,'DE 資料工程',30,578,'var(--de)'],
+ ['BE',110,660,340,285,'BE 後端',118,676,'var(--be)'],['FE',130,1005,260,100,'FE 前端',138,1020,'var(--fe)']];
+const EDG=[
+ ['M130,56V205H165'],['M390,56V205H355'],
+ ['M260,151V190','定時觸發',268,175],['M260,236V270','存原始資料',268,258],
+ ['M165,228H80V400','新抓到的',74,330,'end'],['M355,293H440V400','讀舊資料',446,350,'start',1],
+ ['M135,446V528H150','寫入兩欄',143,484],['M385,446V528H370','只補空的',377,484,'start',1],
+ ['M260,556V680','查詢結果',268,625],['M260,726V770','帶出新欄位',268,753],
+ ['M340,816V880','提供資料',348,852],['M190,816V1030','加總排序',182,930,'end'],
+ ['M340,926V1030','匯出檔',348,985],['M260,1076V1160','看到數字',268,1122]];
+let selNode=null;
+function drawFlow(){
+ const svg=document.getElementById('dsvg');
+ const tag=N=>N.k==='keep'?'不改':(N.k==='mod'?'修改':'新增')+'・'+N.o;
+ let h='<defs><marker id="dar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ar" d="M0,0L10,5L0,10z"/></marker></defs>';
+ GRP.forEach(g=>{h+=`<rect class="gp ${g[0]}" x="${g[1]}" y="${g[2]}" width="${g[3]}" height="${g[4]}" rx="12"/><text class="gl" x="${g[6]}" y="${g[7]}" fill="${g[8]}">${g[5]}</text>`;});
+ EDG.forEach(e=>{h+=`<path class="ed${e[5]?' ds':''}" d="${e[0]}" marker-end="url(#dar)"/>`;if(e[1])h+=`<text class="el" x="${e[2]}" y="${e[3]}" text-anchor="${e[4]||'start'}">${e[1]}</text>`;});
+ // 來源與客戶（不可點）
+ [[40,10,180,'Instagram Reels（觀看數）'],[300,10,180,'Threads（轉發數）']].forEach(([x,y,w,t])=>{h+=`<rect class="bx" x="${x}" y="${y}" width="${w}" height="46" rx="10"/><text class="nm" x="${x+w/2}" y="${y+28}">${t}</text>`;});
+ h+=`<rect class="bx" x="200" y="1160" width="120" height="46" rx="23"/><text class="nm" x="260" y="1188">客戶</text>`;
+ Object.keys(NODES).forEach(id=>{
+  const N=NODES[id],[x,y,w,ht]=POS[id];
+  h+=`<g class="nd ${N.k}${id===selNode?' sel':''}" data-id="${id}" tabindex="0" role="button" aria-label="${N.n}：${tag(N)}"><rect class="bx" x="${x}" y="${y}" width="${w}" height="${ht}" rx="10"/>`+
+   `<text class="nm" x="${x+w/2}" y="${y+ht/2-1}">${N.n}</text><text class="tg" x="${x+w/2}" y="${y+ht/2+14}" fill="${N.k==='keep'?'var(--muted)':'var(--'+N.o.toLowerCase()+')'}">${tag(N)}</text></g>`;
+ });
+ svg.innerHTML=h;
+ svg.querySelectorAll('.nd').forEach(g=>{
+  const go=()=>{selNode=g.dataset.id;drawFlow();const f=document.querySelector('#dsvg .nd.sel');if(f)f.focus({preventScroll:true});};
+  g.onclick=go;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};
+ });
+ const d=document.getElementById('ddetail');
+ if(!selNode){d.innerHTML='<span class="muted">點圖上任一個框，看這層要改什麼。</span>';return;}
+ const N=NODES[selNode],lab={mod:['p-mod','修改'],new:['p-new','新增'],keep:['p-keep','不改']}[N.k];
+ const t=N.t?TASKS.find(x=>x[0]===N.t):null;
+ d.innerHTML=`<h4>${N.n}</h4><span class="pill ${lab[0]}">${lab[1]}</span> ${N.o!=='既有'?`<span class="pill" style="background:var(--code-bg)"><b class="r-${N.o}">${N.o}</b></span>`:''}<p style="margin:10px 0 0">${N.d}</p>${t?`<p class="small muted" style="margin:8px 0 0">(b) 第 ${t[0]} 項：${t[1]} · ${H[t[0]]} 小時</p>`:''}${selNode==='es'?`<figure class="dshot"><img src="kb-mapping.png" alt="Kibana Dev Tools：GET q5art-threads/_mapping，紅框為新增欄位" onclick="this.classList.toggle('big')" title="點一下放大／縮小"><figcaption>ES 9.5.5 實際 mapping（Kibana Dev Tools，點圖放大）。紅框＝新增欄位：counts_at.*（date）與 text_post_app_info.*_count（long）。</figcaption></figure>`:''}${STEPS[selNode]?'<div class="stp" id="stp"></div>':''}`;
+ startStepper(selNode);
+}
+
+/* 爬蟲寫入／回補程式：實際畫面逐步播放（ES 9.5.5 實跑，紅框＝重點欄位） */
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const pre=s=>`<pre class="stcode">${esc(s).replace(/«/g,'<mark>').replace(/»/g,'</mark>')}</pre>`;
+const STEPS={
+ w:[
+  {t:'Threads 畫面',im:['th_A.png','th_B.png'],c:'實際畫面。A：轉發 13（＝repost 12＋quote 1）、分享 5。B：轉發 1、分享<b>空白</b>，不是 0。'},
+  {t:'F12 讀 JSON',im:['f12.png'],c:'頁面內嵌 JSON 的 <code>text_post_app_info</code> 是整數，不是「1.2 萬」這種縮寫。B 的 <code>reshare_count</code> 是 null。紅框＝要寫的三個欄位。'},
+  {t:'Python 寫入',code:'# j＝頁面內嵌 JSON 的 text_post_app_info\ndef crawl_write(post_id, j, at):\n  fields = ("repost_count",\n            "quote_count",\n            "reshare_count")\n  return requests.post(\n    f"{ES}/{IDX}/_update/{post_id}",\n    json={"doc": {\n      "post_id": post_id,\n      # 整數照寫，null 保留成 null\n      «"text_post_app_info":\n        {f: j[f] for f in fields},»\n      # 每欄附抓取時間\n      «"counts_at":\n        {f: at for f in fields}»},\n      "doc_as_upsert": True})',c:'數字和該欄的 <code>counts_at</code> 在同一個請求裡寫，之後回補才有時間戳可比。'},
+  {t:'ES 結果',im:['live-crawl.png'],c:'Kibana Discover：A 是 12／1／5，B 是 1／0／null（null 沒變成 0），<code>counts_at</code>＝抓取時間。C 還沒被爬蟲寫到，三欄全空。'}
+ ],
+ bf:[
+  {t:'Python 回補',code:'history = {  # GCS 歷史抓取（示範資料）\n  # 每欄已取「有值的最新一次」\n  "DfsCgPwpdE3": {"repost_count": 9,\n    "quote_count": 1, "reshare_count": 3},\n    # 線上較新 → 不該被蓋\n  "DfsCg3vpUH6": {"repost_count": 1,\n    "quote_count": 0, "reshare_count": 14},\n    # 線上還空 → 補齊\n}\ndef backfill(post_id, values):\n  return requests.post(\n    f"{ES}/{IDX}/_update/{post_id}",\n    json={"script": {\n      "lang": "painless",\n      "source": GUARD_SCRIPT,\n      "params": {\n        "obj": "text_post_app_info",\n        "values": values,\n        # 每欄時間戳＝歷史抓取時間\n        «"at": {f: HIST for f in values}»}}})',c:'歷史資料是示範用的；實際是從 GCS 讀。和爬蟲同一個更新語法，只是改成 script 加時間戳保護。'},
+  {t:'ES 腳本',code:'for (f in params.values.keySet()) {\n  def cur = ctx._source.counts_at[f];\n  «if (cur == null || cur < params.at[f])» {   // 只在較新時寫\n    t[f] = params.values[f];\n    ctx._source.counts_at[f] = params.at[f];\n    changed = true;\n  }\n}\n«if (!changed) { ctx.op = \'noop\'; }»          // 重跑全是 noop',c:'Painless（排版後的示意，完整版見 <code>backfill.py</code> 的 <code>GUARD_SCRIPT</code>）。每欄各自比時間戳，不是整篇一起比。'},
+  {t:'回補前',im:['live-before.png'],c:'Kibana Discover：C（紅框）三欄都是空的。A 已經由爬蟲寫成 12／1／5。'},
+  {t:'回補後',im:['live-after.png'],c:'C 補成 1／0／14，<code>counts_at</code> 是歷史抓取時間。A 的歷史值（9／1／3）比線上舊，<b>沒有蓋掉</b>線上的 12／1／5。'},
+  {t:'單筆文件',im:['live-kb-after.png'],c:'Dev Tools <code>GET q5live-threads/_doc/DfsCg3vpUH6</code>：三個計數與每欄 <code>counts_at</code> 都在。'},
+  {t:'重跑＋畫面',im:['th_C.png'],code:"回補結果  {'DfsCgPwpdE3': 'noop', 'DfsCg3vpUH6': 'updated'}\n重跑結果  {'DfsCgPwpdE3': «'noop'», 'DfsCg3vpUH6': «'noop'»}",c:'同一批再送一次，兩筆都是 noop。對照 Threads 實際畫面：C 轉發 1、分享 14，和 ES 補齊後的數字一致。'}
+ ]
+};
+let stpTimer=null;
+function startStepper(id){
+ clearInterval(stpTimer);
+ const box=document.getElementById('stp');if(!box)return;
+ const S=STEPS[id];let i=0,hold=false;
+ const show=k=>{i=k;
+  box.innerHTML=`<div class="stchips">${S.map((s,j)=>`<button type="button" class="${j===i?'on':''}" data-j="${j}">${j+1} ${s.t}</button>`).join('')}</div>`+
+   `<div class="stbody">${S[i].code?pre(S[i].code):''}${(S[i].im||[]).map(f=>`<figure class="dshot"><img src="live/${f}" alt="${S[i].t}" onclick="this.classList.toggle('big')" title="點一下放大／縮小"></figure>`).join('')}<p class="small" style="margin:8px 0 0">${S[i].c}</p></div>`;
+  box.querySelectorAll('.stchips button').forEach(b=>b.onclick=()=>{hold=true;show(+b.dataset.j);});
+ };
+ box.onmouseenter=box.onfocusin=()=>{hold=true;};box.onmouseleave=()=>{hold=false;};
+ show(0);
+ if(!matchMedia('(prefers-reduced-motion: reduce)').matches)stpTimer=setInterval(()=>{if(!hold&&document.getElementById('stp')===box)show((i+1)%S.length);},5000);
+}
+
+/* ---------- (b) schedule (port of schedule.py) ---------- */
+// [編號, 名稱, 角色, 工時, strict 依賴, contract 依賴]
+const TASKS=[
+ [1,'ES mapping','DE',6,[],[]],
+ [2,'爬蟲寫入','DE',12,[[1,'end']],[[1,'end']]],
+ [3,'歷史回補','DE',16,[[1,'end']],[[1,'end']]],
+ [4,'Data Layer API','BE',8,[[1,'end']],[]],
+ [5,'Analytics API','BE',10,[[4,'end']],[[4,'end']]],
+ [6,'Export Service','BE',6,[[5,'end']],[[5,'end']]],
+ [7,'前端顯示','FE',10,[[5,'end']],[[5,'start']]],
+ [8,'整合＋SLA 監控','DE',8,[[2,'end'],[3,'end'],[7,'end']],[[2,'end'],[3,'end'],[7,'end']]],
+ [9,'驗收（與 PM 確認定義）','ALL',4,[[8,'end']],[[8,'end']]],
+];
+const IDS=TASKS.map(t=>t[0]);const T={};TASKS.forEach(t=>T[t[0]]=t);
+const H={};const resetH=()=>TASKS.forEach(t=>H[t[0]]=t[3]);resetH();
+const ROLES=['DE','BE','FE'];
+const deps=t=>T[t][5];
+const sameRole=(role,k)=>role==='ALL'||T[k][2]===role||T[k][2]==='ALL';
+function schedule(){
+ const free={DE:0,BE:0,FE:0},times={},left=new Set(IDS);
+ while(left.size){
+  const ready=[...left].filter(t=>deps(t).every(([d])=>d in times)).sort((a,b)=>a-b);
+  const t=ready[0],role=T[t][2],h=H[t];
+  const dep=Math.max(0,...deps(t).map(([d,k])=>times[d][k==='start'?0:1]));
+  const rs=role==='ALL'?ROLES:[role];
+  const s=Math.max(dep,...rs.map(r=>free[r]));
+  times[t]=[s,s+h];rs.forEach(r=>free[r]=s+h);left.delete(t);
+ }
+ return times;
+}
+function critChain(times){
+ let t=IDS.reduce((a,b)=>times[b][1]>times[a][1]?b:a);const ch=[t];let g=0;
+ while(times[t][0]>0&&g++<30){
+  const s=times[t][0],role=T[t][2];
+  let c=deps(t).filter(([d,k])=>times[d][k==='start'?0:1]===s).map(([d])=>d);
+  c=c.concat(IDS.filter(k=>k!==t&&times[k][1]===s&&sameRole(role,k)));
+  if(!c.length)break;t=Math.min(...c);ch.push(t);
+ }
+ return ch.reverse();
+}
+function drawB(){
+ const times=schedule(),P=Math.max(...IDS.map(t=>times[t][1])),ch=critChain(times);
+ const span=Math.ceil(P/8)*8,days=span/8;
+ document.getElementById('gdays').innerHTML=Array.from({length:days},(_,i)=>`<span>D${i+1}</span>`).join('');
+ const pct=x=>(x/span*100)+'%';
+ document.getElementById('gantt').innerHTML=IDS.map(t=>{
+  const [s,e]=times[t],role=T[t][2],c=ch.includes(t);
+  const col=c?'var(--bad)':`var(--${role.toLowerCase()})`;
+  return `<div class="grow"><span class="nm"><b class="r-${role} mono" style="font-size:11px">${role}</b> ${t} ${T[t][1]}</span>
+  <input type="number" min="1" max="40" value="${H[t]}" data-t="${t}" aria-label="${T[t][1]} 工時">
+  <div class="track" style="--day:${100/days}%"><div class="bar" style="left:${pct(s)};width:${pct(e-s)};background:${col};opacity:${c?1:.35}" title="${T[t][1]} ${s}–${e}h"></div></div></div>`;
+ }).join('');
+ document.querySelectorAll('#gantt input').forEach(inp=>inp.addEventListener('change',()=>{H[inp.dataset.t]=Math.min(40,Math.max(1,Math.round(+inp.value||1)));drawB();drawFlow();}));
+ document.getElementById('total-out').innerHTML=`關鍵路徑 <b>${P} 小時</b>（${ch.join('→')}）`;
+}
+document.getElementById('reset-h').onclick=()=>{resetH();drawB();drawFlow();};
+
+/* ---------- (c) guard ---------- */
+const F=['repost','quote','reshare'];
+const IN={T1:{repost:10,quote:10,reshare:10},T3:{repost:undefined,quote:3,reshare:3}};
+const ORD={T1:1,T2:2,T3:3};
+let GM='field',ES,sends;
+function merged(){const m={};F.forEach(f=>{if(IN.T3[f]!==undefined)m[f]=[IN.T3[f],'T3'];else if(IN.T1[f]!==undefined)m[f]=[IN.T1[f],'T1'];});return m;}
+function gReset(){ES={repost:[20,'T2'],quote:null,reshare:null,post:'T2'};sends=0;drawG();document.getElementById('g-log').textContent='按「送出回補」看腳本怎麼處理；再按一次就是重跑。';}
+function drawG(changed=[]){
+ const m=merged();
+ document.getElementById('g-in').innerHTML=F.map(f=>`<tr><td>${f}</td><td class="mono">${IN.T1[f]??'<span class="muted">缺 key</span>'}</td><td class="mono">${IN.T3[f]??'<span class="muted">缺 key</span>'}</td><td class="mono">${m[f]?m[f][0]+' <span class="muted">@'+m[f][1]+'</span>':'—'}</td></tr>`).join('')+
+  (GM==='post'?`<tr><td colspan="4" class="small muted">整篇時間戳＝最新一次抓取 T3</td></tr>`:'');
+ document.getElementById('g-es').innerHTML=F.map(f=>{const v=ES[f];const ts=GM==='post'?(v?ES.post:'—'):(v?v[1]:'—');
+  const bad=f==='repost'&&v&&v[0]!==20;
+  return `<tr class="${changed.includes(f)?'flash':''}"><td>${f}</td><td class="num ${bad?'bad':''}">${v?v[0]:'—'}</td><td class="mono">${GM==='post'?'counts_crawled_at='+ts:'counts_at.'+f+'='+ts}</td></tr>`}).join('');
+}
+function gSend(){
+ const m=merged();sends++;const changed=[];let lines=[];
+ if(GM==='post'){
+  if(ORD.T3>ORD[ES.post]){F.forEach(f=>{if(m[f]){ES[f]=[m[f][0],'T3'];changed.push(f);}});ES.post='T3';lines.push(`第 ${sends} 次：回補整篇時間戳 T3 > 線上 T2 → 整篇覆寫`);
+   if(ES.repost[0]===10)lines.push('repost 從 20 變成 10：T1 的舊值借了 T3 的時間戳，蓋掉了 T2 的新值。');}
+  else lines.push(`第 ${sends} 次：T3 不比線上新 → noop`);
+ }else{
+  F.forEach(f=>{if(!m[f])return;const cur=ES[f];
+   if(!cur||ORD[m[f][1]]>ORD[cur[1]]){ES[f]=[m[f][0],m[f][1]];changed.push(f);lines.push(`${f}: ${m[f][0]}@${m[f][1]} 比線上${cur?' @'+cur[1]:'（無）'}新 → 寫入`);}
+   else lines.push(`${f}: ${m[f][0]}@${m[f][1]} 不比線上 @${cur[1]} 新 → 不動`);});
+  lines.unshift(`第 ${sends} 次：${changed.length?'ok（寫了 '+changed.length+' 欄）':'noop（一欄都沒寫）'}`);
+ }
+ drawG(changed);document.getElementById('g-log').textContent=lines.join('\n');
+}
+seg('g-mode',v=>{GM=v;gReset();});
+document.getElementById('g-send').onclick=gSend;
+document.getElementById('g-reset').onclick=gReset;
+
+/* ---------- partition gate ---------- */
+const PART=[['threads／2026-05-04',321,[1.87,1.56,8.10]],['threads／2026-05-11',652,[3.22,2.91,8.59]],['threads／2026-05-18',1005,[2.49,1.79,5.57]],['threads／2026-05-25',1543,[2.85,2.33,6.42]]];
+function drawPart(){
+ const rn=document.getElementById('rename').checked,thr=+document.getElementById('thr').value;
+ document.getElementById('thr-o').textContent=thr+'%';
+ let stops=[];
+ document.querySelector('#part-tbl tbody').innerHTML=PART.map(([p,n,r],i)=>{
+  const rates=rn&&i===1?[100,100,100]:r;const over=rates.map(x=>x>thr);if(over.some(Boolean))stops.push(p);
+  return `<tr><td class="mono" style="font-size:12px">${p}</td><td class="num">${fmt(n)}</td>${rates.map((x,j)=>`<td class="num ${over[j]?'bad':''}">${x.toFixed(x===100?0:2)}%</td>`).join('')}<td>${over.some(Boolean)?'<span class="pill p-bad">停</span>':'<span class="pill p-ok">過</span>'}</td></tr>`;
+ }).join('');
+ const o=document.getElementById('part-out');
+ if(stops.length){o.className='callout bad';o.innerHTML=`退出碼 3，不產生 bulk 檔：${stops.join('、')} 有欄位的不知道比例超過 ${thr}%。`+(rn?`<br>如果只看全體：改名那週 652 筆攤到 3,521 筆只有 <b>18.5%</b>，${thr>18.5?'門檻 '+thr+'% 擋不下來。所以必須逐分區看。':'這個門檻剛好擋得下，但雜訊多的正常分區也會被擋。'}`:'<br>沒有改名也停了：門檻低於正常雜訊（reshare 在大分區約 6%–9%），會誤擋。');}
+ else{o.className='callout ok';o.innerHTML=`全部通過。reshare 的雜訊（合成資料每筆 4% 缺 key）最高 8.59%，門檻 ${thr}% 不會誤擋。`+(thr>=20?'20% 是依合成資料訂的，正式資料盤點後應調低。':'');}
+}
+document.getElementById('rename').addEventListener('change',drawPart);
+document.getElementById('thr').addEventListener('input',drawPart);
+
+/* ---------- (d) latency ---------- */
+function drawLat(){
+ const I=+document.getElementById('poll').value,p=+document.getElementById('pipe').value;
+ document.getElementById('poll-o').textContent=I+' 分';document.getElementById('pipe-o').textContent=p+' 分';
+ const p95=0.95*I+p,mx=I+p,hit=Math.max(0,Math.min(1,(60-p)/I));
+ const scale=Math.max(130,mx*1.1),x=v=>(v/scale*100)+'%';
+ let ticks='';for(let t=0;t<=scale;t+=(scale>200?30:15))ticks+=`<span class="tick" style="left:${x(t)}">${t}</span>`;
+ document.getElementById('lat').innerHTML=`<div class="axis"></div><div class="band" style="left:${x(p)};width:${x(I)}" title="延遲分布"></div>
+  <div class="mk" style="left:${x(45)};border-color:var(--warn)"><span style="color:var(--warn)">45 警告</span></div>
+  <div class="mk" style="left:${x(60)};border-color:var(--bad)"><span style="color:var(--bad);top:10px">60 SLA</span></div>
+  <div class="mk" style="left:${x(p95)};border-color:var(--accent);border-left-style:solid"><span style="color:var(--accent);top:22px">P95</span></div>${ticks}`;
+ const st=p95>60?['呼叫','bad']:p95>45?['警告','warn']:['正常','ok'];
+ document.getElementById('k-p95').textContent=p95.toFixed(1)+' 分';
+ document.getElementById('k-max').textContent=mx+' 分';
+ document.getElementById('k-hit').textContent=(hit*100).toFixed(hit<1?1:0)+'%';
+ const ks=document.getElementById('k-st');ks.textContent=st[0];ks.className=st[1];
+ const o=document.getElementById('lat-out');
+ if(mx>60){o.className='callout bad';o.innerHTML=`輪詢 ${I} 分鐘時，最壞 ${mx} 分鐘超過 SLA，約 ${((1-hit)*100).toFixed(1)}% 的新貼文會超過 1 小時才查得到。寫入鏈路只佔 ${p} 分，調快寫入救不了，要縮短輪詢間隔。`;}
+ else if(p95>45){o.className='callout warn';o.innerHTML=`最壞 ${mx} 分鐘還在 SLA 內，但 P95 ${p95.toFixed(1)} 分已過 45 分警告線，餘裕很小：一次 Pub/Sub 積壓就會超標。`;}
+ else{o.className='callout ok';o.innerHTML=`P95 ${p95.toFixed(1)} 分、最壞 ${mx} 分，都在 SLA 內，還留 ${60-mx} 分鐘給積壓或重試。監控的「爬蟲週期 &gt; 30 分」告警就是守這條線。`;}
+}
+['poll','pipe'].forEach(id=>document.getElementById(id).addEventListener('input',drawLat));
+
+/* ---------- nav highlight ---------- */
+const links=[...document.querySelectorAll('nav.top a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}}),{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>io.observe(s));
+
+drawB();drawFlow();gReset();drawPart();drawLat();
+</script>
+</body>
+</html>

@@ -458,3 +458,20 @@ def test_recheck_matches_readme_figures(monkeypatch, tmp_path, capsys):
     # 文章太新只解釋得了 37.7 → 約 18 則；日均跟 Windows 那次一樣高的視窗，平均也看得到 17 則以上，到不了 6.0
     assert 17 < y["visible_comments_age_uniform_0_72_min"] < 19
     assert y["visible_at_1_2h_window_end_ge_short_run"]["min"] > 2 * y["short_run_implied_comments_per_article"]
+
+
+@pytest.mark.parametrize("name, argv, copy_census", [
+    ("ptt_q3_recheck", ["--out", "{tmp}/r.json"], False),
+    ("ptt_q3_census", ["--report", "--out", "{tmp}"], True),
+])
+def test_report_scripts_survive_cp950_stdout(name, argv, copy_census, tmp_path):
+    # 繁中 Windows 把輸出導向檔案或管線時預設 cp950，報告裡的 ≥、≈ 曾讓程式在寫完檔案後以退出碼 1 中斷
+    import os
+    import subprocess
+    if copy_census:
+        shutil.copy(DATA / "ptt_q3_census_out" / "articles.jsonl", tmp_path / "articles.jsonl")
+    env = {**os.environ, "PYTHONIOENCODING": "cp950", "PYTHONDONTWRITEBYTECODE": "1"}
+    p = subprocess.run([sys.executable, str(CODE / f"{name}.py"), *[a.format(tmp=tmp_path) for a in argv]],
+                       env=env, capture_output=True, timeout=120)
+    assert p.returncode == 0, p.stderr.decode("utf-8", "replace")[-500:]
+    assert "≥".encode("utf-8") in p.stdout or "≈".encode("utf-8") in p.stdout

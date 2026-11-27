@@ -1,6 +1,6 @@
-# 第 4 題 Threads 爬蟲：驗證紀錄（2026-10-28 ～ 10-30）
+# 第 4 題 Threads 爬蟲：驗證紀錄（2026-10-28 ～ 10-30；11-15 補 §12、§13；11-16 補 §14）
 
-這份紀錄逐條驗證 2026-10-27 第三次實測（`q4/answer/threads_q4_result.txt` 舊版）的結論，並補測最終做法。修正後的結論與答案見 `q4/answer/threads_q4_result.txt`。§1–§10 是 10-28、10-29 的紀錄；§11 是 10-30 在 Linux 重跑量測程式的結果，和前面不一致的地方已在原段落加註。
+這份紀錄逐條驗證 2026-10-27 第三次實測（`q4/answer/threads_q4_result.txt` 舊版）的結論，並補測最終做法。修正後的結論與答案見 `q4/answer/threads_q4_result.txt`。§1–§10 是 10-28、10-29 的紀錄；§11 是 10-30 在 Linux 重跑量測程式的結果，和前面不一致的地方已在原段落加註；§12 是 11-15 驗證 doc_id 能從網頁 JS 取得；§13 是 11-15 重測 GraphQL 第 1 頁的傳輸量。
 
 共同條件：
 
@@ -67,6 +67,7 @@
 | profile HTML（10-30，gzip，3 帳號） | 163.9–198.6 KB | 848,792–1,206,757 B |
 | profile HTML（10-30，Chromium 自己協商的壓縮，6 次） | 144.1–164.5 KB | 846,469–1,275,840 B |
 | 網頁自己送的分頁 query（10-30，natgeo，11 串） | 24.0 KB | 210 KB |
+| GraphQL 第 1 頁（11-15 重測，12 帳號平均，§13） | 回應 26.4 KB，上傳 body 4.6 KB | 平均 231 KB |
 
 ## 5. 「HTML ＋ 1 頁 GraphQL」能不能達到 10 篇（10-28）
 
@@ -201,7 +202,105 @@ natgeo 的分頁 query：`BarcelonaProfileThreadsTabRefetchableDirectQuery`、do
 結論：
 
 - 「HTML 只內嵌 4 串」與「doc_id 會換」再次成立。
-- 網頁自己送分頁 query 今天不穩定：量測程式桌面 0/15、手機 1/3。實作不能依賴「開頁就會看到分頁 query」，要監控每次回傳的串數。doc_id 要另外取得：10-30 兩個時段存下的 36 份 HTML（含 9 份空殼）都找不到上面三個分頁 query 的 doc_id，有內容的 HTML 只有模組名 `BarcelonaProfileThreadsTabRefetchableDirectQuery.threads.graphql`。推測要從網頁的 JS 取得，但這個做法沒有驗證。
+- 網頁自己送分頁 query 今天不穩定：量測程式桌面 0/15、手機 1/3。實作不能依賴「開頁就會看到分頁 query」，要監控每次回傳的串數。doc_id 要另外取得：10-30 兩個時段存下的 36 份 HTML（含 9 份空殼）都找不到上面三個分頁 query 的 doc_id，有內容的 HTML 只有模組名 `BarcelonaProfileThreadsTabRefetchableDirectQuery.threads.graphql`。推測要從網頁的 JS 取得，但這個做法沒有驗證（2026-11-15 已驗證可行，見 §12）。
 - 手機視窗每次載入都會經過網站自己的轉址：先拿到 `/@帳號` 的 200，網頁接著自己導到 `/aymh/?next`，該網址回 302 轉回 `/@帳號?hpir&http_ref`。
 - 沒有重測：§3 的最小請求、§6 的 `after=null` 直接呼叫（都需要取用 token），以及 §7 的 401 封鎖。
 - robots.txt（10-30 抓取，sha256 `3230a25a…0e44`）對 `User-agent: *` 是 `Disallow: /`，並註明未經 Threads 書面許可不得以自動化方式蒐集資料（GPTBot 等 14 組列名的爬蟲也是 `Disallow: /`，Googlebot 等 22 組列名的爬蟲只擋部分路徑）。這點 10-31 已補進答案 (b)。
+
+## 12. 分頁 query 的 doc_id 從網頁 JS 取得（2026-11-15）
+
+要驗證的是 §11 留下的推測：doc_id 不在 HTML 裡，要從網頁的 JS 取得。證據與腳本在 `q4/data/threads_q4_out/docid_2026-11-15/`（不含 token、cursor）。
+
+做法（帳號 zuck）：
+
+1. 純 HTTP 抓 `/@zuck`，帶 §1 的瀏覽器標頭與 Sec-Fetch：200，解壓後 1,127,051 B。HTML 裡分頁 query 只出現模組名 2 次，和 §11 一樣沒有 doc_id。
+2. HTML 的 43 個 `<script src>` 都是內嵌的 `data:` 小腳本，不含 query 模組。
+3. HTML 裡 `rsrcMap` 列出的 649 個 JS（共 32 MB）全部下載：沒有一個含分頁 query 的模組，但已看到 doc_id 的寫法，136 個其他 query 都是 `__d("<Query名>_threadsRelayOperation",[],(function(...){a.exports="<doc_id>"}),null)`。
+4. 把 HTML 裡多層跳脫的 JS 網址（含 `rel="preload"` 的串流資料）一起解開，共 663 個不重複網址，全部下載：其中 1 個 bundle 含 `__d("BarcelonaProfileThreadsTabRefetchableDirectQuery_threadsRelayOperation", …)`，值是 `29427891256864466`。同一個 bundle 裡 query 定義寫的是 `params:{id:n("BarcelonaProfileThreadsTabRefetchableDirectQuery_threadsRelayOperation"), …}`，也就是網頁送分頁 query 時用的 doc_id 就是這個模組的值。
+5. 用 Playwright 手機視窗（§2 的設定）開同一頁對照：載入後、捲動前就下載了同名 bundle，頁面裡 `require("BarcelonaProfileThreadsTabRefetchableDirectQuery_threadsRelayOperation")` 回 `29427891256864466`，捲動 8 次後不變，和步驟 4 一致。這次網頁自己沒有送分頁 query（和 §11 的不穩定一致），所以「瀏覽器實際送出的 doc_id」是用 require 的值對照，沒有攔到實際請求。
+
+實打 GraphQL（token 由無頭瀏覽器取一次，請求本身不帶 cookie，只帶 §3 的 4 個 x-header）：
+
+| doc_id | variables | 結果 |
+|---|---|---|
+| `29427891256864466`（今天從 JS 取得） | userID、after=null、first=10，不帶 `__relay_internal__pv__*` | 200，`execution error`，`data: null` |
+| `39551525044493602`（10-29 的值） | 同上 | 200，`execution error` |
+| `29427891256864466` | 加上 query 定義列出的 52 個 `__relay_internal__pv__*` 旗標（值全部取自 HTML 預排 query 的 variables，52/52 都找得到，19 個 true） | 200，10 串、20 篇三欄齊全（code、taken_at、全文），壓縮後 62,230 B、解壓後 547,052 B；第一篇 code 也在 HTML 裡 |
+| `39551525044493602` | 同上加旗標 | 200，`execution error` |
+
+結論：
+
+- 「doc_id 要從網頁的 JS 取得」成立，而且不需要瀏覽器：HTML → 解開 JS 網址 → 下載 bundle → 用上面的 `__d(...)` 樣式取值。今天要下載 663 個檔案才找到；實作可先只找網址裡含已知 bundle 名的檔案，但 bundle 名會隨版本變，最穩的是全找。
+- 舊 doc_id 會失效：10-29 的值今天回 `execution error`。所以 doc_id 要定期重新取得，並以「回應沒有 `data.mediaData`」當作要更新的訊號。
+- 只換 doc_id 不夠，`__relay_internal__pv__*` 旗標也要帶，名單來自 query 定義（今天 52 個，10-29 是 45 個），值可從 HTML 取。§3 拿掉的是 body 欄位與 header，沒有測過拿掉這些旗標。
+- 今天 zuck 分頁 GraphQL 第 1 頁的回應壓縮後（gzip 線路位元組，不是 HTML）62.2 KB，10-29 是 38.6 KB（§6）。重測與成因見 §13：主要是 zuck 這 10 串的內容變大，平均值與成本沒有明顯變化。
+- 請求量：threads.com 純 HTTP 1 次（HTML）；無頭瀏覽器開頁 3 次；GraphQL 直接呼叫 4 次。static.cdninstagram.com 的 JS 約 1,300 次（步驟 3、4 分開下載）。出口為個人網路 IP，沒有遇到 401。
+
+## 13. GraphQL 第 1 頁傳輸量重測（2026-11-15）
+
+§12 看到 zuck 的 GraphQL 第 1 頁回應（不是 HTML）從 38.6 KB 變成 62.2 KB，(c) 用的 27.8 KB 平均值需要重測。10-29 那 102 次的原始資料沒有存下來，27.8 KB 怎麼平均的（例如 20 次 401 有沒有算進去）無法回頭確認，所以這次重新量，以這次的數字為準。
+
+條件：doc_id `29427891256864466`、`after=null`、`first=10`、帶 52 個旗標；token 由無頭瀏覽器取一次，請求不帶 cookie；個人網路 IP、每 3 秒 1 次。帳號是量測程式預設的 7 個大帳號，加上這 7 個回應裡出現的另外 5 個帳號（不列名稱）。結果在 `q4/data/threads_q4_out/docid_2026-11-15/size_rerun.json`。
+
+| 帳號 | 壓縮後 | 解壓後 | 串 | 篇 |
+|---|---|---|---|---|
+| zuck | 61,420 B | 543,652 B | 10 | 20 |
+| nasa | 46,591 B | 392,278 B | 10 | 12 |
+| 其他 5 | 36,073 B | 298,232 B | 10 | 11 |
+| natgeo | 30,187 B | 226,731 B | 10 | 13 |
+| 其他 1 | 27,383 B | 258,759 B | 10 | 10 |
+| nba | 25,532 B | 239,294 B | 10 | 10 |
+| instagram | 20,813 B | 196,344 B | 10 | 10 |
+| 其他 2 | 20,476 B | 178,520 B | 10 | 10 |
+| mosseri | 19,730 B | 168,966 B | 10 | 11 |
+| nytimes | 15,446 B | 128,915 B | 10 | 10 |
+| 其他 4 | 6,941 B | 74,221 B | 10 | 10 |
+| 其他 3 | 5,861 B | 66,734 B | 10 | 10 |
+
+- 12/12 都是 200、10 串；137 篇裡 136 篇三欄齊全。
+- GraphQL 第 1 頁回應壓縮後（不含 HTML）：平均 26,371 B（26.4 KB），中位數 23,173 B，範圍 5.9–61.4 KB。7 個大帳號平均 31.4 KB，另外 5 個平均 19.3 KB。
+- 上傳 body：每次 4,637 B（4.6 KB），比 10-29 的 4.08 KB 多，因為旗標從 45 個變成 52 個。
+- 成因：同一刻打 zuck，旗標照 HTML 值是 62,227 B，全部設 false 是 59,570 B，只差 4%；完全不帶旗標則是 `execution error`。所以變大的主因是內容：今天 zuck 這 10 串含 20 篇（有串內回覆），10-29 的內容不同。同帳號比 10-29（§6）也是有增有減：zuck 38.6 → 61.4 KB、nba 36.9 → 25.5 KB、nytimes 14.3 → 15.4 KB。
+
+重新計算 (c)（每月 4,800 萬次，TLS 加 18% 仍是估計）：
+
+| | 每次 | 每月 | 含 TLS | IPRoyal $1.84/GB | Oxylabs $2.5/GB |
+|---|---|---|---|---|---|
+| 10-29（答案用的） | 27.8 ＋ 4.08 ＝ 31.9 KB | 1.53 TB | 1.81 TB | US$2,816–3,322 | US$3,826–4,514 |
+| 11-15 重測 | 26.4 ＋ 4.6 ＝ 31.0 KB | 1.49 TB | 1.76 TB | US$2,739–3,232 | US$3,721–4,391 |
+
+結論：
+
+- 每次請求總量少 3%，月流量仍是約 1.5 TB、含 TLS 約 1.8 TB，答案 (c) 的 US$2.8–3.3k 與 US$3.8–4.5k 在四捨五入範圍內仍成立。
+- 單一帳號差異很大（5.9–61.4 KB，約 10 倍），平均值取決於 40 萬帳號的組成。這次樣本偏大帳號（12 個裡 7 個是名人／機構），不能代表一般帳號；一般帳號若較小，實際流量會低於估計。
+- 請求量：threads.com 純 HTTP 7 次（HTML 取 userID）、無頭瀏覽器開頁 1 次、GraphQL 15 次，沒有遇到 401。
+
+## 14. 單一 IP 被封後的解封時間重測（2026-11-16）
+
+環境：測試機走 iPhone 個人熱點（區網 172.20.10.3），對外 IP 全程 39.10.64.xxx（電信業者 NAT，可能多人共用）；cmd `ipconfig /all`、`curl api.ipify.org` 與 DevTools 讀到的 ipify 回應都已截圖。原始紀錄：docid_2026-11-15 的 rate_ladder.log、rate_curve.log、unblock_probe.log。
+
+| 時間 | 動作 | 結果 |
+|---|---|---|
+| 04:08 | 開測前 1 次 | 200 |
+| 04:08–04:09 | 1 req/s 連發 | 前 50 次 200，第 51 次起 401（本文 119 B），連續 8 次 401 即停；HTML 頁仍 200、貼文照常 |
+| 04:09:43 | 封後 22 秒 1 次 | 200，緊接著 3 次都是 401 |
+| 04:10–04:30 | 完全不送，休息 30／60／120／300／600 秒後各以 2 req/s 連發 | 6、6、6、6、7 次，0 次成功 |
+| 04:30–04:56 | 每 2 分鐘 1 次 | 13 次全 401 |
+| 04:58:52 | 同上 | 200（被封約 49 分鐘後第一次） |
+| 05:00 | 7 次（每 3 秒 1 次，DevTools 實拍） | 全 401 |
+| 05:15 | 7 次（每 3 秒 1 次，DevTools 實拍） | 全 401（距封鎖約 66 分鐘） |
+| 05:54 | 7 次（每 3 秒 1 次，DevTools 實拍），對外 IP 仍是 39.10.64.xxx | 全 401（距封鎖約 105 分鐘） |
+| 05:56 | 熱點開關飛航換出口 IP（39.10.64.xxx → 39.10.24.xxx），同一台機器、同一批請求 | 立即 200（7 次全 200），證實封鎖綁 IP |
+| 05:57–06:00 | 7 個大帳號第 1 頁 query，DevTools 實拍（evidence/size_list_dev.png、size_hdr*_dev.png） | Size 7.7～41.1 kB（合計 174 kB、平均約 24.8 kB）、請求 Content-Length 4637 B |
+
+結論與限制：
+
+- 1 req/s 約 50 次就被封，比 10-29 的 5 req/s 約 82 次更少；換 token 無效、HTML 照常 200（與 §7 一致）。
+- 「5 分鐘未解」的寫法偏樂觀：休息 10 分鐘仍 0 次成功，約 49 分鐘才出現 1 次 200，隨後又 401。
+- 單 IP 可長期撐住的速率仍沒有量到；觀察是封後 1 小時內平均不到 1 次成功，但我們自己的探測請求可能延長封鎖，數字只能當參考。
+- 單一 IP、單一電信 NAT，樣本只有 1 個；手機未登入的行動網路／已登入 App 是否同樣被封沒有測。
+- 這些測試期間測試機的 GraphQL 被封，HTML 不受影響。
+
+補充（2026-11-16，壓縮格式）：同一個 zuck 第 1 頁 query，展開後 JSON 約 547 KB；requests（Accept-Encoding gzip, deflate）傳輸 61,410 B，Chromium 協商 zstd 傳輸約 39～41 KB。完整新版 Chromium（channel chromium／chrome）以 CDP 開 F12 時曾出現沒壓縮的 550 kB 傳輸，改用預設 headless shell 後穩定為壓縮；Size 欄的數字以壓縮後為準。(c) 的 27.8 KB（10-29）、26.4 KB（11-15）、24.8 KB（11-16）都是壓縮後傳輸量。
+
+補充（2026-11-16，TLS 握手實測）：用 tshark 抓 3 條「每次新建連線」（new Session，模擬輪換 IP 代理）的 threads.com TLS 1.3，Wireshark 開抓到的封包檔（tcp.stream eq 3）截圖為 `evidence/tls_ws.png`（封包檔含網卡位址，公開版只放截圖，截圖已遮網卡位址）。握手：ClientHello 517 B、伺服器首包 2784＋746＝3530 B、CCS＋Finished 64 B，合計約 4.1 KB；加 session ticket 約 184 B、close_notify 約 23 B，每條新連線約 4.2～4.3 KB，約佔每個請求（30～33 KB）的 13～14%，低於答案用的估計 18%（約 5.6 KB）；以 13.5% 重算約 1.7 TB（答案寫 1.8 TB 為估計上緣）。未量 CONNECT 代理那一段；若代理商按 L3 封包計費再多約 3%。只有每次請求都換 IP 才每次付握手，同一連線重用則幾乎為零。

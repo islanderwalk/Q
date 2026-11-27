@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS quality_daily (
   top_v2 jsonb, top_v1 jsonb, rbo_prev numeric, js_prev numeric, rbo_v1v2 numeric,
   computed_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (day, channel)
 );
+ALTER TABLE quality_daily ADD COLUMN IF NOT EXISTS split_examples jsonb;
 ALTER TABLE dict_releases ADD COLUMN IF NOT EXISTS rerun_written integer;
 ALTER TABLE dict_releases ADD COLUMN IF NOT EXISTS bigram_audit_missed integer;
 CREATE OR REPLACE VIEW backfill_gap AS

@@ -18,6 +18,9 @@ def main():
     elif cmd == "rerun":
         from .rerun import main as rerun
         sys.exit(rerun(rest))
+    elif cmd == "fill":
+        from .fill import main as fill
+        sys.exit(fill(rest))
     elif cmd == "impact":
         from .impact import main as impact
         sys.exit(impact(rest))

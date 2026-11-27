@@ -1,0 +1,14 @@
+{
+  "articles_subset": 1414,
+  "comments_subset": 54006,
+  "first_1h": 63.84,
+  "cum_24h": 99.22,
+  "cum_168h": 99.98,
+  "a_req": 6278,
+  "b_req": 1828,
+  "diff_req": 4450,
+  "ratio": 3.4,
+  "gap_pp": 0.76,
+  "gap_comments": 410.0,
+  "ratio_recheck_24h": 9.7
+}

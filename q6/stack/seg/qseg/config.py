@@ -10,10 +10,16 @@ PROJECT = os.environ.get("PUBSUB_PROJECT", "qsearch-local")
 SUBSCRIPTION = os.environ.get("PUBSUB_SUBSCRIPTION", "parsed-posts-seg-v2")
 PG_DSN = os.environ.get("PG_DSN", "postgresql://qsearch:qsearch@pg:5432/qsearch")
 RAW_ROOT = os.environ.get("RAW_ROOT", "/data/raw")
+# 回補 Job 的原文來源（rawsrc.py）：file＝本機對應元件，讀 RAW_ROOT；bigquery＝正式環境，讀 RAW_BQ_TABLE（專案.資料集.表）
+RAW_SOURCE = os.environ.get("RAW_SOURCE", "file")
+RAW_BQ_TABLE = os.environ.get("RAW_BQ_TABLE", "")
+RAW_BQ_PROJECT = os.environ.get("RAW_BQ_PROJECT", "")             # 查詢記帳的專案；空＝用執行環境預設
+BQ_TIME_TRAVEL_HOURS = int(os.environ.get("BQ_TIME_TRAVEL_HOURS", "168"))   # 原文表所在資料集的時光回溯期限（預設 7 天）
 METRICS_PORT = int(os.environ.get("METRICS_PORT", "9108"))
 COVERAGE_PORT = int(os.environ.get("COVERAGE_PORT", "9110"))   # P0-2：coverage 子命令的 /metrics
 RECON_PORT = int(os.environ.get("RECON_PORT", "9112"))         # 完整性四層對帳＋回補燃盡（recon 子命令）的 /metrics
 QUALITY_PORT = int(os.environ.get("QUALITY_PORT", "9113"))     # 文字雲品質日報（quality 子命令）的 /metrics
+LEDGER_INDEX = os.environ.get("LEDGER_INDEX", "backfill_ledger")   # 回補帳本：ES 索引（ledger.py），取代原本 PostgreSQL 的 backfill_ledger 表
 MAX_ATTEMPTS = int(os.environ.get("BACKFILL_MAX_ATTEMPTS", "3"))   # 分區被領超過這個次數就轉 failed，不再反覆重領
 SEG_BUILD = os.environ.get("SEG_BUILD", "dev")
 # Cloud Run Jobs 內建環境變數：一個 Job 開多個 task 時，用它們把分區切成 slice

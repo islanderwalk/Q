@@ -90,6 +90,15 @@ override_resource {
   }
 }
 
+override_resource {
+  target          = google_service_account.backfill
+  override_during = plan
+  values = {
+    email = "qsearch-backfill@qsearch-test.iam.gserviceaccount.com"
+    name  = "projects/qsearch-test/serviceAccounts/qsearch-backfill@qsearch-test.iam.gserviceaccount.com"
+  }
+}
+
 # =====================================================================
 # Pub/Sub：每條流水線一個 pull 訂閱，重送退避 10s–600s、5 次進 DLQ、永不過期；DLQ 檢查訂閱保留 31 天
 # =====================================================================
@@ -332,4 +341,59 @@ run "elasticsearch_url_rejects_public_http" {
   }
 
   expect_failures = [var.elasticsearch_url]
+}
+
+# =====================================================================
+# 斷詞回補讀 BigQuery 原文：沒設表＝不建權限、不設環境變數；設了＝只給那張表唯讀＋本專案跑查詢
+# =====================================================================
+run "backfill_raw_bq_off_by_default" {
+  command = plan
+
+  assert {
+    condition = (
+      length(google_bigquery_table_iam_member.backfill_read_raw_bq) == 0 &&
+      length(google_project_iam_member.backfill_bq_job_user) == 0 &&
+      length(google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].containers[0].env) == 0
+    )
+    error_message = "沒設 q6_raw_bq_table：不給 BigQuery 權限、回補 Job 不設 RAW_SOURCE。"
+  }
+}
+
+run "backfill_raw_bq_reads_one_table" {
+  command = plan
+
+  variables {
+    q6_raw_bq_table = "qsearch-data.raw.posts"
+  }
+
+  assert {
+    condition = (
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].project == "qsearch-data" &&
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].dataset_id == "raw" &&
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].table_id == "posts" &&
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].role == "roles/bigquery.dataViewer" &&
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].member == "serviceAccount:qsearch-backfill@qsearch-test.iam.gserviceaccount.com" &&
+      google_project_iam_member.backfill_bq_job_user[0].project == "qsearch-test" &&
+      google_project_iam_member.backfill_bq_job_user[0].role == "roles/bigquery.jobUser"
+    )
+    error_message = "回補 SA 只拿原文那張表的唯讀，查詢在本專案跑。"
+  }
+
+  assert {
+    condition = (
+      { for e in google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].containers[0].env : e.name => e.value } ==
+      { RAW_SOURCE = "bigquery", RAW_BQ_TABLE = "qsearch-data.raw.posts", RAW_BQ_PROJECT = "qsearch-test" }
+    )
+    error_message = "回補 Job 要設 RAW_SOURCE=bigquery、RAW_BQ_TABLE、RAW_BQ_PROJECT。"
+  }
+}
+
+run "backfill_raw_bq_rejects_bad_table_name" {
+  command = plan
+
+  variables {
+    q6_raw_bq_table = "raw.posts"
+  }
+
+  expect_failures = [var.q6_raw_bq_table]
 }

@@ -93,7 +93,8 @@ def heartbeat() -> None:
         pass
 
 
-def set_run(run_id, **fields) -> None:
+def set_run(run_id, only_if_status=None, **fields) -> None:
+    """更新 rerun_runs 一列。only_if_status：只有目前狀態在這幾個裡面才改（別的 worker 已經寫好的結局不覆寫）。"""
     if run_id is None:
         return
     cols = {k: v for k, v in fields.items() if k in RUN_FIELDS}
@@ -102,9 +103,13 @@ def set_run(run_id, **fields) -> None:
     if "examples" in cols:
         cols["examples"] = json.dumps(cols["examples"], ensure_ascii=False)
     sets = ", ".join(f"{k}=%s" for k in cols) + ", updated_at=now()"
+    where, params = "id=%s", [*cols.values(), run_id]
+    if only_if_status:
+        where += " AND status = ANY(%s)"
+        params.append(list(only_if_status))
     try:
         with _pg() as c:
-            c.execute(f"UPDATE rerun_runs SET {sets} WHERE id=%s", (*cols.values(), run_id))
+            c.execute(f"UPDATE rerun_runs SET {sets} WHERE {where}", params)
     except Exception as e:
         log("rerun_run_update_failed", "WARNING", error=str(e)[:200])
 
@@ -133,7 +138,9 @@ def handle_release(msg: dict, state: SegState, es) -> None:
     target, current = seg_ver("v2", msg["dict_version"]), seg_ver("v2", state.dic.version)
     if target <= current:
         log("release_skipped", dict_version=msg["dict_version"], loaded=state.dic.version, reason="已載入同版或更新版")
-        set_run(run_id, status="skipped", worker=service_name(), error=f"服務已在 {state.dic.version}", finished_at=now)
+        # 只有還在排隊（queued）的才記成 skipped：同一則訊息重送時（處理超過 ack 期限），這一列可能已經是 done，不能蓋掉
+        set_run(run_id, only_if_status=("queued",), status="skipped", worker=service_name(), error=f"服務已在 {state.dic.version}",
+                finished_at=now)
         return
     set_run(run_id, status="loading", worker=service_name(), started_at=now)
     try:

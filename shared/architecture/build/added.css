@@ -122,6 +122,20 @@ main > .pane.split { background: var(--bg); }
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.55; }
 .tbl th, .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .tbl th { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.tbl .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rowmap td.shots { min-width: 200px; }
+.rowmap a.shot { display: inline-block; margin: 0 4px 4px 0; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--bg); color: var(--accent); font-size: 12px; line-height: 1.7; text-decoration: none; white-space: nowrap; }
+.rowmap a.shot:hover { border-color: var(--accent); }
+@media (max-width: 760px) {
+  .rowmap thead { display: none; }
+  .rowmap tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .rowmap td { padding: 0; border: 0; min-width: 0; }
+  .rowmap td.num { grid-column: 2; grid-row: 1; }
+  .rowmap td:nth-child(n+3) { grid-column: 1 / -1; }
+  .rowmap td[data-k]::before { content: attr(data-k); display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .rowmap td.shots { min-width: 0; }
+}
 .orig { border: 1px solid var(--line); border-radius: 10px; background: var(--bar); }
 .orig summary { padding: 10px 14px; cursor: pointer; font-size: 13.5px; }
 .orig img { display: block; max-width: 420px; width: 100%; margin: 0 auto 14px; border: 1px solid var(--line); border-radius: 8px; }
@@ -140,6 +154,7 @@ main > .pane.split { background: var(--bg); }
 .ev figcaption { display: grid; gap: 6px; align-content: start; padding: 10px 12px 12px; min-width: 0; }
 .ev .cap { margin: 0; font-size: 13px; line-height: 1.55; }
 .ev .res { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.ev .cap, .ev .res { overflow-wrap: anywhere; }
 .ev .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 11.5px; color: var(--muted); }
 .ev code { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
 @media (max-width: 760px) { .qbar { flex: 1 1 100%; max-width: 100%; } }

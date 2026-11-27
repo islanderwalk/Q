@@ -13,7 +13,7 @@
 | 答案裡的 GCP 元件 | 這裡用什麼 | 一樣的地方 | 不一樣的地方 |
 |---|---|---|---|
 | Cloud Storage（字典 artifact） | `dictsrv`：nginx 1.27 服務 `runtime/dictsrv/versions/<版本>/` 與 `current` | 依版本取檔、逐檔 sha256、`current` 原子切換、`Last-Modified`／`ETag`（IK 靠這兩個判斷重載） | 沒有 IAM、物件版本控制 |
-| BigQuery／GCS 匯出（回補讀原文） | `runtime/raw/<渠道>/<yyyy-mm>.jsonl`（`scripts/prepare_raw.py`，只收有原始發文時間的文章） | 回補從原文讀，不從 ES scroll；分區 = 渠道 × 發文月份 | 只有 PTT 一個渠道 |
+| BigQuery（回補讀原文） | `runtime/raw/<渠道>/<yyyy-mm>.jsonl`（`scripts/prepare_raw.py`，只收有原始發文時間的文章），`RAW_SOURCE=file` | 回補從原文讀，不從 ES scroll；分區 = 渠道 × 發文月份；同一個 post_id 只留第一筆 | 只有 PTT 一個渠道。正式環境的 `RAW_SOURCE=bigquery`（`seg/qseg/rawsrc.py`：固定讀帳本 `started_at` 那個時間點、依 post_id 排序續跑、超過 7 天從頭重跑）2026-11-14 對BigQuery 實測表 `q6_raw.posts` 跑過列分區與讀分區，結果和本機檔案一致；也用PostgreSQL 帳本把整個分區跑完斷詞寫進 ES、在 Cloud Run 用回補服務帳號讀過 BigQuery（`RUNBOOK-backfill.md` 第 8 節第 5 點） |
 | Pub/Sub | 官方 `google-cloud-cli:emulators` 的 Pub/Sub 模擬器 | 同一套 client 程式碼；訂閱、ack／nack、dead letter 都會動 | 沒有配額、沒有跨區 |
 | Cloud Run 服務（斷詞服務、文字雲 API、採集器） | 同一個容器映像 `docker compose` 起 | 程式碼、映像、環境變數完全相同；斷詞服務 v2 多訂閱 `dict-releases`，收到發版訊息就熱換字典、定向重跑 | 沒有自動擴縮 |
 | Cloud Run Jobs（回補） | 同一個映像 `docker compose run`，`CLOUD_RUN_TASK_INDEX` 照 Cloud Run 的變數名 | 多 task 從帳本領分區、checkpoint、被砍後接續 | task 數要自己起 |
@@ -36,10 +36,10 @@
 | `seg/qseg/` | 斷詞映像：`service`（串流；v2 另訂閱發版控制訊息 `control.py`，每台輪詢 manifest 收斂）、`job`（回補）、`rerun`（定向重跑）、`impact`（影響範圍地面真值）、`shadow`（影子比對）、`coverage`（覆蓋與缺值）、`recon`（四層對帳＋回補燃盡＋發版收斂）、`quality`（品質日報；金標在 `seg/quality/gold_150.json`）、`approve`／`baseline`、`seed` |
 | `api/`、`web/` | 文字雲 API（FastAPI；`/api/ops/alert` 收 Alertmanager、`/api/rum` 收 PM 頁 RUM）、PM A/B 頁面（無外部套件；`rum.js` 自寫 RUM）、資料工程端操作（`ops.py`：發版（outbox）、簽核、重播、限速）、來源採集器（`collector.py`＋`feeds.json`：每次請求記 outcome，YouTube 走 Data API） |
 | `pg/init.sql`、`pg/live.sql`、`pg/migrate_p0.sql` | 帳本、控制表、批次紀錄、發版紀錄、影子比對、對帳 `recon_daily`、品質 `quality_daily`、`posts_terms`；即時操作用的 `rerun_runs`、`service_state`、`live_events`（含告警）、`collector_state`、`release_outbox`；既有 volume 用 `migrate_p0.sql` 補表 |
-| `tests/` | 即時操作的純函式測試（發版、版本號、feed 解析、原文湖解析）：`pytest -p no:cacheprovider q6/stack/tests` |
+| `tests/` | 即時操作的純函式測試（發版、版本號、feed 解析、原文湖解析、歷史爬蟲橋、樣本的發文時間）：`pytest -p no:cacheprovider q6/stack/tests` |
 | `monitoring/` | OTel Collector、Prometheus（`rules/*.yml`；`slo/` 是 Sloth 規格）、Alertmanager、Loki＋Alloy、Grafana 資料來源與兩張儀表板（`grafana/build_dashboard.py` 產生：主看板 9 層、採集看板 6 列） |
 | `collect/` | 六渠道樣本的抓取程式；`data/channels/` 是抓到的資料與紀錄 |
-| `scripts/` | 準備原文、建索引與訂閱、送串流、各項實驗、延遲探針、截圖 |
+| `scripts/` | 準備原文、建索引與訂閱、送串流、各項實驗、延遲探針、截圖；`fix_sample_es.py` 把已入庫的樣本對上補好的發文時間（check／apply／rollback） |
 | `results/` | 每次實測的日誌與 JSON（`backfill/`、`es/`、`stream/`、延遲探針） |
 | `runtime/` | 執行時產生的字典 artifact 與原文（不進 git） |
 
@@ -78,8 +78,8 @@ PM 頁下半部是「資料工程端」：每一個按鈕都打同一套 ES／Po
 
 | 操作 | 實際發生什麼 | 哪裡看得到 |
 |---|---|---|
-| 字典發版（填詞、按「建版並發佈」） | API 從 artifact 的 `current` 版複製一份、加詞（詞頻不低於主字典）、逐檔 sha256、寫 manifest、原子切 `current`；`rerun_runs` 一列；控制訊息發到 Pub/Sub `dict-releases` | seg-v2 收到後載入新版（sha256 對不上就拒絕）、換掉服務用的字典、對原文含新詞字串的文章定向重跑；進度每 0.5 秒寫回 `rerun_runs`，頁面顯示候選／掃過／詞表實際變了幾篇、前 3 個例子；IK 60 秒內看到 `ik_ext.dic` 變了也會重載 |
-| 回補簽核／豁免 | `backfill_ledger` 由 `awaiting_pm`→`passed`（簽核人、時間寫進 `gates.G4`）；豁免只允許 `failed` 分區且一定要寫說明 | 回補 Job 下一次領分區就會放行；事件流 |
+| 字典發版（填詞、按「建版並發佈」） | API 從 artifact 的 `current` 版複製一份、加詞（詞頻不低於主字典）、逐檔 sha256、寫 manifest、原子切 `current`；`rerun_runs` 一列；控制訊息發到 Pub/Sub `dict-releases` | seg-v2 收到後載入新版（sha256 對不上就拒絕）、換掉服務用的字典、對原文含新詞字串的文章定向重跑；進度每 0.5 秒寫回 `rerun_runs`，頁面顯示候選／掃過／詞表變了幾篇、前 3 個例子；IK 60 秒內看到 `ik_ext.dic` 變了也會重載 |
+| 回補簽核／豁免 | `backfill_ledger` 由 `awaiting_pm`→`passed`（簽核人、時間寫進 `gates.G4`）；豁免只允許 `failed` 分區且一定要寫說明；首月（`gates.G4` 沒有記成已過，或該渠道還沒有任何分區 `passed`）豁免後是 `awaiting_pm`，仍要 PM 簽；一次只豁免一個閘門，G1–G3 還有別的沒過又沒豁免時仍是 `failed`，要逐一豁免 | 回補 Job 下一次領分區就會放行；事件流 |
 | 回補限速／暫停 | `backfill_control`；Job 每批前都讀 | 控制列、Grafana 吞吐 |
 | 重播六渠道樣本 | 267 篇（`data/channels/`）由 parser 寫本體 → `parsed-posts` → seg-v1／seg-v2 各自斷詞；同版本重送是 noop | 「剛進來的文章」每篇兩版詞表與延遲 |
 | 來源採集器 | `collector.py` 輪詢 PTT 看板 Atom、YouTube 頻道 RSS、中央社／公視 RSS（`api/feeds.json`）：只抓站方公開給閱讀器的 feed，不登入、帶 ETag／If-Modified-Since、同一主機間隔 ≥ 2.5 秒、429／5xx 退避；新文章走同一條串流路 | 每個 feed 的上次抓取、HTTP 狀態、新進篇數；「立刻抓一次」3 秒內開始 |

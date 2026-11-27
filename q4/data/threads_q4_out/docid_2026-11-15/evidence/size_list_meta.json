@@ -1,0 +1,76 @@
+{
+ "rows": [
+  {
+   "text": "query\t200\tfetch\tVM11:1\t41.1 kB\t1.16 s",
+   "box": {
+    "x": 0,
+    "y": 189,
+    "width": 1140,
+    "height": 21
+   }
+  },
+  {
+   "text": "query\t200\tfetch\tVM18:1\t18.4 kB\t894 ms",
+   "box": {
+    "x": 0,
+    "y": 210,
+    "width": 1140,
+    "height": 21
+   }
+  },
+  {
+   "text": "query\t200\tfetch\tVM24:1\t22.6 kB\t696 ms",
+   "box": {
+    "x": 0,
+    "y": 231,
+    "width": 1140,
+    "height": 21
+   }
+  },
+  {
+   "text": "query\t200\tfetch\tVM30:1\t35.5 kB\t1.02 s",
+   "box": {
+    "x": 0,
+    "y": 252,
+    "width": 1140,
+    "height": 21
+   }
+  },
+  {
+   "text": "query\t200\tfetch\tVM36:1\t23.1 kB\t805 ms",
+   "box": {
+    "x": 0,
+    "y": 273,
+    "width": 1140,
+    "height": 21
+   }
+  },
+  {
+   "text": "query\t200\tfetch\tVM42:1\t7.7 kB\t634 ms",
+   "box": {
+    "x": 0,
+    "y": 294,
+    "width": 1140,
+    "height": 21
+   }
+  },
+  {
+   "text": "query\t200\tfetch\tVM48:1\t25.4 kB\t846 ms",
+   "box": {
+    "x": 0,
+    "y": 315,
+    "width": 1140,
+    "height": 21
+   }
+  }
+ ],
+ "statuses": [
+  200,
+  200,
+  200,
+  200,
+  200,
+  200,
+  200
+ ]
+}

@@ -6,7 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 RUN --mount=type=secret,id=ca,required=false \
     if [ -f /run/secrets/ca ]; then export PIP_CERT=/run/secrets/ca; fi; \
     pip install --no-cache-dir jieba==0.42.1 requests==2.34.2 google-cloud-pubsub==2.43.0 \
-    prometheus-client==0.26.0 "psycopg[binary]==3.3.6"
+    google-cloud-bigquery==3.27.0 prometheus-client==0.26.0 "psycopg[binary]==3.3.6"
+# google-cloud-bigquery：回補 Job 在正式環境（RAW_SOURCE=bigquery）讀原文用；本機 RAW_SOURCE=file 不會 import
 WORKDIR /app
 COPY code/segmenter.py /app/segmenter.py
 COPY code/dict/ /app/dict/

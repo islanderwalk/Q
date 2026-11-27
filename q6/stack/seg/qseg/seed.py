@@ -24,7 +24,7 @@ def main(argv=None):
             post = json.loads(line)
             if zlib.crc32(post["post_id"].encode()) % config.TASK_COUNT != config.TASK_INDEX:
                 continue
-            items.append((post["post_id"], base_doc(post), seg_fields(dic, segment(dic, post["channel"], post.get("text", ""))), dic.pipeline))
+            items.append((post["post_id"], base_doc(post), seg_fields(dic, segment(dic, post["channel"], post.get("text", "")), post.get("text", "")), dic.pipeline))
             if len(items) >= 1000:
                 es.bulk_seg(items)
                 n += len(items)

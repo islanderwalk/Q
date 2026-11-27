@@ -1,0 +1,513 @@
+{
+ "說明": "Q3 管線常駐運行的一次快照：狀態、搜尋耗時、容器資源、兩層故障演練結果。截圖同目錄（無前綴＝近 6 小時；drill-＝演練前後 3 小時；backfill-＝回填期間；reconnect-＝連線修正前後近 6 小時）。",
+ "status": {
+  "window": {
+   "searchable": 6226,
+   "deleted": 1,
+   "empty": 0,
+   "comment_sum": 229453,
+   "comments": 229453,
+   "truncated": 1,
+   "unsearchable": 0,
+   "unsearchable_oldest_min": 0.0,
+   "staleness_max_h": 10.686375130555556
+  },
+  "runs": [
+   {
+    "run_id": "8b086ba64e7e4548ba1b0b960c269950",
+    "board": "Gossiping",
+    "started_at": "2026-11-04 02:50:00.959528+00:00",
+    "finished_at": "2026-11-04 02:50:34.627217+00:00",
+    "status": "ok",
+    "list_pages": 1,
+    "new_posts": 3,
+    "refreshed": 0,
+    "deleted_found": 0,
+    "failures": 0,
+    "requests": 4,
+    "batches": 1,
+    "rolled_back_batches": 0,
+    "gate_blocked": 0,
+    "note": ""
+   },
+   {
+    "run_id": "2b94ec0ff2a34067956effd11a0b2c3b",
+    "board": "Gossiping",
+    "started_at": "2026-11-04 02:49:01.813292+00:00",
+    "finished_at": "2026-11-04 02:49:15.840647+00:00",
+    "status": "rolled_back",
+    "list_pages": 1,
+    "new_posts": 3,
+    "refreshed": 0,
+    "deleted_found": 0,
+    "failures": 0,
+    "requests": 4,
+    "batches": 1,
+    "rolled_back_batches": 0,
+    "gate_blocked": 0,
+    "note": "故障演練：這一輪當成退步處理（Q3_DRILL_REGRESSION）；已還原 1 批"
+   },
+   {
+    "run_id": "3674511bb7fe4de2bb32a6aaf642c912",
+    "board": "Gossiping",
+    "started_at": "2026-11-04 02:43:26.995678+00:00",
+    "finished_at": "2026-11-04 02:43:44.969213+00:00",
+    "status": "ok",
+    "list_pages": 1,
+    "new_posts": 6,
+    "refreshed": 0,
+    "deleted_found": 0,
+    "failures": 0,
+    "requests": 7,
+    "batches": 1,
+    "rolled_back_batches": 0,
+    "gate_blocked": 0,
+    "note": ""
+   },
+   {
+    "run_id": "fd0def91d61e43acb47b60bcd21710e8",
+    "board": "Gossiping",
+    "started_at": "2026-11-04 02:42:41.035376+00:00",
+    "finished_at": "2026-11-04 02:43:00.869530+00:00",
+    "status": "partial",
+    "list_pages": 1,
+    "new_posts": 0,
+    "refreshed": 0,
+    "deleted_found": 0,
+    "failures": 0,
+    "requests": 7,
+    "batches": 1,
+    "rolled_back_batches": 1,
+    "gate_blocked": 0,
+    "note": ""
+   },
+   {
+    "run_id": "7d68573fcf94470fa9d70e542fcf99fe",
+    "board": "Gossiping",
+    "started_at": "2026-11-04 02:36:17.002740+00:00",
+    "finished_at": "2026-11-04 02:37:16.627557+00:00",
+    "status": "ok",
+    "list_pages": 2,
+    "new_posts": 22,
+    "refreshed": 0,
+    "deleted_found": 0,
+    "failures": 0,
+    "requests": 24,
+    "batches": 1,
+    "rolled_back_batches": 0,
+    "gate_blocked": 0,
+    "note": ""
+   }
+  ],
+  "last_verify": [
+   {
+    "run_at": "2026-11-04 01:12:22.924159+00:00",
+    "board": "Gossiping",
+    "window_start": "2026-10-28 01:12:22.924159+00:00",
+    "pages_checked": 321,
+    "pages_not_20": 0,
+    "missing_ids": 0,
+    "out_of_order_pairs": 0,
+    "nrec_checked": 6234,
+    "nrec_agree_ratio": 0.9654,
+    "ok": true,
+    "details": "{\"bad_pages\": [], \"missing\": [], \"out_of_order\": [], \"page_range\": [38656, 38976]}"
+   }
+  ]
+ },
+ "search": [
+  {
+   "keyword": "颱風",
+   "posts": 80,
+   "wall_ms": 3438,
+   "query_ms": 1791
+  },
+  {
+   "keyword": "沈伯洋",
+   "posts": 765,
+   "wall_ms": 9185,
+   "query_ms": 7830
+  },
+  {
+   "keyword": "墜機",
+   "posts": 18,
+   "wall_ms": 2672,
+   "query_ms": 1389
+  }
+ ],
+ "search_note": "wall_ms＝CLI 從送出到回傳的總時間；query_ms＝查詢本身。搜尋頁一次列出前 50 篇。",
+ "drill": [
+  {
+   "name": "單批還原（Q3_DRILL_FAIL_BATCHES=1）",
+   "how": "第 1 批在 MERGE 之後、落地核對之前注入故障，只還原這一批",
+   "started": "2026-11-04T02:42:33Z",
+   "drill_enabled": "2026-11-04T02:42:41Z",
+   "rolled_back_at": "2026-11-04T02:42:58Z",
+   "run_end": {
+    "t": "2026-11-04T02:43:03Z",
+    "status": "partial",
+    "new": 0,
+    "rolled_back_batches": 1,
+    "note": ""
+   },
+   "recovery_run_end": {
+    "t": "2026-11-04T02:43:46Z",
+    "status": "ok",
+    "new": 6,
+    "rolled_back_batches": 0,
+    "note": ""
+   }
+  },
+  {
+   "name": "整輪還原（Q3_DRILL_REGRESSION=1）",
+   "how": "一輪結束時當成退步，整輪 rollback；開關只作用一輪，下一輪先試探一小批再恢復",
+   "started": "2026-11-04T02:48:56Z",
+   "drill_enabled": "2026-11-04T02:49:01Z",
+   "rolled_back_at": "2026-11-04T02:49:15Z",
+   "run_end": {
+    "t": "2026-11-04T02:49:18Z",
+    "status": "rolled_back",
+    "new": 3,
+    "rolled_back_batches": 0,
+    "note": "故障演練：這一輪當成退步處理（Q3_DRILL_REGRESSION）；已還原 1 批"
+   },
+   "recovery_run_end": {
+    "t": "2026-11-04T02:50:41Z",
+    "status": "ok",
+    "new": 3,
+    "rolled_back_batches": 0,
+    "note": ""
+   }
+  }
+ ],
+ "backfill": {
+  "status": "partial",
+  "new": 6240,
+  "failures": 7,
+  "batches": 125,
+  "seconds": 17621
+ },
+ "docker_stats": [
+  {
+   "Name": "q3pipe-bigquery-1",
+   "CPUPerc": "0.00%",
+   "MemUsage": "920.4MiB / 7.418GiB",
+   "MemPerc": "12.12%",
+   "NetIO": "115MB / 93.5MB",
+   "BlockIO": "435MB / 23.9GB"
+  },
+  {
+   "Name": "q3pipe-crawler-1",
+   "CPUPerc": "0.12%",
+   "MemUsage": "88.14MiB / 7.418GiB",
+   "MemPerc": "1.16%",
+   "NetIO": "13.2MB / 592kB",
+   "BlockIO": "12.8MB / 1.26MB"
+  },
+  {
+   "Name": "q3pipe-gcs-1",
+   "CPUPerc": "0.00%",
+   "MemUsage": "28.68MiB / 7.418GiB",
+   "MemPerc": "0.38%",
+   "NetIO": "38.9MB / 9.06MB",
+   "BlockIO": "30.3MB / 149MB"
+  },
+  {
+   "Name": "q3pipe-grafana-1",
+   "CPUPerc": "0.02%",
+   "MemUsage": "100MiB / 7.418GiB",
+   "MemPerc": "1.32%",
+   "NetIO": "5.68MB / 181MB",
+   "BlockIO": "108MB / 31.6MB"
+  },
+  {
+   "Name": "q3pipe-prometheus-1",
+   "CPUPerc": "0.00%",
+   "MemUsage": "46.91MiB / 7.418GiB",
+   "MemPerc": "0.62%",
+   "NetIO": "18MB / 22.3MB",
+   "BlockIO": "53.3MB / 24.4MB"
+  },
+  {
+   "Name": "q3pipe-pushgateway-1",
+   "CPUPerc": "0.00%",
+   "MemUsage": "18.95MiB / 7.418GiB",
+   "MemPerc": "0.25%",
+   "NetIO": "26.8MB / 12.2MB",
+   "BlockIO": "7.3MB / 10.8MB"
+  },
+  {
+   "Name": "q3pipe-search-1",
+   "CPUPerc": "0.01%",
+   "MemUsage": "41.36MiB / 7.418GiB",
+   "MemPerc": "0.54%",
+   "NetIO": "696kB / 1.1MB",
+   "BlockIO": "1.55MB / 1.06MB"
+  }
+ ],
+ "known_display": [
+  "搜尋頁一次列出前 50 篇，命中總數以 CLI／API 為準",
+  "② 事後刪文 404 以 1 小時視窗加總，刪文發生在視窗外時圖上為 0",
+  "「① 單次請求失敗」每個整點輪次有 1 次 list 的 error，「PTT 回應時間」p95 在每輪開頭跳到 20 秒：每輪第一個列表頁請求沿用了上一輪閒置的連線，重試一次就讀到，不影響入庫（見 request_errors_12h）"
+ ],
+ "drill_dashboard_check": {
+  "captured_at": "2026-11-04T02:58Z",
+  "每小時寫入批次": "出現 rolled_back 長條；increase(q3_batches_total{result=\"rolled_back\"}[1h]) = 1",
+  "過去 24 小時整輪還原": "1（increase(q3_run_rollbacks_total[24h]) = 1）",
+  "每小時重抓篇數": "第 0–7 天皆為 0 值，不是 No data"
+ },
+ "drill_note": "整輪還原那一輪的 new=3 是還原前寫入的篇數，已整批撤回；恢復那一輪重新寫入同樣 3 篇。",
+ "search_emulator_restart": {
+  "說明": "搜尋耗時隨時間變長（同一個「颱風」查詢從 2 秒升到 18 秒），重啟 BigQuery 模擬器前後各量一次，確認原因。模擬器資料存在 volume，重啟不掉資料。",
+  "restarted_at": "2026-11-04T03:12:53Z",
+  "status_ready_at": "2026-11-04T03:13:33Z",
+  "before": {
+   "measured_at": "2026-11-04T03:11:47Z",
+   "emulator_mem": "1022MiB",
+   "jobs_listed": 0,
+   "cli": [
+    {
+     "wall_ms": 7394,
+     "query_ms": 6625
+    },
+    {
+     "wall_ms": 7418,
+     "query_ms": 6654
+    },
+    {
+     "wall_ms": 8613,
+     "query_ms": 7654
+    }
+   ],
+   "curl_s": [
+    11.522,
+    6.887,
+    6.217
+   ]
+  },
+  "after": {
+   "measured_at": "2026-11-04T03:13:41Z",
+   "emulator_mem": "111.8MiB",
+   "jobs_listed": 0,
+   "cli": [
+    {
+     "wall_ms": 3867,
+     "query_ms": 2870
+    },
+    {
+     "wall_ms": 2553,
+     "query_ms": 1672
+    },
+    {
+     "wall_ms": 2457,
+     "query_ms": 1401
+    }
+   ],
+   "curl_s": [
+    1.462,
+    1.558,
+    1.393
+   ]
+  },
+  "search_page_ms_by_set": {
+   "backfill": {
+    "captured_at": "2026-11-04T01:22:41+00:00",
+    "search_page_ms": 2200
+   },
+   "main": {
+    "captured_at": "2026-11-04T02:56:02+00:00",
+    "search_page_ms": 12891
+   },
+   "drill": {
+    "captured_at": "2026-11-04T02:58:43+00:00",
+    "search_page_ms": 18399
+   },
+   "restart": {
+    "captured_at": "2026-11-04T03:15:30+00:00",
+    "search_page_ms": 1466
+   }
+  },
+  "measure_note": "cli 是在 crawler 容器內執行 python -m q3pipe search 颱風 --limit 100000，wall_ms 為整個指令的時間，query_ms 為程式回報的查詢時間；curl_s 為 /api/search?q=颱風 的 time_total（回 50 篇）。jobs_listed 是 Warehouse.c.list_jobs 列出的工作數。程式每查完一次就刪掉那筆工作紀錄，crawler 啟動時也會清一次（02:49 重建時清過），所以重啟前後都是 0，沒有殘留的工作紀錄。",
+  "finding": "重啟後模擬器記憶體從 1022 MiB 降到 112 MiB，同一查詢從 6–8 秒回到 1.4–2.9 秒（第一次查詢較慢屬於暖機），與 pipeline README 的 1–3 秒相符。變慢與模擬器常駐記憶體增長一起出現；可列出的工作紀錄為 0，不是原因。",
+  "follow_up": "重啟確實讓 03:11 那種三次都要 6–8 秒的狀態恢復；但 07:34（重啟後 4 小時 20 分、記憶體 841 MiB）只有第一次查詢慢、之後約 1 秒，見 search_recheck_0734，所以「跑久了一定變慢」不成立。要不要排程定期重啟模擬器，再觀察；換成 BigQuery 正式服務就沒有這個問題。"
+ },
+ "request_errors_12h": {
+  "measured_at": "2026-11-04T03:20Z",
+  "範圍": "2026-11-03T15:20Z 到 2026-11-04T03:20Z，Prometheus increase()，重啟後計數器從 0 重新算的那一下不算。時間只精確到 pushgateway 推送點（批次或整輪結束時），所以只能對到是哪一輪。",
+  "list": {
+   "requests": 341,
+   "errors": 7,
+   "over_10s": 5,
+   "over_20s": 5
+  },
+  "article_new": {
+   "requests": 6493,
+   "errors": 21,
+   "over_10s": 21,
+   "over_20s": 1
+  },
+  "article_refresh": {
+   "errors": 0
+  },
+  "list_error_runs": [
+   {
+    "run_start": "2026-11-03T21:05Z",
+    "idle_before": "約 7 分鐘",
+    "list_latency": "這輪 5 個列表頁請求都在 0.5 秒內"
+   },
+   {
+    "run_start": "2026-11-03T22:05Z",
+    "idle_before": "約 55–58 分鐘",
+    "list_latency": "1 個請求超過 20 秒（request_timeout_s 逾時）"
+   },
+   {
+    "run_start": "2026-11-03T23:05Z",
+    "idle_before": "約 55–58 分鐘",
+    "list_latency": "1 個請求超過 20 秒（request_timeout_s 逾時）"
+   },
+   {
+    "run_start": "2026-11-04T00:05Z",
+    "idle_before": "約 55–58 分鐘",
+    "list_latency": "1 個請求超過 20 秒（request_timeout_s 逾時）"
+   },
+   {
+    "run_start": "2026-11-04T01:05Z",
+    "idle_before": "約 55–58 分鐘",
+    "list_latency": "1 個請求超過 20 秒（request_timeout_s 逾時）"
+   },
+   {
+    "run_start": "2026-11-04T02:05Z",
+    "idle_before": "約 44 分鐘",
+    "list_latency": "1 個請求超過 20 秒（request_timeout_s 逾時）"
+   },
+   {
+    "run_start": "2026-11-04T03:05Z",
+    "idle_before": "約 14 分鐘",
+    "list_latency": "這輪 3 個列表頁請求都在 5 秒內"
+   }
+  ],
+  "runs_without_error": [
+   "2026-11-04T01:20Z",
+   "2026-11-04T02:13Z",
+   "2026-11-04T02:14Z",
+   "2026-11-04T02:36Z",
+   "2026-11-04T02:42Z",
+   "2026-11-04T02:43Z",
+   "2026-11-04T02:49Z",
+   "2026-11-04T02:50Z"
+  ],
+  "runs_without_error_note": "都是容器剛啟動或剛重建後的那一輪，第一個請求用的是新連線。",
+  "article_new_note": "21 次都在回補期間 2026-11-03T16:21Z–17:57Z，約每 5.3 分鐘 1 次（整體暫停 5 分鐘加上請求時間），每次 10–20 秒，也就是 7 篇各試 3 次都失敗；下一輪補抓。當時的容器後來重建過，log 沒有留下，查不到失敗種類。",
+  "finding": "每輪第一個請求一定是讀最新列表頁，它沿用了上一輪閒置的連線：閒置將近一小時的等滿 20 秒逾時，閒置十幾分鐘以內的幾秒內就失敗。程式改成閒置超過 60 秒的連線不再沿用，每一次失敗的種類也記進 log（request_failed）。"
+ },
+ "request_errors_after_fix": {
+  "deployed_at": "2026-11-04T03:33:52Z",
+  "change": "閒置超過 reuse_idle_s（60 秒）的連線不再沿用，下一個請求重新連線；每一次失敗（包括重試成功的）記一行 request_failed。只重建 crawler，故障演練開關都關掉。",
+  "runs": [
+   {
+    "run_start": "2026-11-04T03:34:18Z",
+    "idle_before": "換版後第一輪（新連線）",
+    "status": "ok",
+    "new": 40,
+    "seconds": 89.2,
+    "list_requests": 3,
+    "list_errors": 0,
+    "list_over_20s": 0,
+    "request_failed": [
+     {
+      "kind": "article_new",
+      "attempt": 1,
+      "status": 525,
+      "latency_s": 0.8,
+      "retry": "成功"
+     }
+    ]
+   },
+   {
+    "run_start": "2026-11-04T04:05:01Z",
+    "idle_before": "29 分 12 秒",
+    "status": "ok",
+    "new": 43,
+    "seconds": 104.5,
+    "list_requests": 4,
+    "list_errors": 0,
+    "list_over_20s": 0,
+    "request_failed": []
+   },
+   {
+    "run_start": "2026-11-04T05:05Z",
+    "idle_before": "58 分 15 秒",
+    "status": "ok",
+    "new": 77,
+    "seconds": 203.6,
+    "list_requests": 5,
+    "list_errors": 0,
+    "list_over_20s": 0,
+    "request_failed": [
+     {
+      "kind": "article_new",
+      "status": 525,
+      "latency_s": 0.8,
+      "retry": "成功"
+     }
+    ]
+   },
+   {
+    "run_start": "2026-11-04T06:05Z",
+    "idle_before": "56 分 33 秒",
+    "status": "ok",
+    "new": 55,
+    "seconds": 102.5,
+    "list_requests": 3,
+    "list_errors": 0,
+    "list_over_20s": 0,
+    "request_failed": []
+   },
+   {
+    "run_start": "2026-11-04T07:05Z",
+    "idle_before": "58 分 20 秒",
+    "status": "ok",
+    "new": 49,
+    "seconds": 110.8,
+    "list_requests": 4,
+    "list_errors": 0,
+    "list_over_20s": 0,
+    "request_failed": []
+   }
+  ],
+  "measure_note": "列表請求數與 list_over_20s 用 q3_http_requests_total{kind=\"list\"} 與 q3_http_latency_seconds_bucket 每輪前後相減；request_failed 看 crawler 的 log。四輪都在整點準時執行，中間沒有漏跑。",
+  "note_525": "525 是 Cloudflare 回的：它跟 PTT 主機之間的 TLS 交握失敗，不是我們這邊閒置的連線。只有 error 這個狀態預先建成 0，525 第一次出現（03:34）時序列從 1 開始，increase() 看不到這一步，所以「① 單次請求失敗」只畫出 05:05 那一次。",
+  "finding": "修之前，閒置 44–58 分鐘的 5 輪各有 1 個列表請求等滿 20 秒逾時；修之後，閒置 56–58 分鐘的 3 輪和閒置 29 分鐘的 1 輪，列表請求都沒有失敗，也都沒有超過 20 秒。"
+ },
+ "search_recheck_0734": {
+  "說明": "07:10 拍 reconnect- 時搜尋頁是 10,125 ms；07:34 不重啟模擬器，用和 03:11／03:13 同樣的方法再量一次，看是不是又回到重啟前的狀態。",
+  "measured_at": "2026-11-04T07:34:06Z",
+  "since_restart": "4 小時 20 分（上次重啟 2026-11-04T03:12:53Z）",
+  "emulator_mem": "841.1MiB",
+  "jobs_listed": 0,
+  "cli": [
+   {
+    "wall_ms": 6218,
+    "query_ms": 5213,
+    "posts": 79
+   },
+   {
+    "wall_ms": 1712,
+    "query_ms": 1001,
+    "posts": 79
+   },
+   {
+    "wall_ms": 1855,
+    "query_ms": 1154,
+    "posts": 79
+   }
+  ],
+  "api_took_ms": [
+   1294,
+   985,
+   1008
+  ],
+  "measure_note": "cli 同 search_emulator_restart；api_took_ms 是 /api/search?q=颱風 回傳 JSON 裡的 took_ms（回 50 篇），不是 curl 的 time_total，和 03:11／03:13 的 curl_s 不能直接比。",
+  "finding": "只有第一次查詢慢（5.2 秒），後兩次約 1 秒；03:11 重啟前是三次都 6–8 秒。07:10 的 10,125 ms 不是重啟前那種狀態，比較像隔一陣子沒查後的第一次查詢，加上截圖程式拍完二十多張看板才開搜尋頁、電腦當時比較忙（07:10–07:11 之間，同一台電腦上的 Q6 採集器有三個來源 30 秒逾時；這點沒有直接證據）。"
+ }
+}

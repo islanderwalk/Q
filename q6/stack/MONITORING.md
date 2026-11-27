@@ -20,8 +20,8 @@
 |---|---|---|---|---|
 | 1 | SLA 燃燒率：3 分鐘 SLO 不漏報 | `wordcloud_duration_seconds{seg,cache,status}`（失敗也 observe，桶含 180／300）、`wordcloud_errors_total{reason=timeout\|partial\|other}`、`wordcloud_over_180s_total`、`wordcloud_inflight_queries`、`wordcloud_cache_total`（`api/app.py`：ES 逾時 (3, 180)、ES 查詢 `timeout: 170s`、label 啟動預建、快取鍵含世代號、single-flight、psycopg 連線池） | `slo.yml` `WordcloudSlo180sBurn`（page 14.4×/6×，ticket 3×/1×）、`WordcloudSlo10sBurn`；`api.yml` `WordcloudOver180s`（ticket）、`WordcloudPartialResults`、`WordcloudApiDown` | 主看板 ① |
 | 2 | 完整性四層對帳 | `seg/qseg/recon.py`（seg-recon，每小時）：`qseg_recon_docs{layer=raw\|es\|es_with_v2\|es_at_latest_v2\|es_deleted\|ledger}`、`qseg_recon_missing_ratio`、`qseg_recon_extra_docs`、表 `recon_daily`；`coverage.py` 的未斷詞與缺 `published_at` | `completeness.yml` `ReconMissingDocs`（passed 分區 > 0.1%）、`ReconV2CoverageGap`、`ReconStale`、`ReconUnknownMonthDocs`、`SegUnsegmentedDocs`（page） | 主看板 ③ |
-| 3 | 採集產出率與軟封鎖 | `api/collector.py`：`collector_requests_total{feed,channel,outcome}`（outcome 11 種）、`collector_posts_parsed\|new\|updated_total`、`collector_backoff_level`、`collector_last_ok_timestamp_seconds`、`collector_robots_info`、`collector_youtube_quota_units_total`；每次請求一行日誌（`outcome`、`posts_parsed`、`final_url`、`ttfb_ms`） | `collector.yml` `CollectorLoginWall`（page，≥1 次）、`CollectorBlocked`、`CollectorYieldDrop`（7 天前同時段 50%）、`CollectorFeedStale\|Dead`、`CollectorRobotsChanged`；Loki `CrawlLoginWallFromLogs` | 採集看板 1、2、4、6 |
-| 4 | 首抓延遲 | `collector_first_seen_lag_seconds`（只算發文 24 小時內；桶含 2700、3600） | `CollectorFirstSeenLagHigh`（p95 > 45 分）、`Critical`（> 60 分，page） | 採集看板 3 |
+| 3 | 採集產出率與軟封鎖 | `api/collector.py`：`collector_requests_total{feed,channel,outcome}`（outcome 12 種）、`collector_posts_parsed\|new\|updated_total`、`collector_backoff_level`、`collector_last_ok_timestamp_seconds`、`collector_robots_info`、`collector_youtube_quota_units_total`、`collector_youtube_quota_exhausted`；每次請求一行日誌（`outcome`、`posts_parsed`、`final_url`、`ttfb_ms`） | `collector.yml` `CollectorLoginWall`（page，≥1 次）、`CollectorBlocked`、`CollectorYieldDrop`（7 天前同時段 50%）、`CollectorFeedStale\|Dead`、`CollectorYoutubeQuotaExhausted`（warn）、`CollectorRobotsChanged`；Loki `CrawlLoginWallFromLogs` | 採集看板 1、2、4、6 |
+| 4 | 首抓延遲 | `collector_detect_lag_seconds`（我們這邊：抓到 − 上一次成功檢查，含 304）、`collector_first_seen_lag_seconds`（發文到抓到，含來源晚上架）；都只算發文 24 小時內、桶含 2700、3600 | `CollectorFirstSeenLagHigh`（我們這邊 p95 > 45 分）、`Critical`（> 60 分，page）；發文到抓到只上看板 | 採集看板 3 |
 | 5 | Pub/Sub 積壓與 DLQ | 本機用程序內 `qseg_oldest_unacked_publish_ts`（`backlog.py`）、`qseg_messages_total{result=ack\|nack\|bad}`；GCP 上改看 `subscription/oldest_unacked_message_age`、`dead_letter_message_count` | `stream.yml` `SegBacklogAgeTicket`（10 分）、`SegBacklogAgePage`（45 分）、`SegNackRatioHigh`（1%）、`SegServiceDown` | 主看板 ④ |
 | 6 | 影子比對與版本覆蓋 | `shadow_checks` 表（`shadow.py`）；覆蓋率 `qseg_coverage_terms_v2_ratio`、`qseg_recon_docs{layer=es_at_latest_v2}` | `ReconV2CoverageGap`；影子比對目前只有表、沒有排程（未做） | 主看板 ③ |
 | 7 | 字典發版收斂 | `recon.py` 從 `service_state`／`rerun_runs`／`release_outbox` 算 `qseg_service_dict_versions`、`qseg_service_instances_alive`、`qseg_rerun_running_age_seconds`、`qseg_rerun_runs`、`qseg_release_outbox_pending`；`control.py` 每台每 15 秒輪詢 `current/manifest.json` 熱換（`qseg_dict_swaps_total{source}`）；`app.py` 先寫 outbox 再切 current，背景每 10 秒重送；`es.py` seg_guard 看 `content_sha`、429 重送 1/2/4 秒 | `release.yml` `DictVersionDivergence`（> 1 版持續 10 分）、`RerunStuck`、`RerunFailed`、`ReleaseOutboxStuck`、`SegNoAliveInstances`（page） | 主看板 ⑤ |
@@ -54,7 +54,7 @@ python -m pytest -q -p no:cacheprovider q6/stack/tests q6/code/tests     # 從 r
 
 同一個容器（4 核心、15 GB RAM）把整套從頭跑一次：`./run.sh up` → `seed`（v0／v1）→ `backfill`（G1／G2／G3 三道閘門通過）→ `live` → `stream`（六渠道 267 篇全部有 v1 與 v2）→ 來源採集（PTT、中央社、公視；容器對外要經代理，用 `docker-compose.ca.yml` 把宿主機 CA 掛進採集器）→ 告警鏈 Prometheus → Alertmanager → `POST /api/ops/alert` → PM 頁橫幅（firing 與 resolved 都收到，`pm/30_alerts_strip.png`）→ SLM `daily-posts` 手動執行 SUCCESS → Grafana 兩張看板由 provisioning 讀到、Loki 收到 19 個服務的日誌、品質日報與四層對帳的指標都由實跑資料算出。結束時 Prometheus 96 條規則（66 告警＋30 記錄）健康、11 個 job 全部 up。截圖在 `../evidence/stack/{pm,grafana,alertmanager,prometheus}/`。
 
-### 實跑抓到並修掉的 14 個問題
+### 實跑抓到並修掉的 22 個問題
 
 | # | 現象（離線測試看不到） | 修正 |
 |---|---|---|
@@ -72,14 +72,21 @@ python -m pytest -q -p no:cacheprovider q6/stack/tests q6/code/tests     # 從 r
 | 12 | `metric or vector(0)` 產生沒有標籤的幻影序列，`time() - …` 規則永遠成立 | 統一 `(time() - (max(metric) or vector(0))) > N`；`test_p0_configs_consistency.py` 禁止舊寫法 |
 | 13 | 冷啟動第一次抓到的舊文被算成首抓延遲，直接 page | 第一次成功不算 lag（`lag_skipped_first_success`） |
 | 14 | 沒有請求時 SLI 0/0＝NaN，Sloth 的 4 週 `sum_over_time` 整段 NaN，錯誤預算面板空白 | SLO 規格的分母加 `> 0`（沒有請求就沒樣本）；Prometheus 改用具名 volume `promdata` 並重建 TSDB |
+| 15 | YouTube RSS（`/feeds/videos.xml`）所有頻道一起回 404／500，公視 feed 被判 `CollectorFeedDead`；改走 Data API 之後，當日配額用完也會被當成來源壞掉 | 採集器走 Data API（金鑰與歷史爬蟲共用，爬蟲上限降到 9,000，留 1,000 給採集器）；403 `quotaExceeded` 記成 `quota_exceeded`，下次排到太平洋時間 00:05，`collector_youtube_quota_exhausted`＝1 時 `CollectorFeedDead` 不響、改由 `CollectorYoutubeQuotaExhausted`（warn）提醒 |
+| 16 | 整詞召回把「台北／市長」「台北／市民」這種交集型歧義、「台北市立」「高雄港」這種在更長詞裡的、清洗時拿掉的字都算漏；台北市一個詞就把整體拖到 0.81 | 改成與 `must_keep_split` 同一條規則：片語有、`terms_v2` 沒有的文章每詞隨機抽 200 篇（`QUALITY_MISS_SAMPLE`）用目前字典重斷，只有確實被切開才算漏；原始口徑留在每個詞的 `recall_raw`。本機 PTT 語料（字典 10.30.2）0.961 → 1.000 |
+| 17 | `must_keep_split`、地名被切開只記篇數，看不出是哪一篇、哪個詞、怎麼切 | `quality_daily.split_examples`（每天最多 20 筆：post_id、詞、切法、前後文）＋日誌 `quality_splits`；`python -m qseg quality --diagnose` 唯讀列出漏網文章的分類 |
+| 18 | 歷史爬蟲橋寫著「沒有發文時間的略過」，實際上 `make_post` 先補了現在時間，擋不到；Meta 的 post_id 跟樣本不同套（`in-`／`ig-`），同一篇在 ES 有兩份 | 在 `make_post` 之前擋（`to_post`）；`in-`／`fa-`／`th-` 換成樣本那一套；已在 ES 的成對文件與合成時間的文件用 `scripts/fix_sample_es.py` 寫 `deleted_at`（先存現值，可 rollback） |
+| 19 | 品質日報把 youtube「大台北市區」→ 大台北／市區 算成「台北市」被切開，`QualityLeak`（must_keep_split）與 `QualityPlaceSplit` 一直響；它和「搶輝達來」→ 搶輝／達來（斷錯，字典調高「輝達」詞頻前）斷點位置一模一樣，只看位置分不開 | 剛好跨在兩個詞中間、兩邊都往外跨時，再看這兩個詞是不是字典詞（jieba 詞頻 > 0）：都是＝鏈狀交集型歧義，不算切開；有一邊是 HMM 猜的就算切開。串流斷詞、回補 G2、品質日報、整詞召回都走同一條規則（`pipeline.occurrence_kind`，詞頻表 `pipeline.dict_freq`） |
+| 20 | 媒體首抓延遲 p95 約 3.5 小時，`CollectorFirstSeenLagCritical`（page）響了好幾個小時：中央社經 feedburner 的條目晚 15 分鐘到將近 3 小時才出現在 RSS（政治版一次出現 8 筆），一出現 5 分鐘內就抓到；1 小時窗只有二十幾個樣本，一批晚到的就決定 p95 | 告警改看我們這邊 `collector_detect_lag_seconds`（抓到 − 上一次成功檢查，超過發文到抓到就取後者）；發文到抓到留在看板同一張圖，兩條線的差就是來源端 |
+| 21 | 字典發版的重跑超過控制訊息的 ack 期限，同一則訊息又送來一次；重送那次看到服務已在新版，把 `rerun_runs` 已經 done 的那一列改成 skipped | 記 skipped 只改還是 queued 的那一列（`control.set_run(..., only_if_status=("queued",))`） |
+| 22 | YouTube 改走 Data API 之後 37 分鐘沒抓到，`CollectorFeedStale` 響：RSS 時期 404／500 累積的退避（排到 2～5 小時後）被帶到 API；PM 頁「立刻抓一次」抓成功後，表裡的退避清掉了，記憶體裡的下一次輪詢時間沒清，一般輪次照舊跳過，直到採集器重啟 | 成功一次就結束退避，表和記憶體一起清（`collector.sweep`／`backing_off`）；`collector_state.method` 記這次怎麼抓（feed／api），抓法換了就當成新的 feed：重啟時退避、ETag、上次成功時間從頭開始，新端點第一次成功不量首抓延遲 |
 
 ### 實跑結束時仍在響的告警（各有實際原因，不是誤報）
 
 | 告警 | 原因 |
 |---|---|
 | `ElasticsearchDiskHigh`／`DiskCritical` | 容器磁碟用了 94%（整台 Linux 容器的固定配額，不是 ES 寫滿） |
-| `ReconUnknownMonthDocs`、`SegPublishedAtMissing{channel="instagram"}` | Instagram 的 48 篇公開頁樣本沒有 `published_at`（頁面沒給時間），四層對帳歸到「月份不明」 |
-| `QualityWholeWordRecallLow` | 整詞召回 0.925 < 提案值 0.99（金標 150 題裡有地名被拆） |
+| `ReconUnknownMonthDocs`、`SegPublishedAtMissing{channel="instagram"}` | Instagram 的 48 篇樣本沒有 `published_at`（頁面沒給時間），四層對帳歸到「月份不明」。2026-11-04 樣本已補上時間（`data/channels/COLLECTION.md`）；已在 ES 的 48 篇要部分更新 `published_at`／`month` 才會解除（`scripts/fix_sample_es.py`），重播前 API 映像要重建（映像裡帶著樣本）。2026-11-04 已部分更新，兩條告警已解除 |
 | `ElasticsearchSnapshotStale` | SLM 每日排程還沒到第一次自動執行（手動執行的那次 SUCCESS） |
 
 ### 這輪新增的設定

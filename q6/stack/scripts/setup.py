@@ -1,15 +1,24 @@
-"""建 ES 索引、同義詞集、守門腳本；Pub/Sub 主題與訂閱（含 DLQ）；PostgreSQL 回補帳本。
+"""建 ES 索引、同義詞集、守門腳本；Pub/Sub 主題與訂閱（含 DLQ）；ES 回補帳本索引（backfill_ledger）。
 在宿主機跑（連 localhost 對外埠）：python scripts/setup.py [--reset]"""
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 
 import psycopg
 import requests
 
+import pubsub_init
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+# 帳本的分區清單和回補 Job（job --plan）用同一個函式：rawsrc.list_partitions；宿主機上原文湖在 runtime/raw
+os.environ.setdefault("RAW_ROOT", str(ROOT / "runtime/raw"))
+sys.path.insert(0, str(ROOT / "seg"))
+from qseg import config as qcfg  # noqa: E402
+from qseg import rawsrc  # noqa: E402  只 import config，不需要斷詞套件
+from qseg.ledger import Ledger  # noqa: E402
 ES = os.environ.get("ES", "http://localhost:9200")
 PUBSUB = os.environ.get("PUBSUB", "http://localhost:8085")
 PROJECT = "qsearch-local"
@@ -36,10 +45,11 @@ def main():
     if requests.head(f"{ES}/posts", timeout=30).status_code == 404:
         es("PUT", "/posts", json.loads((ROOT / "es/index/posts.json").read_text(encoding="utf-8")))
     else:
-        # 既有索引補 v0 欄位與 author／content_sha／deleted_at（dynamic:strict，不先加就寫不進）；重複加同欄位是 no-op
+        # 既有索引補 v0 欄位、seg_sha_<版>（斷的是哪一份原文）與 author／content_sha／deleted_at（dynamic:strict，不先加就寫不進）；重複加同欄位是 no-op
         es("PUT", "/posts/_mapping", {"properties": {
             "terms_v0": {"type": "keyword"}, "seg_ver_v0": {"type": "long"}, "dict_version_v0": {"type": "keyword"},
             "seg_build_v0": {"type": "keyword"}, "seg_at_v0": {"type": "date"},
+            "seg_sha_v0": {"type": "keyword"}, "seg_sha_v1": {"type": "keyword"}, "seg_sha_v2": {"type": "keyword"},
             "author": {"type": "keyword"}, "content_sha": {"type": "keyword"}, "deleted_at": {"type": "date"}}})
         es("PUT", "/posts/_settings", {"index": {"search.slowlog.threshold.query.warn": "60s", "search.slowlog.threshold.query.info": "10s",
                                                   "search.slowlog.threshold.fetch.warn": "10s", "indexing.slowlog.threshold.index.warn": "5s"}})
@@ -51,32 +61,17 @@ def main():
         es("PUT", "/_slm/policy/daily-posts", {"schedule": "0 30 1 * * ?", "name": "<posts-{now/d}>", "repository": "local",
                                               "config": {"indices": ["posts"], "ignore_unavailable": True},
                                               "retention": {"expire_after": "7d", "min_count": 1, "max_count": 7}})
-    # Pub/Sub：parsed-posts 主題，v1／v2 各一個訂閱（A/B 期間各寫各的欄位），失敗 5 次進 DLQ
-    for t in ("parsed-posts", "parsed-posts-dlq"):
-        requests.put(f"{PUBSUB}/v1/projects/{PROJECT}/topics/{t}", json={}, timeout=30)
-    for sub in ("parsed-posts-seg-v2", "parsed-posts-seg-v1", "parsed-posts-seg-v0"):
-        r = requests.put(f"{PUBSUB}/v1/projects/{PROJECT}/subscriptions/{sub}", timeout=30, json={
-            "topic": f"projects/{PROJECT}/topics/parsed-posts", "ackDeadlineSeconds": 60,
-            "deadLetterPolicy": {"deadLetterTopic": f"projects/{PROJECT}/topics/parsed-posts-dlq", "maxDeliveryAttempts": 5}})
-        print("subscription", sub, r.status_code)
-    requests.put(f"{PUBSUB}/v1/projects/{PROJECT}/subscriptions/parsed-posts-dlq-sub", timeout=30,
-                 json={"topic": f"projects/{PROJECT}/topics/parsed-posts-dlq"})
-    # 字典發版控制主題：PM 頁發版 → seg-v2 服務重載字典並定向重跑（seg/qseg/control.py）
-    requests.put(f"{PUBSUB}/v1/projects/{PROJECT}/topics/dict-releases", json={}, timeout=30)
-    r = requests.put(f"{PUBSUB}/v1/projects/{PROJECT}/subscriptions/dict-releases-seg-v2", timeout=30,
-                     json={"topic": f"projects/{PROJECT}/topics/dict-releases", "ackDeadlineSeconds": 600})
-    print("subscription dict-releases-seg-v2", r.status_code)
-    # 回補帳本：原文湖裡每個「渠道 × 月」一列
+    # Pub/Sub 主題與訂閱：定義在 pubsub_init.py，compose 的 pubsub-init 服務每次啟動也跑同一份（模擬器重啟會清空）
+    pubsub_init.ensure()
+    # 回補帳本：ES 索引 backfill_ledger，原文湖裡每個「渠道 × 月」一篇（_id＝分區編號；正式環境用 job --plan 建，見 RUNBOOK-backfill.md）
     with psycopg.connect(PG, autocommit=True) as c:
         c.execute((ROOT / "pg/live.sql").read_text(encoding="utf-8"))   # 即時操作用的表（全部 IF NOT EXISTS）
-        n = 0
-        for f in sorted((ROOT / "runtime/raw").glob("*/*.jsonl")):
-            ch, month = f.parent.name, f.stem
-            c.execute("""INSERT INTO backfill_ledger (partition_id, channel, month, target_seg_ver, dict_version)
-                         VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
-                      (f"{ch}/{month}", ch, month, SEG_V2_TARGET, "qsearch-q6-2026.10.30.2"))
-            n += 1
-        print("ledger partitions", n)
+    led = Ledger(ES, qcfg.LEDGER_INDEX)
+    led.ensure_index()
+    docs = [{"partition_id": f"{ch}/{month}", "channel": ch, "month": month, "target_seg_ver": SEG_V2_TARGET,
+             "dict_version": "qsearch-q6-2026.10.30.2", "status": "pending", "attempts": 0, "checkpoint_line": 0,
+             "written": 0, "noop": 0, "errors": 0} for ch, month in rawsrc.list_partitions()]
+    print("ledger partitions", len(docs), led.create_many(docs) if docs else {"created": 0, "exists": 0})
     print(json.dumps(es("GET", "/posts/_settings"), ensure_ascii=False)[:300])
 
 

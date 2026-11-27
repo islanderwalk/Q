@@ -197,11 +197,11 @@ def main():
          "所以「關鍵字要不要比對留言」決定了要索引的文字量差 3.5 倍，這是動工前最值得問的一題", svg, src_census)
 
     # ── 5. 兩條規格的成本 ────────────────────────────────────────────────
-    spec1 = round(avg) + 70
+    spec1 = round(avg) + 48
     spec2 = round(avg) * 6
     page("3-spec-cost", "第 3 題・第 3 小題｜哪條規格主導成本",
          f"規格 2（每天更新留言）的請求數是規格 1 的 {spec2 / spec1:.1f} 倍",
-         f"規格 1：新文章首抓 {round(avg):,} + 列表頁 70 = {spec1:,} 次/天；規格 2：每篇在第 1–6 天各重抓一次 = {round(avg):,} × 6 = {spec2:,} 次/天",
+         f"規格 1：新文章首抓 {round(avg):,} + 列表頁 48 = {spec1:,} 次/天；規格 2：每篇在第 1–6 天各重抓一次 = {round(avg):,} × 6 = {spec2:,} 次/天",
          vbar_chart(["規格 1：6 小時內入庫", "規格 2：7 天內每天更新留言"], [spec1, spec2], [BLUE, ORANGE],
                     [f"{spec1:,} 次/天", f"{spec2:,} 次/天"], height=300, label_size=16, ymax=6000, ticks=3),
          src_index + "；把「6 小時」收緊到 1 小時只多約 20 次列表請求（+2%）")
@@ -308,7 +308,7 @@ def main():
         f'</div>')
     page("5-crawl-stats", "第 3 題・第 5 小題｜不監控的事", "單次請求的延遲與失敗不值得告警",
          (f"{len(got):,} 篇文章最後全部拿到 200 或 404，中途若有失敗也由退避重試補回" if not failed
-          else f"{len(got):,} 篇文章最後有 {failed:,} 篇仍然失敗") + "；只監控結果（入庫延遲、job 失敗、不變量），不監控過程",
+          else f"{len(got):,} 篇文章最後有 {failed:,} 篇仍然失敗") + "；只對結果告警（入庫延遲、job 失敗、不變量），過程只上看板",
          tiles, src_census)
     # ── 給 capture.js 的截圖目標：被刪的文章、被截斷的文章 ───────────────
     titles = {r["aid"]: r["title"] for r in index if r["aid"]}

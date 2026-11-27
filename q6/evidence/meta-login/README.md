@@ -161,7 +161,10 @@ FB 兩邊都沒有讚數、留言數。Threads 登入版缺連結和留言數。
 
 ## 證據鏈：session → API → JSON → 落地欄位
 
-擷取時間 2026-11-01 05:31:43。每一格都來自擷取機器上的遮罩紀錄檔，可以和下方 F12 截圖裡的請求對照。cookie 只列名稱、網域、httpOnly 與長度；sha256 前 10 碼留在紀錄檔裡。
+擷取時間 2026-11-01 05:31:43。每一格都來自擷取機器上的遮罩紀錄檔，可以和下方 F12 截圖裡的請求對照。
+
+每個平台的四格證據鏈也畫成圖：[chain_facebook.png](chain/chain_facebook.png)、[chain_instagram.png](chain/chain_instagram.png)、[chain_threads.png](chain/chain_threads.png)；未登入 vs 登入的逐欄比較在 [compare.png](chain/compare.png)／[compare.html](chain/compare.html)，數字在 [compare_loggedout_vs_loggedin.json](chain/compare_loggedout_vs_loggedin.json)。產生這些圖的程式在 [`q6/code/meta-login/`](../../code/meta-login)，落地資料在 [`q6/data/meta-login/`](../../data/meta-login)。
+cookie 只列名稱、網域、httpOnly 與長度；sha256 前 10 碼留在紀錄檔裡。
 
 ### Facebook（104 個 API 回應｜8 個 cookie）
 
@@ -471,5 +474,6 @@ FB 兩邊都沒有讚數、留言數。Threads 登入版缺連結和留言數。
 
 ## 沒有入庫的
 
-- 未遮罩的原始截圖（有登入帳號的頭像）、遮罩後的請求帳本（8.6 MB JSON）、session 紀錄與三個平台的 jsonl 輸出，留在擷取機器上；本頁的數字都從那些檔案算出。
+- 已入庫：程式 [`q6/code/meta-login/`](../../code/meta-login)；三個平台的落地資料 [`q6/data/meta-login/`](../../data/meta-login)（facebook、threads，以及清洗後的 instagram_clean）；證據鏈圖與比較 [`chain/`](chain)；Instagram 混入推薦貼文的判定 [`chain/instagram_contamination.json`](chain/instagram_contamination.json)。
+- 沒入庫：未遮罩的原始截圖（有登入帳號的頭像）、遮罩後的請求帳本（8.6 MB JSON）、session 紀錄、清洗前的 instagram.jsonl（混入非目標作者），以及證據鏈的 HTML 原始檔（內含 cookie 雜湊）。本頁數字都從那些檔案算出。
 - 免登入那一側的原始截圖與欄位證據在各題的 `evidence/playwright/`，見 [`shared/docs/evidence.md`](../../../shared/docs/evidence.md)。

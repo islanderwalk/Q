@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from _p0_fakes import API, MON, PG, REALENV, SEG, ensure_prometheus_client, has_series, read_text, read_value
+from _p0_fakes import API, MON, PG, REALENV, SEG, ensure_prometheus_client, has_series, read_text, read_value, FakeLedger
 
 ensure_prometheus_client()
 if str(SEG) not in sys.path:
@@ -72,13 +72,15 @@ class D:
         self.pipeline, self.version = "v2", v
 
 
-# ---------- seg_guard：content_sha ----------
-def test_guard_script_rewrites_body_when_content_sha_changes():
+# ---------- seg_guard：先比原文、再比版本 ----------
+def test_guard_script_compares_text_then_version():
     s = qes.GUARD_SCRIPT
-    assert "content_sha" in s and "boolean changed" in s
-    assert "cur != null && !changed && (force ? cur > params.seg_ver : cur >= params.seg_ver)" in s   # 同版、內容沒變才 noop
-    assert "if (changed || !ctx._source.containsKey(entry.getKey())" in s                            # 內容變了就重寫本體
+    assert "if (segSha != null && curSha != null && segSha != curSha) { ctx.op = 'noop'; return; }" in s   # 斷的是舊原文：不寫
+    assert "cur == params.seg_ver && !force && !newText" in s                                              # 同版、同一份原文才 noop；改文同版也重寫
+    assert "if (!ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null)" in s    # 本體只補空欄位，不覆寫
+    assert "changed ||" not in s
     assert 'GUARD_SCRIPT = """' in read_text(REALENV / "scripts" / "setup.py")                         # setup.py 裝同一段進 ES
+    assert '"seg_sha_v2": {"type": "keyword"}' in read_text(REALENV / "scripts" / "setup.py")          # 既有索引補欄位（dynamic:strict）
     body = qes.ES(url="http://es:9200", index="posts")._bulk_lines(ITEMS[:1], force=True).decode("utf-8")
     assert '"force": true' in body and '"content_sha": "x"' in body and '"id": "seg_guard"' in body
 
@@ -162,6 +164,29 @@ def test_manifest_poller_swaps_once_when_current_is_newer(monkeypatch):
     assert control.MANIFEST_POLL_SEC == 15
 
 
+def test_release_redelivered_after_done_does_not_overwrite_status(monkeypatch):
+    """重跑超過 ack 期限、同一則發版訊息又送來一次：服務已在新版，只有還是 queued 的那一列才記 skipped，done 不會被蓋掉。"""
+    executed = []
+
+    class Conn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, sql, params=()):
+            executed.append((sql, list(params)))
+    monkeypatch.setattr(control, "_pg", lambda: Conn())
+    control.handle_release({"dict_version": V_NEW, "words": ["台中"], "run_id": 7}, control.SegState(D(V_NEW)), es=None)
+    (sql, params), = executed
+    assert sql.startswith("UPDATE rerun_runs SET status=%s") and sql.endswith("WHERE id=%s AND status = ANY(%s)")
+    assert params[0] == "skipped" and params[-2:] == [7, ["queued"]]
+    executed.clear()
+    control.set_run(7, status="done")                       # 一般的進度更新不加條件
+    assert executed[0][0].endswith("WHERE id=%s") and executed[0][1][-1] == 7
+
+
 def test_handle_release_uses_load_and_swap_and_counts_source():
     src = read_text(SEG / "qseg" / "control.py")
     assert 'load_and_swap(state, msg["dict_version"], source="control"' in src
@@ -182,12 +207,12 @@ def test_rerun_rate_limit_shares_backfill_budget(monkeypatch):
                 def fetchone(self):
                     return row
             return Cur()
-    assert rerun.rate_limit(Conn({"max_docs_per_sec": 3000, "paused": False, "n": 2})) == 1000   # 全域 ÷（回補分區數＋1）
-    assert rerun.rate_limit(Conn({"max_docs_per_sec": 3000, "paused": False, "n": 0})) == 3000
-    assert rerun.rate_limit(Conn({"max_docs_per_sec": 1, "paused": False, "n": 9})) == 1          # 最低 1 篇／秒
-    assert rerun.rate_limit(Conn(None)) is None
-    monkeypatch.setattr(job, "throttle", lambda conn: 7)                                           # paused：與回補 Job 同一段等待
-    assert rerun.rate_limit(Conn({"max_docs_per_sec": 3000, "paused": True, "n": 0})) == 7
+    assert rerun.rate_limit(Conn({"max_docs_per_sec": 3000, "paused": False}), FakeLedger(running=2)) == 1000   # 全域 ÷（回補分區數＋1）
+    assert rerun.rate_limit(Conn({"max_docs_per_sec": 3000, "paused": False}), FakeLedger(running=0)) == 3000
+    assert rerun.rate_limit(Conn({"max_docs_per_sec": 1, "paused": False}), FakeLedger(running=9)) == 1          # 最低 1 篇／秒
+    assert rerun.rate_limit(Conn(None), FakeLedger()) is None
+    monkeypatch.setattr(job, "throttle", lambda conn, led: 7)                                                    # paused：與回補 Job 同一段等待
+    assert rerun.rate_limit(Conn({"max_docs_per_sec": 3000, "paused": True}), FakeLedger()) == 7
     src = read_text(SEG / "qseg" / "rerun.py")
     assert "canary_after(conn, es" in src and 'out["g3"]' in src and '"--no-limit"' in src
 

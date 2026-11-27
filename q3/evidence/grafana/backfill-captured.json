@@ -1,0 +1,25 @@
+{
+ "captured_at": "2026-11-04T01:22:41+00:00",
+ "dashboard_range": "now-12h → now",
+ "shots": [
+  {
+   "file": "backfill-dashboard-full.png",
+   "what": "看板全頁（now-12h 到現在）"
+  },
+  {
+   "file": "backfill-search-1.png",
+   "what": "搜尋頁：颱風",
+   "keyword": "颱風",
+   "meta": "50 篇文章（貼文命中 40、留言命中 76）· 2200 ms · 掃描 50.5 kB"
+  },
+  {
+   "file": "backfill-search-1-api.png",
+   "what": "查詢 API 回傳的 JSON：颱風（limit=3）",
+   "keyword": "颱風"
+  },
+  {
+   "file": "backfill-prometheus-alerts.png",
+   "what": "Prometheus 告警規則與目前狀態"
+  }
+ ]
+}

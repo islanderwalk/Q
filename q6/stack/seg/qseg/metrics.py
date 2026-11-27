@@ -10,6 +10,7 @@ DICT = Gauge("qseg_dict_info", "目前載入的字典版本", ["pipeline", "dict
 # P0-2：ES 覆蓋檢查（coverage.py 每隔一段時間算一次，給 Prometheus 抓）
 COV_DOCS = Gauge("qseg_coverage_docs", "覆蓋檢查：各渠道文章數", ["channel"])
 COV_UNSEG = Gauge("qseg_coverage_unsegmented_docs", "覆蓋檢查：fetched_at 落在 1 小時到 15 分鐘前、沒有 seg_ver_v2 的文章數（未斷詞）", ["channel"])
+COV_STALE = Gauge("qseg_coverage_unsegmented_stale_docs", "覆蓋檢查：抓到超過 15 分鐘、沒刪除、這一版沒有 seg_ver 的文章數（不限多久以前；用 qseg fill 補）", ["channel", "pipeline"])
 COV_NO_PUB = Gauge("qseg_coverage_missing_published_at_docs", "覆蓋檢查：沒有 published_at 的文章數", ["channel"])
 COV_AB = Gauge("qseg_coverage_terms_v2_ratio", "覆蓋檢查：有 terms_v2 的文章數 ÷ 文章數（A/B 覆蓋率）", ["channel"])
 COV_OK = Gauge("qseg_coverage_last_success_timestamp_seconds", "覆蓋檢查最後一次成功的 Unix 時間")
@@ -65,7 +66,7 @@ def serve(port: int, owner: str = None):
     start_http_server(port, registry=registry_for(owner))
 SPLIT = Counter("qseg_must_keep_split_total", "串流斷詞時必不可拆的詞被切開的次數（依渠道；回補 G2 也看同一件事）", ["pipeline", "channel"])
 TOMBSTONES = Counter("qseg_tombstones_total", "串流收到的刪文訊息（寫 deleted_at；result=updated／missing／errors）", ["pipeline", "result"])
-EDITED = Counter("qseg_edited_total", "串流收到的改文訊息（edited=1：content_sha 不同，重寫本體與詞表）", ["pipeline"])
+EDITED = Counter("qseg_edited_total", "串流收到的改文訊息（edited=1：原文改了，同一版也重寫詞表）", ["pipeline"])
 BULK_RETRIED = Counter("qseg_bulk_retries_total", "ES bulk 被 429 拒絕後重送的次數", ["pipeline", "mode"])
 # 字典發版收斂（control.py 每台輪詢 manifest；recon.py 從 service_state 算）
 DICT_SWAPS = Counter("qseg_dict_swaps_total", "服務熱換字典的次數（source=control：發版訊息；manifest：輪詢 current/manifest.json 發現新版）", ["pipeline", "source"])
@@ -77,7 +78,8 @@ RERUN_RUNS = Gauge("qseg_rerun_runs", "rerun_runs 各狀態的筆數（最近 7 
 QUALITY_SAMPLED = Gauge("qseg_quality_docs_sampled", "品質日報抽樣篇數（最近 QUALITY_WINDOW 內、有 terms_v2）", ["channel"])
 QUALITY_LEAK = Gauge("qseg_quality_leak_ratio", "抽樣裡詞表有洩漏的篇數比例（kind=url／phone／number／stopword／must_keep_split）", ["channel", "kind"])
 QUALITY_PLACE = Gauge("qseg_quality_place_split_ratio", "原文含地名（使用者字典裡縣市區鄉鎮村里結尾的詞）的抽樣篇數中，地名被切開的比例", ["channel"])
-QUALITY_WHOLE = Gauge("qseg_quality_whole_word_recall", "查詢詞整詞召回（整詞成為 token 的篇數 ÷ 片語比對篇數，micro 平均；目標 ≥ 99%）")
+QUALITY_WHOLE = Gauge("qseg_quality_whole_word_recall", "查詢詞整詞召回（片語比對篇數裡沒有確實被切開的比例，micro 平均；漏網文章抽樣用目前字典重斷，"
+                      "交集型歧義不算漏，與 must_keep_split 同一條規則；目標 ≥ 99%）")
 QUALITY_WHOLE_WORDS = Gauge("qseg_quality_whole_word_words", "整詞召回算了幾個詞（片語比對 ≥ QUALITY_MIN_DOCS 篇）")
 QUALITY_GOLD = Gauge("qseg_quality_gold_recall", "150 題金標詞召回（嚴格比對；q6/code/recall_eval.py 同一份金標）", ["pipeline"])
 QUALITY_MCNEMAR_P = Gauge("qseg_quality_mcnemar_p", "金標召回配對檢定的 p 值（精確二項式；pair=v1_v2／v0_v2）", ["pair"])

@@ -19,13 +19,16 @@
 
 | 項目 | 位置 | 說明 |
 |---|---|---|
-| 正式答案（599 字，連空白與換行；(a)(b)(c)） | [`q6/answer/answer_600.txt`](answer/answer_600.txt) | 2026-10-31 依審查四點改寫，字數由 `code/tests/test_answer_length.py` 檢查；研究頁 [`q6/answer/research-page.html`](answer/research-page.html)（下載後用瀏覽器開，答案分頁與本檔相同） |
+| 正式答案（600 字，連空白與換行；(a)(b)(c)） | [`q6/answer/answer_600.txt`](answer/answer_600.txt) | 2026-10-31 依審查四點改寫，字數由 `code/tests/test_answer_length.py` 檢查；研究頁 [`q6/answer/research-page.html`](answer/research-page.html)（下載後用瀏覽器開，答案分頁與本檔相同） |
 | 架構圖 11 張 | [`q6/architecture/`](architecture) | 依子題分資料夾，整套系統實跑的 2 張在 `architecture/stack/`；原始檔 `architecture/src/arch_*.html`，用 Playwright 渲染成 PNG |
 | 佐證 21 張 | [`q6/evidence/`](evidence) | 官方文件／原始碼／論文用 Playwright 擷取後加黃框；VM 實測做成卡片；原始擷取在 `q6/evidence/src/crops/` |
 | PTT 雜訊截圖 6 張 | [`q6/evidence/playwright/`](evidence/playwright) | 01 短網址與地名、02 地名「鼓山區」、03 地名與電話、04 電話（已遮）、05 `tinyurl.com` 短網址與被推文換行切開的網址、06 `bit.ly` 短網址。沒有一張標助詞，也沒有一張證明「高雄市」被拆（jieba 預設字典本來就保留「高雄市」） |
 | 斷詞原型 | [`q6/code/`](code) | `segmenter.py`（新舊並行，`Segmenters.build(base_dict=…)` 可換主字典；`run_compare.py`、`kaohsiung_trace.py` 用 `--base-dict`）、`run_compare.py`、`kaohsiung_trace.py`（「高雄市」6→6 的證據：用 jieba 字典模擬的舊流程本來就沒拆）、`affected_demo.py`、`tests/`；結果 [`q6/code/RESULTS.md`](code/RESULTS.md)（jieba 內建字典與繁體 dict.txt.big 各一組對照）、估算 [`q6/code/PLAN.md`](code/PLAN.md) |
 | jieba 實驗 | [`q6/code/jieba_experiments/`](code/jieba_experiments) | 吞吐、dict.txt.big 覆蓋、加詞影響範圍、固定 total；輸出與 sha256 在 [`q6/data/jieba_experiments/`](data/jieba_experiments)；2026-10-30 在 Linux 重跑，除計時欄位外與 repo 版本相同（`rerun_linux.log`） |
 | 登入帳號重爬 60 張 | [`q6/evidence/meta-login/`](evidence/meta-login) | 2026-11-01 用登入帳號的 Chrome profile 把 Facebook 4、Instagram 8、Threads 3 個目標頁再爬一次：Facebook 4 → 65、Instagram 48 → 1,134、Threads 59 → 588 篇，登入牆 0 次；每頁有頁面與 F12 Network 截圖各 2 張，加上 cookie → API → JSON → 欄位的證據鏈；頭像、通知數、分頁標題已模糊 |
+| 登入重爬的程式、證據鏈圖與資料 | [`q6/code/meta-login/`](code/meta-login)、[`q6/evidence/meta-login/chain/`](evidence/meta-login/chain)、[`q6/data/meta-login/`](data/meta-login) | 六個步驟的程式（登入、只讀爬取、F12 補拍、遮罩、比較、證據頁）；三個平台的證據鏈圖與未登入 vs 登入比較；Instagram 已移除混入的推薦貼文 |
+| 六渠道歷史爬蟲（2023-01 起） | [`q6/code/history-crawl/`](code/history-crawl)、[`q6/evidence/history-crawl/`](evidence/history-crawl) | PTT 9 板、YouTube 7 頻道、FB／IG／Threads 登入重送 GraphQL cursor；自適應節流與 checkpoint；10 張執行中截圖、Grafana 看板、遙測統計；欄位與痛點 [`fields-and-painpoints.md`](evidence/history-crawl/fields-and-painpoints.md) |
+| 規模試跑 | [`q6/code/scale-pilot/`](code/scale-pilot)、[`q6/evidence/scale-pilot/`](evidence/scale-pilot) | 單機 ES 灌入 28.3 萬篇、538.7 MB（約 1.99 KB／篇），5 億篇外推約 950 GB，單機磁碟放不下；查詢延遲這次沒量到 |
 | 整套系統實跑（Docker） | [`q6/stack/`](stack) | 官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OTel／Prometheus／Grafana 全部在 Docker，零成本；42.5 萬篇 PTT 回補三輪、六渠道串流、PM A/B 文字雲頁。數字在 [`RESULTS.md`](stack/RESULTS.md)，截圖在 [`q6/evidence/stack/`](evidence/stack) |
 
 ## 2026-10-31 審查四點的處理
@@ -37,7 +40,7 @@
 | 1. 重要詞召回 | 150 個標題的金標集，三組獨立的模型標註（不是人工），兩組以上同意算數（[`data/recall_eval/`](data/recall_eval)）；方括號改白名單、加單字保留名單、字典加「颱風假」 | 金標詞召回：舊流程 64.7%，10/30 版 74.4%，10/31 版 75.6%；審查舉的三個例子都留住 | 剩下的漏詞多是字典沒有的人名與新詞，以及 jieba 切成兩段的複合詞（例如改變世界、護樹團體），要靠新詞發現；樣本只有 150 題 |
 | 2. 三分鐘查詢路徑 | 文字雲用 ES terms 聚合，`doc_count` 是篇數；100 萬、300 萬篇實測（[`data/es_terms_scale/`](data/es_terms_scale)） | 300 萬篇全命中精確聚合 317 ms；抽樣 1% 14 ms，前 50 詞重疊 49/50 | 5 億篇是單節點線性外推（約 50 秒），沒在正式叢集量 |
 | 3. 版本 | 指紋涵蓋 jieba 版本、主字典、使用者字典、停用詞、標籤與單字名單、固定的 total、程式碼；原文另記 `content_sha`；PLAN 不再用 `dict_version` 當 ES external version | 測試 `test_fingerprint_covers_stopwords_base_dict_and_code` 等 | |
-| 4. 增量重跑 | 5 億篇規模用 ES `content.bigram` 的 `match_phrase` 加 PIT（`stack/seg/qseg/rerun.py`）；「只影響含新詞的文件」改成以固定 total 為前提，預設固定 | 42.5 萬篇加「肥宅」定向重跑 22,271 篇 8.6 秒，不含字串的 0 篇變 | 全量重跑「離峰約 6 晚」的寫入上限是假設 |
+| 4. 增量重跑 | 5 億篇規模用 ES `content.bigram` 的 `match_phrase` 加 PIT（`stack/seg/qseg/rerun.py`）；「只影響含新詞的文件」改成以固定 total 為前提，預設固定 | 42.5 萬篇加「肥宅」定向重跑 22,271 篇 8.6 秒，不含字串的 0 篇變 | 全量寫入時間用單機不限速實測（每秒約 5,170 篇）推算，正式環境 POC 再量 |
 
 ## 依子題分類的素材
 
@@ -94,7 +97,7 @@
 
 幾個關鍵數字：
 
-- 回補：1 個 task 每秒約 2,900 篇；3 個 task 共用全域限速 3,000 時，全期查詢 p95 從 114 ms 升到 192 ms，G3 閘門自動降速 3,000 → 1,500 → 750 後通過。回補期間 3,727 次查詢最慢 396.9 ms，沒有一次超過 180 秒。
+- 回補：42.5 萬篇不限速約每秒 5,170 篇。回補期間 3,727 次查詢最慢 396.9 ms，沒有一次超過 180 秒（題目目標 3 分鐘）。
 - 加詞「肥宅」：42.5 萬篇裡詞表會變 5,253 篇，不含這個字串的 0 篇；ES 定向重跑 22,271 篇 8.6 秒。
 - 六渠道 267 篇送出後 1.73 秒全部有新舊詞表；文字雲前 30 詞的雜訊從 21–29 個降到 0 個（FB 剩 1 個）。
 - 同樣的前 50 詞，ES 74 ms、PostgreSQL（GIN）1,579 ms，篇數完全一樣。
@@ -105,10 +108,10 @@
 
 | | 舊版 PLAN.md | 現在（答案稿＝PLAN.md） |
 |---|---|---|
-| 工作天 | 26–28 | 45（基準 2、POC 5、字典整併 10、工程化 6、六渠道回朔與驗收 12、壓測切換 3、緩衝 7） |
+| 工作天 | 26–28 | 45（先量現況 2、POC 5、字典整併 10、工程化 10、六渠道回朔與驗收 12、壓測切換 3、緩衝 3） |
 | 批數 | 276（6 渠道 × 46 個月） | 270（Threads 2023/07 才有資料，只有 40 個月） |
-| 每則字數 | 120 字（假設） | 300 字（假設） |
-| 斷詞速度 | 每核 1,000 則/秒（假設） | 每核每秒約 28 萬字（實測 262,611–301,854 字/秒），約 150 核心小時 |
+| 每則字數 | 120 字（假設） | 284 字（實測：自爬 13.2 萬篇有內文的貼文） |
+| 斷詞速度 | 每核 1,000 則/秒（假設） | 每核每秒約 28 萬字（實測 262,611–301,854 字/秒），約 140 核心小時 |
 | total 風險 | 推測 | 實測：20 萬篇加 1 詞，52 篇不含該詞也變；固定 total 後 0 篇 |
 | dict.txt.big | 未下載 | 已下載，並在 6,685 篇標題上對照 |
 

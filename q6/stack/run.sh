@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Q6 整套系統：一步一步重跑。全部在本機 Docker，零成本。用法：./run.sh <步驟>
 #   build   下載並驗證 ES 外掛、建字典 artifact r1–r6、建三個映像
+#   image   只重建斷詞映像（改了 qseg 程式之後用；回補 Job 與串流共用這個映像）
 #   up      起 ES／Kibana／PostgreSQL／Pub/Sub 模擬器／字典服務／API／監控
 #   seed    建索引與訂閱，灌 PTT 文章（原始發文時間：標題 + 兩個公開語料），寫舊詞表 terms_v1（「現在的線上狀態」）
 #   backfill 回補 v2：首月跑完等 PM 簽核；AUTO_APPROVE=1（預設）用指令簽核並接著開 3 個 task，AUTO_APPROVE=0 到 PM 頁簽核後再跑 backfill-tasks
@@ -22,14 +23,22 @@ PY=${PY:-python3}
 CA=${CA:-}   # 公司代理會攔 TLS 時給 CA 檔，例如 CA=/root/.ccr/ca-bundle.crt
 secret=(); [ -n "$CA" ] && secret=(--secret "id=ca,src=$CA")
 R=qsearch-q6-2026.10.30
+# 斷詞程式版本：建進映像，寫進每篇的 seg_build_<版>。在 git 裡自動用 commit 編號（有未提交的修改加 -dirty）；
+# 不在 git 裡（例如複製出去的資料夾）要自己給，例如 SEG_BUILD=c9c2430 ./run.sh image
+SEG_BUILD=${SEG_BUILD:-$(git -C .. describe --always --dirty --abbrev=7 2>/dev/null || echo nogit)}
+export SEG_BUILD
+seg_image() { (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$SEG_BUILD" -t qsearch-seg:local -f stack/seg/Dockerfile .); echo "斷詞映像 SEG_BUILD=$SEG_BUILD"; }
 case "${1:-}" in
   build)
     es/fetch_plugins.sh
     $PY dict/build_artifact.py "$DL/dict.txt.big" runtime/dictsrv $R.1 $R.3 $R.4 $R.5 $R.6 $R.2   # 最後一個是 current
     $PY dict/build_legacy.py runtime/dictsrv qsearch-q6-legacy-2019.12.31.1 --moe "$DL/moe_revised_words.txt" --jieba-tw "$DL/jieba_tw_dict.txt"   # v0 舊流程重現版字典
     docker build --network host -t qsearch-es:9.5.5 es
-    (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$(git rev-parse --short HEAD)" -t qsearch-seg:local -f stack/seg/Dockerfile .)
+    seg_image
     docker build --network host "${secret[@]}" -t qsearch-wordcloud-api:local -f api/Dockerfile .
+    ;;
+  image)
+    seg_image
     ;;
   up)
     docker compose up -d dictsrv es kibana pubsub pg api otelcol es-exporter alertmanager prometheus loki alloy grafana
@@ -50,8 +59,10 @@ case "${1:-}" in
     ;;
   backfill)
     V=${V:-$R.3}; T=$($PY -c "import sys; sys.path.insert(0, 'api'); import ops; print(ops.seg_ver('v2', '$V'))")   # seg_ver：v2 × 10^10 ＋ 日期序號
-    docker exec qsearch-q6-pg-1 psql -U qsearch -d qsearch -c \
-      "UPDATE backfill_ledger SET dict_version='$V', target_seg_ver=$T WHERE status IN ('pending','failed')"
+    # 帳本在 ES 索引 backfill_ledger：只改 pending／failed 分區的字典版本與目標 seg_ver（running 與已通過的不動）
+    ES_URL=${ES_URL:-http://localhost:9200}
+    curl -sf -X POST "$ES_URL/backfill_ledger/_update_by_query?refresh=true&conflicts=proceed" -H 'Content-Type: application/json' \
+      -d "{\"query\":{\"terms\":{\"status\":[\"pending\",\"failed\"]}},\"script\":{\"lang\":\"painless\",\"source\":\"ctx._source.dict_version = params.v; ctx._source.target_seg_ver = params.t;\",\"params\":{\"v\":\"$V\",\"t\":$T}}}" >/dev/null
     docker compose --profile job run --rm -T --no-deps -e DICT_VERSION=$V seg-job baseline
     docker compose --profile job run --rm -T --no-deps -e DICT_VERSION=$V seg-job job          # 首月分區 → awaiting_pm
     if [ "${AUTO_APPROVE:-1}" = 1 ]; then

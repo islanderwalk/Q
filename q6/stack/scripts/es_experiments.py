@@ -122,9 +122,9 @@ def guard():
     seg = lambda ver, terms: {"terms_v2": terms, "seg_ver_v2": ver, "dict_version_v2": f"v{ver}", "seg_build_v2": "test", "seg_at_v2": "2026-10-30T00:00:00Z"}
     steps = []
 
-    def step(name, fn):
+    def step(name, fn, did="g1"):
         r = fn()
-        doc = es("GET", f"/{idx}/_doc/g1", ok=(200, 404)).get("_source", {})
+        doc = es("GET", f"/{idx}/_doc/{did}", ok=(200, 404)).get("_source", {})
         steps.append({"step": name, "result": {k: v for k, v in r.items() if k in ("created", "updated", "noop", "errors")} if isinstance(r, dict) else r,
                       "seg_ver_v2": doc.get("seg_ver_v2"), "terms_v2": doc.get("terms_v2"), "content": doc.get("content"), "channel": doc.get("channel")})
 
@@ -135,6 +135,18 @@ def guard():
     step("新版（r6）：更新", lambda: c.bulk_seg([("g1", base, seg(22026103006, ["肥宅", "新北投", "r6"]), "v2")], refresh=True))
     step("force 同版（修程式重跑）：覆寫", lambda: c.bulk_seg([("g1", base, seg(22026103006, ["肥宅", "新北投", "r6-fixed"]), "v2")], refresh=True, force=True))
     step("force 舊版：仍然 noop", lambda: c.bulk_seg([("g1", base, seg(22026103005, ["舊"]), "v2")], refresh=True, force=True))
+    # 改文：collector 先把新原文和 content_sha 寫進 ES，再發 edited=1；之後回補可能讀到改文前的快照
+    from qseg.pipeline import content_sha
+    old, new = "肥宅在新北投", "肥宅改去淡水"
+    b3 = lambda text: {**base, "post_id": "g3", "content": text, "content_sha": content_sha(text)}
+    s3 = lambda ver, terms, text: {**seg(ver, terms), "seg_sha_v2": content_sha(text)}
+    step("改文前：串流斷舊原文（r5）", lambda: c.bulk_seg([("g3", b3(old), s3(22026103005, ["肥宅", "新北投"], old), "v2")], refresh=True), "g3")
+    step("改文：parser 先寫新原文", lambda: (c.upsert_base([("g3", b3(new))], refresh=True), {"updated": 1})[1], "g3")
+    step("改文：串流同一版（r5）斷新原文 → 要重寫詞表", lambda: c.bulk_seg([("g3", b3(new), s3(22026103005, ["肥宅", "淡水"], new), "v2")], refresh=True), "g3")
+    step("同一份新原文重送（r5）：noop", lambda: c.bulk_seg([("g3", b3(new), s3(22026103005, ["肥宅", "淡水"], new), "v2")], refresh=True), "g3")
+    step("回補讀到改文前的快照（新版 r6）：noop，新原文、新詞表不被蓋回去", lambda: c.bulk_seg([("g3", b3(old), s3(22026103006, ["肥宅", "新北投"], old), "v2")], refresh=True), "g3")
+    step("同上加 force：仍然 noop", lambda: c.bulk_seg([("g3", b3(old), s3(22026103006, ["肥宅", "新北投"], old), "v2")], refresh=True, force=True), "g3")
+    step("回補用新原文（r6）：更新", lambda: c.bulk_seg([("g3", b3(new), s3(22026103006, ["肥宅", "淡水", "r6"], new), "v2")], refresh=True), "g3")
     # 多寫者同時寫同一篇：版本亂序，最後一定是最大版本
     vers = list(range(22026103001, 22026103041))
     import random

@@ -1,0 +1,180 @@
+{
+ "date": "2026-11-15",
+ "doc_id": "29427891256864466",
+ "gap_s": 3.0,
+ "rows": [
+  {
+   "status": 200,
+   "wire": 61420,
+   "ce": "gzip",
+   "decoded": 543652,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 20,
+   "complete": 20,
+   "label": "zuck",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 19730,
+   "ce": "gzip",
+   "decoded": 168966,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 11,
+   "complete": 11,
+   "label": "mosseri",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 20813,
+   "ce": "gzip",
+   "decoded": 196344,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "instagram",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 46591,
+   "ce": "gzip",
+   "decoded": 392278,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 12,
+   "complete": 11,
+   "label": "nasa",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 30187,
+   "ce": "gzip",
+   "decoded": 226731,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 13,
+   "complete": 13,
+   "label": "natgeo",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 15446,
+   "ce": "gzip",
+   "decoded": 128915,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "nytimes",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 25532,
+   "ce": "gzip",
+   "decoded": 239294,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "nba",
+   "group": "named"
+  },
+  {
+   "status": 200,
+   "wire": 27383,
+   "ce": "gzip",
+   "decoded": 258759,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "other_01",
+   "group": "other"
+  },
+  {
+   "status": 200,
+   "wire": 20476,
+   "ce": "gzip",
+   "decoded": 178520,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "other_02",
+   "group": "other"
+  },
+  {
+   "status": 200,
+   "wire": 5861,
+   "ce": "gzip",
+   "decoded": 66734,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "other_03",
+   "group": "other"
+  },
+  {
+   "status": 200,
+   "wire": 6941,
+   "ce": "gzip",
+   "decoded": 74221,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 10,
+   "complete": 10,
+   "label": "other_04",
+   "group": "other"
+  },
+  {
+   "status": 200,
+   "wire": 36073,
+   "ce": "gzip",
+   "decoded": 298232,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 11,
+   "complete": 11,
+   "label": "other_05",
+   "group": "other"
+  }
+ ],
+ "zuck_flag_compare": {
+  "html_values": {
+   "status": 200,
+   "wire": 62227,
+   "decoded": 547052,
+   "up_body": 4637,
+   "threads": 10,
+   "posts": 20,
+   "err": null
+  },
+  "all_false": {
+   "status": 200,
+   "wire": 59570,
+   "decoded": 524612,
+   "up_body": 4656,
+   "threads": 10,
+   "posts": 20,
+   "err": null
+  },
+  "no_flags": {
+   "status": 200,
+   "wire": 183,
+   "decoded": 316,
+   "up_body": 361,
+   "threads": null,
+   "posts": 0,
+   "err": "{\"errors\":[{\"message\":\"execution error\",\"severity\":\"CRITICAL\"},{\"message\":\"execution error\",\"severity\":\"CRITICAL\"},{\"mes"
+  }
+ }
+}

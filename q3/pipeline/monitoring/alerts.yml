@@ -1,0 +1,59 @@
+# 只對「結果」告警（答案第 5 題）：單次請求失敗與延遲、事後刪文 404、檔案過大截斷都只記錄在看板上，不告警。
+# 被擋的時候抓取程序可能卡在退避等待、好幾個小時沒更新數字，所以「新文章多久可搜尋」「留言多久沒重抓」
+# 都用「上次算出的數字＋算完到現在過了多久」推算現在的值；另外最新列表頁連續讀不到也直接告警。
+groups:
+  - name: q3-ptt-search
+    rules:
+      - alert: Q3NewPostsNotSearchable
+        # 門檻 3 小時，不用規格的 6 小時：正常最久約 1 小時 15 分入庫，連漏 2 輪才會到；
+        # 加上 for 10 分鐘，響的時候約 3 小時 10 分，離規格還有約 2 小時 50 分可以處理
+        expr: (q3_unsearchable_oldest_minutes > 0) + (time() - q3_window_stats_timestamp_seconds) / 60 > 180
+        for: 10m
+        labels: {severity: page}
+        annotations:
+          summary: "規格 1 快破了：有新文章發文超過 3 小時還不能搜尋（規格 6 小時）"
+      - alert: Q3CommentsStale
+        expr: (q3_comment_staleness_max_hours > 0) + (time() - q3_window_stats_timestamp_seconds) / 3600 > 24
+        for: 30m
+        labels: {severity: page}
+        annotations:
+          summary: "規格 2：7 天內有文章超過 24 小時沒有重抓留言"
+      - alert: Q3PttListUnreachable
+        # 每輪第一個請求就是最新列表頁；連續讀不到 90 分鐘（至少連兩輪）多半是被 PTT 擋了。
+        # 一輪中途只是舊列表頁或幾篇文章抓不到不算（那些下一輪會補，記在看板上）。
+        # 程序重啟時從 crawl_runs 接回計時，不會從頭算；程序停了改由 Q3CrawlerDown 告警，這裡不重複響
+        expr: |
+          (q3_list_failing_since_timestamp_seconds > 0 and time() - q3_list_failing_since_timestamp_seconds > 90 * 60)
+          unless on() (time() - push_time_seconds{job="q3_crawler"} > 180)
+        labels: {severity: page}
+        annotations:
+          summary: "最新列表頁連續 90 分鐘讀不到（至少連兩輪），多半被 PTT 擋了；新文章進不來"
+      - alert: Q3InvariantFailed
+        expr: q3_verify_ok == 0
+        labels: {severity: page}
+        annotations:
+          summary: "每日不變量檢查失敗：沒走完列表頁、走的途中最新頁變了、列表上有文章沒入庫、或有文章不是正常狀態"
+      - alert: Q3VerifyNotRun
+        expr: time() - q3_verify_last_run_timestamp_seconds > 26 * 3600
+        labels: {severity: ticket}
+        annotations:
+          summary: "超過 26 小時沒有跑不變量檢查"
+      - alert: Q3CrawlerDown
+        expr: time() - push_time_seconds{job="q3_crawler"} > 180
+        labels: {severity: page}
+        annotations:
+          summary: "抓取程序 3 分鐘沒有回報（程序停了或卡住）"
+      - alert: Q3RunNotFinishing
+        # 正在跑：這一輪已經跑超過 2 小時（卡住或被擋）；沒在跑：上一輪結束超過 2 小時（排程沒觸發）。
+        # 第一次回補 7 天要跑好幾個小時，也會響，這是對的：那段期間新文章確實要等回補跑完
+        expr: >-
+          (q3_run_in_progress == 1 and time() - q3_run_started_timestamp_seconds > 2 * 3600)
+          or (q3_run_in_progress == 0 and time() - q3_run_last_finished_timestamp_seconds > 2 * 3600)
+        labels: {severity: page}
+        annotations:
+          summary: "這一輪跑超過 2 小時還沒結束，或超過 2 小時沒有開始新的一輪"
+      - alert: Q3RunRolledBackOrBlocked
+        expr: q3_run_status{status=~"rolled_back|gate_blocked|failed"} == 1
+        labels: {severity: ticket}
+        annotations:
+          summary: "上一輪被品質檢查擋下、整輪還原，或失敗（連續幾篇抓不到、讀不到列表、寫不進資料庫）；下一輪會自動重試"

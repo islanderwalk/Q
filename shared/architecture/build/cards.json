@@ -79,7 +79,8 @@
    "Terraform：第一輪對正式專案 plan 70 to add；第二輪離線 plan 102 to add、terraform test 30 passed，已開 cloudsql.enable_pg_bigm flag，CREATE EXTENSION 還沒在正式專案驗證；未 apply（shared/infra/gcp/README.md）。",
    "沒驗證的部分：中文維基沒有用pg_bigm 本體 重跑（GIN 模擬 1,165,492,224 B）；pg_bigm 跑在 Docker，不是原生安裝，也不是 Cloud SQL；pg_bigm 在 generic plan 下沒有量（generic_plan_check.py 只量 pg_trgm）；GIN 模擬那次維基颱風、政府兩格的 pg_trgm 時間是 generic plan 量到的，資料庫已刪，沒有重量；Windows 把那 60 字當非字母是推論，沒有在 Windows 上直接查。",
    "Playwright 未登入實抓 FB 粉專頁與單則貼文各 1 張，manifest 標 status real；補抓單則貼文那一輪 FB 載入 9 次，含探測腳本（shared/docs/playwright.md）。",
-   "Playwright 第二輪（10/30）：住宅 IP 實抓到發文絕對時間（creation_time）與 Page ID 54971236771；雲端 IP 開 FB 直接 302 到登入頁，所以 100 萬則要走 Graph API 或授權資料源。"
+   "Playwright 第二輪（10/30）：住宅 IP 實抓到發文絕對時間（creation_time）與 Page ID 54971236771；雲端 IP 開 FB 直接 302 到登入頁，所以 100 萬則要走 Graph API 或授權資料源。",
+   "欄位對照（2026-11-04）：用登入帳號開 NASA 一則公開貼文，只載入 2 次、只讀；貼文表 16 個值各翻到它在頁面內嵌 JSON 的位置截圖（F12 17 張、畫面 3 張），路徑與值記在 q2/evidence/f12/fb_post_fields.json；row_layout.py 讀出一列 920 B，三項檢查（合計等於 lp_len、每欄等於 pg_column_size、補齊全是 00）都通過。"
   ],
   "todo": "pg_bigm 本體 已在 Docker（PostgreSQL 16.15）量過頁面做法與 PTT。還沒做：在部署的 Cloud SQL（PG15）上 CREATE EXTENSION pg_bigm 並量一次；中文維基用 pg_bigm 重跑；量粉專貼文。編 pg_bigm 的 Dockerfile 把 server-dev 套件釘在映像的 PostgreSQL 版本，PGDG 出下一個 16.x 後要加 apt-archive 來源才建得起來。GCP 閒置約 US$104／月（約 NT$3,382），其中 Cloud SQL db-custom-2-7680 佔 US$100，超過 3,000 元，Cloud SQL 改 db-custom-1-3840 約 US$51。",
   "evidence": [
@@ -131,9 +132,361 @@
     "path": "q2/evidence/playwright/fb_cloud_ip_login_redirect.png",
     "cap": "雲端 IP 開 FB 粉專：302 到 /login/，拿不到貼文欄位",
     "priority": 1
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_post_id.png",
+    "cap": "F12 Sources 全域搜尋：貼文 ID post_id 1671214107707292，緊接著 creation_time",
+    "result": "路徑 node_v2.post_id；搜尋式 post_id.{3}1671214107707292.{3}creation_time",
+    "at": "2026-11-05 00:03",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_page_id.png",
+    "cap": "F12：粉專 Page ID 54971236771 在 delegate_page.id，和粉專透明度頁的 Page ID 相同",
+    "result": "路徑 node_v2…actors[0].delegate_page.id；搜尋式 delegate_page.{4}is_business_page_active.{2}false,.id.{3}54971236771",
+    "at": "2026-11-05 00:06",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_profile_id.png",
+    "cap": "F12：貼文擁有者是 profile ID 100044561550831（__typename User），不是 Page ID",
+    "result": "路徑 node_v2.feedback.owning_profile.id",
+    "at": "2026-11-05 00:03",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_page_name.png",
+    "cap": "F12：粉專名稱 NASA - National Aeronautics and Space Administration 在 owning_profile.name",
+    "result": "路徑 node_v2.feedback.owning_profile.name",
+    "at": "2026-11-05 00:03",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_creation_time.png",
+    "cap": "F12：發文時間 creation_time 1793310300（2026-10-30 05:45 UTC+8），頁面資料裡共 15 處",
+    "result": "路徑 node_v2.creation_time",
+    "at": "2026-11-04 23:59",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_message.png",
+    "cap": "F12：內文 message.text「Welcome to the Artemis Accords, Vietnam …」",
+    "result": "路徑 node_v2.comet_sections.content.story.comet_sections.message.story.message.text",
+    "at": "2026-11-05 00:03",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_count.png",
+    "cap": "F12：心情總數 reaction_count.count 27063（畫面不顯示）",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.adaptive_ufi_action_renderers[0].feedback.reaction_count.count",
+    "at": "2026-11-05 00:02",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_share_count.png",
+    "cap": "F12：分享數 share_count.count 1406，對上畫面的「1,406」",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.adaptive_ufi_action_renderers[2].feedback.share_count.count",
+    "at": "2026-11-05 00:03",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_display_strategy.png",
+    "cap": "F12：reaction_display_strategy = HIDE_COUNTS，所以畫面上看不到任何心情數字",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.adaptive_ufi_action_renderers[0].feedback.reaction_display_config.reaction_display_strategy",
+    "at": "2026-11-05 00:03",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_like.png",
+    "cap": "F12：讚（心情 ID 1635855486666999）18961",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[0].reaction_count",
+    "at": "2026-11-05 00:04",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_love.png",
+    "cap": "F12：大心（心情 ID 1678524932434102）7510",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[1].reaction_count",
+    "at": "2026-11-05 00:05",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_care.png",
+    "cap": "F12：加油（心情 ID 613557422527858）377",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[2].reaction_count",
+    "at": "2026-11-05 00:04",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_wow.png",
+    "cap": "F12：哇（心情 ID 478547315650144）121",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[3].reaction_count",
+    "at": "2026-11-05 00:04",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_haha.png",
+    "cap": "F12：哈（心情 ID 115940658764963）79",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[4].reaction_count",
+    "at": "2026-11-05 00:04",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_angry.png",
+    "cap": "F12：怒（心情 ID 444813342392137）9",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[5].reaction_count",
+    "at": "2026-11-05 00:05",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reaction_sad.png",
+    "cap": "F12：嗚（心情 ID 908563459236466）6",
+    "result": "路徑 …comet_ufi_summary_and_actions_renderer.feedback.top_reactions.edges[6].reaction_count",
+    "at": "2026-11-05 00:05",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_f12_reactions_dialog_graphql.png",
+    "cap": "F12 Network：點開心情對話框時的 GraphQL 回應 CometUFIReactionsDialogQuery，七種心情的數字在這裡（第二來源）",
+    "result": "讚 18965 · 大心 7510 · 加油 377 · 哇 121 · 哈 79 · 怒 9 · 嗚 6（比 10 分鐘前多 4 個讚）",
+    "at": "2026-11-05 00:09",
+    "priority": 2,
+    "platform": "facebook"
+   },
+   {
+    "path": "q2/evidence/f12/fb_post_annotated.png",
+    "at": "2026-11-04 23:52",
+    "priority": 2,
+    "platform": "facebook",
+    "result": "心情總數 27,059（23:52 載入時）；畫面只有心情圖示",
+    "cap": ""
+   },
+   {
+    "path": "q2/evidence/f12/fb_post_time_tooltip.png",
+    "at": "2026-11-04 23:53",
+    "priority": 2,
+    "platform": "facebook",
+    "result": "畫面「10月30日上午5:45」＝ creation_time 1793310300",
+    "cap": ""
+   },
+   {
+    "path": "q2/evidence/f12/fb_post_reactions_dialog.png",
+    "at": "2026-11-04 23:54",
+    "priority": 2,
+    "platform": "facebook",
+    "cap": ""
    }
   ],
-  "src": "數字取自 Q2 頁面（q2/answer/fb_q2_posts_table.html）、q2/code/RESULTS.md 與 q2/data/（含 Docker 的 pg_bigm 與 generic plan 重現），另有 shared/infra/onprem/VERIFY.md、shared/infra/gcp/README.md、shared/docs/playwright.md 與 shared/docs/playwright-round2.md。"
+  "src": "數字取自 Q2 頁面（q2/answer/fb_q2_posts_table.html）、q2/code/RESULTS.md 與 q2/data/（含 Docker 的 pg_bigm 與 generic plan 重現），另有 shared/infra/onprem/VERIFY.md、shared/infra/gcp/README.md、shared/docs/playwright.md 與 shared/docs/playwright-round2.md。",
+  "rowmap": {
+   "title": "一則貼文 920 B：每一格對到的 F12 截圖",
+   "lead": "byte 數由 q2/code/row_layout.py 讀 PostgreSQL 16 第 0 頁第 1 列的原始 bytes，照對齊規則逐欄走一遍（q2/data/q2_row_layout_page0.json）。FB 的位置是用登入帳號開 NASA 一則公開貼文，在 F12 Sources 用 Ctrl+Shift+F 把鍵名和值綁在同一個搜尋式裡，翻到它在頁面內嵌 JSON 的那一行再截圖（q2/evidence/f12/，路徑與值在 fb_post_fields.json）。點標籤看原圖。",
+   "rows": [
+    {
+     "cell": "列標頭",
+     "bytes": "24",
+     "where": "不是 FB 欄位",
+     "value": "—",
+     "why": "xmin 4＋xmax 4＋cid 4＋ctid 6＋infomask2 2＋infomask 2＋hoff 1＝23 B，補 1 B 到 24"
+    },
+    {
+     "cell": "貼文 ID",
+     "bytes": "32",
+     "where": "post_id（16 碼純數字；登入帳號重爬的 65 篇 FB 貼文也都是 16 碼，沒有底線）",
+     "value": "1671214107707292（16 碼）",
+     "why": "測試資料把粉專 ID 和 15 碼亂數用底線接成 31 字元，存 text＋1 B 長度。爬到的是純數字，存 bigint 只要 8 B",
+     "shots": [
+      {
+       "path": "q2/evidence/f12/fb_f12_post_id.png",
+       "label": "F12 post_id",
+       "cap": "F12 Sources 全域搜尋：貼文 ID post_id 1671214107707292，緊接著 creation_time"
+      }
+     ]
+    },
+    {
+     "cell": "粉專 ID",
+     "bytes": "8",
+     "where": "delegate_page.id（Page ID）；owning_profile.id 是 profile ID",
+     "value": "54971236771",
+     "why": "bigint",
+     "shots": [
+      {
+       "path": "q2/evidence/f12/fb_f12_page_id.png",
+       "label": "F12 Page ID",
+       "cap": "F12：粉專 Page ID 54971236771 在 delegate_page.id，和粉專透明度頁的 Page ID 相同"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_profile_id.png",
+       "label": "F12 profile ID",
+       "cap": "F12：貼文擁有者是 profile ID 100044561550831（__typename User），不是 Page ID"
+      },
+      {
+       "path": "q2/evidence/playwright/fb_page_transparency_id.png",
+       "label": "透明度頁",
+       "cap": "粉專透明度頁：Page ID 54971236771"
+      }
+     ]
+    },
+    {
+     "cell": "粉專名稱",
+     "bytes": "14",
+     "where": "owning_profile.name",
+     "value": "NASA - National Aeronautics and Space Administration（52 字）",
+     "why": "測試資料 fanpage-07920 13 字＋1 B 長度",
+     "shots": [
+      {
+       "path": "q2/evidence/f12/fb_f12_page_name.png",
+       "label": "F12 名稱",
+       "cap": "F12：粉專名稱 NASA - National Aeronautics and Space Administration 在 owning_profile.name"
+      },
+      {
+       "path": "q2/evidence/f12/fb_post_annotated.png",
+       "label": "畫面",
+       "cap": "畫面上的粉專名稱、發文時間、內文與分享數"
+      }
+     ]
+    },
+    {
+     "cell": "補齊",
+     "bytes": "2",
+     "where": "—",
+     "value": "—",
+     "why": "補的 2 個 byte 都是 00：發文時間要從 8 的倍數開始"
+    },
+    {
+     "cell": "發文時間",
+     "bytes": "8",
+     "where": "creation_time（Unix 秒）",
+     "value": "1793310300＝2026-10-30 05:45 UTC+8",
+     "why": "timestamptz",
+     "shots": [
+      {
+       "path": "q2/evidence/f12/fb_f12_creation_time.png",
+       "label": "F12 creation_time",
+       "cap": "F12：發文時間 creation_time 1793310300（2026-10-30 05:45 UTC+8），頁面資料裡共 15 處"
+      },
+      {
+       "path": "q2/evidence/f12/fb_post_time_tooltip.png",
+       "label": "畫面 tooltip",
+       "cap": "滑過發文時間顯示「2026年10月30日 星期五上午5:45」"
+      }
+     ]
+    },
+    {
+     "cell": "內文",
+     "bytes": "754",
+     "where": "message.text",
+     "value": "英文 207 字、213 B",
+     "why": "測試資料 250 個中文字 × 3 B＋4 B 長度",
+     "shots": [
+      {
+       "path": "q2/evidence/f12/fb_f12_message.png",
+       "label": "F12 message",
+       "cap": "F12：內文 message.text「Welcome to the Artemis Accords, Vietnam …」"
+      }
+     ]
+    },
+    {
+     "cell": "補齊",
+     "bytes": "6",
+     "where": "—",
+     "value": "—",
+     "why": "補的 6 個 byte 都是 00：數字欄要從 8 的倍數開始"
+    },
+    {
+     "cell": "心情與分享 9 欄",
+     "bytes": "72",
+     "where": "top_reactions.edges[i].reaction_count（七種）、reaction_count.count（總數）、share_count.count（分享）",
+     "value": "讚 18961、大心 7510、加油 377、哇 121、哈 79、怒 9、嗚 6；總數 27063；分享 1406",
+     "why": "9 × bigint 8 B",
+     "shots": [
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_like.png",
+       "label": "讚",
+       "cap": "F12：讚（心情 ID 1635855486666999）18961"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_love.png",
+       "label": "大心",
+       "cap": "F12：大心（心情 ID 1678524932434102）7510"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_care.png",
+       "label": "加油",
+       "cap": "F12：加油（心情 ID 613557422527858）377"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_wow.png",
+       "label": "哇",
+       "cap": "F12：哇（心情 ID 478547315650144）121"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_haha.png",
+       "label": "哈",
+       "cap": "F12：哈（心情 ID 115940658764963）79"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_angry.png",
+       "label": "怒",
+       "cap": "F12：怒（心情 ID 444813342392137）9"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_sad.png",
+       "label": "嗚",
+       "cap": "F12：嗚（心情 ID 908563459236466）6"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_count.png",
+       "label": "總數",
+       "cap": "F12：心情總數 reaction_count.count 27063（畫面不顯示）"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_share_count.png",
+       "label": "分享",
+       "cap": "F12：分享數 share_count.count 1406，對上畫面的「1,406」"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reaction_display_strategy.png",
+       "label": "HIDE_COUNTS",
+       "cap": "F12：reaction_display_strategy = HIDE_COUNTS，所以畫面上看不到任何心情數字"
+      },
+      {
+       "path": "q2/evidence/f12/fb_f12_reactions_dialog_graphql.png",
+       "label": "對話框 GraphQL",
+       "cap": "F12 Network：點開心情對話框時的 GraphQL 回應 CometUFIReactionsDialogQuery，七種心情的數字在這裡（第二來源）"
+      },
+      {
+       "path": "q2/evidence/f12/fb_post_reactions_dialog.png",
+       "label": "對話框畫面",
+       "cap": "心情對話框只列名稱，不列數字"
+      }
+     ]
+    }
+   ],
+   "notes": [
+    "合計 920 B，等於這一列的 lp_len；每欄長度都和 pg_column_size 相同，補齊的 byte 全是 00。",
+    "心情數畫面上看不到：這則貼文設定 HIDE_COUNTS，數字只在頁面內嵌資料與心情對話框的 GraphQL 回應裡，爬蟲要讀資料，不能讀畫面文字。",
+    "數字會一直變：23:56 載入時讚 18,961，00:06 再開對話框是 18,965。每筆紀錄要附擷取時間。",
+    "貼文 ID 改存 bigint（照 F12 拍到的 16 碼純數字）：同一批 100 萬列實測，一列 920 → 896 B，一頁可用 8,168 B 放得下第 9 列，表 1,024,000,000 → 910,229,504 B（977 → 868 MB，小 11.1%）。",
+    "byte 數是 100 萬列測試資料的長度。截圖證明的是欄位存在、在哪裡、是什麼型別；這則 NASA 貼文放進同一張表是粉專名稱 53 B、內文 217 B，一列比 920 B 短。"
+   ]
+  }
  },
  "3": {
   "title": "Q3　PTT 八卦板全文搜尋",

@@ -79,6 +79,8 @@ CREATE TABLE IF NOT EXISTS quality_daily (
   computed_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (day, channel)
 );
+-- 被切開的必不可拆詞例子（post_id、詞、是否地名、切法、清洗後原文前後 10 字；每渠道最多 20 筆）；quality.py 的 DDL 也會補這一欄
+ALTER TABLE quality_daily ADD COLUMN IF NOT EXISTS split_examples jsonb;
 CREATE TABLE IF NOT EXISTS dict_releases (
   dict_version text PRIMARY KEY,
   seg_ver bigint NOT NULL,

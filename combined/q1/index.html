@@ -1,0 +1,165 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Q1 顧客反饋整理</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root { --bg: #ffffff; --ink: #1b2330; --mail: #1f5fa8; --mail-bg: #e4eef9; --survey: #2e7d4f; --survey-bg: #e3f2e8; --social: #b4462f; --social-bg: #f9e7e2; --alert: #c62828; --alert-bg: #fdecec; --paper: #fafbfc; --line: #d5dae2; --shadow: rgba(20,30,45,.14); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #12161d; --ink: #e6eaf0; --mail: #8dbcf0; --mail-bg: #1d3046; --survey: #86d0a3; --survey-bg: #1b3326; --social: #f0a08c; --social-bg: #3d2420; --alert: #e5534b; --alert-bg: #3a1c1c; --paper: #1a2029; --line: #333d4b; --shadow: rgba(0,0,0,.5); color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #12161d; --ink: #e6eaf0; --mail: #8dbcf0; --mail-bg: #1d3046; --survey: #86d0a3; --survey-bg: #1b3326; --social: #f0a08c; --social-bg: #3d2420; --alert: #e5534b; --alert-bg: #3a1c1c; --paper: #1a2029; --line: #333d4b; --shadow: rgba(0,0,0,.5); color-scheme: dark; }
+.c-mail { color: var(--mail); } .c-survey { color: var(--survey); } .c-social { color: var(--social); }
+ul.src { list-style: none; padding: 0; margin: 8px 0 4px; display: grid; gap: 6px; }
+ul.src li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; }
+.tag { font-size: 13px; font-weight: 700; padding: 1px 8px; border-radius: 4px; white-space: nowrap; }
+.t-mail { color: var(--mail); background: var(--mail-bg); }
+.t-survey { color: var(--survey); background: var(--survey-bg); }
+.t-social { color: var(--social); background: var(--social-bg); }
+.pollute { display: flex; gap: 10px; align-items: baseline; margin: 8px 0 14px; padding: 10px 12px; border-left: 4px solid var(--alert); background: var(--alert-bg); border-radius: 0 6px 6px 0; }
+.ptag { flex: none; font-size: 13px; font-weight: 700; color: #fff; background: var(--alert); padding: 1px 8px; border-radius: 4px; }
+.disc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+@media (max-width: 560px) { .disc { grid-template-columns: 1fr; } }
+.tile { position: relative; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); padding: 10px 12px 12px; cursor: default; transition: transform .15s, box-shadow .15s, border-color .15s; min-width: 0; }
+.tile::after { content: ""; position: absolute; top: -1px; right: -1px; width: 14px; height: 14px; background: linear-gradient(225deg, var(--bg) 50%, var(--line) 50%); border-bottom-left-radius: 3px; }
+.tile:hover, .tile:focus-visible { transform: translateY(-3px); box-shadow: 0 6px 18px var(--shadow); border-color: var(--ink); outline: none; }
+.tname { font-size: 13px; font-weight: 700; opacity: .7; margin-bottom: 8px; }
+.body { position: relative; height: 96px; }
+.viz, .detail { position: absolute; inset: 0; display: flex; transition: opacity .2s; }
+.viz { flex-direction: column; justify-content: center; gap: 6px; }
+.detail { align-items: center; justify-content: center; text-align: center; font-size: 15px; font-weight: 500; line-height: 1.6; opacity: 0; }
+.tile:hover .viz, .tile:focus-visible .viz { opacity: .08; }
+.tile:hover .detail, .tile:focus-visible .detail { opacity: 1; }
+.cov { display: flex; justify-content: space-between; align-items: center; }
+.cov i { font-style: normal; font-weight: 700; }
+.cov .ok { color: var(--survey); } .cov .no { color: var(--alert); }
+.tile:nth-child(2) .viz { flex-direction: row; align-items: center; justify-content: center; gap: 10px; }
+.tag.big { font-size: 15px; padding: 3px 10px; text-decoration: line-through; }
+.stamp { font-size: 13px; font-weight: 700; color: var(--alert); border: 2px solid var(--alert); border-radius: 4px; padding: 0 6px; transform: rotate(-8deg); }
+.tile:nth-child(3) .viz { align-items: center; }
+.dots { width: 160px; max-width: 100%; height: 80px; background-image: radial-gradient(circle, var(--social) 2.2px, transparent 2.6px); background-size: 8px 8px; }
+.days { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 10px 0 8px; position: relative; }
+@media (max-width: 560px) { .days { grid-template-columns: 1fr; } }
+.day { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dh { position: relative; display: flex; align-items: center; padding-bottom: 6px; border-bottom: 3px solid var(--ink); }
+.day:not(:last-child) .dh::after { content: "▶"; position: absolute; right: -11px; bottom: -11px; font-size: 14px; line-height: 1; color: var(--ink); }
+@media (max-width: 560px) { .day:not(:last-child) .dh::after { display: none; } }
+.dn { font-weight: 700; font-size: 15px; }
+.task { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.task.m { border-left: 4px solid var(--mail); }
+.task.s { border-left: 4px solid var(--survey); }
+.task p { margin: 0; font-size: 14.5px; line-height: 1.55; }
+.task small { font-size: 12.5px; opacity: .7; }
+.strata { display: flex; width: 100%; height: 18px; border-radius: 3px; overflow: hidden; margin-top: 4px; font-size: 11px; line-height: 18px; font-style: normal; }
+.strata i { font-style: normal; text-align: center; white-space: nowrap; overflow: hidden; }
+.strata .old { background: var(--survey); color: var(--bg); }
+.strata .new { background: var(--survey-bg); color: var(--survey); }
+.rank { width: 100%; display: grid; gap: 4px; margin-top: 4px; }
+.rank i { display: block; height: 8px; border-radius: 2px; background: var(--ink); opacity: .55; }
+.rank i:first-child { opacity: .9; }
+.sens { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; }
+.sens .col { flex: 1; display: grid; gap: 3px; text-align: center; }
+.sens .col b { font-size: 11.5px; font-weight: 700; opacity: .75; }
+.sens .col i { font-style: normal; font-size: 12px; font-weight: 700; border: 1px solid var(--line); border-radius: 3px; background: var(--bg); }
+.sens .vs { font-size: 18px; opacity: .7; }
+.why { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 13.5px; line-height: 1.6; }
+.why b { display: inline-block; margin-right: 6px; font-size: 12px; padding: 0 6px; border-radius: 3px; background: var(--ink); color: var(--bg); }
+@media (prefers-reduced-motion: reduce) { .tile, .viz, .detail { transition: none; } .tile:hover, .tile:focus-visible { transform: none; } }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.8;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px;
+}
+main { max-width: 720px; margin: 0 auto; }
+p, ol { margin: 0 0 12px; }
+hr { border: 0; border-top: 1px solid currentColor; opacity: .25; margin: 28px 0; }
+h2 { font-size: 20px; margin: 0 0 12px; }
+</style>
+<main>
+  <p>你被指派整理一批未經整理的顧客反饋資料，來自三個通路。三天後老闆要在董事會上用這份分析，主題是「今年最該優先修的三個產品問題」。你花了半天做完抽樣檢視，發現三個資料問題：</p>
+  <ol>
+    <li>客服信件（約 4 萬封）：純文字，沒有任何結構化欄位，且夾雜大量罐頭回覆、簽名檔、轉寄引文。</li>
+    <li>問卷（約 2,000 份）：只有主動填答者，其中 8 成是購買滿 6 個月以上的老客戶。</li>
+    <li>社群貼文（約 15 萬則）：含大量業配與同一批帳號的洗版內容。</li>
+  </ol>
+  <p>你只有三天，評估後最多只能認真處理其中兩個問題。</p>
+  <p>請回答：</p>
+  <ol>
+    <li>你處理哪兩個、放棄哪一個？</li>
+    <li>被放棄的那個會如何污染最終結論，你會在報告裡怎麼揭露？</li>
+    <li>你的三天怎麼分配，會怎麼處理資料？</li>
+  </ol>
+  <p>上限 400 字。</p>
+  <hr>
+  <h2>答案</h2>
+  <ol>
+    <li><b>處理「<span class="c-mail">客服信件</span>」與「<span class="c-survey">問卷</span>」，放棄「<span class="c-social">社群貼文</span>」。</b>
+      <ul class="src">
+        <li><span class="tag t-mail">客服信件</span>顧客直接描述問題；罐頭回覆、簽名可用模板聚類與規則移除。</li>
+        <li><span class="tag t-survey">問卷</span>只有主動填答者，但有結構化評分，可依購買期間分層。</li>
+        <li><span class="tag t-social">社群貼文</span>業配與洗版需先標註帳號與文本，三天內難以可靠區分；且非本公司顧客的直接反饋。</li>
+      </ul>
+    </li>
+    <li><b>污染與揭露。</b>
+      <div class="pollute"><span class="ptag">污染結論</span><span>結論會偏向已購買、會主動聯絡客服的老客戶，低估潛在客戶與公開抱怨的問題。</span></div>
+      <div class="disc">
+        <div class="tile" tabindex="0">
+          <div class="tname">報告第一頁</div>
+          <div class="body">
+            <div class="viz">
+              <div class="cov"><span class="tag t-mail">客服信件</span><i class="ok">✓</i></div>
+              <div class="cov"><span class="tag t-survey">問卷</span><i class="ok">✓</i></div>
+              <div class="cov"><span class="tag t-social">社群貼文</span><i class="no">✕</i></div>
+            </div>
+            <div class="detail">列出覆蓋範圍與各數字的樣本來源</div>
+          </div>
+        </div>
+        <div class="tile" tabindex="0">
+          <div class="tname">「未涵蓋」一節</div>
+          <div class="body">
+            <div class="viz"><span class="tag t-social big">社群貼文</span><span class="stamp">未納入</span></div>
+            <div class="detail">說明社群沒有納入</div>
+          </div>
+        </div>
+        <div class="tile" tabindex="0">
+          <div class="tname">社群抽樣 200 則</div>
+          <div class="body">
+            <div class="viz"><div class="dots" aria-label="200 則社群貼文"></div></div>
+            <div class="detail">人工定性檢視，只作佐證，不納入計數</div>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li><b>三天分配。</b>
+      <div class="days">
+        <div class="day">
+          <div class="dh"><span class="dn">第一天</span></div>
+          <div class="task m"><span class="tag t-mail">客服信件</span><p>去罐頭回覆、簽名檔與轉寄引文</p><small>規則＋模板聚類</small></div>
+          <div class="task m"><span class="tag t-mail">客服信件</span><p>抽樣 300 則人工標註</p></div>
+          <div class="task s"><span class="tag t-survey">問卷</span><p>依購買期間分層、檢查偏誤</p>
+            <div class="strata"><i class="old" style="flex:8">老客戶 8 成</i><i class="new" style="flex:2">新</i></div>
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh"><span class="dn">第二天</span></div>
+          <div class="task"><p>建立問題分類</p></div>
+          <div class="task"><p>計算各問題的提及數與佔比並排序</p>
+            <div class="rank"><i style="width:100%"></i><i style="width:78%"></i><i style="width:60%"></i><i style="width:40%"></i></div>
+          </div>
+        </div>
+        <div class="day">
+          <div class="dh"><span class="dn">第三天</span></div>
+          <div class="task"><p>敏感度檢查</p><small>排除老客戶後排序是否改變</small>
+            <div class="sens">
+              <div class="col"><b>全部</b><i>A</i><i>B</i><i>C</i></div>
+              <span class="vs">⇄</span>
+              <div class="col"><b>排除老客戶</b><i>?</i><i>?</i><i>?</i></div>
+            </div>
+            <div class="why"><b>理由</b>問卷 8 成是老客戶，結論可能只反映老客戶。排序不變，結論較穩；排序改變，代表結論受老客戶偏誤影響。</div>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ol>
+</main>
+
+</body></html>

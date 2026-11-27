@@ -62,6 +62,8 @@ def img(p, thumb=False):
         if not os.path.exists(t):
             from PIL import Image
             im = Image.open(full).convert("RGB")
+            if "/evidence/f12/fb_f12_" in p:  # F12 shots: the thumbnail shows the DevTools search hit, not the post again
+                im = im.crop(THUMB_BOX.get(p) or (760, im.height - 480, 1400, im.height))
             w = 640
             if im.width > w:
                 im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
@@ -71,6 +73,7 @@ def img(p, thumb=False):
         FILES[tp] = t
         return tp
     return pub
+THUMB_BOX = {"q2/evidence/f12/fb_f12_reactions_dialog_graphql.png": (760, 150, 1400, 630)}  # Network search sidebar
 THUMBS = os.path.join(os.path.dirname(os.path.abspath(a.out)), "thumbs")
 os.makedirs(THUMBS, exist_ok=True)
 
@@ -117,6 +120,7 @@ def platform(p):
     return "doc"
 def kind(p):
     b = os.path.basename(p)
+    if "/evidence/f12/" in p: return "F12 截圖" if b.startswith("fb_f12_") else "登入帳號畫面"  # Q2 per-field chain, 2026-11-04
     if "/evidence/playwright/" in p: return "Playwright 實抓"
     if b == "threads-app-repost-options-menu.png": return "手機 App 截圖"
     if p.startswith("q4/evidence/") or p.startswith("q5/evidence/a-dataflow/"): return "Playwright 實抓"
@@ -145,7 +149,7 @@ if a.cards:
     cards = json.load(open(a.cards, encoding="utf8"))
     for q, c in cards.items():
         Q = D["questions"].setdefault(q, {})
-        for k in ("title", "ask", "factsTitle", "facts", "path", "say", "notes", "verify", "todo", "src"):
+        for k in ("title", "ask", "factsTitle", "facts", "path", "say", "notes", "verify", "todo", "src", "rowmap"):
             if k in c:
                 if c[k] in ("", [], None):
                     Q.pop(k, None)
@@ -158,12 +162,19 @@ if a.cards:
         have = {e["path"] for e in EVID}
         for e in c.get("evidence_all", []):  # images a card cites that no README table lists
             p = e["path"]
-            if p in have or not re.fullmatch(r"q\d/.*", p) or "horizontal-draft" in p:
+            if p in have:  # README already lists it: the card may only add the time and the result line
+                for x in EVID:
+                    if x["path"] == p:
+                        x["at"] = e.get("at") or x["at"]
+                        x["result"] = e.get("result") or x["result"]
+                continue
+            if not re.fullmatch(r"q\d/.*", p) or "horizontal-draft" in p:
                 continue
             m = manifest.get(p, {})
             pf = e.get("platform") if e.get("platform") in PF_LABEL else platform(p)
             EVID.append({"path": p, "q": p[1], "pf": pf, "kind": kind(p), "title": m.get("title", ""), "cap": e["cap"],
-                         "result": m.get("result", ""), "at": (m.get("captured_at") or "")[:16].replace("T", " ")})
+                         "result": e.get("result") or m.get("result", ""),
+                         "at": e.get("at") or (m.get("captured_at") or "")[:16].replace("T", " ")})
             have.add(p)
 else:  # keep current evidence but point at repo files
     OLD = {"q2_fb_post_nasa.png": "q2/evidence/playwright/fb_post_nasa.png", "q2_fb_page_nasa.png": "q2/evidence/playwright/fb_page_nasa.png",
@@ -377,7 +388,8 @@ for e in sorted(EVID, key=lambda e: (pf_order.index(e["pf"]), e["q"], e["path"])
         f'<figure class="ev" data-pf="{e["pf"]}" data-q="{E(e["q"])}"><a href="{E(img(e["path"]))}">'
         f'<img src="{E(img(e["path"], thumb=True))}" alt="{E(e["cap"])}" loading="lazy" decoding="async"></a>'
         f'<figcaption><p class="cap">{E(e["cap"])}</p>{extra}<div class="meta">{meta}</div><code>{E(e["path"])}</code></figcaption></figure>')
-real = sum(1 for e in EVID if e["kind"] == "Playwright 實抓")
+real = sum(1 for e in EVID if e["kind"] in ("Playwright 實抓", "F12 截圖", "登入帳號畫面"))
+f12 = sum(1 for e in EVID if e["kind"] in ("F12 截圖", "登入帳號畫面"))
 
 def ev_card(e):
     meta = f'<span class="qt">Q{E(e["q"])}</span><span>{E(e["kind"])}</span>' + (f'<span>{E(e["at"])}</span>' if e["at"] else "")
@@ -404,6 +416,20 @@ def q_doc(q):
         parts.append(f'<section class="dgrp"><h3>怎麼驗證的</h3>{ul(Q["verify"])}</section>')
     if Q.get("todo"):
         parts.append(f'<section class="dgrp"><h3>還沒驗證的部分</h3><p class="lead">{E(Q["todo"])}</p></section>')
+    if Q.get("rowmap"):
+        R = Q["rowmap"]
+        def shots(xs):
+            return " ".join(f'<a class="shot" href="{E(img(x["path"]))}" title="{E(x["cap"])}">{E(x["label"])}</a>' for x in xs) or "—"
+        rows = "".join(
+            f'<tr><td><b>{E(r["cell"])}</b></td><td class="num">{E(r["bytes"])} B</td><td data-k="在 FB 頁面資料的位置">{E(r["where"])}</td>'
+            f'<td data-k="這則 NASA 貼文的值">{E(r["value"])}</td><td data-k="byte 怎麼來">{E(r["why"])}</td>'
+            f'<td class="shots" data-k="截圖">{shots(r.get("shots", []))}</td></tr>'
+            for r in R["rows"])
+        notes = "".join(f"<li>{E(x)}</li>" for x in R.get("notes", []))
+        parts.append(f'<section class="dgrp"><h3>{E(R["title"])}</h3><p class="lead">{E(R["lead"])}</p>'
+                     f'<div class="scroll"><table class="tbl rowmap"><thead><tr><th>一列裡的格子</th><th>大小</th><th>在 FB 頁面資料的位置</th>'
+                     f'<th>這則 NASA 貼文的值</th><th>byte 怎麼來</th><th>截圖</th></tr></thead><tbody>{rows}</tbody></table></div>'
+                     + (f'<ul class="qlist">{notes}</ul>' if notes else "") + '</section>')
     evs = sorted((e for e in EVID if e["q"] == q), key=lambda e: (pf_order.index(e["pf"]), e["path"]))
     if evs:
         parts.append(f'<section class="dgrp"><h3>佐證 <b>{len(evs)}</b> 張</h3><div class="gal">{"".join(ev_card(e) for e in evs)}</div></section>')
@@ -418,7 +444,7 @@ st_table = (f'<section class="dgrp"><h3>程式與基礎設施驗證</h3><div cla
 fbtn = lambda attr, val, lab, on=False: f'<button type="button" data-{attr}="{val}" aria-pressed="{"true" if on else "false"}">{E(lab)}</button>'
 ev_html = f'''<div class="doc-in">
   <div class="doc-h"><h2>佐證總覽</h2>
-  <p>總架構每個說法背後的截圖、圖表與架構圖，一共 {len(EVID)} 張，其中 {real} 張是 Playwright 或瀏覽器實抓（全部未登入、不存 cookie 或 token；FB、IG、Threads 截圖裡非公眾人物的姓名、ID、電話已遮，PTT 帳號屬公開資料，大多沒有遮；ptt_article_comments.png 是遮掉帳號與 IP 的重拍版）。點圖看原尺寸。</p></div>
+  <p>總架構每個說法背後的截圖、圖表與架構圖，一共 {len(EVID)} 張，其中 {real} 張是 Playwright 或瀏覽器實抓（{f"Q2 的 {f12} 張 F12 與畫面截圖用登入帳號開一則公開貼文，只讀、不存 cookie 或 token，帳號頭像與名稱已模糊；其餘" if f12 else ""}全部未登入、不存 cookie 或 token；FB、IG、Threads 截圖裡非公眾人物的姓名、ID、電話已遮，PTT 帳號屬公開資料，大多沒有遮；ptt_article_comments.png 是遮掉帳號與 IP 的重拍版）。點圖看原尺寸。</p></div>
   {st_table}
   <div class="fbars">
     <div class="fbar" role="group" aria-label="依平台" data-group="pf">{fbtn("f", "all", "全部", True)}{"".join(fbtn("f", p, f"{PF_LABEL[p]} {pf_count[p]}") for p in pf_order if pf_count[p])}</div>

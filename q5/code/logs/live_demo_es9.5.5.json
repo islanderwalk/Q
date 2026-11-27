@@ -1,0 +1,104 @@
+{
+ "stages": [
+  {
+   "stage": "setup",
+   "code": "FIELDS = (\"repost_count\", \"quote_count\", \"reshare_count\")\nrequests.put(f\"{ES}/{IDX}\", json={\n    \"settings\": {\"number_of_shards\": 1, \"number_of_replicas\": 0},\n    \"mappings\": {\"dynamic\": \"strict\", \"properties\": {\n        \"post_id\": {\"type\": \"keyword\"},\n        \"text_post_app_info\": {\"properties\": {f: {\"type\": \"long\"} for f in FIELDS}},\n        \"counts_at\": {\"properties\": {f: {\"type\": \"date\", \"format\": \"epoch_millis\"} for f in FIELDS}}}}})\nr = requests.put(f\"{ES}/{IDX}/_doc/DfsCg3vpUH6?refresh=true\", json={\"post_id\": \"DfsCg3vpUH6\"})",
+   "status": 201,
+   "resp": {
+    "_index": "q5live-threads",
+    "_id": "DfsCg3vpUH6",
+    "_version": 1,
+    "result": "created",
+    "forced_refresh": true,
+    "_shards": {
+     "total": 1,
+     "successful": 1,
+     "failed": 0
+    },
+    "_seq_no": 0,
+    "_primary_term": 1
+   },
+   "res": null,
+   "now": 1794806756427,
+   "HIST": 1794268800000
+  },
+  {
+   "stage": "crawl",
+   "code": "def crawl_write(post_id, j, at):            # j＝頁面內嵌 JSON 的 text_post_app_info\n    fields = (\"repost_count\", \"quote_count\", \"reshare_count\")\n    return requests.post(f\"{ES}/{IDX}/_update/{post_id}?refresh=true\", json={\n        \"doc\": {\"post_id\": post_id,\n                \"text_post_app_info\": {f: j[f] for f in fields},   # 整數照寫，null 保留成 null\n                \"counts_at\": {f: at for f in fields}},             # 每欄附抓取時間（epoch 毫秒）\n        \"doc_as_upsert\": True})\n\ncrawl_write(\"DfsCgPwpdE3\", {\"repost_count\": 12, \"quote_count\": 1, \"reshare_count\": 5}, now)\nr = crawl_write(\"Dfk_SPpH-sH\", {\"repost_count\": 1, \"quote_count\": 0, \"reshare_count\": None}, now)",
+   "status": 201,
+   "resp": {
+    "_index": "q5live-threads",
+    "_id": "Dfk_SPpH-sH",
+    "_version": 1,
+    "result": "created",
+    "forced_refresh": true,
+    "_shards": {
+     "total": 1,
+     "successful": 1,
+     "failed": 0
+    },
+    "_seq_no": 2,
+    "_primary_term": 1
+   },
+   "res": null,
+   "now": 1794806756427,
+   "HIST": 1794268800000
+  },
+  {
+   "stage": "backfill",
+   "code": "history = {  # GCS 歷史抓取（示範資料），每欄已取「有值的最新一次」\n    \"DfsCgPwpdE3\": {\"repost_count\": 9, \"quote_count\": 1, \"reshare_count\": 3},   # 線上更新 → 不該被蓋\n    \"DfsCg3vpUH6\": {\"repost_count\": 1, \"quote_count\": 0, \"reshare_count\": 14},  # 線上還空 → 補齊\n}\ndef backfill(post_id, values):\n    return requests.post(f\"{ES}/{IDX}/_update/{post_id}?refresh=true\", json={\"script\": {\n        \"lang\": \"painless\", \"source\": GUARD_SCRIPT,      # 逐欄：線上時間戳較舊或沒有才寫\n        \"params\": {\"obj\": \"text_post_app_info\", \"values\": values,\n                   \"at\": {f: HIST for f in values}}}})\n\nres = {pid: backfill(pid, v).json()[\"result\"] for pid, v in history.items()}\nr = requests.get(f\"{ES}/{IDX}/_doc/DfsCg3vpUH6\")",
+   "status": 200,
+   "resp": {
+    "_index": "q5live-threads",
+    "_id": "DfsCg3vpUH6",
+    "_version": 2,
+    "_seq_no": 3,
+    "_primary_term": 1,
+    "found": true,
+    "_source": {
+     "post_id": "DfsCg3vpUH6",
+     "text_post_app_info": {
+      "repost_count": 1,
+      "reshare_count": 14,
+      "quote_count": 0
+     },
+     "counts_at": {
+      "repost_count": 1794268800000,
+      "reshare_count": 1794268800000,
+      "quote_count": 1794268800000
+     }
+    }
+   },
+   "res": {
+    "DfsCgPwpdE3": "noop",
+    "DfsCg3vpUH6": "updated"
+   },
+   "now": 1794806756427,
+   "HIST": 1794268800000
+  },
+  {
+   "stage": "rerun",
+   "code": "res = {pid: backfill(pid, v).json()[\"result\"] for pid, v in history.items()}   # 同一批再送一次\nr = requests.post(f\"{ES}/{IDX}/_update/DfsCg3vpUH6\", json={\"script\": {\n    \"lang\": \"painless\", \"source\": GUARD_SCRIPT,\n    \"params\": {\"obj\": \"text_post_app_info\", \"values\": history[\"DfsCg3vpUH6\"],\n               \"at\": {f: HIST for f in history[\"DfsCg3vpUH6\"]}}}})",
+   "status": 200,
+   "resp": {
+    "_index": "q5live-threads",
+    "_id": "DfsCg3vpUH6",
+    "_version": 2,
+    "result": "noop",
+    "_shards": {
+     "total": 0,
+     "successful": 0,
+     "failed": 0
+    },
+    "_seq_no": 3,
+    "_primary_term": 1
+   },
+   "res": {
+    "DfsCgPwpdE3": "noop",
+    "DfsCg3vpUH6": "noop"
+   },
+   "now": 1794806756427,
+   "HIST": 1794268800000
+  }
+ ]
+}

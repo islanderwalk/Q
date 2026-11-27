@@ -1,5 +1,5 @@
 """P0 監控測試共用的對應元件。本機沒有 prometheus_client 時才安裝最小對應元件（只支援 Counter／Gauge／Histogram 的 labels、inc、set、observe），
-有裝 prometheus_client 就用它。讀數一律走 metric.labels(...)._value.get()，兩種實作都成立。
+有裝 prometheus_client 就用它。讀數一律走 metric.labels(...)._value.get()（Histogram 的總和走 ._sum.get()），兩種實作都成立。
 不碰網路、不碰 GCP、不碰 ES；ES 用測試內的假物件。"""
 import sys
 import types
@@ -25,6 +25,7 @@ class _Val:
 class _Child:
     def __init__(self):
         self._value = _Val()
+        self._sum = self._value      # Histogram 的觀察值總和（prometheus_client 本體 讀 ._sum.get()）；對應元件的 observe 本來就是累加
 
     def inc(self, amount=1):
         self._value.v += amount
@@ -99,3 +100,60 @@ def has_series(metric, *labels) -> bool:
 def read_text(path: Path) -> str:
     """讀文字檔（UTF-8），統一成 LF 方便比對。"""
     return path.read_bytes().decode("utf-8").replace("\r\n", "\n")
+
+
+class FakeLedger:
+    """記憶體版回補帳本（qseg.ledger.Ledger 的假物件）：記下每一次寫入，給 job 的測試檢查。不連 ES。"""
+
+    def __init__(self, url="http://fake-es:9200", index="backfill_ledger", rows=None, passed=False, running=1):
+        self.url, self.index = url, index
+        self.rows = {k: dict(v) for k, v in (rows or {}).items()}
+        self.calls = []
+        self.passed, self.running = passed, running
+
+    def ensure_index(self):
+        return True
+
+    def refresh(self):
+        pass
+
+    def set(self, pid, fields, refresh=False):
+        self.calls.append(("set", pid, dict(fields)))
+        self.rows.setdefault(pid, {}).update(fields)
+
+    def progress(self, pid, checkpoint_line, written=0, noop=0, errors=0, now=None):
+        self.calls.append(("progress", pid, checkpoint_line, written, noop, errors))
+
+    def heartbeat(self, pid):
+        self.calls.append(("heartbeat", pid))
+        return True
+
+    def channel_has_passed(self, channel):
+        return self.passed
+
+    def running_count(self, fresh_sec=30):
+        return self.running
+
+    def create_many(self, docs):
+        res = {"created": 0, "exists": 0}
+        for d in docs:
+            if d["partition_id"] in self.rows:
+                res["exists"] += 1
+            else:
+                self.rows[d["partition_id"]] = dict(d)
+                res["created"] += 1
+        self.calls.append(("create_many", [d["partition_id"] for d in docs]))
+        return res
+
+    def exhaust(self, max_attempts, stale_sec=120):
+        return []
+
+    def claim(self, max_attempts, worker, stale_sec=120, partition_id=None):
+        self.calls.append(("claim", max_attempts, worker, partition_id))
+        return None
+
+    def sets(self, pid):
+        return [c[2] for c in self.calls if c[0] == "set" and c[1] == pid]
+
+    def checkpoints(self, pid):
+        return [c[2] for c in self.calls if c[0] == "progress" and c[1] == pid]

@@ -224,6 +224,8 @@ def human_bytes(n):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # 繁中 Windows 的 cp950 印不出 ≥、≈，導向檔案時會中斷
+        sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="QSearch 第 3 題：PTT 八卦板規模量測")
     ap.add_argument("--board", default="Gossiping")
     ap.add_argument("--days", type=float, default=7, help="往回爬幾天的列表")

@@ -117,8 +117,10 @@ resource "google_cloud_run_v2_service" "parser" {
 }
 
 # 回補（Q5 指標回補、Q6 斷詞回朔）：Cloud Run Job，跑完即結束，沒有 HTTP 入口。雙層 template.template 是 provider 結構（文件確認）。
-# Q6 依「渠道 × 月」約 270 批：task_count = 批數，每個 task 以 CLOUD_RUN_TASK_INDEX 選自己的批次；
-# parallelism 限制同時寫入 Elasticsearch 的 task 數，保護線上查詢。預設 1/1，實際跑時以變數覆寫。
+# Q6 依「渠道 × 月」約 270 批，批次清單在 Cloud SQL 帳本（backfill_ledger），先跑一次 `job --plan` 從 BigQuery 建好（每批一列 pending）。
+# task_count／parallelism 是同時開幾個 worker，不是批數：每個 task 反覆從帳本 FOR UPDATE SKIP LOCKED 領下一批，領不到才結束；
+# CLOUD_RUN_TASK_INDEX 只用來在日誌標出是哪個 task。parallelism 限制同時寫入 Elasticsearch 的 task 數，保護線上查詢。預設 1/1，實際跑時以變數覆寫。
+# 建帳本：gcloud run jobs execute qsearch-backfill --region=<region> --tasks=1 --args=job,--plan
 resource "google_cloud_run_v2_job" "qsearch_backfill" {
   name                = "qsearch-backfill"
   location            = var.region
@@ -141,6 +143,18 @@ resource "google_cloud_run_v2_job" "qsearch_backfill" {
       }
       containers {
         image = var.image_backfill
+        # Q6 斷詞回補：設了 var.q6_raw_bq_table 才改讀 BigQuery 原文（q6/stack/seg/qseg/rawsrc.py）；Q5 回補不看這幾個變數
+        dynamic "env" {
+          for_each = var.q6_raw_bq_table == "" ? {} : {
+            RAW_SOURCE     = "bigquery"
+            RAW_BQ_TABLE   = var.q6_raw_bq_table
+            RAW_BQ_PROJECT = var.project_id
+          }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
       }
     }
   }

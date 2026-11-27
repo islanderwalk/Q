@@ -1,6 +1,7 @@
 """即時操作（PM 頁資料工程端）的純函式測試：不需要 ES／PostgreSQL／Pub/Sub。
 執行：PYTHONDONTWRITEBYTECODE=1 pytest -p no:cacheprovider q6/stack/tests"""
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -10,10 +11,12 @@ import pytest
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "api"))
 sys.path.insert(0, str(HERE.parent / "scripts"))
+sys.path.insert(0, str(HERE.parent / "seg" / "qseg"))
 
 import collector  # noqa: E402
 import ops  # noqa: E402
 import prepare_raw  # noqa: E402
+import ledger  # noqa: E402
 
 FILES = ("base.dict", "user.dict", "stopwords.txt", "soft_stopwords.txt", "merges.tsv", "synonyms.txt", "ik_ext.dic", "ik_stop.dic")
 
@@ -153,6 +156,91 @@ def test_lake_writes_real_months_only_and_dedupes(tmp_path):
     assert stats["partitions"] == 1 and (tmp_path / "raw" / "_manifest.json").exists()
 
 
+def test_prepare_raw_iso_time_needs_a_timezone():
+    assert prepare_raw.iso_time("2024-05-03T21:15:00+08:00").isoformat() == "2024-05-03T21:15:00+08:00"
+    assert prepare_raw.iso_time("2026-11-02T18:58:43.538+08:00").isoformat(timespec="seconds") == "2026-11-02T18:58:43+08:00"
+    assert prepare_raw.iso_time("2024-04-30T16:30:00Z").isoformat() == "2024-05-01T00:30:00+08:00", "換成台灣時間再算月份"
+    assert prepare_raw.iso_time("2024-05-03T21:15:00") is None, "沒帶時區不猜"
+    assert prepare_raw.iso_time("") is None and prepare_raw.iso_time(None) is None and prepare_raw.iso_time("昨天") is None
+
+
+def test_prepare_raw_meta_post_id_matches_the_bridge():
+    assert prepare_raw.meta_post_id("instagram", "in-DXmSYkXGOI9") == "ig-DXmSYkXGOI9"
+    assert prepare_raw.meta_post_id("facebook", "fa-123") == "fb-123"
+    assert prepare_raw.meta_post_id("threads", "th-C9x") == "C9x"
+    assert prepare_raw.meta_post_id("instagram", "ig-already") == "ig-already" and prepare_raw.meta_post_id("ptt", "x") == "x"
+
+
+def _write_jsonl(path: Path, rows, tail=""):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows) + tail, encoding="utf-8")
+
+
+def test_prepare_raw_crawl_uses_bridge_ids_keeps_closed_months_and_extra_wins(tmp_path):
+    crawl, t = tmp_path / "crawl", "2024-05-03T21:15:00+08:00"
+    _write_jsonl(crawl / "ptt" / "lists" / "Stock.jsonl", [
+        {"board": "Stock", "url": "https://www.ptt.cc/bbs/Stock/M.1714742100.A.1B2.html", "title": "[標的] 台積電", "author": "abc",
+         "published_at": t, "fetched_at": "2026-11-02T18:58:43.538+08:00"},
+        {"board": "Stock", "url": "https://www.ptt.cc/bbs/Stock/M.1793264859.A.8CF.html", "title": "還在進文章的月份", "published_at": "2026-10-29T17:07:39+08:00"},
+        {"board": "Stock", "url": "https://www.ptt.cc/bbs/Stock/index.html", "title": "沒有文章代碼", "published_at": t},
+        {"board": "Stock", "url": "https://www.ptt.cc/bbs/Stock/M.1714742200.A.1B3.html", "title": "沒有發文時間", "published_at": None},
+    ], tail='{"board": "Stock", "url": "https://www.ptt.cc/bbs/Stock/M.17')          # 爬蟲正在寫的半行
+    _write_jsonl(crawl / "youtube" / "out" / "videos.jsonl", [
+        {"post_id": "yt-K7IBteSskis", "channel": "youtube", "video_id": "K7IBteSskis", "source": "TVBS NEWS", "url": "https://www.youtube.com/watch?v=K7IBteSskis",
+         "title": "AI 時代", "text": "安全感有時比恐懼更危險", "published_at": t}])
+    for ch, pid in (("facebook", "fa-1"), ("instagram", "in-AAA"), ("threads", "th-X9")):
+        _write_jsonl(crawl / "metalogin" / "deep" / "clean" / f"{ch}.jsonl", [
+            {"post_id": pid, "channel": ch, "sub_type": "post", "source": "@x", "author": "x", "url": None, "published_at": t, "text": f" 爬蟲的 {ch} "},
+            {"post_id": pid + "-empty", "channel": ch, "published_at": t, "text": ""}])
+    extra = tmp_path / "es_export.jsonl"
+    _write_jsonl(extra, [{"post_id": "ig-AAA", "channel": "instagram", "sub_type": "post", "source": "@x", "published_at": t, "content": "ES 裡已經有的版本"}])
+    out = tmp_path / "raw"
+    assert prepare_raw.main(["--out", str(out), "--titles", "", "--extra", str(extra), "--crawl", str(crawl), "--since", "2023-01", "--until", "2026-09"]) == 0
+
+    def rows(ch):
+        return [json.loads(l) for l in (out / ch / "2024-05.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert sorted(p.relative_to(out).as_posix() for p in out.glob("*/*.jsonl")) == [f"{c}/2024-05.jsonl" for c in ("facebook", "instagram", "ptt", "threads", "youtube")]
+    ptt = rows("ptt")
+    assert [(r["post_id"], r["source"], r["sub_type"], r["text"], r["author"], r["fetched_at"]) for r in ptt] == [
+        ("ptt-M.1714742100.A.1B2", "Stock", "article", "[標的] 台積電", "abc", "2026-11-02T18:58:43.538+08:00")]
+    yt = rows("youtube")[0]
+    assert (yt["post_id"], yt["sub_type"], yt["source"], yt["text"]) == ("K7IBteSskis", "video", "TVBS NEWS", "AI 時代\n安全感有時比恐懼更危險")
+    assert [(r["post_id"], r["text"]) for r in rows("facebook")] == [("fb-1", "爬蟲的 facebook")]
+    assert [(r["post_id"], r["text"]) for r in rows("threads")] == [("X9", "爬蟲的 threads")]
+    assert [(r["post_id"], r["text"]) for r in rows("instagram")] == [("ig-AAA", "ES 裡已經有的版本")], "同一個 post_id：ES 既有的版本先到先贏"
+    man = json.loads((out / "_manifest.json").read_text(encoding="utf-8"))
+    s = next(v for k, v in man["sources"].items() if "ptt/lists" in k)
+    assert (s["rows"], s["kept"], s["after_until"], s["bad_format"], s["no_time"]) == (5, 1, 1, 2, 1)
+    assert man["docs"] == 5 and man["until"] == "2026-09" and man["by_month"]["instagram/2024-05"] == 1
+    assert next(v for k, v in man["sources"].items() if "instagram.jsonl" in k)["dup"] == 1
+
+
+def test_prepare_raw_full_text_beats_title_only_and_corpus_fetch_time_is_the_file_time(tmp_path):
+    import os
+    titles, extra, out = tmp_path / "titles.jsonl", tmp_path / "es_export.jsonl", tmp_path / "raw"
+    _write_jsonl(titles, [{"doc_id": "M.1714742100.A.1B2", "text": "只有標題"}, {"doc_id": "M.1714742200.A.1B3", "text": "只在標題檔"}])
+    os.utime(titles, (1793000000, 1793000000))            # 假裝這個檔是 2026-10-26 下載的
+    _write_jsonl(extra, [{"post_id": "ptt-M.1714742100.A.1B2", "channel": "ptt", "sub_type": "article", "source": "Gossiping",
+                          "published_at": "2024-05-03T21:15:00+08:00", "fetched_at": "2026-10-31T01:34:01+08:00", "content": "標題\n有全文的版本"}])
+    assert prepare_raw.main(["--out", str(out), "--titles", str(titles), "--extra", str(extra), "--since", "2023-01", "--until", "2026-09"]) == 0
+    got = {r["post_id"]: r for r in (json.loads(l) for l in (out / "ptt" / "2024-05.jsonl").read_text(encoding="utf-8").splitlines())}
+    assert got["ptt-M.1714742100.A.1B2"]["text"] == "標題\n有全文的版本", "同一篇：有全文的贏過只有標題的"
+    assert got["ptt-M.1714742100.A.1B2"]["fetched_at"] == "2026-10-31T01:34:01+08:00", "自己抓的文章保留原本的抓取時間"
+    assert got["ptt-M.1714742200.A.1B3"]["fetched_at"] == "2026-10-26T15:33:20+08:00", "下載的語料：抓取時間 = 檔案下載時間，不是建檔當下"
+
+
+def test_prepare_raw_keeps_one_post_per_line_when_text_has_unicode_line_separators(tmp_path):
+    """內文有 U+2028 / U+2029 / U+0085 時，原文檔仍是一行一篇（seed 與回補用 splitlines() 讀檔），讀回來內文不變。"""
+    extra, out = tmp_path / "es_export.jsonl", tmp_path / "raw"
+    text = "第一段 第二段 第三段\u0085結尾"
+    _write_jsonl(extra, [{"post_id": "ig-AAA", "channel": "instagram", "sub_type": "post", "source": "someone",
+                          "published_at": "2024-05-03T21:15:00+08:00", "fetched_at": "2026-10-31T01:34:01+08:00", "content": text}])
+    assert prepare_raw.main(["--out", str(out), "--titles", "", "--extra", str(extra), "--since", "2023-01", "--until", "2026-09"]) == 0
+    lines = (out / "instagram" / "2024-05.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1, "特殊換行字元不可以把一篇切成好幾行"
+    assert json.loads(lines[0])["text"] == text, "讀回來的內文一模一樣"
+
+
 # ---------- 採集器：feed 解析 ----------
 ATOM_PTT = """<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>Gossiping</title>
 <entry><id>https://www.ptt.cc/bbs/Gossiping/M.1761900000.A.ABC.html</id><title>[問卦] 颱風假怎麼放</title>
@@ -208,3 +296,25 @@ def test_feeds_json_is_well_formed():
     names = [f["name"] for f in spec["feeds"]]
     assert len(names) == len(set(names)) and all(f["channel"] in ops.CHANNELS and f["url"].startswith("https://") for f in spec["feeds"])
     assert all("Cookie" not in (f.get("headers") or {}) or f["name"] == "ptt/Gossiping" for f in spec["feeds"]), "只有八卦板帶年齡同意標頭"
+
+
+# ---------- 回補豁免：首月不能靠豁免跳過 PM 簽核 ----------
+def test_waive_first_month_still_waits_for_pm_in_both_entry_points():
+    """命令列（qseg approve --waive）與 PM 頁（/api/ops/approve）都走 ledger.waive_plan，這裡直接測那個純函式：
+    G4 還沒簽，或該渠道還沒有任何分區 passed，豁免後是 awaiting_pm 而不是 passed。
+    G1–G3 還有別的閘門沒過又沒豁免，豁免後仍是 failed（不能豁免一個就整批放行）。"""
+    w = {"waived_by": "PM", "waived_at": "2026-11-14T00:00:00Z", "note": "逐篇看過"}
+    g4 = {"G4": {"pass": True, "approved_by": "PM"}}
+    assert ledger.waive_plan({"G2": {"pass": False}}, "G2", w, True)[0] == "awaiting_pm"           # 沒有 G4 紀錄
+    assert ledger.waive_plan({"G2": {"pass": False}, **g4}, "G2", w, False)[0] == "awaiting_pm"    # 渠道還沒有 passed
+    assert ledger.waive_plan({"G2": {"pass": False}, **g4}, "G2", w, True)[0] == "passed"
+    assert ledger.waive_plan({"G1": {"pass": False}, "G2": {"pass": False}, **g4}, "G2", w, True)[0] == "failed"   # G1 沒過又沒豁免
+    assert ledger.waive_plan({"G1": {"pass": False, "waiver": w}, "G2": {"pass": False}, **g4}, "G2", w, True)[0] == "passed"
+    _, gates = ledger.waive_plan({"G2": {"pass": False}}, "G2", w, True)
+    assert gates["G2"]["waiver"] == w and gates["G2"]["pass"] is False
+    # 兩個入口都改走帳本模組，舊的 SQL 不能留著
+    job = (HERE.parent / "seg" / "qseg" / "job.py").read_text(encoding="utf-8")
+    api = (HERE.parent / "api" / "app.py").read_text(encoding="utf-8")
+    assert "led.waive(a.partition, a.waive" in job and "LED.waive(partition, waive" in api
+    assert "led.approve(a.partition, g4)" in job and "LED.approve(partition, g4)" in api
+    assert "WAIVE_SQL" not in job and "UPDATE backfill_ledger" not in api and "FROM backfill_ledger" not in api

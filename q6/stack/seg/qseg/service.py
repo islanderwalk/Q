@@ -4,7 +4,7 @@
 v2 服務另外訂閱字典發版主題（control.py）：收到發版訊息就重載字典、定向重跑；之後的串流訊息立刻用新版字典；
 每台另外輪詢 current/manifest.json 收斂。目前載入的字典版本與心跳寫在 PostgreSQL service_state，PM 頁會顯示。
 串流也走 segment_checked（必不可拆的詞被切開就計數 qseg_must_keep_split_total）；訊息屬性 action=delete 是刪文（只寫 deleted_at），
-edited=1 是改文（content_sha 不同，seg_guard 會重寫本體與詞表）。"""
+edited=1 是改文（collector 已先把新原文寫進 ES；seg_guard 看 seg_sha 和上次斷的原文不同，同一版也會重寫詞表）。"""
 import json
 import queue
 import threading
@@ -85,7 +85,7 @@ def run():
                 terms, bad = segment_checked(dic, post["channel"], post.get("text", ""))
                 for w in bad:
                     metrics.SPLIT.labels(dic.pipeline, post.get("channel", "")).inc()
-                items.append((post["post_id"], base_doc(post), seg_fields(dic, terms), dic.pipeline))
+                items.append((post["post_id"], base_doc(post), seg_fields(dic, terms, post.get("text", "")), dic.pipeline))
                 ok_msgs.append(m)
             except Exception as e:  # 壞訊息：nack 讓它進 DLQ（GCP 上由訂閱的 dead_letter_policy 決定）
                 log("bad_message", "ERROR", error=str(e)[:200])

@@ -1,0 +1,70 @@
+{
+ "board": "Gossiping",
+ "index_full_page": 38958,
+ "index_full_slots": 20,
+ "index_full_deleted_slots": 1,
+ "article_pushes_nrec": "45",
+ "files": {
+  "index_newest.html": {
+   "url": "https://www.ptt.cc/bbs/Gossiping/index.html",
+   "final_url": "https://www.ptt.cc/bbs/Gossiping/index.html",
+   "status": 200,
+   "bytes": 14061,
+   "cookie_over18": true,
+   "redirects": [],
+   "fetched_at": "2026-11-03T20:30:54+08:00"
+  },
+  "index_full.html": {
+   "url": "https://www.ptt.cc/bbs/Gossiping/index38958.html",
+   "final_url": "https://www.ptt.cc/bbs/Gossiping/index38958.html",
+   "status": 200,
+   "bytes": 22905,
+   "cookie_over18": true,
+   "redirects": [],
+   "fetched_at": "2026-11-03T20:33:19+08:00"
+  },
+  "article_pushes.html": {
+   "url": "https://www.ptt.cc/bbs/Gossiping/M.1793703227.A.462.html",
+   "final_url": "https://www.ptt.cc/bbs/Gossiping/M.1793703227.A.462.html",
+   "status": 200,
+   "bytes": 28006,
+   "cookie_over18": true,
+   "redirects": [],
+   "fetched_at": "2026-11-03T20:33:22+08:00"
+  },
+  "article_404.html": {
+   "url": "https://www.ptt.cc/bbs/Gossiping/M.1792887225.A.5F3.html",
+   "final_url": "https://www.ptt.cc/bbs/Gossiping/M.1792887225.A.5F3.html",
+   "status": 404,
+   "bytes": 2789,
+   "cookie_over18": true,
+   "redirects": [],
+   "fetched_at": "2026-11-03T20:31:02+08:00"
+  },
+  "over18.html": {
+   "url": "https://www.ptt.cc/ask/over18?from=%2Fbbs%2FGossiping%2Findex.html",
+   "final_url": "https://www.ptt.cc/ask/over18?from=%2Fbbs%2FGossiping%2Findex.html",
+   "status": 200,
+   "bytes": 3801,
+   "cookie_over18": false,
+   "redirects": [],
+   "fetched_at": "2026-11-03T20:32:19+08:00"
+  }
+ },
+ "index_without_cookie": {
+  "url": "https://www.ptt.cc/bbs/Gossiping/index.html",
+  "final_url": "https://www.ptt.cc/bbs/Gossiping/index.html",
+  "status": 200,
+  "redirects": [],
+  "fetched_at": "2026-11-03T20:30:50+08:00",
+  "note": "no redirect to /ask/over18 observed at fetch time"
+ },
+ "over18_post": {
+  "url": "https://www.ptt.cc/ask/over18",
+  "method": "POST",
+  "status": 302,
+  "location": "/bbs/Gossiping/index.html",
+  "set_cookie": "over18=1; Path=/",
+  "fetched_at": "2026-11-03T20:32:23+08:00"
+ }
+}

@@ -52,7 +52,7 @@
 
 | 檔案 | 佐證什麼 |
 |---|---|
-| [`chart-spec-cost.png`](answer/3-cost/chart-spec-cost.png) | 規格 1 每天 960 次、規格 2 每天 5,340 次，相差 5.6 倍 |
+| [`chart-spec-cost.png`](answer/3-cost/chart-spec-cost.png) | 規格 1 每天 938 次（首抓 890＋列表 48）、規格 2 每天 5,340 次，相差 5.7 倍 |
 | [`chart-comment-arrival.png`](answer/3-cost/chart-comment-arrival.png) | 留言 92.5% 在 6 小時內、99.3% 在 24 小時內進來，規格 2 的成本集中在幾乎沒有新留言的時段 |
 
 ## 4. 不變量 — [`q3/answer/4-invariant/`](answer/4-invariant)
@@ -72,8 +72,8 @@
 | 檔案 | 佐證什麼 |
 |---|---|
 | [`chart-crawl-stats.png`](answer/5-not-monitored/chart-crawl-stats.png) | 6,237 篇最後狀態都是 200／404（0 篇失敗），另有約 10 篇推測是第一次請求失敗、退避 5 秒後重試成功；回應時間 P95 0.45 秒：單次請求的延遲與失敗不值得告警 |
-| [`ptt-deleted-404.png`](answer/5-not-monitored/ptt-deleted-404.png) | 快照時還在、隔天變 404 的文章（7 天內 0.2%）：每天重抓時標記即可 |
-| [`ptt-truncated-article.png`](answer/5-not-monitored/ptt-truncated-article.png) | 網頁版「檔案過大」截斷留言（6,224 篇中 2 篇）：已知且接受的風險 |
+| [`ptt-deleted-404.png`](answer/5-not-monitored/ptt-deleted-404.png) | 快照時還在、隔天變 404 的文章（7 天內 0.2%）：每天重抓時標記，最多晚 1 天下架；整批 404 過多在寫入前擋下 |
+| [`ptt-truncated-article.png`](answer/5-not-monitored/ptt-truncated-article.png) | 網頁版「檔案過大」截斷留言（6,224 篇中 2 篇）：網頁版本身拿不到，告警也無從處理 |
 
 ## 6. 規格修改 — [`q3/answer/6-spec-change/`](answer/6-spec-change)
 
@@ -105,6 +105,20 @@
 | [`ptt_live_invariants.png`](evidence/playwright/ptt_live_invariants.png) | 實測 10 頁：篇數不是 20 的頁有 0 頁；文章 ID 時間戳倒退 0 次（共 197 篇） |
 | [`ptt_article_top.png`](evidence/playwright/ptt_article_top.png) | 文章網址帶發文時間（`M.{unix}.A.{hex}`），留言與內文在同一頁；這篇留言 203 則 |
 | [`ptt_article_comments.png`](evidence/playwright/ptt_article_comments.png) | 每則留言都有推噓、帳號、內容、IP 與時間，parser 依這些欄位拆成資料列。這張是 10/30 20:29（+08）重拍、遮掉帳號與 IP 的版本，留言 261 則：推 150、噓 10、→ 101（同一篇在 01:51 拍 `ptt_article_top.png` 時是 203 則：推 108、噓 7、→ 88） |
+
+## F12 Network 截圖 — [`q3/evidence/f12/`](evidence/f12)
+
+用瀏覽器開發者工具（F12 → Network）觀察 over18 確認頁、最新頁與置底分隔線、填滿的列表頁 20 格、文章頁、刪文 404、翻頁，共 7 張。每張對應哪個爬蟲設計，見 [`evidence/f12/README.md`](evidence/f12/README.md)；同一批頁面的原始 HTML 是 pipeline 解析測試的資料。
+
+---
+
+## 可以直接跑的 pipeline — [`q3/pipeline/`](pipeline)
+
+照第 2 題的架構寫成的程式：每小時一輪的排程、單 worker 每秒最多 1 次的抓取、原始 HTML 存 GCS、MERGE 進 BigQuery、查詢 API 與搜尋頁、每日不變量檢查、Prometheus 告警與 Q3 專用的 Grafana 看板。GCP 服務換成本機容器，`docker compose up -d --build` 就能跑，不花錢。
+
+停機或抓取失敗後怎麼自動回補、寫壞時怎麼自動 rollback（每批寫入前的品質檢查、每批的 before-image、整輪的回歸檢查），以及 6 個故障注入的端到端測試，見 [`pipeline/README.md`](pipeline/README.md)。
+
+在本機常駐運行時拍的 Q3 看板、搜尋頁與告警截圖（常駐運行、第一次回補、兩層故障演練、模擬器重啟後的搜尋）在 [`evidence/grafana/`](evidence/grafana)，每組怎麼看見 [`evidence/grafana/README.md`](evidence/grafana/README.md)。
 
 ---
 

@@ -21,7 +21,7 @@ renderDiagram({
     { id: 'parts', x: 20, y: 256, w: 220, tag: '排程', title: '分區清單', sub: '渠道 × 月 ≈ 270 批；由新到舊；大分區切 slice' },
     { id: 'raw', x: 275, y: 256, w: 220, cls: 'store', tag: 'BigQuery / GCS', title: '原文', sub: 'Storage Read API 讀取，不從 ES scroll' },
     { id: 'segb', x: 530, y: 250, w: 220, cls: 'accent', tag: 'Cloud Run Jobs（回補）', title: '斷詞 Job', sub: '與斷詞服務同一個映像；一個 task 一個 slice' },
-    { id: 'gate', x: 785, y: 352, w: 225, cls: 'gate', tag: '每一批', title: '閘門 G1–G4', sub: '筆數守恆、洩漏 = 0、無寫入拒絕、首月 PM 抽查' },
+    { id: 'gate', x: 785, y: 352, w: 225, cls: 'gate', tag: '每一批', title: '閘門 G1–G4', sub: '筆數守恆、洩漏 = 0、查詢 ≤ 3 分鐘、首月 PM 抽查' },
 
     { id: 'crawl', x: 20, y: 527, w: 220, tag: '既有', title: '爬蟲 → GCS → Pub/Sub', sub: 'FB、IG、YouTube、論壇、媒體、Threads' },
     { id: 'pubsub', x: 275, y: 527, w: 220, tag: '既有 · Cloud Run', title: 'parser', sub: '解析、清洗後發到 parsed 主題；失敗進 DLQ' },

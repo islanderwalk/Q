@@ -21,7 +21,8 @@
     if (!box) build();
     const fig = a.closest("figure"), cap = fig && fig.querySelector("figcaption");
     const im = a.querySelector("img");
-    const text = cap ? Array.from(cap.childNodes, (n) => n.textContent.trim()).filter(Boolean).join(" · ") : (im && im.alt) || "";
+    const text = cap ? Array.from(cap.childNodes, (n) => n.textContent.trim()).filter(Boolean).join(" · ")
+                     : (im && im.alt) || a.getAttribute("title") || a.textContent.trim();
     box.querySelector(".lb-cap").textContent = text;
     const big = box.querySelector(".lb-scroll img");
     big.src = a.getAttribute("href"); big.alt = text;

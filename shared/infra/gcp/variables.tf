@@ -177,3 +177,13 @@ variable "elasticsearch_url" {
     error_message = "elasticsearch_url 只能是 VPC 私有位址（http://10.…）或 https://。"
   }
 }
+
+variable "q6_raw_bq_table" {
+  type        = string
+  description = "Q6 斷詞回補 Job 讀原文的 BigQuery 表（專案.資料集.表；表由資料團隊建立，不在這個模組）。空字串＝不接 BigQuery，Job 不設 RAW_SOURCE（維持 file）。"
+  default     = ""
+  validation {
+    condition     = var.q6_raw_bq_table == "" || can(regex("^[a-z][a-z0-9-]{4,61}[a-z0-9]\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_-]+$", var.q6_raw_bq_table))
+    error_message = "q6_raw_bq_table 要是 專案.資料集.表（例如 qsearch-prod.raw.posts），或留空。"
+  }
+}

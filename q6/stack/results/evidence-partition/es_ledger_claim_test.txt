@@ -1,0 +1,15 @@
+es_ledger_claim_test  url=http://localhost:9200  index=backfill_ledger_test  processes=8  max_attempts=3  trials(B)=20
+started 2026-11-14T16:58:55
+[PASS] 1 exactly-once: 24 個 pending 分區被 8 個行程各自循環領取
+        claimed=24 unique=24 attempts_all_1=True per_process=[2, 4, 3, 4, 3, 3, 4, 1] cas_conflicts=74
+[PASS] 2 channel blocking under race: 20 次、每次 8 行程同時搶同一渠道（無 passed）
+        trials_with_exactly_1_running=20 trials_with_more_than_1_running=0 trials_with_0_running=0  (running, claimed, cas_conflicts) per trial = [(1, 1, 5), (1, 1, 7), (1, 1, 7), (1, 1, 7), (1, 1, 7), (1, 1, 5), (1, 1, 7), (1, 1, 7), (1, 1, 7), (1, 1, 4), (1, 1, 5), (1, 1, 7), (1, 1, 7), (1, 1, 7), (1, 1, 4), (1, 1, 5), (1, 1, 3), (1, 1, 7), (1, 1, 7), (1, 1, 6)]
+[PASS] 3 stale heartbeat: 心跳 600 秒前的 running 被重領（attempts 1→2），5 秒前的不動
+        first=('stale/2026-01', 2) second=None live_status=running
+[PASS] 4 attempts exhaustion: 用盡 → failed（附 attempts_exhausted）；不自動重領；同渠道被 failed 擋住；他渠道照常
+        exhausted=[('ex/2026-02', 3), ('ex/2026-01', 3)] claimed_after=['ex2/2026-01'] statuses={'ex/2026-01': 'failed', 'ex/2026-02': 'failed', 'ex/2026-03': 'pending'}
+[PASS] 5 --partition 路徑：忽略 failed 與渠道規則；心跳只更新 running
+        claimed=('ex/2026-01', 'running', 4) heartbeat(running)=True heartbeat(failed)=False
+
+RESULT 5/5 scenarios passed
+deleted test index backfill_ledger_test
