@@ -4,16 +4,28 @@
 (function () {
   const q = [];
   const push = (metric, value, extra) => { q.push(Object.assign({ metric, value }, extra || {})); if (q.length > 2000) q.splice(0, q.length - 2000); };
-  let lcp = null, cls = 0, inp = 0, lcpSent = false, firstCloud = false;
+  let lcp = null, cls = 0, inp = 0, lcpSent = false, firstCloud = false, clsSent = -1;
+  // CLS 照 web-vitals 定義：位移間隔 < 1 秒且整段 < 5 秒算同一個 session window，取最大的那段。
+  // 舊寫法把整個頁面生命週期的位移全部加總，PM 頁開著每 2 秒重繪，開越久數字越大，WebClsHigh 永遠會響
+  let winVal = 0, winFirst = 0, winLast = 0;
   const observe = (type, cb, extra) => { try { new PerformanceObserver(l => cb(l.getEntries())).observe(Object.assign({ type, buffered: true }, extra || {})); } catch (e) { /* 瀏覽器不支援就不量 */ } };
   observe('largest-contentful-paint', es => { if (es.length) lcp = es[es.length - 1].startTime; });
-  observe('layout-shift', es => { for (const e of es) if (!e.hadRecentInput) cls += e.value; });
+  observe('layout-shift', es => {
+    for (const e of es) {
+      if (e.hadRecentInput) continue;
+      if (winVal && e.startTime - winLast < 1000 && e.startTime - winFirst < 5000) winVal += e.value;
+      else { winVal = e.value; winFirst = e.startTime; }
+      winLast = e.startTime;
+      cls = Math.max(cls, winVal);
+    }
+  });
   observe('event', es => { for (const e of es) inp = Math.max(inp, e.duration); }, { durationThreshold: 40 });
   window.addEventListener('error', e => push('error', 1, { kind: 'error', msg: String(e && e.message || '').slice(0, 120) }));
   window.addEventListener('unhandledrejection', e => push('error', 1, { kind: 'unhandledrejection', msg: String(e && e.reason && (e.reason.message || e.reason) || '').slice(0, 120) }));
   function flush(final) {
     if (lcp != null && !lcpSent) { push('lcp', lcp / 1000); lcpSent = true; }
-    if (final) { push('cls', cls); if (inp) push('inp', inp / 1000); }
+    // 每次切到背景都會 flush(true)；同一個頁面只在 CLS 變大時才再送，不然一個開著的分頁會被當成很多次頁面瀏覽
+    if (final) { if (cls > clsSent) { push('cls', cls); clsSent = cls; } if (inp) push('inp', inp / 1000); }
     if (!q.length) return;
     const body = JSON.stringify({ page: location.pathname, events: q.splice(0, 500) });
     let sent = false;

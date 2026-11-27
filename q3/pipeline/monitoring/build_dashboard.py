@@ -111,20 +111,27 @@ def nl(h):
 
 # 1. 規格與結果
 row("1. 兩條資料規格與結果（只有這一區會告警）")
-stat("新文章多久可搜尋：最久等待（分鐘）", [("max(q3_unsearchable_oldest_minutes)", "")], 0, 6, unit="m",
-     steps=((None, GREEN), (300, ORANGE), (360, RED)), decimals=0,
-     desc="列表上已出現、還沒入庫的 7 天內文章裡，發文最久的那篇等了幾分鐘。規格 1：6 小時（360 分鐘）內要能搜尋。")
-stat("留言新鮮度：最久沒重抓（小時）", [("max(q3_comment_staleness_max_hours)", "")], 6, 6, unit="h",
+# 兩個規格數字用「上次算出的值＋算完到現在過了多久」推算現在的值（和告警同一條式子）：
+# 被擋時抓取程序卡在退避等待、幾個小時沒重算，看板也不會停在舊的小數字上
+stat("新文章多久可搜尋：最久等待（分鐘）",
+     [("max((q3_unsearchable_oldest_minutes > 0) + (time() - q3_window_stats_timestamp_seconds) / 60)"
+       " or max(q3_unsearchable_oldest_minutes)", "")], 0, 6, unit="m",
+     steps=((None, GREEN), (180, ORANGE), (360, RED)), decimals=0,
+     desc="列表上已出現、還沒入庫的 7 天內文章裡，發文最久的那篇等了幾分鐘（上次算出的值加上算完到現在的時間）。"
+          "規格 1：6 小時（360 分鐘）內要能搜尋；超過 180 分鐘（3 小時）就告警，留 3 小時處理。橘＝已告警，紅＝規格已破。")
+stat("留言新鮮度：最久沒重抓（小時）",
+     [("max((q3_comment_staleness_max_hours > 0) + (time() - q3_window_stats_timestamp_seconds) / 3600)"
+       " or max(q3_comment_staleness_max_hours)", "")], 6, 6, unit="h",
      steps=((None, GREEN), (22, ORANGE), (24, RED)), decimals=1,
-     desc="7 天內可搜尋文章裡，距離上次抓取最久的那篇。規格 2：每天至少更新一次（24 小時）。重抓門檻是 23 小時。")
+     desc="7 天內可搜尋文章裡，距離上次抓取最久的那篇（上次算出的值加上算完到現在的時間）。規格 2：每天至少更新一次（24 小時）。重抓門檻是 23 小時。")
 stat("每日不變量檢查", [("max(q3_verify_ok) and on() (max(q3_verify_last_run_timestamp_seconds) > 0)", "")], 12, 4,
      steps=((None, GREY),),
      mappings=[{"type": "value", "options": {"0": {"text": "失敗", "color": RED}, "1": {"text": "通過", "color": GREEN}}}],
-     no_value="還沒跑：第一輪結束後跑第一次", desc="填滿的列表頁恰好 20 格、每格是刪文佔位或已入庫、相鄰文章 ID 時間戳不倒序。")
+     no_value="還沒跑：第一輪結束後跑第一次", desc="從最新列表頁沿「上頁」走到 7 天前：要走完、走的途中最新頁沒變、列表上該在的文章都已入庫且是正常狀態。列表頁不是 20 格、時間戳倒序只記在明細，不算失敗。")
 last_run = stat("上一輪結果", [("max by (status) (q3_run_status) == 1", "{{status}}"),
                            ("vector(1) unless on() count(q3_run_status)", "第一輪還在跑")], 16, 4, text_mode="name",
      steps=((None, GREEN),), instant=True,
-     desc="ok＝完整；partial＝有單篇失敗或沒讀完，下一輪自動補；gate_blocked＝品質檢查擋下；rolled_back＝整輪還原；failed＝程式錯誤或連續兩批寫不進去，這輪先停、下一輪補。")
+     desc="ok＝完整；partial＝有單篇失敗或沒讀完，下一輪自動補；gate_blocked＝品質檢查擋下；rolled_back＝整輪還原；failed＝連續 3 篇抓不到、讀不到最新列表頁、連續兩批寫不進去或程式錯誤，這輪先停、下一輪補。")
 last_run["fieldConfig"]["overrides"] = [
     {"matcher": {"id": "byName", "options": name}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": col}}]}
     for name, col in (("partial", ORANGE), ("gate_blocked", ORANGE), ("rolled_back", ORANGE), ("failed", RED),
@@ -133,6 +140,19 @@ stat("距上一輪結束", [("time() - (max(q3_run_last_finished_timestamp_secon
      steps=((None, GREEN), (5400, ORANGE), (7200, RED)), decimals=0, no_value="第一輪還在跑",
      desc="每小時第 5 分跑一輪；第一次回補 7 天約 2 小時。")
 nl(5)
+stat("最新列表頁讀不到多久", [("time() - (max(q3_list_failing_since_timestamp_seconds) > 0)", "")], 0, 6, h=4, unit="s",
+     steps=((None, GREEN), (1, ORANGE), (5400, RED)), decimals=0, no_value="正常：上一輪讀得到",  # 沒值＝讀得到，用底色綠
+     desc="每輪第一個請求就是最新列表頁。讀不到時從第一次失敗開始計時，讀到就歸零；超過 90 分鐘（至少連兩輪）告警，多半是被 PTT 擋了。")
+stat("距 PTT 上次正常回應", [("time() - max by (kind) (q3_ptt_last_ok_timestamp_seconds)", "{{kind}}")], 6, 6, h=4,
+     unit="s", steps=((None, GREEN), (3900, ORANGE)), decimals=0, text_mode="value_and_name",
+     desc="list＝列表頁、article＝文章頁，最後一次拿到 200 或 404 到現在多久。只看趨勢：沒在跑或長時間回補只讀文章時，另一種本來就不會更新。")
+stat("這一輪已經跑了", [("(time() - max(q3_run_started_timestamp_seconds)) and on() (max(q3_run_in_progress) == 1)", "")],
+     12, 6, h=4, unit="s", steps=((None, GREEN), (3600, ORANGE), (7200, RED)), decimals=0, no_value="沒在跑",
+     desc="正常一輪幾分鐘；超過 2 小時還沒結束（卡在退避等待或被擋）就告警。第一次回補 7 天也會超過，這是對的。")
+stat("過去 7 天刪文又恢復", [("sum(increase(q3_posts_undeleted_total[7d])) or vector(0)", "")], 18, 6, h=4, decimals=0,
+     steps=((None, GREY),),
+     desc="重抓拿到 404 的文章，隔天會再抓一次確認；如果又是 200（PTT 暫時異常、不是真的刪文）就恢復成可搜尋。")
+nl(4)
 
 # 2. 資料量
 row("2. 資料量（7 天內）")
@@ -154,9 +174,9 @@ ts("PTT 回應時間", [("histogram_quantile(0.5, sum by (le) (rate(q3_http_late
    12, 12, unit="s", desc="F12 實測單篇約 300 ms。")
 nl(8)
 stat("過去 24 小時請求數", [("sum(increase(q3_http_requests_total[24h]))", "")], 0, 6, decimals=0, steps=((None, BLUE),),
-     desc="答案估算每天 6,300 次（首抓 890＋列表 70＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。")
-text("**答案的估算**\n\n每日 **6,300** 次 ＝ 首抓 890 ＋ 列表 70 ＋ 重抓 890 × 6\n\n"
-     "尖峰小時約 **450** 次 → 以每秒 1 次約 7.5 分鐘跑完\n\n規格 2（每天重抓）主導成本：5,340 對 960，約 **5.6 倍**",
+     desc="答案估算每天 6,278 次（首抓 890＋列表 48＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。")
+text("**答案的估算**\n\n每日 **6,278** 次 ＝ 首抓 890 ＋ 列表 48 ＋ 重抓 890 × 6\n\n"
+     "尖峰小時約 **450** 次 → 以每秒 1 次約 7.5 分鐘跑完\n\n規格 2（每天重抓）主導成本：5,340 對 938，約 **5.7 倍**",
      6, 6, title="對照")
 ts("退避等待", [("max(q3_backoff_seconds)", "等待秒數")], 12, 6, unit="s",
    desc="429／5xx／連線錯誤會退避 5、10 秒（有 Retry-After 照它），連續 3 次失敗整體暫停 5 分鐘。0＝正常。")
@@ -175,13 +195,13 @@ stat("過去 24 小時整輪還原", [("sum(increase(q3_run_rollbacks_total[24h]
      desc="整輪結束後比對：可搜尋文章大減、空白暴增、刪文暴增、留言總數下降，就把這一輪全部還原。")
 ts("新文入庫延遲（發文到可搜尋）", [("histogram_quantile(0.5, sum by (le) (rate(q3_ingest_lag_minutes_bucket[1h])))", "p50"),
                             ("histogram_quantile(0.95, sum by (le) (rate(q3_ingest_lag_minutes_bucket[1h])))", "p95")],
-   16, 8, unit="m", line=(360, "6 小時"), desc="紅線＝規格 1 的 360 分鐘。第一次回補 7 天時延遲會很長，之後每小時一輪。")
+   16, 8, unit="m", line=(360, "6 小時"), desc="紅線＝規格 1 的 360 分鐘；告警門檻是 180 分鐘（3 小時）。第一次回補 7 天時延遲會很長，之後每小時一輪。")
 nl(8)
 
 # 5. 重抓的邊際效益
 row("5. 重抓的邊際效益（答案第 3、6 題）")
 bargauge("過去 24 小時新增留言：依文章發文第幾天", [
-    ("sum(increase(q3_comments_new_total{fetch=\"first\"}[24h])) or vector(0)", "首抓（第 0 天）"),
+    ("sum(increase(q3_comments_new_total{fetch=\"first\"}[24h])) or vector(0)", "首抓"),
     *[(f"sum(increase(q3_comments_new_total{{fetch=\"refresh\",age_day=\"{d}\"}}[24h])) or vector(0)", f"重抓：第 {d} 天")
       for d in range(0, 8)]],
     0, 12, h=9, unit="none", instant=True,
@@ -193,11 +213,13 @@ nl(9)
 # 6. 只記錄、不告警
 row("6. 只記錄、不告警（答案第 5 題決定不監控的三件事）")
 ts("① 單次請求失敗（非 200／404）", [("sum by (status) (increase(q3_http_requests_total{status!~\"200|404\"}[1h]))", "{{status}}")],
-   0, 8, bars=True, decimals=0, no_value="這段時間沒有失敗的請求", desc="失敗的網址下一輪會補，只對結果（規格是否達成）告警。")
+   0, 8, bars=True, decimals=0, no_value="這段時間沒有失敗的請求", desc="失敗的網址下一輪會補，單次失敗不告警，只對結果告警。真的被擋時：最新列表頁連續 90 分鐘讀不到直接告警；"
+        "文章連續 3 篇抓不到這輪就先停（上一輪結果＝failed），之後由「新文 3 小時還搜不到」告警。")
 ts("② 事後刪文 404", [("sum by (when) (increase(q3_posts_deleted_total[1h]))", "{{when}}")], 8, 8, bars=True, decimals=0,
-   no_value="這段時間沒有遇到 404", desc="first＝第一次抓就 404；refresh＝重抓時才發現被刪。答案普查：0.2%（下限）。")
+   no_value="這段時間沒有遇到 404", desc="first＝第一次抓就 404；refresh＝重抓時才發現被刪。答案普查：0.2%（下限）。風險是已刪的文章最多晚約 24 小時下架；"
+            "重抓的 404 隔天會再確認一次，又拿到 200 就恢復（看第 1 區「刪文又恢復」）。一批 404 超過 20% 是被擋或網站異常，寫入前就擋下並告警。")
 stat("③ 「檔案過大」被截斷的文章（7 天內）", [("max(q3_window_truncated_posts)", "")], 16, 8, h=8, steps=((None, GREY),),
-     desc="網頁版本身就拿不到被截掉的留言；答案普查 6,224 篇中 2 篇。")
+     desc="網頁版本身就拿不到被截掉的留言，要補只能走 BBS，告警了也無從處理；答案普查 6,224 篇中 2 篇。")
 nl(8)
 
 # 7. 不變量與查詢 API

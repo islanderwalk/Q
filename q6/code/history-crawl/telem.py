@@ -143,6 +143,7 @@ class Telemetry:
         self.f_metrics = open(self.dir / "metrics.jsonl", "a", encoding="utf-8")
         self.f_events = open(self.dir / "events.jsonl", "a", encoding="utf-8")
         self.lock = threading.Lock()
+        self.mlock = threading.Lock()  # guards self.minute: the flusher thread also rolls it once a minute
         self.buf = collections.defaultdict(list)  # loki stream labels(json) -> [[ns, line]]
         self.minute = self._new_minute()
         self.recent_lat = collections.deque(maxlen=300)  # API latencies for the "2x p95" anomaly rule
@@ -166,18 +167,19 @@ class Telemetry:
     def trace(self, rec, api=False):
         rec = {"t": now_iso(), "job": self.job, **rec, "api": api, "delay_s": self.state["delay_s"], "backoff_level": self.state["backoff_level"]}
         self.f_trace.write(json.dumps(rec, ensure_ascii=False) + "\n")
-        m = self.minute
-        m["n"] += 1
         st = rec.get("status")
-        m["status"][str(st) if st is not None else "failed"] += 1
-        if st is None:
-            m["failed"] += 1
-        if isinstance(rec.get("latency_ms"), (int, float)):
-            m["lat"].append(rec["latency_ms"])
-            if api:
-                m["api_lat"].append(rec["latency_ms"])
-                self.recent_lat.append(rec["latency_ms"])
-        m["bytes"] += rec.get("bytes") or 0
+        with self.mlock:
+            m = self.minute
+            m["n"] += 1
+            m["status"][str(st) if st is not None else "failed"] += 1
+            if st is None:
+                m["failed"] += 1
+            if isinstance(rec.get("latency_ms"), (int, float)):
+                m["lat"].append(rec["latency_ms"])
+                if api:
+                    m["api_lat"].append(rec["latency_ms"])
+                    self.recent_lat.append(rec["latency_ms"])
+            m["bytes"] += rec.get("bytes") or 0
         sc = f"{str(st)[0]}xx" if st else "failed"
         self._loki({"kind": "trace", "platform": rec.get("platform", "na"), "status_class": sc, "api": str(api).lower()}, rec)
         self._roll()
@@ -214,35 +216,41 @@ class Telemetry:
         print("WARN telemetry push failed:", sink, str(err)[:200], flush=True)
 
     def add_posts(self, platform, target, n):
-        self.minute["new_posts"] += n
-        self.posts_total[(platform, target)] += n
+        with self.mlock:
+            self.minute["new_posts"] += n
+            self.posts_total[(platform, target)] += n
 
     def set_state(self, **kw):
         self.state.update(kw)
 
     def _roll(self, force=False):
-        m = self.minute
-        if not force and time.time() - m["start"] < 60:
-            return
+        # Also called every 5 s by the flusher thread, so a row is written (and pushed) every ~60 s even while no request
+        # comes in: window_s stays ~60 and an idle platform pushes 0 instead of leaving its last busy minute in Pushgateway.
+        with self.mlock:
+            m = self.minute
+            if not force and time.time() - m["start"] < 60:
+                return
+            self.minute = self._new_minute()
+            posts_total = dict(self.posts_total)
         row = {"t": now_iso(), "job": self.job, "window_s": round(time.time() - m["start"], 1), "requests": m["n"],
                "status_counts": dict(m["status"]), "failed": m["failed"], "p50_ms": pct(m["lat"], .5), "p95_ms": pct(m["lat"], .95),
                "api_requests": len(m["api_lat"]), "api_p50_ms": pct(m["api_lat"], .5), "api_p95_ms": pct(m["api_lat"], .95),
                "bytes": m["bytes"], "new_posts": m["new_posts"], **{k: self.state[k] for k in ("delay_s", "backoff_level", "session", "platform", "target")},
-               "posts_total": sum(self.posts_total.values())}
+               "posts_total": sum(posts_total.values())}
         self.f_metrics.write(json.dumps(row, ensure_ascii=False) + "\n")
         self.f_metrics.flush()
         self.f_trace.flush()
         self._loki({"kind": "metrics", "platform": str(self.state["platform"])}, row)
-        self._pgw(row)
-        self.minute = self._new_minute()
+        self._pgw(row, posts_total)
 
-    def _pgw(self, row):
+    def _pgw(self, row, posts_total):
         p = str(self.state["platform"])
+        nan = lambda v: "NaN" if v is None else v  # a minute without requests has no p95 (not 0 ms)
         L = [f'crawl_delay_seconds {row["delay_s"] or 0}', f'crawl_backoff_level {row["backoff_level"] or 0}',
              f'crawl_session_ok {1 if row["session"] == "ok" else 0}', f'crawl_requests_per_min {row["requests"]}',
-             f'crawl_api_p95_ms {row["api_p95_ms"] or 0}', f'crawl_p95_ms {row["p95_ms"] or 0}',
+             f'crawl_api_p95_ms {nan(row["api_p95_ms"])}', f'crawl_p95_ms {nan(row["p95_ms"])}',
              f'crawl_new_posts_per_min {row["new_posts"]}']
-        for (pl, tg), n in self.posts_total.items():
+        for (pl, tg), n in posts_total.items():
             L.append(f'crawl_posts_total{{platform="{pl}",target="{tg}"}} {n}')
         for code, n in row["status_counts"].items():
             L.append(f'crawl_status_per_min{{code="{code}"}} {n}')
@@ -256,7 +264,12 @@ class Telemetry:
     def _flusher(self):
         while not self._stop:
             time.sleep(5)
-            self.flush_loki()
+            try:
+                if not self._stop:
+                    self._roll()
+                self.flush_loki()
+            except Exception as e:  # never let the background thread die (files may be closing)
+                print("WARN telemetry flusher:", repr(e)[:200], flush=True)
 
     def flush_loki(self):
         with self.lock:
@@ -273,8 +286,41 @@ class Telemetry:
                 self._push_failed("loki", repr(e))
 
     def close(self):
-        self._roll(force=True)
         self._stop = True
+        self._roll(force=True)
         self.flush_loki()
         for f in (self.f_trace, self.f_metrics, self.f_events):
             f.close()
+
+
+def atomic_write(path, text):
+    """Write text so a crash or power cut leaves either the old file or the new one, never a half-written or NUL-filled
+    file (write_text truncates first). Temp file in the same folder, fsync, then os.replace."""
+    import os
+    path = pathlib.Path(path)
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+        f.flush()
+        os.fsync(f.fileno())
+    for i in range(20):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            # Windows: a reader (watchdog, exporter) holding the target open blocks the rename for a moment
+            time.sleep(0.05 * (i + 1))
+    os.replace(tmp, path)
+
+
+def load_json(path, default):
+    """Read a state file; a missing, empty or corrupt one returns default (and the bad copy is kept as .corrupt)."""
+    import json
+    path = pathlib.Path(path)
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        path.replace(path.with_name(path.name + ".corrupt"))
+        return default

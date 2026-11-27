@@ -54,7 +54,7 @@
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "列表上已出現、還沒入庫的 7 天內文章裡，發文最久的那篇等了幾分鐘。規格 1：6 小時（360 分鐘）內要能搜尋。",
+   "description": "列表上已出現、還沒入庫的 7 天內文章裡，發文最久的那篇等了幾分鐘（上次算出的值加上算完到現在的時間）。規格 1：6 小時（360 分鐘）內要能搜尋；超過 180 分鐘（3 小時）就告警，留 3 小時處理。橘＝已告警，紅＝規格已破。",
    "gridPos": {
     "h": 5,
     "w": 6,
@@ -67,7 +67,7 @@
       "type": "prometheus",
       "uid": "q3_prom"
      },
-     "expr": "max(q3_unsearchable_oldest_minutes)",
+     "expr": "max((q3_unsearchable_oldest_minutes > 0) + (time() - q3_window_stats_timestamp_seconds) / 60) or max(q3_unsearchable_oldest_minutes)",
      "legendFormat": "",
      "refId": "A",
      "range": true,
@@ -86,7 +86,7 @@
        },
        {
         "color": "#e8833a",
-        "value": 300
+        "value": 180
        },
        {
         "color": "#d64545",
@@ -126,7 +126,7 @@
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "7 天內可搜尋文章裡，距離上次抓取最久的那篇。規格 2：每天至少更新一次（24 小時）。重抓門檻是 23 小時。",
+   "description": "7 天內可搜尋文章裡，距離上次抓取最久的那篇（上次算出的值加上算完到現在的時間）。規格 2：每天至少更新一次（24 小時）。重抓門檻是 23 小時。",
    "gridPos": {
     "h": 5,
     "w": 6,
@@ -139,7 +139,7 @@
       "type": "prometheus",
       "uid": "q3_prom"
      },
-     "expr": "max(q3_comment_staleness_max_hours)",
+     "expr": "max((q3_comment_staleness_max_hours > 0) + (time() - q3_window_stats_timestamp_seconds) / 3600) or max(q3_comment_staleness_max_hours)",
      "legendFormat": "",
      "refId": "A",
      "range": true,
@@ -198,7 +198,7 @@
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "填滿的列表頁恰好 20 格、每格是刪文佔位或已入庫、相鄰文章 ID 時間戳不倒序。",
+   "description": "從最新列表頁沿「上頁」走到 7 天前：要走完、走的途中最新頁沒變、列表上該在的文章都已入庫且是正常狀態。列表頁不是 20 格、時間戳倒序只記在明細，不算失敗。",
    "gridPos": {
     "h": 5,
     "w": 4,
@@ -277,7 +277,7 @@
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "ok＝完整；partial＝有單篇失敗或沒讀完，下一輪自動補；gate_blocked＝品質檢查擋下；rolled_back＝整輪還原；failed＝程式錯誤或連續兩批寫不進去，這輪先停、下一輪補。",
+   "description": "ok＝完整；partial＝有單篇失敗或沒讀完，下一輪自動補；gate_blocked＝品質檢查擋下；rolled_back＝整輪還原；failed＝連續 3 篇抓不到、讀不到最新列表頁、連續兩批寫不進去或程式錯誤，這輪先停、下一輪補。",
    "gridPos": {
     "h": 5,
     "w": 4,
@@ -493,22 +493,300 @@
    }
   },
   {
+   "type": "stat",
+   "title": "最新列表頁讀不到多久",
+   "id": 7,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "每輪第一個請求就是最新列表頁。讀不到時從第一次失敗開始計時，讀到就歸零；超過 90 分鐘（至少連兩輪）告警，多半是被 PTT 擋了。",
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 0,
+    "y": 6
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "time() - (max(q3_list_failing_since_timestamp_seconds) > 0)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 1
+       },
+       {
+        "color": "#d64545",
+        "value": 5400
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "noValue": "正常：上一輪讀得到",
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "距 PTT 上次正常回應",
+   "id": 8,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "list＝列表頁、article＝文章頁，最後一次拿到 200 或 404 到現在多久。只看趨勢：沒在跑或長時間回補只讀文章時，另一種本來就不會更新。",
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 6,
+    "y": 6
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "time() - max by (kind) (q3_ptt_last_ok_timestamp_seconds)",
+     "legendFormat": "{{kind}}",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 3900
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value_and_name",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "這一輪已經跑了",
+   "id": 9,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "正常一輪幾分鐘；超過 2 小時還沒結束（卡在退避等待或被擋）就告警。第一次回補 7 天也會超過，這是對的。",
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 12,
+    "y": 6
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "(time() - max(q3_run_started_timestamp_seconds)) and on() (max(q3_run_in_progress) == 1)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#2e9e5b",
+        "value": null
+       },
+       {
+        "color": "#e8833a",
+        "value": 3600
+       },
+       {
+        "color": "#d64545",
+        "value": 7200
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "noValue": "沒在跑",
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "title": "過去 7 天刪文又恢復",
+   "id": 10,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "q3_prom"
+   },
+   "description": "重抓拿到 404 的文章，隔天會再抓一次確認；如果又是 200（PTT 暫時異常、不是真的刪文）就恢復成可搜尋。",
+   "gridPos": {
+    "h": 4,
+    "w": 6,
+    "x": 18,
+    "y": 6
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "q3_prom"
+     },
+     "expr": "sum(increase(q3_posts_undeleted_total[7d])) or vector(0)",
+     "legendFormat": "",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "#8a8f98",
+        "value": null
+       }
+      ]
+     },
+     "color": {
+      "mode": "thresholds"
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "none",
+    "textMode": "value",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
    "type": "row",
    "title": "2. 資料量（7 天內）",
-   "id": 7,
+   "id": 11,
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 6
+    "y": 10
    },
    "panels": []
   },
   {
    "type": "stat",
    "title": "可搜尋文章",
-   "id": 8,
+   "id": 12,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -518,7 +796,7 @@
     "h": 5,
     "w": 4,
     "x": 0,
-    "y": 7
+    "y": 11
    },
    "targets": [
     {
@@ -571,7 +849,7 @@
   {
    "type": "stat",
    "title": "留言",
-   "id": 9,
+   "id": 13,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -581,7 +859,7 @@
     "h": 5,
     "w": 4,
     "x": 4,
-    "y": 7
+    "y": 11
    },
    "targets": [
     {
@@ -634,7 +912,7 @@
   {
    "type": "stat",
    "title": "已標記刪文（404）",
-   "id": 10,
+   "id": 14,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -644,7 +922,7 @@
     "h": 5,
     "w": 4,
     "x": 8,
-    "y": 7
+    "y": 11
    },
    "targets": [
     {
@@ -697,7 +975,7 @@
   {
    "type": "timeseries",
    "title": "待抓佇列",
-   "id": 11,
+   "id": 15,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -707,7 +985,7 @@
     "h": 5,
     "w": 12,
     "x": 12,
-    "y": 7
+    "y": 11
    },
    "targets": [
     {
@@ -771,20 +1049,20 @@
   {
    "type": "row",
    "title": "3. 抓取（單一 worker，每秒最多 1 次）",
-   "id": 12,
+   "id": 16,
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 12
+    "y": 16
    },
    "panels": []
   },
   {
    "type": "timeseries",
    "title": "每分鐘請求數（依種類）",
-   "id": 13,
+   "id": 17,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -794,7 +1072,7 @@
     "h": 8,
     "w": 12,
     "x": 0,
-    "y": 13
+    "y": 17
    },
    "targets": [
     {
@@ -860,7 +1138,7 @@
   {
    "type": "timeseries",
    "title": "PTT 回應時間",
-   "id": 14,
+   "id": 18,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -870,7 +1148,7 @@
     "h": 8,
     "w": 12,
     "x": 12,
-    "y": 13
+    "y": 17
    },
    "targets": [
     {
@@ -934,17 +1212,17 @@
   {
    "type": "stat",
    "title": "過去 24 小時請求數",
-   "id": 15,
+   "id": 19,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "答案估算每天 6,300 次（首抓 890＋列表 70＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。",
+   "description": "答案估算每天 6,278 次（首抓 890＋列表 48＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。",
    "gridPos": {
     "h": 5,
     "w": 6,
     "x": 0,
-    "y": 21
+    "y": 25
    },
    "targets": [
     {
@@ -998,22 +1276,22 @@
   {
    "type": "text",
    "title": "對照",
-   "id": 16,
+   "id": 20,
    "gridPos": {
     "h": 5,
     "w": 6,
     "x": 6,
-    "y": 21
+    "y": 25
    },
    "options": {
     "mode": "markdown",
-    "content": "**答案的估算**\n\n每日 **6,300** 次 ＝ 首抓 890 ＋ 列表 70 ＋ 重抓 890 × 6\n\n尖峰小時約 **450** 次 → 以每秒 1 次約 7.5 分鐘跑完\n\n規格 2（每天重抓）主導成本：5,340 對 960，約 **5.6 倍**"
+    "content": "**答案的估算**\n\n每日 **6,278** 次 ＝ 首抓 890 ＋ 列表 48 ＋ 重抓 890 × 6\n\n尖峰小時約 **450** 次 → 以每秒 1 次約 7.5 分鐘跑完\n\n規格 2（每天重抓）主導成本：5,340 對 938，約 **5.7 倍**"
    }
   },
   {
    "type": "timeseries",
    "title": "退避等待",
-   "id": 17,
+   "id": 21,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1023,7 +1301,7 @@
     "h": 8,
     "w": 6,
     "x": 12,
-    "y": 21
+    "y": 25
    },
    "targets": [
     {
@@ -1076,7 +1354,7 @@
   {
    "type": "timeseries",
    "title": "每小時入庫",
-   "id": 18,
+   "id": 22,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1086,7 +1364,7 @@
     "h": 8,
     "w": 6,
     "x": 18,
-    "y": 21
+    "y": 25
    },
    "targets": [
     {
@@ -1162,20 +1440,20 @@
   {
    "type": "row",
    "title": "4. 寫入與自動 rollback",
-   "id": 19,
+   "id": 23,
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 29
+    "y": 33
    },
    "panels": []
   },
   {
    "type": "timeseries",
    "title": "每小時寫入批次",
-   "id": 20,
+   "id": 24,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1185,7 +1463,7 @@
     "h": 8,
     "w": 12,
     "x": 0,
-    "y": 30
+    "y": 34
    },
    "targets": [
     {
@@ -1285,7 +1563,7 @@
   {
    "type": "stat",
    "title": "過去 24 小時整輪還原",
-   "id": 21,
+   "id": 25,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1295,7 +1573,7 @@
     "h": 5,
     "w": 4,
     "x": 12,
-    "y": 30
+    "y": 34
    },
    "targets": [
     {
@@ -1353,17 +1631,17 @@
   {
    "type": "timeseries",
    "title": "新文入庫延遲（發文到可搜尋）",
-   "id": 22,
+   "id": 26,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "紅線＝規格 1 的 360 分鐘。第一次回補 7 天時延遲會很長，之後每小時一輪。",
+   "description": "紅線＝規格 1 的 360 分鐘；告警門檻是 180 分鐘（3 小時）。第一次回補 7 天時延遲會很長，之後每小時一輪。",
    "gridPos": {
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 30
+    "y": 34
    },
    "targets": [
     {
@@ -1440,20 +1718,20 @@
   {
    "type": "row",
    "title": "5. 重抓的邊際效益（答案第 3、6 題）",
-   "id": 23,
+   "id": 27,
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 38
+    "y": 42
    },
    "panels": []
   },
   {
    "type": "bargauge",
    "title": "過去 24 小時新增留言：依文章發文第幾天",
-   "id": 24,
+   "id": 28,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1463,7 +1741,7 @@
     "h": 9,
     "w": 12,
     "x": 0,
-    "y": 39
+    "y": 43
    },
    "targets": [
     {
@@ -1472,7 +1750,7 @@
       "uid": "q3_prom"
      },
      "expr": "sum(increase(q3_comments_new_total{fetch=\"first\"}[24h])) or vector(0)",
-     "legendFormat": "首抓（第 0 天）",
+     "legendFormat": "首抓",
      "refId": "A",
      "range": false,
      "instant": true
@@ -1607,7 +1885,7 @@
   {
    "type": "timeseries",
    "title": "每小時重抓篇數：依發文第幾天",
-   "id": 25,
+   "id": 29,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1617,7 +1895,7 @@
     "h": 9,
     "w": 12,
     "x": 12,
-    "y": 39
+    "y": 43
    },
    "targets": [
     {
@@ -1671,30 +1949,30 @@
   {
    "type": "row",
    "title": "6. 只記錄、不告警（答案第 5 題決定不監控的三件事）",
-   "id": 26,
+   "id": 30,
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 48
+    "y": 52
    },
    "panels": []
   },
   {
    "type": "timeseries",
    "title": "① 單次請求失敗（非 200／404）",
-   "id": 27,
+   "id": 31,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "失敗的網址下一輪會補，只對結果（規格是否達成）告警。",
+   "description": "失敗的網址下一輪會補，單次失敗不告警，只對結果告警。真的被擋時：最新列表頁連續 90 分鐘讀不到直接告警；文章連續 3 篇抓不到這輪就先停（上一輪結果＝failed），之後由「新文 3 小時還搜不到」告警。",
    "gridPos": {
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 49
+    "y": 53
    },
    "targets": [
     {
@@ -1748,17 +2026,17 @@
   {
    "type": "timeseries",
    "title": "② 事後刪文 404",
-   "id": 28,
+   "id": 32,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "first＝第一次抓就 404；refresh＝重抓時才發現被刪。答案普查：0.2%（下限）。",
+   "description": "first＝第一次抓就 404；refresh＝重抓時才發現被刪。答案普查：0.2%（下限）。風險是已刪的文章最多晚約 24 小時下架；重抓的 404 隔天會再確認一次，又拿到 200 就恢復（看第 1 區「刪文又恢復」）。一批 404 超過 20% 是被擋或網站異常，寫入前就擋下並告警。",
    "gridPos": {
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 49
+    "y": 53
    },
    "targets": [
     {
@@ -1812,17 +2090,17 @@
   {
    "type": "stat",
    "title": "③ 「檔案過大」被截斷的文章（7 天內）",
-   "id": 29,
+   "id": 33,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
    },
-   "description": "網頁版本身就拿不到被截掉的留言；答案普查 6,224 篇中 2 篇。",
+   "description": "網頁版本身就拿不到被截掉的留言，要補只能走 BBS，告警了也無從處理；答案普查 6,224 篇中 2 篇。",
    "gridPos": {
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 49
+    "y": 53
    },
    "targets": [
     {
@@ -1875,20 +2153,20 @@
   {
    "type": "row",
    "title": "7. 每日不變量明細與查詢 API",
-   "id": 30,
+   "id": 34,
    "collapsed": false,
    "gridPos": {
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 57
+    "y": 61
    },
    "panels": []
   },
   {
    "type": "bargauge",
    "title": "上次不變量檢查",
-   "id": 31,
+   "id": 35,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -1898,7 +2176,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 58
+    "y": 62
    },
    "targets": [
     {
@@ -1999,7 +2277,7 @@
   {
    "type": "stat",
    "title": "推文數吻合比例（輔助）",
-   "id": 32,
+   "id": 36,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -2009,7 +2287,7 @@
     "h": 8,
     "w": 4,
     "x": 8,
-    "y": 58
+    "y": 62
    },
    "targets": [
     {
@@ -2080,7 +2358,7 @@
   {
    "type": "timeseries",
    "title": "查詢 API",
-   "id": 33,
+   "id": 37,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -2090,7 +2368,7 @@
     "h": 8,
     "w": 8,
     "x": 12,
-    "y": 58
+    "y": 62
    },
    "targets": [
     {
@@ -2155,7 +2433,7 @@
   {
    "type": "stat",
    "title": "過去 24 小時 BigQuery 掃描量",
-   "id": 34,
+   "id": 38,
    "datasource": {
     "type": "prometheus",
     "uid": "q3_prom"
@@ -2165,7 +2443,7 @@
     "h": 8,
     "w": 4,
     "x": 20,
-    "y": 58
+    "y": 62
    },
    "targets": [
     {

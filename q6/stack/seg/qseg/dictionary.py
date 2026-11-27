@@ -13,7 +13,7 @@ from pathlib import Path
 import jieba
 import requests
 
-from . import config
+from . import config, promo
 
 CACHE = Path(os.environ.get("DICT_CACHE", "/tmp/qseg-dict"))
 
@@ -62,6 +62,8 @@ class Dictionary:
     pipeline: str
     legacy_words: frozenset = None      # v0 與用：老化字典的詞集（沒有 jieba tokenizer）
     legacy_maxlen: int = 8
+    promo_rules: dict = None            # 宣傳句清單 {渠道: frozenset(句子)}；這一版沒帶 promo_lines.tsv 就是空的（清洗結果與以前相同）
+    promo_since: dict = None            # 同一份清單依「從哪一版開始收」分組 {字典版本: {渠道: [句子]}}（定向重跑用）
 
     @property
     def sha(self) -> str:
@@ -91,7 +93,12 @@ def load(version: str = None, pipeline: str = None, base_url: str = None, pin_to
         if pin_total:
             tk.total = manifest["total_pinned"]
     merges = dict(l.split("\t") for l in (d / "merges.tsv").read_text(encoding="utf-8").splitlines() if "\t" in l)
+    rules, since = {}, {}
+    if pipeline == "v2" and promo.FILE in manifest["files"]:
+        # 清單列在 manifest 裡，fetch() 已經比過 sha256；格式不對（PromoListError）就讓載入失敗，不帶著壞清單上線
+        promo_lines = (d / promo.FILE).read_text(encoding="utf-8").splitlines()
+        rules, since = promo.parse(promo_lines), promo.since_map(promo_lines)
     return Dictionary(version=manifest["dict_version"], manifest=manifest, tokenizer=tk,
                       stopwords=frozenset(_lines(d / "stopwords.txt")),
                       soft_stopwords=frozenset(_lines(d / "soft_stopwords.txt")),
-                      merges=merges, user_words=frozenset(words), pipeline=pipeline)
+                      merges=merges, user_words=frozenset(words), pipeline=pipeline, promo_rules=rules, promo_since=since)

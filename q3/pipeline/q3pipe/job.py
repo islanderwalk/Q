@@ -4,6 +4,8 @@
   - 列表從最新頁往回讀到上一輪的最新頁（停機多久都一樣），第一次則讀到 7 天前為止；
     中途斷掉的話，沒讀到的頁下一輪會補讀。
   - 「列表上有、posts 沒有」的文章每輪都會補抓；重抓失敗的文章 last_fetched_at 不變，下一輪還會到期。
+  - 連續幾個網址試完仍失敗（多半被擋）就先停這輪，已抓到的照樣寫入，沒抓的下一輪補。
+  - 抓到 404 標記刪文後，隔天再抓一次確認；又抓得到（站方一時異常、不是真的刪）就恢復可搜尋。
 自動 rollback：
   - 每批寫入前先過品質檢查（解析失敗、空白、404 比例、留言數縮水），不過就整批不寫並停下這一輪，
     下一輪先用一小批試探，過了才恢復正常。
@@ -41,6 +43,10 @@ class WriteFailing(Exception):
     """連續幾批都寫不進去（例如資料庫斷線）：這輪先停，不要繼續抓了又寫不進去。"""
 
 
+class Blocked(Exception):
+    """連續幾個網址都抓不到（多半被 PTT 擋了）：這輪先停，不要一直撞牆。"""
+
+
 @dataclass
 class Ctx:
     cfg: object
@@ -52,6 +58,8 @@ class Ctx:
     parse: object = parse_article          # 測試可以換掉，模擬網站改版
     inject: dict = field(default_factory=dict)
     stopping: threading.Event = field(default_factory=threading.Event)
+    gauges_at: object = None               # 上次更新 7 天內數字的時間，一輪跑很久時定時更新用
+    failed_aids: set = field(default_factory=set)  # 試完仍抓不到的文章；下一輪排到最後，再失敗也不算「被擋」
 
 
 @dataclass
@@ -68,6 +76,8 @@ class RunState:
     rolled_back: int = 0
     gate_blocked: int = 0
     write_fail_streak: int = 0
+    fail_streak: int = 0       # 連續幾個網址試完仍失敗
+    restored: int = 0          # 刪文複查又抓得到的篇數
 
 
 # ---------------- 列表 ----------------
@@ -90,9 +100,17 @@ def discover(ctx, run):
         run.list_pages += 1
 
     r = f.get(f"{base}/index.html", "list")
-    if r.status != 200:
-        raise RuntimeError(f"讀不到最新列表頁：{r.error or r.status}")
-    entries, prev = parse_index(r.text, newest=True, base_url=cfg.base_url)
+    try:
+        if r.status != 200:
+            raise RuntimeError(f"讀不到最新列表頁：{r.error or r.status}")
+        try:
+            entries, prev = parse_index(r.text, newest=True, base_url=cfg.base_url)
+        except ValueError as e:  # 回 200 但不是列表頁（例如擋人的頁面）也算讀不到
+            raise RuntimeError(f"讀不到最新列表頁：不是列表頁（{e}）") from e
+    except RuntimeError:
+        ctx.metrics.list_head(False, ctx.now().timestamp())
+        raise
+    ctx.metrics.list_head(True, ctx.now().timestamp())
     head = (prev + 1) if prev else 1
     keep(head, entries, False, r)  # 最新頁還沒填滿，不算進不變量
     tss = [e["ts"] for e in entries if e["ts"]]
@@ -138,12 +156,13 @@ def build_rows(ctx, item, resp, now, old_keys=None):
     url = item.get("url") or f"{cfg.base_url}/bbs/{cfg.board}/{aid}.html"
     base = {"aid": aid, "board": cfg.board, "url": url, "published_at": published, "fetched_at": now}
     refresh = item.get("comment_count") is not None
+    recheck = bool(item.get("recheck"))  # 上次 404、隔天再確認一次
     if resp.status == 404:
         return {**base, "title": item.get("title"), "author": item.get("author"), "status": 404, "comments": []}, \
-            {"status": 404, "refresh": refresh}
+            {"status": 404, "refresh": refresh, "recheck": recheck}
     art = ctx.parse(resp.text, ts)
     if art is None:
-        return None, {"status": 200, "parse_fail": True, "refresh": refresh}
+        return None, {"status": 200, "parse_fail": True, "refresh": refresh, "recheck": recheck}
     uri = ctx.store.put(raw_key(cfg.board, "article", aid, now), resp.text.encode("utf-8"))
     old_keys = old_keys or {}
     comments, new = [], 0
@@ -162,14 +181,16 @@ def build_rows(ctx, item, resp, now, old_keys=None):
     old = item.get("comment_count")
     shrink = old is not None and old >= 10 and art["comment_count"] <= old / 2 and old - art["comment_count"] >= 10
     empty = not art["content"] and art["comment_count"] == 0
-    return post, {"status": 200, "empty": empty, "shrink": shrink, "refresh": refresh, "new_comments": new}
+    return post, {"status": 200, "empty": empty, "shrink": shrink, "refresh": refresh, "new_comments": new,
+                  "recheck": recheck}
 
 
 def gate(cfg, flags):
     """寫入前的品質檢查。回傳不過的原因，過了回 None。"""
     n = len(flags)
     n200 = sum(f["status"] == 200 for f in flags)
-    n404 = sum(f["status"] == 404 for f in flags)
+    # 複查上次已經 404 的文章，再 404 是預期中的，不算進「突然大量 404」（否則刪文一多，複查那批就會被擋）
+    n404 = sum(f["status"] == 404 and not f.get("recheck") for f in flags)
     fail = sum(f.get("parse_fail", False) for f in flags)
     parsed = n200 - fail
     empty = sum(f.get("empty", False) for f in flags)
@@ -233,14 +254,25 @@ def commit(ctx, run, batch, kind, left=None):
                 run.deleted += 1
                 m.posts_deleted.labels("first").inc()
         elif post["status"] == 404:
-            run.deleted += 1
-            m.posts_deleted.labels("refresh").inc()
+            if not flags.get("recheck"):  # 複查又是 404：確認是真的刪了，不重複計
+                run.deleted += 1
+                m.posts_deleted.labels("refresh").inc()
+        elif flags.get("recheck"):
+            run.restored += 1
+            m.posts_undeleted.inc()
+            m.comments_new.labels("refresh", age).inc(flags.get("new_comments", 0))
+            log("post_restored", run_id=run.id, aid=post["aid"])  # 上次 404、這次抓得到：恢復可搜尋
         else:
             run.refreshed += 1
             m.posts_refreshed.labels(age).inc()
             m.comments_new.labels("refresh", age).inc(flags.get("new_comments", 0))
     log("batch_committed", run_id=run.id, batch=run.batch_no, kind=kind, posts=len(batch),
         comments=sum(len(b[1]["comments"]) for b in batch), left=left)
+
+
+def failed_last(ctx, items):
+    """上一輪試完仍抓不到的排到最後：單篇一直壞（不是被擋）時，不會每輪都卡在同幾篇、後面的文章抓不到。"""
+    return [it for it in items if it["aid"] not in ctx.failed_aids] + [it for it in items if it["aid"] in ctx.failed_aids]
 
 
 def process(ctx, run, items, kind, backlog_gauge):
@@ -264,15 +296,24 @@ def process(ctx, run, items, kind, backlog_gauge):
             backlog_gauge.set(left)
             if resp.status not in (200, 404):
                 run.failures += 1
+                if item["aid"] not in ctx.failed_aids:  # 已知會失敗的那幾篇再失敗，不當成被擋的證據
+                    run.fail_streak += 1
+                    ctx.failed_aids.add(item["aid"])
                 m.fetch_failures.labels(kind).inc()
                 log("fetch_failed", kind=kind, aid=item["aid"], error=resp.error)
+                if run.fail_streak >= cfg.abort_after_failed_urls:
+                    if batch:
+                        commit(ctx, run, batch, kind, left=left)  # 已抓到的照樣寫入
+                    raise Blocked(f"連續 {run.fail_streak} 篇抓不到（{resp.error or resp.status}），疑似被擋，這輪先停")
+                maybe_refresh_window_gauges(ctx)
                 continue  # 試完仍失敗：這篇留給下一輪（新文還在 due_new、重抓的 last_fetched_at 沒變）
+            run.fail_streak = 0
+            ctx.failed_aids.discard(item["aid"])
             post, flags = build_rows(ctx, item, resp, now, keys.get(item["aid"]))
             batch.append((item, post, flags))
+            maybe_refresh_window_gauges(ctx)
         if batch:
             commit(ctx, run, batch, kind, left=left)
-            if run.batches % 10 == 0:
-                refresh_window_gauges(ctx)
 
 
 # ---------------- 整輪 ----------------
@@ -295,17 +336,27 @@ def regression(cfg, before, after, run):
 
 
 def refresh_window_gauges(ctx):
-    """7 天內的數字平常在每輪結束時更新；第一次回補要跑幾個小時，中途也更新，看板才看得到進度。"""
+    """7 天內的數字平常在每輪結束時更新；第一次回補或被擋時一輪會跑好幾個小時，中途也要更新，看板與告警才跟得上。"""
     try:
         update_window_gauges(ctx, ctx.wh.window_stats(ctx.cfg.board, ctx.now(), ctx.cfg.window_days))
     except Exception as e:  # 只影響看板上的數字，不影響這輪
+        ctx.gauges_at = ctx.now()  # 失敗也等下一個間隔再試，不要每篇都查一次
         log("window_gauges_failed", error=repr(e)[:200])
+
+
+def maybe_refresh_window_gauges(ctx):
+    """距上次更新超過 gauge_refresh_s 才更新（每篇文章抓完檢查一次，不論成功失敗）。"""
+    if ctx.gauges_at is None or (ctx.now() - ctx.gauges_at).total_seconds() >= ctx.cfg.gauge_refresh_s:
+        refresh_window_gauges(ctx)
 
 
 def restore_gauges(ctx):
     """程序重啟後指標從 0 開始；先用 BigQuery 裡的紀錄補回「上一輪」「上次不變量檢查」「7 天內」，看板不會歸零到下一輪跑完。"""
     cfg, wh, m = ctx.cfg, ctx.wh, ctx.metrics
     last = wh.last_run(cfg.board)
+    since = wh.list_failing_since(cfg.board)  # 被擋時重啟，90 分鐘告警不要從頭算
+    if since:
+        m.list_head(False, since.timestamp())
     if last and last["finished_at"]:
         m.run_last_finished.set(last["finished_at"].timestamp())
         m.run_duration.set((last["finished_at"] - last["started_at"]).total_seconds())
@@ -319,6 +370,8 @@ def restore_gauges(ctx):
 
 def update_window_gauges(ctx, stats):
     m = ctx.metrics
+    ctx.gauges_at = stats.get("at") or ctx.now()
+    m.window_stats_at.set(ctx.gauges_at.timestamp())
     m.window_posts.set(stats["searchable"])
     m.window_deleted.set(stats["deleted"])
     m.window_comments.set(stats["comments"])
@@ -334,6 +387,7 @@ def run(ctx):
     st = RunState(id=uuid.uuid4().hex, started=started)
     since = started - timedelta(days=cfg.window_days)
     m.run_in_progress.set(1)
+    m.run_started.set(started.timestamp())
     m.push()
     status, note, disc = "ok", "", {}
     prev = wh.last_run_status(cfg.board)
@@ -350,18 +404,19 @@ def run(ctx):
             disc = discover(ctx, st)
             log("discovered", run_id=st.id, **disc)
             refresh_window_gauges(ctx)  # 列表讀完就更新「還不能搜尋的文章等了多久」
-            new = wh.due_new(cfg.board, int(since.timestamp()))
+            new = failed_last(ctx, wh.due_new(cfg.board, int(since.timestamp())))
             if probe:
                 new = new[:cfg.gate_min_batch]  # 上一輪被擋或被還原：先用一小批試探
             process(ctx, st, new, "article_new", m.backlog_new)
             if not (probe and new):
-                due = wh.due_refresh(cfg.board, ctx.now(), cfg.refresh_policy, cfg.refresh_after_hours, cfg.window_days)
+                due = failed_last(ctx, wh.due_refresh(cfg.board, ctx.now(), cfg.refresh_policy,
+                                                      cfg.refresh_after_hours, cfg.window_days))
                 if probe:
                     due = due[:cfg.gate_min_batch]
                 process(ctx, st, due, "article_refresh", m.backlog_refresh)
         except GateBlocked as e:
             status, note = "gate_blocked", str(e)  # 這批沒寫；前面已寫的批次照樣做回歸檢查
-        except WriteFailing as e:
+        except (WriteFailing, Blocked) as e:
             status, note = "failed", str(e)  # 沒有結局的批次下一輪開始前會先還原，沒抓的下一輪補
         after = wh.window_stats(cfg.board, ctx.now(), cfg.window_days, since=since)
         reason = regression(cfg, before, after, st)
@@ -399,7 +454,8 @@ def run(ctx):
     m.set_run_status(status)
     m.push()
     summary = {"run_id": st.id, "status": status, "note": note, "list_pages": st.list_pages, "new": st.new,
-               "refreshed": st.refreshed, "deleted": st.deleted, "failures": st.failures, "batches": st.batches,
+               "refreshed": st.refreshed, "deleted": st.deleted, "restored": st.restored, "failures": st.failures,
+               "batches": st.batches,
                "rolled_back_batches": st.rolled_back, "seconds": round((finished - started).total_seconds(), 1), **disc}
     log("run_end", **summary)
     return summary

@@ -9,6 +9,8 @@ import re
 
 import segmenter as sg
 
+from . import promo
+
 TAG_RE = re.compile(r"<[^>]+>")
 # 沒有協定的網址、被換行切斷的網址殘片（PTT 推文把 https://… 切成「http」+「s://…」）
 # 前面不能用 \w：Python 的 \w 包含中文，「信箱是msn.com」的「是」會讓整條規則失效（回補閘門 G2 抓到的實例）
@@ -34,8 +36,12 @@ def _ptt(text: str) -> str:
     return "\n".join(out)
 
 
-def normalize(channel: str, text: str) -> str:
+def normalize(channel: str, text: str, promo_rules: dict = None) -> str:
+    """promo_rules：字典版本帶的宣傳句清單（promo.parse 的結果）。沒給或這個渠道沒有規則時，結果和以前一字不差。"""
     t = html.unescape(text or "")
+    if promo_rules:
+        # 一定要最先做：後面的步驟會把換行壓掉，就分不出「整行」了；比對基準與回補關卡、定向重跑是同一個函式
+        t, _ = promo.strip(channel, t, promo_rules)
     t = TAG_RE.sub(" ", t)
     if channel == "ptt":
         t = _ptt(t)

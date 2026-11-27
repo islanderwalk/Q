@@ -1,0 +1,222 @@
+{
+ "youtube": {
+  "TVBS NEWS": {
+   "posts": 19957,
+   "span": "2026-07-11~2026-11-02",
+   "months": 5,
+   "chars_mean": 722,
+   "chars_median": 716,
+   "per_full_month_median": 5378,
+   "per_full_month_max": 5457,
+   "per_full_month_min": 5166
+  },
+  "公視新聞網": {
+   "posts": 19996,
+   "span": "2025-08-09~2026-11-02",
+   "months": 16,
+   "chars_mean": 472,
+   "chars_median": 467,
+   "per_full_month_median": 1366,
+   "per_full_month_max": 1438,
+   "per_full_month_min": 1073
+  },
+  "東森新聞 CH51": {
+   "posts": 7791,
+   "span": "2026-09-15~2026-11-02",
+   "months": 3,
+   "chars_mean": 267,
+   "chars_median": 211,
+   "per_full_month_median": 5405,
+   "per_full_month_max": 5405,
+   "per_full_month_min": 5405
+  }
+ },
+ "facebook": {
+  "cnanewstaiwan": {
+   "posts": 4466,
+   "span": "2026-07-01~2026-11-08",
+   "months": 5,
+   "chars_mean": 175,
+   "chars_median": 169,
+   "per_full_month_median": 1049,
+   "per_full_month_max": 1070,
+   "per_full_month_min": 1021
+  },
+  "PNNPTS": {
+   "posts": 11866,
+   "span": "2025-09-15~2026-11-08",
+   "months": 15,
+   "chars_mean": 131,
+   "chars_median": 118,
+   "per_full_month_median": 880,
+   "per_full_month_max": 963,
+   "per_full_month_min": 708
+  }
+ },
+ "instagram": {
+  "cnanews_tw": {
+   "posts": 2597,
+   "span": "2023-01-02~2026-11-03",
+   "months": 47,
+   "chars_mean": 203,
+   "chars_median": 181,
+   "per_full_month_median": 59,
+   "per_full_month_max": 104,
+   "per_full_month_min": 19
+  },
+  "pts.news": {
+   "posts": 3032,
+   "span": "2023-01-01~2026-11-01",
+   "months": 47,
+   "chars_mean": 350,
+   "chars_median": 298,
+   "per_full_month_median": 64,
+   "per_full_month_max": 107,
+   "per_full_month_min": 45
+  },
+  "ftvnews": {
+   "posts": 13153,
+   "span": "2025-08-21~2026-11-08",
+   "months": 16,
+   "chars_mean": 178,
+   "chars_median": 148,
+   "per_full_month_median": 926,
+   "per_full_month_max": 1523,
+   "per_full_month_min": 310
+  },
+  "nasa": {
+   "posts": 1131,
+   "span": "2023-01-01~2026-11-05",
+   "months": 47,
+   "chars_mean": 1130,
+   "chars_median": 1128,
+   "per_full_month_median": 24,
+   "per_full_month_max": 65,
+   "per_full_month_min": 1
+  }
+ },
+ "threads": {
+  "cnanews_tw": {
+   "posts": 9835,
+   "span": "2025-03-04~2026-11-08",
+   "months": 21,
+   "chars_mean": 120,
+   "chars_median": 122,
+   "per_full_month_median": 493,
+   "per_full_month_max": 554,
+   "per_full_month_min": 387
+  },
+  "pts.news": {
+   "posts": 2159,
+   "span": "2026-07-25~2026-11-08",
+   "months": 5,
+   "chars_mean": 94,
+   "chars_median": 83,
+   "per_full_month_median": 624,
+   "per_full_month_max": 697,
+   "per_full_month_min": 619
+  },
+  "ftvnews": {
+   "posts": 36382,
+   "span": "2026-07-12~2026-11-08",
+   "months": 5,
+   "chars_mean": 75,
+   "chars_median": 48,
+   "per_full_month_median": 9307,
+   "per_full_month_max": 9616,
+   "per_full_month_min": 9218
+  }
+ },
+ "ptt_lists": {
+  "Baseball": {
+   "posts": 43530,
+   "span": "2026-01-21~2026-11-08",
+   "months": 11,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 4407,
+   "per_full_month_max": 7651,
+   "per_full_month_min": 2584
+  },
+  "Boy-Girl": {
+   "posts": 15364,
+   "span": "2023-01-01~2026-11-08",
+   "months": 47,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 342,
+   "per_full_month_max": 631,
+   "per_full_month_min": 96
+  },
+  "Gossiping": {
+   "posts": 45665,
+   "span": "2026-09-15~2026-11-08",
+   "months": 3,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 26686,
+   "per_full_month_max": 26686,
+   "per_full_month_min": 26686
+  },
+  "Kaohsiung": {
+   "posts": 32794,
+   "span": "2023-01-01~2026-11-08",
+   "months": 47,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 739,
+   "per_full_month_max": 1054,
+   "per_full_month_min": 348
+  },
+  "MobileComm": {
+   "posts": 21747,
+   "span": "2023-01-01~2026-11-08",
+   "months": 47,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 485,
+   "per_full_month_max": 806,
+   "per_full_month_min": 202
+  },
+  "Stock": {
+   "posts": 43602,
+   "span": "2025-02-24~2026-11-08",
+   "months": 22,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 2046,
+   "per_full_month_max": 4740,
+   "per_full_month_min": 1309
+  },
+  "Tainan": {
+   "posts": 43246,
+   "span": "2023-08-28~2026-11-08",
+   "months": 40,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 1130,
+   "per_full_month_max": 1602,
+   "per_full_month_min": 703
+  },
+  "Tech_Job": {
+   "posts": 12900,
+   "span": "2023-01-01~2026-11-07",
+   "months": 47,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 306,
+   "per_full_month_max": 467,
+   "per_full_month_min": 64
+  },
+  "WomenTalk": {
+   "posts": 43097,
+   "span": "2023-03-29~2026-11-08",
+   "months": 45,
+   "chars_mean": null,
+   "chars_median": null,
+   "per_full_month_median": 1021,
+   "per_full_month_max": 2028,
+   "per_full_month_min": 186
+  }
+ }
+}

@@ -25,6 +25,7 @@ class Config:
     backoff_base_s: float = 5.0
     pause_after_failures: int = 3      # 連續 3 次失敗：整體暫停
     pause_s: float = 300.0
+    abort_after_failed_urls: int = 3   # 連續幾個網址試完仍失敗就停下這一輪（多半被擋，再抓只是一直撞牆）
     reuse_idle_s: float = 60.0         # 閒置超過 60 秒的連線不再沿用，下一個請求重新連線
     user_agent: str = "Mozilla/5.0 (compatible; qsearch-q3-pipeline/1.0)"
     max_list_pages: int = 2000         # 安全上限：一輪最多往回翻幾頁列表
@@ -59,6 +60,7 @@ class Config:
     verify_hour_tw: int = 4            # 每日不變量檢查：台灣時間 04 點後的第一輪
     verify_every_run: bool = False
     pushgateway: str = ""              # host:port
+    gauge_refresh_s: float = 600.0     # 一輪跑很久時（第一次回補、被擋），每隔這麼久更新一次 7 天內的數字
     metrics_job: str = "q3_crawler"
     search_port: int = 8300
     search_limit: int = 50

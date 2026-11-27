@@ -22,6 +22,7 @@ class Metrics:
         self.posts_new = Counter("q3_posts_new_total", "第一次入庫的文章數", registry=r)
         self.posts_refreshed = Counter("q3_posts_refreshed_total", "重抓後寫回的文章數（依發文第幾天）", ["age_day"], registry=r)
         self.posts_deleted = Counter("q3_posts_deleted_total", "抓到 404 而標記刪文的篇數", ["when"], registry=r)
+        self.posts_undeleted = Counter("q3_posts_undeleted_total", "標記刪文後隔天複查又抓得到、恢復可搜尋的篇數", registry=r)
         self.comments_new = Counter("q3_comments_new_total", "新增的留言數：首抓／重抓，依文章發文第幾天", ["fetch", "age_day"], registry=r)
         self.fetch_failures = Counter("q3_fetch_failures_total", "試完仍失敗、留給下一輪補抓的網址數", ["kind"], registry=r)
         self.batches = Counter("q3_batches_total", "寫入批次", ["result"], registry=r)  # committed/rolled_back/gate_blocked
@@ -33,12 +34,18 @@ class Metrics:
         self.run_in_progress = g("q3_run_in_progress", "1＝正在跑一輪")
         self.run_duration = g("q3_run_duration_seconds", "上一輪花的秒數")
         self.run_last_finished = g("q3_run_last_finished_timestamp_seconds", "上一輪結束時間")
+        self.run_started = g("q3_run_started_timestamp_seconds", "這一輪（或上一輪）開始時間")
         self.run_status = g("q3_run_status", "上一輪結果，1＝這個狀態", ["status"])
         self.list_pages = Counter("q3_list_pages_read_total", "讀過的列表頁", registry=r)
         self.backlog_new = g("q3_backlog_new_posts", "列表上看到、還沒入庫的 7 天內文章")
         self.backlog_refresh = g("q3_backlog_refresh_posts", "該重抓還沒重抓的文章")
         self.unsearchable_oldest = g("q3_unsearchable_oldest_minutes", "還不能搜尋的文章裡最久的已發文分鐘數（規格：360）")
         self.staleness = g("q3_comment_staleness_max_hours", "7 天內文章距上次抓取最久幾小時（規格：每天至少一次）")
+        self.window_stats_at = g("q3_window_stats_timestamp_seconds",
+                                 "上面兩個數字是什麼時候算的；告警用「數字＋算完到現在的時間」推算現在的值")
+        self.ptt_last_ok = g("q3_ptt_last_ok_timestamp_seconds", "最後一次 PTT 正常回應（200／404）的時間", ["kind"])
+        self.list_failing_since = g("q3_list_failing_since_timestamp_seconds",
+                                    "最新列表頁從什麼時候開始讀不到，0＝上次讀得到")
         self.window_posts = g("q3_window_posts", "7 天內可搜尋的文章數")
         self.window_deleted = g("q3_window_deleted_posts", "7 天內已標記刪文的文章數")
         self.window_comments = g("q3_window_comments", "7 天內文章的留言數")
@@ -60,6 +67,11 @@ class Metrics:
         for kind in ("list", "article_new", "article_refresh"):
             self.requests.labels(kind, "error")
             self.fetch_failures.labels(kind)
+        started = time.time()  # 程序剛啟動還沒送過請求：先當成現在，看板不會顯示成 1970 年
+        for kind in ("list", "article"):
+            self.ptt_last_ok.labels(kind).set(started)
+        self._list_failing_since = 0.0
+        self.list_failing_since.set(0)
         self._warned_at = 0.0
         self._stop = threading.Event()
 
@@ -68,6 +80,17 @@ class Metrics:
         self.requests.labels(kind, str(status) if status is not None else "error").inc()
         self.latency.labels(kind).observe(latency_s)
         self.bytes.labels(kind).inc(nbytes)
+        if status in (200, 404):
+            self.ptt_last_ok.labels("article" if kind.startswith("article") else "list").set(time.time())
+
+    def list_head(self, ok, now_ts):
+        """每輪第一個請求（最新列表頁）的結果。連續讀不到就記下從什麼時候開始，給「被擋」告警用；
+        不看中途的舊列表頁，第一次回補一輪跑好幾個小時，期間不會再讀最新頁，不能當成讀不到。"""
+        if ok:
+            self._list_failing_since = 0.0
+        elif not self._list_failing_since:
+            self._list_failing_since = now_ts
+        self.list_failing_since.set(self._list_failing_since)
 
     def set_run_status(self, status):
         for s in ("ok", "partial", "gate_blocked", "rolled_back", "failed"):

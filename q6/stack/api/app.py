@@ -39,8 +39,14 @@ except ImportError:                            # pragma: no cover
     ConnectionPool = None
 
 import ops
+try:
+    import ledger                              # 回補帳本（ES 索引）：api 映像裡是 /app/ledger.py；本機從 seg/qseg 載入
+except ImportError:  # pragma: no cover
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "seg" / "qseg"))
+    import ledger
 
 ES_URL = os.environ.get("ES_URL", "http://es:9200").rstrip("/")
+LEDGER_INDEX = os.environ.get("LEDGER_INDEX", "backfill_ledger")   # 回補帳本的 ES 索引（與 seg 的 config.LEDGER_INDEX 同一個）
 INDEX = os.environ.get("ES_INDEX", "posts")
 DICT_BASE_URL = os.environ.get("DICT_BASE_URL", "http://dictsrv").rstrip("/")
 DICT_ROOT = Path(os.environ.get("DICT_ROOT", "/dict"))
@@ -148,6 +154,7 @@ _GEN = {"at": 0.0, "v": "0:0"}
 _RECENT = {"token": None, "v": []}
 RELEASE_LOCK = threading.Lock()
 PUBSUB = ops.PubSub(PROJECT, EMULATOR or None)
+LED = ledger.Ledger(ES_URL, LEDGER_INDEX)   # 回補帳本：條件更新、搜尋、計數都走 ES
 
 
 def log(**rec):
@@ -209,6 +216,20 @@ def pg_exec(sql, params=()):
     with pg() as c:
         cur = c.execute(sql, params)
         return cur.rowcount, (cur.fetchone() if cur.description else None)
+
+
+def led_rows(fn, default):
+    """回補帳本在 ES：查詢失敗就當沒有（記一筆 log），與 pg_rows 同樣不讓整個狀態頁壞掉。"""
+    try:
+        return fn()
+    except Exception as e:
+        log(severity="WARNING", event="ledger_query_failed", error=str(e)[:200])
+        return default
+
+
+def led_clean(rows):
+    """拿掉 ES 的樂觀鎖欄位（_seq_no／_primary_term），回應形狀與原本 PG 查詢相同。"""
+    return [{k: v for k, v in r.items() if k not in ("_seq_no", "_primary_term")} for r in rows]
 
 
 def event(kind, actor, **detail):
@@ -287,7 +308,15 @@ def dict_overlay():
             txt = lambda name: S.get(f"{DICT_BASE_URL}/current/{name}", timeout=5).content.decode("utf-8")
             soft = [w for w in txt("soft_stopwords.txt").splitlines() if w.strip()]
             merges = dict(l.split("\t") for l in txt("merges.tsv").splitlines() if "\t" in l)
-            _DICT["v"] = {"dict_version": man["dict_version"], "soft": soft, "merges": merges}
+            # 宣傳句清單（這一版字典有帶才有）：算出「還沒清的貼文」的 ES 條件，與定向重跑同一個條件（ops.promo_pending_filter）
+            promo = {"list_lines": None, "filter": None}      # list_lines=None＝這一版沒帶清單，PM 頁要講「沒檢查」而不是亮綠燈
+            if ops.PROMO_FILE in man.get("files", {}):
+                try:
+                    flt, n = ops.promo_pending_filter(txt(ops.PROMO_FILE).splitlines(), man["dict_version"])
+                    promo = {"list_lines": n, "filter": flt}
+                except Exception as e:
+                    promo = {"list_lines": None, "filter": None, "error": str(e)[:200]}
+            _DICT["v"] = {"dict_version": man["dict_version"], "soft": soft, "merges": merges, "promo": promo}
         except Exception as e:
             _DICT["v"] = _DICT["v"] or {"dict_version": None, "soft": [], "merges": {}, "error": str(e)}
         _DICT["at"] = time.time()
@@ -368,7 +397,10 @@ def scope_query(q, channels, date_from, date_to):
         if date_to:
             rng["lte"] = date_to
         flt.append({"range": {"published_at": rng}})
-    must = [{"match": {"content": {"query": q, "operator": "and"}}}] if q else []
+    # 關鍵字範圍用不靠字典的雙字片語比對（content.bigram）。content 是 IK 切的：字典發版後查詢端馬上換新字典，
+    # 舊文章的索引還是發版前的切法，兩邊對不上（實測「台東縣長」0 篇、實際 79 篇；「縣長」被拆成 縣＋長，多抓「縣市長」等 442 篇、漏 144 篇）。
+    # 空白隔開的多個詞要全部出現；單一個字沒有雙字可比，才退回 content。
+    must = [{"match_phrase": {"content.bigram": w}} if len(w) > 1 else {"match": {"content": w}} for w in (q or "").split()]
     return {"bool": {"filter": flt, "must": must, "must_not": [{"exists": {"field": "deleted_at"}}]}}   # 已刪文章（tombstone）不進文字雲
 
 
@@ -397,12 +429,12 @@ def closed_range(date_from, date_to) -> bool:
 
 
 def generation():
-    """發版世代號：定向重跑（rerun_runs）或回補分區（backfill_ledger）每完成一個就變，已結束日期範圍的快取跟著失效；每 5 秒最多查一次 PG。"""
+    """發版世代號：定向重跑（rerun_runs）或回補分區（回補帳本，ES）每完成一個就變，已結束日期範圍的快取跟著失效；每 5 秒最多查一次 PG 與 ES。"""
     if time.time() - _GEN["at"] > GEN_TTL:
-        rows = pg_rows("SELECT (SELECT count(*) FROM rerun_runs WHERE finished_at IS NOT NULL) AS runs, "
-                       "(SELECT count(*) FROM backfill_ledger WHERE finished_at IS NOT NULL) AS parts")
-        if rows:
-            _GEN["v"] = f"{rows[0]['runs']}:{rows[0]['parts']}"
+        rows = pg_rows("SELECT count(*) AS runs FROM rerun_runs WHERE finished_at IS NOT NULL")
+        parts = led_rows(lambda: LED.count({"exists": {"field": "finished_at"}}), None)
+        if rows and parts is not None:
+            _GEN["v"] = f"{rows[0]['runs']}:{parts}"
         _GEN["at"] = time.time()
     return _GEN["v"]
 
@@ -487,6 +519,10 @@ def _wordcloud_compute(rid, t0, t1, t2, ov, st, excl, closed, key, seg, q, chann
             "channels": {"terms": {"field": "channel", "size": 10}},
         },
     }
+    promo = (ov.get("promo") or {}) if seg == "v2" else {}
+    if promo.get("filter"):
+        # 查詢範圍內「原文可能還留著宣傳句」的貼文數：重跑完是 0。舊流程不清宣傳句，不數
+        body["aggs"]["promo_pending"] = {"filter": promo["filter"]}
     INFLIGHT.labels(seg).inc()
     try:
         res, es_ms = es("POST", f"/{INDEX}/_search?request_cache=false", body)
@@ -534,6 +570,11 @@ def _wordcloud_compute(rid, t0, t1, t2, ov, st, excl, closed, key, seg, q, chann
         "excluded_soft_stopwords": excl, "overlay_dict_version": ov["dict_version"],
         "buckets": buckets,
         "noise_in_top": {k: sum(1 for b in buckets if b["noise"] == k) for k in ("stopword", "symbol", "number", "url_or_code", "single_char")},
+        # 只有新流程有。list_lines：這一版清單幾句（None＝沒帶清單，等於沒檢查）；pending：範圍內還沒清的貼文數
+        "promo": None if seg != "v2" else {
+            "list_lines": promo.get("list_lines"), "error": promo.get("error"),
+            "pending": res["aggregations"]["promo_pending"]["doc_count"] if "promo_pending" in res["aggregations"]
+            else (0 if promo.get("list_lines") is not None else None)},
     }
     if len(CACHE) > 400:   # token 一變舊鍵就沒用了，別讓它們堆著
         for k in sorted(CACHE, key=lambda k: CACHE[k]["at"])[:200]:
@@ -633,9 +674,9 @@ def api_status(events: int = Query(30, le=200)):
                        "extract(epoch FROM now() - heartbeat_at) AS age_sec FROM service_state ORDER BY pipeline, service")
     for s in services:
         s["alive"] = s["age_sec"] is not None and float(s["age_sec"]) < 60
-    by_status = {r["status"]: r["n"] for r in pg_rows("SELECT status, count(*) AS n FROM backfill_ledger GROUP BY status")}
-    attention = pg_rows("""SELECT partition_id, channel, month, status, raw_count, written, noop, errors, docs_per_sec, gates, finished_at, dict_version, worker
-                           FROM backfill_ledger WHERE status IN ('awaiting_pm','failed','running') ORDER BY status, month DESC LIMIT 40""")
+    by_status = led_rows(LED.counts_by_status, {})
+    attention = led_rows(lambda: led_clean(LED.search({"terms": {"status": ["awaiting_pm", "failed", "running"]}}, size=40,
+                                                     sort=[{"status": "asc"}, {"month": "desc"}])), [])
     control = pg_rows("SELECT max_docs_per_sec, ceiling_docs_per_sec, paused, reason, canary_baseline_ms, updated_at FROM backfill_control WHERE id=1")
     coll_ctl = pg_rows("SELECT run_now, paused, poll_sec, updated_at FROM collector_control WHERE id=1")
     return {"time": datetime.now(timezone.utc).isoformat(timespec="seconds"), "token": st.get("token"), "es": st,
@@ -652,10 +693,9 @@ def api_status(events: int = Query(30, le=200)):
 
 @app.get("/api/ops/ledger")
 def api_ledger(status: str = "", limit: int = Query(500, le=5000)):
-    rows = pg_rows("""SELECT partition_id, channel, month, status, raw_count, checkpoint_line, written, noop, errors, docs_per_sec, attempts,
-                      worker, started_at, finished_at, dict_version, target_seg_ver, gates FROM backfill_ledger
-                      WHERE (%s = '' OR status = %s) ORDER BY month DESC, channel LIMIT %s""", (status, status, limit))
-    return {"rows": rows, "by_status": {r["status"]: r["n"] for r in pg_rows("SELECT status, count(*) AS n FROM backfill_ledger GROUP BY status")}}
+    q = {"term": {"status": status}} if status else {"match_all": {}}
+    rows = led_rows(lambda: led_clean(LED.search(q, size=limit)), [])
+    return {"rows": rows, "by_status": led_rows(LED.counts_by_status, {})}
 
 
 @app.get("/api/ops/runs")
@@ -672,8 +712,9 @@ def _actor(body) -> str:
 
 @app.post("/api/ops/approve")
 def api_approve(body: dict = Body(...)):
-    """PM 抽查簽核（awaiting_pm → passed，簽核人與時間寫進 gates.G4），或人工豁免某個沒過的閘門（failed → passed，一定要寫說明）。
-    與 `python -m qseg approve` 同一段 SQL。"""
+    """PM 抽查簽核（awaiting_pm → passed，簽核人與時間寫進 gates.G4），或人工豁免某個沒過的閘門（failed → passed；首月是 failed → awaiting_pm；還有別的閘門沒過又沒豁免時留在 failed。一定要寫說明）。
+    首月不能靠豁免跳過 PM：G4 沒有記成已過（還沒簽，或閘門根本沒算到），或這個渠道還沒有任何分區 passed，豁免後停在 awaiting_pm，PM 簽完才 passed。
+    與 `python -m qseg approve` 同一段狀態機（ledger.waive_plan）。"""
     by = _actor(body)
     partition, note, waive = str(body.get("partition") or "").strip(), str(body.get("note") or "").strip(), body.get("waive")
     if not partition:
@@ -684,17 +725,13 @@ def api_approve(body: dict = Body(...)):
             raise HTTPException(400, "只能豁免 G1／G2／G3")
         if not note:
             raise HTTPException(400, "豁免一定要寫說明（逐篇看過什麼）")
-        w = json.dumps({"waived_by": by, "waived_at": now, "note": note}, ensure_ascii=False)
-        n, _ = pg_exec("""UPDATE backfill_ledger SET status='passed', gates=jsonb_set(gates, %s, %s::jsonb)
-                          WHERE partition_id=%s AND status='failed'""", ([waive, "waiver"], w, partition))
-        if not n:
+        status = LED.waive(partition, waive, {"waived_by": by, "waived_at": now, "note": note})
+        if status is None:
             raise HTTPException(409, f"{partition} 不在 failed 狀態，沒有可豁免的閘門")
-        event("waive", by, partition=partition, gate=waive, note=note)
-        return {"ok": True, "partition": partition, "status": "passed", "waived": waive}
-    g4 = json.dumps({"pass": True, "pm_spot_check_required": True, "approved_by": by, "note": note, "approved_at": now}, ensure_ascii=False)
-    n, _ = pg_exec("""UPDATE backfill_ledger SET status='passed', gates=jsonb_set(gates, '{G4}', %s::jsonb)
-                      WHERE partition_id=%s AND status='awaiting_pm'""", (g4, partition))
-    if not n:
+        event("waive", by, partition=partition, gate=waive, note=note, status=status)
+        return {"ok": True, "partition": partition, "status": status, "waived": waive}
+    g4 = {"pass": True, "pm_spot_check_required": True, "approved_by": by, "note": note, "approved_at": now}
+    if not LED.approve(partition, g4):
         raise HTTPException(409, f"{partition} 不在 awaiting_pm 狀態")
     event("approve", by, partition=partition, note=note)
     return {"ok": True, "partition": partition, "status": "passed"}
@@ -928,7 +965,17 @@ def metrics():
 
 
 WEB = Path(__file__).resolve().parent / "web"
-app.mount("/static", StaticFiles(directory=str(WEB)), name="static")
+class _RevalidatingStatic(StaticFiles):
+    """前端 JS／CSS 每次都向伺服器確認（ETag 沒變就 304）。沒有 Cache-Control 時瀏覽器會自行快取，
+    部署新版後已開著的 PM 頁仍跑舊 rum.js／app.js（2026-11-08 修 CLS 時就是這樣，舊分頁繼續送錯的 CLS）。"""
+
+    def file_response(self, *args, **kwargs):
+        resp = super().file_response(*args, **kwargs)
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
+
+
+app.mount("/static", _RevalidatingStatic(directory=str(WEB)), name="static")
 
 
 @app.get("/")

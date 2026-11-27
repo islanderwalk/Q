@@ -1951,6 +1951,63 @@
   },
   {
    "type": "stat",
+   "title": "漏斷詞（不限時間）",
+   "description": "抓到超過 15 分鐘、這一版沒有 seg_ver；SegUnsegmentedStale（warn，30 分鐘）；用 qseg fill 補",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prom"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prom"
+     },
+     "expr": "sum by (pipeline) (qseg_coverage_unsegmented_stale_docs) or vector(0)",
+     "legendFormat": "{{pipeline}}",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "background",
+    "graphMode": "area",
+    "textMode": "auto"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 4,
+    "x": 4,
+    "y": 37
+   }
+  },
+  {
+   "type": "stat",
    "title": "缺 published_at",
    "description": "month=unknown 的文章不在任何回補分區（ReconUnknownMonthDocs）",
    "datasource": {
@@ -2002,14 +2059,14 @@
    "gridPos": {
     "h": 4,
     "w": 4,
-    "x": 4,
+    "x": 8,
     "y": 37
    }
   },
   {
    "type": "stat",
    "title": "對帳最後成功",
-   "description": "ReconStale：26 小時",
+   "description": "ReconStale：26 小時；空白＝服務起來之後還沒成功跑過（不是「56 年前」）",
    "datasource": {
     "type": "prometheus",
     "uid": "prom"
@@ -2020,7 +2077,7 @@
       "type": "prometheus",
       "uid": "prom"
      },
-     "expr": "time() - qseg_recon_last_success_timestamp_seconds",
+     "expr": "time() - (qseg_recon_last_success_timestamp_seconds > 0)",
      "legendFormat": "",
      "refId": "A"
     }
@@ -2063,14 +2120,14 @@
    "gridPos": {
     "h": 4,
     "w": 4,
-    "x": 8,
+    "x": 12,
     "y": 37
    }
   },
   {
    "type": "stat",
    "title": "覆蓋檢查最後成功",
-   "description": "SegCoverageStale：10 分鐘",
+   "description": "SegCoverageStale：10 分鐘；空白＝還沒成功跑過",
    "datasource": {
     "type": "prometheus",
     "uid": "prom"
@@ -2081,7 +2138,7 @@
       "type": "prometheus",
       "uid": "prom"
      },
-     "expr": "time() - qseg_coverage_last_success_timestamp_seconds",
+     "expr": "time() - (qseg_coverage_last_success_timestamp_seconds > 0)",
      "legendFormat": "",
      "refId": "A"
     }
@@ -2120,7 +2177,7 @@
    "gridPos": {
     "h": 4,
     "w": 4,
-    "x": 12,
+    "x": 16,
     "y": 37
    }
   },
@@ -2315,8 +2372,8 @@
    "gridPos": {
     "h": 8,
     "w": 8,
-    "x": 16,
-    "y": 37
+    "x": 0,
+    "y": 41
    }
   },
   {
@@ -2326,7 +2383,7 @@
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 45
+    "y": 49
    },
    "collapsed": false
   },
@@ -2533,7 +2590,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 46
+    "y": 50
    }
   },
   {
@@ -2719,7 +2776,7 @@
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 46
+    "y": 50
    }
   },
   {
@@ -2909,7 +2966,7 @@
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 46
+    "y": 50
    }
   },
   {
@@ -3099,13 +3156,13 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 54
+    "y": 58
    }
   },
   {
    "type": "timeseries",
    "title": "刪文 tombstone／改文／bulk 429 重送",
-   "description": "刪文只寫 deleted_at（文字雲查詢排除）；改文＝content_sha 不同，seg_guard 重寫本體與詞表；429 等 1、2、4 秒最多重送 3 次",
+   "description": "刪文只寫 deleted_at（文字雲查詢排除）；改文＝collector 先寫新原文，seg_guard 看斷的原文換了，同一版也重寫詞表；斷到舊原文的不寫；429 等 1、2、4 秒最多重送 3 次",
    "datasource": {
     "type": "prometheus",
     "uid": "prom"
@@ -3303,7 +3360,7 @@
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 54
+    "y": 58
    }
   },
   {
@@ -3489,7 +3546,7 @@
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 54
+    "y": 58
    }
   },
   {
@@ -3499,7 +3556,7 @@
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 62
+    "y": 66
    },
    "collapsed": false
   },
@@ -3557,7 +3614,7 @@
     "h": 4,
     "w": 4,
     "x": 0,
-    "y": 63
+    "y": 67
    }
   },
   {
@@ -3614,7 +3671,7 @@
     "h": 4,
     "w": 4,
     "x": 4,
-    "y": 63
+    "y": 67
    }
   },
   {
@@ -3671,7 +3728,7 @@
     "h": 4,
     "w": 4,
     "x": 8,
-    "y": 63
+    "y": 67
    }
   },
   {
@@ -3728,7 +3785,7 @@
     "h": 4,
     "w": 4,
     "x": 12,
-    "y": 63
+    "y": 67
    }
   },
   {
@@ -3914,7 +3971,7 @@
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 63
+    "y": 67
    }
   },
   {
@@ -4100,7 +4157,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 71
+    "y": 75
    }
   },
   {
@@ -4290,7 +4347,7 @@
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 71
+    "y": 75
    }
   },
   {
@@ -4333,7 +4390,7 @@
     "h": 7,
     "w": 24,
     "x": 0,
-    "y": 79
+    "y": 83
    }
   },
   {
@@ -4343,7 +4400,7 @@
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 86
+    "y": 90
    },
    "collapsed": false
   },
@@ -4397,7 +4454,7 @@
     "h": 4,
     "w": 3,
     "x": 0,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4455,7 +4512,7 @@
     "h": 4,
     "w": 3,
     "x": 3,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4512,7 +4569,7 @@
     "h": 4,
     "w": 3,
     "x": 6,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4569,7 +4626,7 @@
     "h": 4,
     "w": 3,
     "x": 9,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4626,7 +4683,7 @@
     "h": 4,
     "w": 3,
     "x": 12,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4680,7 +4737,7 @@
     "h": 4,
     "w": 3,
     "x": 15,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4737,7 +4794,7 @@
     "h": 4,
     "w": 3,
     "x": 18,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -4927,7 +4984,7 @@
     "h": 4,
     "w": 3,
     "x": 21,
-    "y": 87
+    "y": 91
    }
   },
   {
@@ -5114,7 +5171,7 @@
     "h": 8,
     "w": 12,
     "x": 0,
-    "y": 91
+    "y": 95
    }
   },
   {
@@ -5157,7 +5214,7 @@
     "h": 8,
     "w": 12,
     "x": 12,
-    "y": 91
+    "y": 95
    }
   },
   {
@@ -5167,7 +5224,7 @@
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 99
+    "y": 103
    },
    "collapsed": false
   },
@@ -5234,7 +5291,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 100
+    "y": 104
    }
   },
   {
@@ -5296,7 +5353,7 @@
     "h": 8,
     "w": 4,
     "x": 8,
-    "y": 100
+    "y": 104
    }
   },
   {
@@ -5354,7 +5411,7 @@
     "h": 4,
     "w": 4,
     "x": 12,
-    "y": 100
+    "y": 104
    }
   },
   {
@@ -5412,7 +5469,7 @@
     "h": 4,
     "w": 4,
     "x": 16,
-    "y": 100
+    "y": 104
    }
   },
   {
@@ -5466,7 +5523,7 @@
     "h": 4,
     "w": 4,
     "x": 20,
-    "y": 100
+    "y": 104
    }
   },
   {
@@ -5679,7 +5736,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 108
+    "y": 112
    }
   },
   {
@@ -5874,7 +5931,7 @@
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 108
+    "y": 112
    }
   },
   {
@@ -5917,7 +5974,7 @@
     "h": 8,
     "w": 24,
     "x": 0,
-    "y": 116
+    "y": 120
    }
   },
   {
@@ -5927,14 +5984,14 @@
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 124
+    "y": 128
    },
    "collapsed": false
   },
   {
    "type": "stat",
    "title": "叢集狀態",
-   "description": "0 green／1 yellow／2 red；本機單節點 0 副本本來就是 yellow；red 立即 page（ElasticsearchClusterRed）",
+   "description": "0 green／1 yellow／2 red；三個顏色是不同標籤的序列，要先 sum 掉標籤才能相加（原本直接相加，對不上標籤所以整格空白）；本機單節點 0 副本本來就是 yellow；red 立即 page（ElasticsearchClusterRed）",
    "datasource": {
     "type": "prometheus",
     "uid": "prom"
@@ -5945,7 +6002,7 @@
       "type": "prometheus",
       "uid": "prom"
      },
-     "expr": "elasticsearch_cluster_health_status{color=\"green\"} * 0 + elasticsearch_cluster_health_status{color=\"yellow\"} * 1 + elasticsearch_cluster_health_status{color=\"red\"} * 2",
+     "expr": "sum(elasticsearch_cluster_health_status{color=\"yellow\"}) + 2 * sum(elasticsearch_cluster_health_status{color=\"red\"})",
      "legendFormat": "",
      "refId": "A"
     }
@@ -5989,7 +6046,7 @@
     "h": 4,
     "w": 3,
     "x": 0,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6050,7 +6107,7 @@
     "h": 4,
     "w": 3,
     "x": 3,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6111,7 +6168,7 @@
     "h": 4,
     "w": 3,
     "x": 6,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6168,7 +6225,7 @@
     "h": 4,
     "w": 3,
     "x": 9,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6225,7 +6282,7 @@
     "h": 4,
     "w": 3,
     "x": 12,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6282,7 +6339,7 @@
     "h": 4,
     "w": 3,
     "x": 15,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6339,7 +6396,7 @@
     "h": 4,
     "w": 3,
     "x": 18,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6396,7 +6453,7 @@
     "h": 4,
     "w": 3,
     "x": 21,
-    "y": 125
+    "y": 129
    }
   },
   {
@@ -6591,7 +6648,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 129
+    "y": 133
    }
   },
   {
@@ -6786,7 +6843,7 @@
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 129
+    "y": 133
    }
   },
   {
@@ -6997,7 +7054,7 @@
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 129
+    "y": 133
    }
   },
   {
@@ -7007,7 +7064,7 @@
     "h": 1,
     "w": 24,
     "x": 0,
-    "y": 137
+    "y": 141
    },
    "collapsed": false
   },
@@ -7196,7 +7253,7 @@
     "h": 8,
     "w": 8,
     "x": 0,
-    "y": 138
+    "y": 142
    }
   },
   {
@@ -7391,7 +7448,7 @@
     "h": 8,
     "w": 8,
     "x": 8,
-    "y": 138
+    "y": 142
    }
   },
   {
@@ -7586,7 +7643,7 @@
     "h": 8,
     "w": 8,
     "x": 16,
-    "y": 138
+    "y": 142
    }
   },
   {
@@ -7618,7 +7675,7 @@
     "h": 8,
     "w": 24,
     "x": 0,
-    "y": 146
+    "y": 150
    }
   }
  ],

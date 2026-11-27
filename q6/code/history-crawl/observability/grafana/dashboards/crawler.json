@@ -282,7 +282,7 @@
    },
    "targets": [
     {
-     "expr": "crawl_api_p95_ms{job=~\"$job\"}",
+     "expr": "crawl_api_p95_ms{job=~\"$job\"} and on(job, platform) (time() - push_time_seconds{job=~\"$job\"} < 180)",
      "legendFormat": "{{platform}}",
      "refId": "A",
      "datasource": {

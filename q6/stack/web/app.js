@@ -66,8 +66,18 @@ function meta(r) {
 
 function noise(el, r) {
   const n = r.noise_in_top, total = Object.values(n).reduce((a, b) => a + b, 0);
-  el.innerHTML = total === 0 ? `<span class="badge ok">前 ${r.buckets.length} 詞沒有雜訊</span>` :
-    Object.entries(n).filter(([, v]) => v).map(([k, v]) => `<span class="badge bad">${NOISE[k]} ${v}</span>`).join('');
+  const bad = Object.entries(n).filter(([, v]) => v).map(([k, v]) => `<span class="badge bad">${NOISE[k]} ${v}</span>`);
+  // 宣傳句（只有新流程檢查）：綠燈只在「雜訊 0 而且待清 0 篇」時亮；這一版字典沒帶清單就明講沒檢查，不當成通過
+  const p = r.promo;
+  let promo = '';
+  if (p && p.pending > 0)
+    bad.push(`<span class="badge bad" title="原文裡還留著宣傳句清單上的句子、還沒用新版重算的貼文">宣傳句待清 ${p.pending.toLocaleString()} 篇</span>`);
+  else if (p && p.list_lines != null)
+    promo = `<span class="badge ok" title="這一版字典的宣傳句清單，以及查詢範圍內還沒清的貼文數">宣傳句清單 ${p.list_lines} 句、待清 0 篇</span>`;
+  else if (p)
+    promo = `<span class="badge bad">宣傳句沒檢查（${p.error ? '清單讀不到' : '這版字典沒帶清單'}）</span>`;
+  el.innerHTML = (total === 0 ? `<span class="badge ok" title="只檢查停用詞、符號、純數字、網址碎片、單字">前 ${r.buckets.length} 詞沒有雜訊</span>` : '')
+    + bad.join('') + promo;
 }
 
 /* 與上一次同一個查詢的結果比：新進前 N 的詞、掉出去的詞、篇數變了的詞 */
@@ -165,15 +175,27 @@ function pill(ok, text) { return `<span class="pill ${ok ? 'ok' : 'bad'}">${text
 
 function renderStatus(s) {
   const es = s.es || {};
-  const svc = Object.fromEntries((s.services || []).map(x => [x.pipeline, x]));
+  // service_state 會留著重建前舊容器的列（心跳早就停了）；每條 pipeline 只要有一台活著就算運作中，
+  // 不能用 Object.fromEntries 取「最後一列」，否則舊容器排在後面時就會誤報沒心跳
+  const svc = {};
+  for (const x of s.services || []) {
+    const cur = svc[x.pipeline] || (svc[x.pipeline] = { alive: false, n_alive: 0, dict_version: x.dict_version, heartbeat_at: x.heartbeat_at });
+    if (x.alive) { cur.n_alive++; if (!cur.alive) cur.dict_version = x.dict_version; cur.alive = true; }
+    else if (!cur.alive && (x.heartbeat_at || '') > (cur.heartbeat_at || '')) { cur.dict_version = x.dict_version; cur.heartbeat_at = x.heartbeat_at; }
+  }
   $('env').innerHTML = (es.ok ? `<span>文章 <b>${num(es.total)}</b></span><span>有舊詞表 <b>${num(es.with_v1)}</b></span><span>有新詞表 <b>${num(es.with_v2)}</b></span>` : `<span class="err">${esc(es.error || 'ES 無回應')}</span>`) +
     `<span>字典 current <b>${esc(s.dict.current || s.dict.overlay_version || '—')}</b></span>` +
-    ['v1', 'v2'].map(p => { const x = svc[p]; return `<span>seg-${p} ${x ? pill(x.alive, x.alive ? '運作中' : '沒心跳') + ` <b>${esc(x.dict_version)}</b>` : '<span class="pill off">未啟動</span>'}</span>`; }).join('');
+    ['v1', 'v2'].map(p => { const x = svc[p]; return `<span>seg-${p} ${x ? pill(x.alive, x.alive ? `運作中${x.n_alive > 1 ? ' ×' + x.n_alive : ''}` : '沒心跳') + ` <b>${esc(x.dict_version)}</b>` : '<span class="pill off">未啟動</span>'}</span>`; }).join('');
   $('dict-current').innerHTML = `<div><span class="k">current</span><b>${esc(s.dict.current || '—')}</b>${s.dict.root_mounted ? '' : ' <span class="err">（API 沒掛 artifact 目錄，不能發版）</span>'}</div>` +
     `<div><span class="k">查詢端 overlay</span>${esc(s.dict.overlay_version || '—')}</div>` +
     `<div><span class="k">最後斷詞</span>v1 ${t(es.last_seg_at_v1)}｜v2 ${t(es.last_seg_at_v2)}</div>`;
-  $('services').querySelector('tbody').innerHTML = (s.services || []).map(x =>
-    `<tr><td>${esc(x.service)}</td><td>${esc(x.dict_version)}</td><td>${x.seg_ver}</td><td>${pill(x.alive, ago(x.heartbeat_at))}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">斷詞服務還沒啟動（./run.sh live）</td></tr>';
+  const all = s.services || [];
+  const live = all.filter(x => x.alive || Number(x.age_sec) < 3600);   // 一小時內停的仍逐列列出（剛掛掉要看得到）
+  const gone = all.length - live.length;
+  $('services').querySelector('tbody').innerHTML = (live.map(x =>
+    `<tr><td>${esc(x.service)}</td><td>${esc(x.dict_version)}</td><td>${x.seg_ver}</td><td>${pill(x.alive, ago(x.heartbeat_at))}</td></tr>`).join('') +
+    (gone ? `<tr><td colspan="4" class="muted">另有 ${gone} 個舊執行個體超過 1 小時沒心跳（容器重建前的紀錄）</td></tr>` : '')) ||
+    '<tr><td colspan="4" class="muted">斷詞服務還沒啟動（./run.sh live）</td></tr>';
   $('versions').querySelector('tbody').innerHTML = (s.dict.versions || []).slice().reverse().map(v =>
     `<tr class="${v.dict_version === s.dict.current ? 'cur' : ''}"><td>${esc(v.dict_version)}${v.dict_version === s.dict.current ? ' <small>current</small>' : ''}</td>` +
     `<td>${(v.add_words || []).map(w => esc(Array.isArray(w) ? w[0] : w)).join('、') || '<span class="muted">—</span>'}</td>` +
@@ -210,11 +232,11 @@ function summary(e) {
 }
 
 function renderRun(runs) {
-  const r = runs.find(x => x.id === watchRun) || runs[0];
+  const r = runs.find(x => x.id === watchRun) || runs.find(x => !['done', 'failed', 'skipped'].includes(x.status)) || runs[0];
   if (!r) { $('run').innerHTML = '<div class="muted">還沒有發過版</div>'; return; }
   const pct = r.candidates ? Math.min(100, Math.round(100 * (r.scanned || 0) / r.candidates)) : (r.status === 'done' ? 100 : 0);
   const ex = (r.examples || []).slice(0, 3).map(x => `<div class="ex"><span class="muted">${esc(x.id)}</span> ${(x.removed || []).map(w => `<s>${esc(w)}</s>`).join(' ')} → ${(x.added || []).map(w => `<b>${esc(w)}</b>`).join(' ')}</div>`).join('');
-  $('run').innerHTML = `<div class="runhead"><b>run #${r.id}</b> ${esc(r.dict_version)} 加詞 ${(r.words || []).map(esc).join('、')} <span class="pill ${r.status === 'done' ? 'ok' : r.status === 'failed' ? 'bad' : 'warn'}">${RUN[r.status] || r.status}</span>` +
+  $('run').innerHTML = `<div class="runhead"><b>run #${r.id}</b> ${esc(r.dict_version)} ${(r.requested_by || '').startsWith('cli-promo') ? '宣傳句重跑（指令列）' : '加詞 ' + (r.words || []).map(esc).join('、')} <span class="pill ${r.status === 'done' ? 'ok' : r.status === 'failed' ? 'bad' : 'warn'}">${RUN[r.status] || r.status}</span>` +
     ` <span class="muted">${esc(r.worker || '')} ${r.requested_by ? '由 ' + esc(r.requested_by) : ''}</span></div>` +
     `<div class="prog"><i style="width:${pct}%"></i></div>` +
     `<div class="muted">候選 ${num(r.candidates)} 篇｜掃過 ${num(r.scanned)}｜詞表真的變了 ${num(r.terms_changed)}｜寫入 ${num(r.written)}｜noop ${num(r.noop)}｜錯 ${num(r.errors)}` +
@@ -302,9 +324,10 @@ $('ledger').addEventListener('click', async e => {
   const p = b.dataset.approve || b.dataset.p;
   const note = (b.closest('td').querySelector('input.note') || {}).value || '';
   try {
-    if (b.dataset.approve) await post('/api/ops/approve', { partition: p, note });
-    else if (b.dataset.waive) { if (!note.trim()) throw new Error('豁免一定要寫說明'); await post('/api/ops/approve', { partition: p, note, waive: b.dataset.waive }); }
-    say('ctl-msg', `${p} 已處理`);
+    let r = null;
+    if (b.dataset.approve) r = await post('/api/ops/approve', { partition: p, note });
+    else if (b.dataset.waive) { if (!note.trim()) throw new Error('豁免一定要寫說明'); r = await post('/api/ops/approve', { partition: p, note, waive: b.dataset.waive }); }
+    say('ctl-msg', r && r.waived && r.status === 'failed' ? `${p} 已豁免 ${r.waived}，還有其他閘門沒過，要逐一豁免才會往下走` : r && r.waived && r.status === 'awaiting_pm' ? `${p} 已豁免 ${r.waived}，還要 PM 簽核才放行` : `${p} 已處理`);
     if (fullLedger) loadFullLedger();
   } catch (err) { say('ctl-msg', err.message, true); }
 });

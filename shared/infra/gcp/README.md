@@ -17,7 +17,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `shared/infra/gcp/versions.tf` | Terraform >= 1.5；google / google-beta `~> 8.7`（安裝版本 v8.9.0；鎖定檔含 windows／linux／darwin 四個平台的 hash） |
-| `shared/infra/gcp/variables.tf` | project_id、project_number（需數字驗證）、region、deletion_protection（預設 true）、映像變數（含 Q6 的 `image_seg`、`image_wordcloud_api`、`image_collector`）、`elasticsearch_url`（只接受 VPC 私有位址或 https）、GCS 轉冷／刪除天數、PTT Job 排程、backfill 分片數、Cloud SQL 備份開關、Cloud Build 2nd gen 參數 |
+| `shared/infra/gcp/variables.tf` | project_id、project_number（需數字驗證）、region、deletion_protection（預設 true）、映像變數（含 Q6 的 `image_seg`、`image_wordcloud_api`、`image_collector`）、`elasticsearch_url`（只接受 VPC 私有位址或 https）、GCS 轉冷／刪除天數、PTT Job 排程、backfill 分片數、`q6_raw_bq_table`（回補 Job 讀原文的 BigQuery 表，留空＝不接）、Cloud SQL 備份開關、Cloud Build 2nd gen 參數 |
 | `shared/infra/gcp/apis.tf` | 13 個 API（含 Secret Manager）、Pub/Sub 與 Cloud Tasks 服務代理（google-beta） |
 | `shared/infra/gcp/iam.tf` | 8 個 service account（另有 legacy 可選 1 個；新增 backfill 專用、Cloud Tasks OIDC 用的 tasks-invoker）、Pub/Sub push 的 token creator、api/worker 的 publisher、GCS 權限 |
 | `shared/infra/gcp/network.tf` | VPC、子網、Cloud Router、Cloud NAT（兩個固定出口 IP、動態配埠 1,024–8,192、ERRORS_ONLY 日誌）、Private Services Access（Cloud SQL 私有 IP） |
@@ -34,7 +34,7 @@
 | `shared/infra/gcp/legacy_gce.tf` | 可選：legacy GCE instance template（Shielded VM、OS Login、擋專案 SSH key）+ 區域 MIG + health check + 健康檢查防火牆（`enable_legacy_gce`，預設 false） |
 | `shared/infra/gcp/outputs.tf` | Cloud Run URL、Pub/Sub 主題／訂閱 id、bucket、BQ 表、AR repo、固定出口 IP（`egress_static_ips` 列兩個）、Cloud SQL 私有 IP、`q6`（Q6 服務 URL、主題／訂閱、字典 bucket） |
 | `shared/infra/gcp/services/parser/` | 從 lab 複製的 FastAPI parser（`POST /events/crawl-fetched`，目前只 log 並 ACK，**不是正式解析器**）；`Event` 已改成 strict 且六欄必填（與 avsc 一致）、映像以 uid 10001 執行；`tests/`（pytest 119 passed；最初 13 項，與 Python 驗證合併後 119 項）、`local/`（Pub/Sub 模擬器實跑，見 `local/VERIFY.md`） |
-| `shared/infra/gcp/tests/` | `terraform test`（mock provider，不需憑證）：architecture 11、toggles 5、validation 4、hardening 10、q6 7 個 run（共 37） |
+| `shared/infra/gcp/tests/` | `terraform test`（mock provider，不需憑證）：architecture 11、toggles 5、validation 4、hardening 10、q6 10 個 run（共 40，2026-11-11 全過；第一次跑要先 `terraform init -backend=false` 下載 provider） |
 | `shared/infra/gcp/optional/gke/` | 方案 B／C 的 GKE：Autopilot 叢集、Standard 叢集＋browser-pool 節點池、HPA（**獨立 root**，不併入主 plan）；私有節點、`master_authorized_cidr`（必填）、專用節點 SA、Workload Identity、REGULAR channel |
 | `shared/infra/gcp/.terraform.lock.hcl` | provider 鎖定檔（建議版控） |
 | `shared/infra/gcp/terraform.tfvars.example` | 變數範本；`terraform.tfvars` 已列入 `shared/infra/gcp/.gitignore` |

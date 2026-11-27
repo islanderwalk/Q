@@ -144,12 +144,9 @@ def publish(rows: list):
     metrics.RECON_OK.set(time.time())
 
 
-LEDGER_SQL = "SELECT channel, month, status, written, noop, raw_count, checkpoint_line, attempts, finished_at FROM backfill_ledger"
-BURNDOWN_SQL = """
-SELECT (SELECT count(*) FROM backfill_ledger WHERE status NOT IN ('passed') AND attempts >= %s) AS exhausted,
-       (SELECT extract(epoch FROM now() - min(finished_at)) FROM backfill_ledger WHERE status='awaiting_pm') AS oldest_awaiting,
-       (SELECT coalesce(sum(greatest(coalesce(raw_count, 0) - checkpoint_line, 0)), 0) FROM backfill_ledger WHERE status IN ('pending','running')) AS remaining,
-       (SELECT coalesce(sum(docs), 0) FROM backfill_batches WHERE at > now() - interval '15 minutes') / 900.0 AS rate_15m,
+# 帳本已搬到 ES（ledger.py）；燃盡裡還留在 PG 的只有限速、暫停、近 15 分鐘吞吐（backfill_control／backfill_batches）
+BURNDOWN_CONTROL_SQL = """
+SELECT (SELECT coalesce(sum(docs), 0) FROM backfill_batches WHERE at > now() - interval '15 minutes') / 900.0 AS rate_15m,
        (SELECT max_docs_per_sec FROM backfill_control WHERE id=1) AS max_dps,
        (SELECT paused FROM backfill_control WHERE id=1) AS paused
 """
@@ -188,21 +185,29 @@ def convergence(conn):
         metrics.RELEASE_OUTBOX_PENDING.set(0)
 
 
-def ledger_and_burndown(conn, max_attempts: int = 3):
-    """帳本層（每分區）＋燃盡 gauge。"""
-    ledger = {}
-    for ch, month, status, written, noop, raw_count, cp, attempts, fin in conn.execute(LEDGER_SQL).fetchall():
-        ledger[(ch, month)] = {"status": status, "written": written, "noop": noop, "raw_count": raw_count}
-    by_status = {}
-    for l in ledger.values():
-        by_status[l["status"]] = by_status.get(l["status"], 0) + 1
+def ledger_and_burndown(conn, max_attempts: int = 3, led=None):
+    """帳本層（每分區）＋燃盡 gauge。帳本在 ES 索引 backfill_ledger（ledger.py），在 Python 裡算各狀態數、已耗盡數、最舊待簽時間、剩餘篇數；
+    限速、暫停、吞吐仍從 PG 讀。"""
+    from .ledger import Ledger
+    led = led or Ledger(config.ES_URL, config.LEDGER_INDEX)
+    ledger, by_status, exhausted, oldest_ts, remaining = {}, {}, 0, None, 0
+    for r in led.all_rows():
+        st = r["status"]
+        ledger[(r["channel"], r["month"])] = {"status": st, "written": r.get("written"), "noop": r.get("noop"), "raw_count": r.get("raw_count")}
+        by_status[st] = by_status.get(st, 0) + 1
+        if st != "passed" and (r.get("attempts") or 0) >= max_attempts:
+            exhausted += 1
+        if st == "awaiting_pm" and r.get("finished_at") is not None:
+            ts = r["finished_at"].timestamp()
+            oldest_ts = ts if oldest_ts is None else min(oldest_ts, ts)
+        if st in ("pending", "running"):
+            remaining += max(0, (r.get("raw_count") or 0) - (r.get("checkpoint_line") or 0))
     for st in ("pending", "running", "awaiting_pm", "passed", "failed"):
         metrics.LEDGER_PARTS.labels(st).set(by_status.get(st, 0))
-    row = conn.execute(BURNDOWN_SQL, (max_attempts,)).fetchone()
-    exhausted, oldest, remaining, rate, max_dps, paused = row
-    metrics.LEDGER_EXHAUSTED.set(exhausted or 0)
-    metrics.LEDGER_OLDEST_PM.set(float(oldest) if oldest is not None else 0)
-    metrics.BACKFILL_REMAINING.set(int(remaining or 0))
+    rate, max_dps, paused = conn.execute(BURNDOWN_CONTROL_SQL).fetchone()
+    metrics.LEDGER_EXHAUSTED.set(exhausted)
+    metrics.LEDGER_OLDEST_PM.set(time.time() - oldest_ts if oldest_ts is not None else 0)
+    metrics.BACKFILL_REMAINING.set(int(remaining))
     metrics.BACKFILL_RATE.set(float(rate or 0))
     metrics.BACKFILL_MAX_DPS.set(int(max_dps or 0))
     metrics.BACKFILL_PAUSED.set(1 if paused else 0)
@@ -261,6 +266,18 @@ def idle(interval: float, tick: float, refresh) -> int:
             log("recon_heartbeat_failed", "WARNING", error=str(e)[:200])
 
 
+RETRY_FIRST, RETRY_MAX = 60.0, 600.0   # 失敗後的重試間隔：60 秒起、每次加倍、最多 10 分鐘
+
+
+def retry_delay(failures: int, interval: float) -> float:
+    """連續失敗 failures 次之後，下一次要等多久；failures=0（上一次成功）就是正常週期 interval。
+    實測抓到的問題：整台重開時 ES 還沒好，第一次對帳連線被拒，原本要等滿一個週期（對帳 1 小時、品質日報 24 小時）才重試，
+    這段時間看板是空值、ReconStale／QualityStale 一直響。重試間隔不會比正常週期長。"""
+    if failures <= 0:
+        return interval
+    return min(interval, RETRY_MAX, RETRY_FIRST * 2 ** min(failures - 1, 10))
+
+
 def main(args):
     import psycopg
 
@@ -278,15 +295,18 @@ def main(args):
         with psycopg.connect(config.PG_DSN, autocommit=True) as conn:
             convergence(conn)
 
+    failures = 0
     while True:
         try:
             with psycopg.connect(config.PG_DSN, autocommit=True) as conn:
                 run_once(es, conn)
+            failures = 0
         except Exception as e:  # 失敗不能讓常駐程序死掉；錯誤要看得見（RECON_OK 不更新 → ReconStale 會響）
+            failures += 1
             metrics.RECON_ERR.inc()
-            log("recon_failed", "ERROR", error=str(e)[:300])
+            log("recon_failed", "ERROR", error=str(e)[:300], failures=failures, retry_in_s=retry_delay(failures, interval))
             if once:
                 return 1
         if once:
             return 0
-        idle(interval, HEARTBEAT_TICK, refresh_heartbeats)
+        idle(retry_delay(failures, interval), HEARTBEAT_TICK, refresh_heartbeats)

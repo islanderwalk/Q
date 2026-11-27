@@ -9,6 +9,7 @@ RUN --mount=type=secret,id=ca,required=false \
     "psycopg[binary,pool]==3.3.6" google-cloud-pubsub==2.43.0
 WORKDIR /app
 COPY api/app.py api/ops.py api/collector.py api/feeds.json /app/
+COPY seg/qseg/ledger.py /app/ledger.py
 COPY pg/live.sql /app/live.sql
 COPY web/ /app/web/
 COPY data/channels/ /app/data/channels/

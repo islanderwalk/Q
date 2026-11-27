@@ -1,0 +1,218 @@
+[
+  {
+    "case": "deleted_404",
+    "url": "https://www.ptt.cc/bbs/Gossiping/M.1792887225.A.5F3.html",
+    "http_status": 404,
+    "events": 57,
+    "responses": [
+      {
+        "status": 404,
+        "mime": "text/html"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/plain"
+      },
+      {
+        "status": 200,
+        "mime": "text/plain"
+      },
+      {
+        "status": 200,
+        "mime": "image/gif"
+      },
+      {
+        "status": 204,
+        "mime": "text/plain"
+      },
+      {
+        "status": 204,
+        "mime": "text/plain"
+      },
+      {
+        "status": 204,
+        "mime": "text/plain"
+      }
+    ]
+  },
+  {
+    "case": "truncated_200",
+    "url": "https://www.ptt.cc/bbs/Gossiping/M.1792462201.A.2BD.html",
+    "http_status": 200,
+    "events": 50,
+    "responses": [
+      {
+        "status": 200,
+        "mime": "text/html"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "image/jpeg"
+      },
+      {
+        "status": 204,
+        "mime": "text/plain"
+      },
+      {
+        "status": 200,
+        "mime": "text/plain"
+      }
+    ]
+  },
+  {
+    "case": "normal_200",
+    "url": "https://www.ptt.cc/bbs/Gossiping/M.1792946240.A.772.html",
+    "http_status": 200,
+    "events": 47,
+    "responses": [
+      {
+        "status": 200,
+        "mime": "text/html"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "application/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/css"
+      },
+      {
+        "status": 200,
+        "mime": "text/javascript"
+      },
+      {
+        "status": 204,
+        "mime": "text/plain"
+      },
+      {
+        "status": 200,
+        "mime": "text/plain"
+      }
+    ]
+  }
+]

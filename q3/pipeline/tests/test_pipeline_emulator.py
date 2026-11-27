@@ -223,3 +223,118 @@ def test_regression_drill_rolls_back_one_run_only(pipe):
     assert "regression" not in ctx.inject     # 只作用一輪
     r3 = job.run(ctx)
     assert r3["status"] == "ok" and r3["new"] == 4    # 被還原的 4 篇補回來
+
+
+def test_blocked_articles_stop_the_run_then_resume(pipe):
+    """只有文章頁被擋（列表照常）：連續 3 篇抓不到就停這輪、記 failed；解除後下一輪補齊。"""
+    b, clock = pipe.board, pipe.clock
+    b.seed(days=2, per_day=6)
+    ctx = pipe.make()
+    assert job.run(ctx)["status"] == "ok"
+    clock.advance(hours=1)
+    for k in range(6):
+        b.add_post(clock.now() - timedelta(minutes=5 * (k + 1)))
+    b.block_articles = 503
+    hits = b.hits["blocked"]
+    r = job.run(ctx)
+    assert r["status"] == "failed" and "連續 3 篇抓不到" in r["note"] and r["failures"] == 3
+    assert b.hits["blocked"] - hits == 3 * ctx.cfg.max_attempts   # 3 篇各試滿次數就停，後面 3 篇沒去撞
+    get = ctx.metrics.reg.get_sample_value
+    assert get("q3_list_failing_since_timestamp_seconds") == 0      # 列表讀得到，不是列表被擋
+    b.block_articles = None
+    clock.advance(hours=1)
+    r2 = job.run(ctx)
+    assert r2["status"] == "ok" and r2["new"] == 6
+
+
+def test_articles_that_keep_failing_do_not_stall_later_rounds(pipe):
+    """最舊的 3 篇新文一直 503（單篇壞掉，不是被擋）：第一輪照規則停下；之後它們排到最後、不算被擋，
+    後面的文章照常入庫，壞的那幾篇每輪仍會再試。"""
+    b, clock = pipe.board, pipe.clock
+    b.seed(days=2, per_day=6)
+    ctx = pipe.make()
+    assert job.run(ctx)["status"] == "ok"
+    clock.advance(hours=1)
+    for k in range(6):
+        b.add_post(clock.now() - timedelta(minutes=60 - 5 * k))
+    bad, good = [p["aid"] for p in b.posts[-6:-3]], [p["aid"] for p in b.posts[-3:]]
+    b.broken = set(bad)
+    r1 = job.run(ctx)
+    assert r1["status"] == "failed" and "連續 3 篇抓不到" in r1["note"] and r1["new"] == 0   # 舊的先抓，正好撞上
+    for _ in range(2):
+        clock.advance(hours=1)
+        hits = b.hits["broken"]
+        r = job.run(ctx)
+        assert r["status"] == "partial" and r["failures"] == 3
+        assert b.hits["broken"] - hits == 3 * ctx.cfg.max_attempts   # 壞的仍然每篇試滿
+        assert set(good) <= set(posts_by_aid(ctx))
+    b.broken = set()
+    clock.advance(hours=1)
+    r = job.run(ctx)
+    assert r["status"] == "ok" and r["new"] == 3 and set(bad) <= set(posts_by_aid(ctx))
+
+
+def test_blocked_list_marks_failing_since_until_it_recovers(pipe):
+    """最新列表頁讀不到（429，或回 200 但不是列表頁）：從第一次讀不到開始計時，重啟後接著算，讀到就歸零。"""
+    b, clock = pipe.board, pipe.clock
+    b.seed(days=2, per_day=6)
+    ctx = pipe.make()
+    job.run(ctx)
+    get = ctx.metrics.reg.get_sample_value
+    b.block_status = 429
+    clock.advance(hours=1)
+    first = clock.now().timestamp()
+    assert job.run(ctx)["status"] == "failed"
+    assert get("q3_list_failing_since_timestamp_seconds") == first
+    b.block_status, b.not_index = None, True   # 第二輪換成回 200 的維護頁：一樣算讀不到
+    clock.advance(hours=1)
+    r = job.run(ctx)
+    assert r["status"] == "failed" and "不是列表頁" in r["note"]
+    assert get("q3_list_failing_since_timestamp_seconds") == first  # 連兩輪：從第一次讀不到開始算，告警看得出已 2 小時
+    fresh = Metrics(ctx.cfg)                    # 被擋期間程序重啟：從 crawl_runs 接回計時，不從頭算
+    job.restore_gauges(dataclasses.replace(ctx, metrics=fresh))
+    assert fresh.reg.get_sample_value("q3_list_failing_since_timestamp_seconds") == first
+    b.not_index = False
+    clock.advance(hours=1)
+    assert job.run(ctx)["status"] == "ok"
+    assert get("q3_list_failing_since_timestamp_seconds") == 0
+
+
+def test_deleted_post_is_rechecked_next_day_and_restored_or_confirmed(pipe):
+    """重抓拿到 404 的文章隔天再抓一次：抓得到就恢復可搜尋；還是 404 就確定，不重複計、之後不再抓。"""
+    b, clock = pipe.board, pipe.clock
+    b.seed(days=2, per_day=6)
+    ctx = pipe.make()
+    job.run(ctx)
+    flaky, really = b.posts[-3]["aid"], b.posts[-5]["aid"]
+    clock.advance(hours=24)
+    b.gone = {flaky}              # 一時 404，列表沒變
+    b.delete(really)              # 真的刪了
+    r = job.run(ctx)
+    assert r["status"] == "ok" and r["deleted"] == 2
+    got = posts_by_aid(ctx)
+    deleted_at = got[really]["deleted_at"]
+    assert got[flaky]["deleted_at"] is not None and deleted_at is not None
+    n_fetch = {a: got[a]["fetch_count"] for a in (flaky, really)}
+
+    clock.advance(hours=1)        # 還不到隔天：不複查
+    job.run(ctx)
+    got = posts_by_aid(ctx)
+    assert {a: got[a]["fetch_count"] for a in (flaky, really)} == n_fetch
+
+    clock.advance(hours=23)
+    b.gone = set()
+    r = job.run(ctx)
+    assert r["status"] == "ok" and r["restored"] == 1 and r["deleted"] == 0   # 複查又 404 的不重複計
+    got = posts_by_aid(ctx)
+    assert got[flaky]["status"] == 200 and got[flaky]["deleted_at"] is None
+    assert got[really]["status"] == 404 and got[really]["deleted_at"] == deleted_at   # 刪文時間維持第一次發現的
+    assert got[really]["fetch_count"] == n_fetch[really] + 1
+    assert ctx.metrics.reg.get_sample_value("q3_posts_undeleted_total") == 1
+    res = search.do_search(ctx.wh, ctx.cfg, b.by_aid[flaky]["title"], 7, 50, now=clock.now())
+    assert flaky in {p["aid"] for p in res["results"]}
+
+    clock.advance(hours=24)       # 確定刪了的不再抓
+    job.run(ctx)
+    assert posts_by_aid(ctx)[really]["fetch_count"] == n_fetch[really] + 1
+

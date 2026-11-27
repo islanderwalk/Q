@@ -39,6 +39,9 @@ class FakeBoard:
         self.wipe_content = False
         self.gone = set()        # 這些文章回 404，但列表沒變（模擬被擋或網站異常）
         self.block_status = None  # 例如 429：所有請求都回這個
+        self.block_articles = None  # 例如 503：只有文章頁回這個，列表照常（只擋文章的情況）
+        self.broken = set()      # 這幾篇文章一直回 503，其他照常（單篇壞掉，不是被擋）
+        self.not_index = False   # 最新列表頁回 200，但內容不是列表頁（例如維護頁）
         self.hits = Counter()
         self.lock = threading.Lock()
 
@@ -170,11 +173,17 @@ class FakeBoard:
             if self.block_status:
                 return self.block_status, "Too Many Requests", "blocked"
             if name == "index.html":
+                if self.not_index:
+                    return 200, "<html><body>系統維護中</body></html>", "index"
                 return 200, self.index_html(), "index"
             if name.startswith("index") and name.endswith(".html"):
                 body = self.index_html(int(name[5:-5]))
                 return (200, body, "index") if body else (404, "404 - Not Found.", "index")
+            if self.block_articles:
+                return self.block_articles, "Service Unavailable", "blocked"
             aid = name[:-5] if name.endswith(".html") else name
+            if aid in self.broken:
+                return 503, "Service Unavailable", "broken"
             p = self.by_aid.get(aid)
             if p is None or p["deleted"] or aid in self.gone:
                 return 404, "<html><body>404 - Not Found.</body></html>", "article"

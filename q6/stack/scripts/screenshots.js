@@ -52,22 +52,22 @@ async function shot(page, url, file, { wait = 'networkidle', settle = 1500, full
   if (want('grafana')) {
   const tall = await ctx.newPage();
   await tall.setViewportSize({ width: 1600, height: 7200 });
-  await shot(tall, `http://localhost:3000/d/qsearch-q6/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/01_dashboard_main.png', { wait: 'load', settle: 15000 });
+  await shot(tall, `http://localhost:3600/d/qsearch-q6/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/01_dashboard_main.png', { wait: 'load', settle: 15000 });
   await tall.setViewportSize({ width: 1600, height: 3200 });
-  await shot(tall, `http://localhost:3000/d/qsearch-q6-collect/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/02_dashboard_collect.png', { wait: 'load', settle: 15000 });
+  await shot(tall, `http://localhost:3600/d/qsearch-q6-collect/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/02_dashboard_collect.png', { wait: 'load', settle: 15000 });
   await tall.setViewportSize({ width: 1440, height: 900 });
-  await shot(tall, 'http://localhost:3000/alerting/list?view=state&search=', 'grafana/03_alert_rules_from_prometheus.png', { wait: 'load', settle: 6000 });
+  await shot(tall, 'http://localhost:3600/alerting/list?view=state&search=', 'grafana/03_alert_rules_from_prometheus.png', { wait: 'load', settle: 6000 });
   await tall.close();
   }
   if (want('alertmanager')) {
-  await shot(page, 'http://localhost:9093/#/alerts', 'alertmanager/01_alerts.png', { wait: 'load', settle: 3000 });
+  await shot(page, 'http://localhost:9693/#/alerts', 'alertmanager/01_alerts.png', { wait: 'load', settle: 3000 });
   }
   if (want('prometheus')) {
   // Prometheus：告警規則與串流延遲
-  await shot(page, 'http://localhost:9090/alerts', 'prometheus/01_alerts.png', { wait: 'load', settle: 3000 });
-  await shot(page, 'http://localhost:9090/query?g0.expr=' + encodeURIComponent('histogram_quantile(0.95, sum by (le, pipeline) (rate(qseg_e2e_lag_seconds_bucket[5m])))') + '&g0.tab=graph&g0.range_input=1h',
+  await shot(page, 'http://localhost:9690/alerts', 'prometheus/01_alerts.png', { wait: 'load', settle: 3000 });
+  await shot(page, 'http://localhost:9690/query?g0.expr=' + encodeURIComponent('histogram_quantile(0.95, sum by (le, pipeline) (rate(qseg_e2e_lag_seconds_bucket[5m])))') + '&g0.tab=graph&g0.range_input=1h',
     'prometheus/02_stream_lag_p95.png', { wait: 'load', settle: 5000 });
-  await shot(page, 'http://localhost:9090/query?g0.expr=' + encodeURIComponent('rate(elasticsearch_node_operations_completed_total{operation="index"}[1m])') + '&g0.tab=graph&g0.range_input=1h',
+  await shot(page, 'http://localhost:9690/query?g0.expr=' + encodeURIComponent('rate(elasticsearch_node_operations_completed_total{operation="index"}[1m])') + '&g0.tab=graph&g0.range_input=1h',
     'prometheus/03_es_index_rate.png', { wait: 'load', settle: 5000 });
   }
   const f = path.join(out, 'screenshots.json');

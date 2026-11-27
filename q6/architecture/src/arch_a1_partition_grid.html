@@ -53,7 +53,7 @@ const legend = `<div class="legend">
 </div>`;
 const facts = `<div class="facts">
   <div class="card"><h3>批數</h3><b>270 批</b>5 渠道 × 46 個月（2023/01–2026/10）＋ Threads 40 個月</div>
-  <div class="card"><h3>每批大小</h3><b>≈ 185 萬篇</b>5 億 ÷ 270；限速每秒 3,000 篇時約 10 分鐘寫完（假設，POC 實測校正）</div>
+  <div class="card"><h3>每批大小</h3><b>≈ 185 萬篇</b>5 億 ÷ 270；以本機實測寫入每秒約 5,170 篇，約 6 分鐘寫完</div>
   <div class="card"><h3>為什麼是渠道 × 月</h3>渠道決定清洗規則與驗收標準；月份控制批量、失敗只重跑一格。大格再用 doc_id 雜湊切 slice 平行跑；slice 是執行單位，不是驗收單位。</div>
 </div>`;
 

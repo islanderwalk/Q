@@ -2,7 +2,10 @@
 給 Prometheus 抓。這是 Cloud Run Job 定時查 ES 的本機版；GCP 上同一段查詢改由排程 Job 推到 Cloud Monitoring 自訂指標。
 
 - 未斷詞：fetched_at 落在 now-1h～now-15m 之間、且沒有 seg_ver_v2 的文章數。排除最近 15 分鐘（還在串流途中）與 1 小時前的（那是 P0-4 積壓的範圍）。
-- published_at 缺值：沒有 published_at 欄位的文章數（IG 樣本原本 48/48 缺值，2026-11-04 已補上，見 data/channels/COLLECTION.md）。
+- 漏斷詞（不限時間）：抓到超過 15 分鐘、沒刪除、某一版（v0／v1／v2）沒有 seg_ver 的文章數。上面那個只看 1 小時內，
+  串流漏掉的文章（2026-11-08 重開機後 Pub/Sub 模擬器丟了 566 篇的訊息）過了 1 小時就從數字裡消失、告警自己解除；
+  這個數字不會隨時間消失，要用 `PIPELINE=<版> python -m qseg fill` 補完才會歸零（SegUnsegmentedStale）。
+- published_at 缺值：沒有 published_at 欄位的文章數（IG 48/48 缺值：已對本機 data/channels/instagram.jsonl 核對，未對 ES 驗證）。
 - A/B 覆蓋：有 terms_v2 的文章數 ÷ 該渠道文章數。分母是「該渠道全部文章」，不是驗收範圍（驗收範圍未定義，見 MONITORING.md）。
 
 用法：python -m qseg coverage [--once] [--interval 60]；預設常駐並在 COVERAGE_PORT（預設 9110）提供 /metrics。
@@ -14,6 +17,13 @@ from . import config, metrics
 from .logs import log
 
 RECENT = {"range": {"fetched_at": {"gte": "now-1h", "lte": "now-15m"}}}
+PIPELINES = ("v0", "v1", "v2")
+
+
+def stale_filter(pipeline: str) -> dict:
+    """與 fill.missing_query 同一個定義：補完之後這裡一定歸零。"""
+    return {"bool": {"filter": [{"range": {"fetched_at": {"lte": "now-15m"}}}],
+                     "must_not": [{"exists": {"field": f"seg_ver_{pipeline}"}}, {"exists": {"field": "deleted_at"}}]}}
 
 
 def coverage_body() -> dict:
@@ -28,6 +38,7 @@ def coverage_body() -> dict:
                     "missing_published_at": {"filter": {"bool": {"must_not": [{"exists": {"field": "published_at"}}]}}},
                     # 在 ES 上驗證過：exists 對空陣列是 false（標題只剩符號的文章 terms_v2 = []），所以「有 v2」看 seg_ver_v2
                     "with_terms_v2": {"filter": {"exists": {"field": "seg_ver_v2"}}},
+                    **{f"stale_{p}": {"filter": stale_filter(p)} for p in PIPELINES},
                 },
             }
         },
@@ -47,6 +58,7 @@ def parse(res: dict) -> list:
             "missing_published_at": b["missing_published_at"]["doc_count"],
             "with_terms_v2": ab,
             "terms_v2_ratio": (ab / docs) if docs else None,
+            "unsegmented_stale": {p: b[f"stale_{p}"]["doc_count"] for p in PIPELINES if f"stale_{p}" in b},
         })
     return rows
 
@@ -65,11 +77,18 @@ def publish(rows: list):
         metrics.COV_NO_PUB.labels(ch).set(r["missing_published_at"])
         if r["terms_v2_ratio"] is not None:
             metrics.COV_AB.labels(ch).set(r["terms_v2_ratio"])
+        for p, n in r.get("unsegmented_stale", {}).items():
+            metrics.COV_STALE.labels(ch, p).set(n)
     # 上一輪有、這一輪沒有的渠道：移除它的 series，否則舊數字會一直被抓到，看起來像還在
     for gone in _LAST_CHANNELS - seen:
         for g in (metrics.COV_DOCS, metrics.COV_UNSEG, metrics.COV_NO_PUB, metrics.COV_AB):
             try:
                 g.remove(gone)
+            except KeyError:
+                pass
+        for p in PIPELINES:
+            try:
+                metrics.COV_STALE.remove(gone, p)
             except KeyError:
                 pass
     _LAST_CHANNELS = seen
@@ -81,6 +100,7 @@ def run_once(es) -> list:
     rows = parse(res)
     publish(rows)
     log("seg_coverage", channels=len(rows), unsegmented_recent=sum(r["unsegmented_recent"] for r in rows),
+        unsegmented_stale={p: sum(r["unsegmented_stale"].get(p, 0) for r in rows) for p in PIPELINES},
         missing_published_at=sum(r["missing_published_at"] for r in rows))
     return rows
 

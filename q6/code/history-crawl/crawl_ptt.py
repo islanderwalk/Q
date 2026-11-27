@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))  # telem.py sits next to this file
-from telem import Telemetry, Throttle, NetGuard, TW, h10, clean_url, now_iso  # noqa: E402
+from telem import Telemetry, Throttle, NetGuard, TW, h10, clean_url, now_iso, atomic_write, load_json  # noqa: E402
 
 import os  # noqa: E402
 D = pathlib.Path(os.environ.get("CRAWL_WORKDIR") or pathlib.Path(__file__).parent / "work") / "ptt"
@@ -103,17 +103,21 @@ def parse_index(html):
 
 def load_state(b):
     f = D / "state" / f"{b}.json"
-    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {"next_page": None, "done": False, "pages": 0, "rows": 0,
-                                                                        "earliest": None, "latest": None}
+    fresh = {"next_page": None, "done": False, "pages": 0, "rows": 0, "earliest": None, "latest": None}
+    s = load_json(f, None)
+    if s is None and f.with_name(f.name + ".corrupt").exists() and PROG.exists():
+        # state file was broken (power cut): progress.json carries the same per-board state from the last save
+        s = (load_json(PROG, {}).get("boards") or {}).get(b)
+    return s or fresh
 
 
 def save_state(b, s):
-    (D / "state" / f"{b}.json").write_text(json.dumps({**s, "updated": now_iso()}, ensure_ascii=False, indent=1), encoding="utf-8")
+    atomic_write(D / "state" / f"{b}.json", json.dumps({**s, "updated": now_iso()}, ensure_ascii=False, indent=1))
 
 
 def progress(phase, states):
-    PROG.write_text(json.dumps({"updated": now_iso(), "phase": phase, "delay_s": thr.delay, "backoff_level": thr.level,
-                                "boards": states}, ensure_ascii=False, indent=1), encoding="utf-8")
+    atomic_write(PROG, json.dumps({"updated": now_iso(), "phase": phase, "delay_s": thr.delay, "backoff_level": thr.level,
+                                   "boards": states}, ensure_ascii=False, indent=1))
 
 
 def load_seen():

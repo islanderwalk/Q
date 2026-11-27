@@ -1,0 +1,11 @@
+{"ev": "rest_start", "rest_s": 30, "t": 0.0, "wall": "04:10:36"}
+{"ev": "burst", "rest_s": 30, "token_gap_s": 7.2, "rate": 2.0, "sent": 6, "ok": 0, "ok_before_first_401": 0, "secs": 3.0, "seq": "444444", "t": 40.2, "wall": "04:11:17"}
+{"ev": "rest_start", "rest_s": 60, "t": 40.2, "wall": "04:11:17"}
+{"ev": "burst", "rest_s": 60, "token_gap_s": 7.3, "rate": 2.0, "sent": 6, "ok": 0, "ok_before_first_401": 0, "secs": 3.0, "seq": "444444", "t": 110.6, "wall": "04:12:27"}
+{"ev": "rest_start", "rest_s": 120, "t": 110.6, "wall": "04:12:27"}
+{"ev": "burst", "rest_s": 120, "token_gap_s": 7.5, "rate": 2.0, "sent": 6, "ok": 0, "ok_before_first_401": 0, "secs": 3.0, "seq": "444444", "t": 241.1, "wall": "04:14:37"}
+{"ev": "rest_start", "rest_s": 300, "t": 241.1, "wall": "04:14:37"}
+{"ev": "burst", "rest_s": 300, "token_gap_s": 7.1, "rate": 2.0, "sent": 6, "ok": 0, "ok_before_first_401": 0, "secs": 3.0, "seq": "444444", "t": 551.2, "wall": "04:19:48"}
+{"ev": "rest_start", "rest_s": 600, "t": 551.2, "wall": "04:19:48"}
+{"ev": "burst", "rest_s": 600, "token_gap_s": 10.2, "rate": 2.0, "sent": 7, "ok": 0, "ok_before_first_401": 0, "secs": 3.5, "seq": "4444444", "t": 1165.0, "wall": "04:30:01"}
+{"ev": "done", "t": 1165.0, "wall": "04:30:01"}

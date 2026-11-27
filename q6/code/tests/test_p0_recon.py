@@ -69,7 +69,9 @@ def test_publish_sets_layer_gauges_and_removes_gone_partitions(tmp_path):
     assert not has_series(metrics.RECON_DOCS, "es", "media", "2026-11")        # 消失的分區移除序列
 
 
-def test_burndown_sql_mentions_the_four_ledger_signals():
-    sql = recon.BURNDOWN_SQL
-    assert "attempts >= %s" in sql and "status='awaiting_pm'" in sql and "checkpoint_line" in sql and "interval '15 minutes'" in sql
-    assert "/ 900.0" in sql
+def test_burndown_reads_throughput_from_pg_and_ledger_from_es():
+    sql = recon.BURNDOWN_CONTROL_SQL
+    assert "interval '15 minutes'" in sql and "/ 900.0" in sql and "backfill_batches" in sql
+    src = open(recon.__file__, encoding="utf-8").read()
+    assert "led.all_rows()" in src and "awaiting_pm" in src and "attempts" in src
+    assert "BURNDOWN_SQL" not in src and "LEDGER_SQL" not in src

@@ -1,0 +1,6 @@
+{"ev": "baseline", "html_status": 200, "posts_on_page": 30, "graphql": [200, 547070, 1.31], "t": 14.06, "wall": "04:08:05"}
+{"ev": "stage_start", "rate": 1, "planned": 150, "html_status": 200, "posts_on_page": 5, "t": 32.42, "wall": "04:08:23"}
+{"ev": "stage", "rate": 1, "sent": 58, "ok": 50, "non200": 8, "first_non200_at_request": 51, "statuses": {"200": 50, "401": 8}, "bytes_401": [119], "secs": 58.0, "blocked": true, "t": 90.44, "wall": "04:09:21"}
+{"ev": "blocked", "rate": 1, "t": 90.44, "wall": "04:09:21"}
+{"ev": "poll", "since_block_s": 22, "graphql": [200, 547070, 1.66], "t": 112.11, "wall": "04:09:43"}
+{"ev": "unblocked", "since_block_s": 26, "confirm": [401, 401, 401], "t": 116.03, "wall": "04:09:47"}

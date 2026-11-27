@@ -197,6 +197,28 @@ resource "google_secret_manager_secret_iam_member" "q6_es_api_key_access" {
   member    = "serviceAccount:${each.value}"
 }
 
+# --- 斷詞回補 Job 讀 BigQuery 原文（var.q6_raw_bq_table 有設才建）---
+# 只給那一張表的唯讀，加上在本專案跑查詢（查詢費記在 var.project_id，Job 的 RAW_BQ_PROJECT 也設這個）。
+locals {
+  q6_raw_bq = var.q6_raw_bq_table == "" ? [] : [split(".", var.q6_raw_bq_table)]
+}
+
+resource "google_bigquery_table_iam_member" "backfill_read_raw_bq" {
+  count      = length(local.q6_raw_bq)
+  project    = local.q6_raw_bq[0][0]
+  dataset_id = local.q6_raw_bq[0][1]
+  table_id   = local.q6_raw_bq[0][2]
+  role       = "roles/bigquery.dataViewer"
+  member     = "serviceAccount:${google_service_account.backfill.email}"
+}
+
+resource "google_project_iam_member" "backfill_bq_job_user" {
+  count   = length(local.q6_raw_bq)
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.backfill.email}"
+}
+
 # --- Cloud Run 服務 ---
 # 斷詞服務：常駐 streaming pull，min 1 實例（縮到 0 就沒人拉）；不對外（只有 /metrics 與健康檢查在 9108）；
 # Direct VPC（PRIVATE_RANGES_ONLY）連 ES VM 與 Cloud SQL 私有 IP。max_instance_request_concurrency 無 HTTP 流量所以 1。

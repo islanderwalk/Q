@@ -16,7 +16,16 @@ Q6 需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際
 | [observability/](observability/) | 共用 | Loki、Prometheus、Pushgateway、Grafana 的 docker compose 與 crawler-monitor 看板。 |
 | [round1_public/](round1_public/) | PTT、YouTube、Threads、新聞網站 | 第一輪：完全未登入、只走 robots 允許的路徑，用來量出「不登入能拿到多少」。 |
 
-`crawl_deep.py` 會引用 [../meta-login/](../meta-login/) 的 `crawl_loggedin.py`（登入 profile、JSON 解析）與 `redact.py`（截圖遮罩），兩個資料夾要放在同一層。它用 Windows 的 user32 抓含 DevTools 的整個視窗，所以只能在 Windows 上跑。
+`crawl_deep.py` 會引用 [../meta-login/](../meta-login/) 的 `crawl_loggedin.py`（登入 profile、JSON 解析）與 `redact.py`（截圖遮罩），兩個資料夾要放在同一層。
+
+爬蟲的瀏覽器視窗不會出現在螢幕上，也不會搶走焦點。Playwright 的 `ctx.new_page()` 會把已縮小的視窗還原並拉到前景，每開一個目標就會跳出來一次，所以改成：
+
+- 視窗開在螢幕外（`--window-position=-32000,-32000`），啟動後用 CDP 縮到工作列。
+- 新分頁改用 CDP `Target.createTarget(background: true)` 在背景開。
+- 關掉「Chromium 未正常關閉」的泡泡和翻譯提示。
+- 在 Windows 上另有一個執行緒每 0.5 秒檢查一次，自己子程序的視窗若變成可見，就用 `SW_SHOWMINNOACTIVE` 縮回去（不改變焦點）。
+
+截圖只拍頁面本身，Playwright 走 CDP，視窗縮小也拍得到。要拍含 DevTools（F12）的整個視窗當證據時，設 `CRAWL_F12_SHOTS=1`：上面這些都會關掉，改成視窗放大、自動開 DevTools、拉到前景用 Windows 的 user32 擷取。所以這個模式只能在 Windows 上跑，也會打斷正在用這台電腦的人。
 
 ## 節流與異常處理
 
@@ -29,6 +38,11 @@ Q6 需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際
 - 連續 3 次異常暫停 30 分鐘。
 - 連續 20 次正常才把 delay 減半，慢慢回到 base。
 - 登出、驗證挑戰（checkpoint／challenge）、帳號鎖定：該平台直接停止，不嘗試繞過。
+- Meta 開分頁的速率上限：Throttle 只管我們自己重播的分頁請求，每開一次目標頁卻是瀏覽器整頁載入（腳本、圖片、影片分段約 100–300 個請求）。2026-11-08 deep 三次重啟時，三個平台把 11 個目標（含已完成的）接連重開做頭部增量，Grafana 每分鐘請求數因此衝到 200–350、持續約 5 分鐘。現在的限制如下：
+  - `OPEN_GAP_S = 90`：所有平台共用，上一頁載入結束後至少隔 90 秒，才開下一個目標頁（含 FTV 探測）。
+  - `HEAD_MIN_GAP_S = 6 小時`：上次頭部增量在 6 小時內結束的目標，重啟時不再做頭部增量；已完成的目標也就不會重開。
+  - 分頁裡的影片不自動播放（`add_init_script` 讓 `play()` 不播），Instagram 每分鐘約 200 個影片分段請求因此消失。
+- p95 的計算範圍：`api` 只包含頁面文件和我們重播的那支時間軸查詢（friendly name 符合 `TPL_RE`）。頁面自己在背景送的 GraphQL 長連線（Threads ScreenTime、NotificationBadge、Subscription）會掛好幾分鐘，算進去 p95 會被灌到好幾分鐘。
 
 ## 續跑（checkpoint）
 
@@ -40,6 +54,8 @@ Q6 需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際
 
 中斷後直接重跑同一個指令即可。YouTube 重啟時最後一頁會重抓，輸出另有去重版。
 
+狀態檔與 progress.json 都用 `telem.atomic_write` 寫：先寫同目錄的 `.tmp`、fsync，再 `os.replace` 換上去，斷電時只會留下舊檔或新檔。2026-11-08 強制關機曾讓 `ptt/state/Tainan.json` 變成 359 個 NUL 位元組，PTT 重啟就崩潰；現在 PTT 讀到壞檔會改名成 `.corrupt`，改從 `progress.json` 裡同一看板的狀態接續。
+
 ### 頭部增量
 
 每次重跑先補「上次之後的新內容」，再接著往 2023-01 回補：
@@ -48,7 +64,7 @@ Q6 需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際
 |---|---|---|
 | PTT | 從看板目前最新頁往回翻，進度存在 state 的 `head` | 翻到上次的 `newest_page`；新文章排在內文佇列前面 |
 | YouTube | 每個頻道（含已回補完成的）從上傳清單第一頁往後翻 | 遇到已抓過的 video_id，或發布時間不晚於上次的 `latest` |
-| Meta | 每個已有貼文的目標從時間軸頂端重播分頁，回補 cursor 另存 `head.resume_cursor` | 整頁都不晚於上次的 `latest`、整頁都是已見貼文、時間軸到底或滿 300 頁；結束後回到原 cursor 續補 |
+| Meta | 每個已有貼文、且 6 小時內沒做過頭部增量的目標，從時間軸頂端重播分頁，回補 cursor 另存 `head.resume_cursor` | 整頁都不晚於上次的 `latest`、整頁都是已見貼文、時間軸到底或滿 300 頁；結束後回到原 cursor 續補 |
 
 頭部增量中斷也能續跑（state 的 `head` 欄位），結果記在 `head_last` 並發 `head_done` 事件。
 
@@ -90,6 +106,7 @@ CRAWL_WORKDIR=./work META_WORKDIR=../meta-login python crawl_deep.py facebook,in
 - Grafana `crawler-monitor` 看板：<http://127.0.0.1:3000/d/crawler-monitor>（用 127.0.0.1，localhost 在 Windows 會先試 IPv6 而卡約 5 秒）；`observability/shot.py` 以 Playwright 截看板。
 - `observability/up.sh` 啟動 Loki、Prometheus、Pushgateway、Grafana 四個服務，逐一等到 ready 才結束。連接埠只綁 127.0.0.1（Grafana 開匿名 Admin，不對區網開放）。
 - Pushgateway 以 `--persistence.file` 寫入 volume，容器重建後指標仍在。
+- 每分鐘列由背景執行緒每 60 秒強制結算一次，`window_s` 因此維持在約 60 秒。閒置時照樣推送：請求數推 0，p95 推 NaN，代表這分鐘沒有樣本，不是 0 ms。Pushgateway 會一直保留最後一次推送的值，程序結束後那個值也還在，所以看板的 p95 面板只顯示 `push_time_seconds` 在 3 分鐘內的序列。watchdog 判定爬蟲停止時，也會把 p95 推成 NaN。
 - 推送 Loki／Pushgateway 失敗時，每個目的地每分鐘最多記一筆 `push_failed` 事件（只寫本機 events.jsonl）並印出警告，不影響爬取。
 - 原始遙測不進版控，只放統計摘要 [telemetry_summary.json](../../evidence/history-crawl/telemetry_summary.json)。
 

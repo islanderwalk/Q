@@ -1,0 +1,698 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Threads 爬蟲 Q4</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: 單欄閱讀寬度 + 黏頂分段導覽；每段「交卷原文」在上、可操作的實驗在下，像網路檢查器的面板 */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --fg:#17202b; --muted:#5a6676; --line:#dbe2ea;
+  --accent:#2b55c8; --accent-soft:#e5ebfb; --code-bg:#eef1f6;
+  --ok:#1d8549; --ok-soft:#e1f2e8; --bad:#c0392f; --bad-soft:#fbe6e4; --warn:#9a6205; --warn-soft:#fbf0d9;
+  --f-display:"Space Grotesk","Noto Sans TC",system-ui,sans-serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e131a; --surface:#151c25; --fg:#e3e8ef; --muted:#93a0b1; --line:#263142;
+  --accent:#86a4ff; --accent-soft:#1c2946; --code-bg:#1a2330;
+  --ok:#52c585; --ok-soft:#12301f; --bad:#ff7d72; --bad-soft:#3b1b18; --warn:#eeb54c; --warn-soft:#382a10;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e131a; --surface:#151c25; --fg:#e3e8ef; --muted:#93a0b1; --line:#263142;
+  --accent:#86a4ff; --accent-soft:#1c2946; --code-bg:#1a2330;
+  --ok:#52c585; --ok-soft:#12301f; --bad:#ff7d72; --bad-soft:#3b1b18; --warn:#eeb54c; --warn-soft:#382a10;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.25}
+h1{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:24px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+p{margin:0}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--code-bg);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+a{color:var(--accent)}
+
+/* nav */
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px))}
+nav.tabs .in{max-width:860px;margin:0 auto;display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs a{font-family:var(--f-mono);font-size:13px;text-decoration:none;color:var(--fg);padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+nav.tabs a:hover,nav.tabs a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+
+section{display:flex;flex-direction:column;gap:18px;scroll-margin-top:64px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tag{font-family:var(--f-mono);font-weight:600;color:var(--accent);font-size:15px}
+
+/* question */
+.question{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.question ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.question li{display:grid;grid-template-columns:36px 1fr;gap:4px}
+.question li b{font-family:var(--f-mono);color:var(--accent)}
+.limit{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+
+/* answer quote */
+.answer{border-left:3px solid var(--accent);background:var(--surface);padding:14px 18px;border-radius:0 8px 8px 0}
+.answer .lbl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+
+/* panel (interactive) */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--code-bg)}
+.panel-b{padding:16px;display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:660px){.grid2{grid-template-columns:1fr}}
+
+/* inputs */
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:13px;color:var(--muted)}
+.field .row{display:flex;gap:10px;align-items:center}
+.field input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.field input[type=number]{width:120px;font-family:var(--f-mono);font-size:14px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.field output{font-family:var(--f-mono);font-variant-numeric:tabular-nums;min-width:74px;text-align:right}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-variant-numeric:tabular-nums}
+.kv dt{color:var(--muted);font-size:13px}
+.kv dd{margin:0;font-family:var(--f-mono);text-align:right}
+.big{font-family:var(--f-display);font-size:22px;font-weight:700}
+.big.hl{display:inline-block;background:#ffd400;color:#1a1400;padding:0 8px;border-radius:4px;box-shadow:0 0 0 2px #ffd400}
+
+/* frame player */
+.fp{display:flex;flex-direction:column;gap:10px}
+.fp-stage{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#1b1b1f;aspect-ratio:8/5}
+.fp-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .35s}
+.fp-stage img.on{opacity:1}
+.fp-ctl a{margin-left:auto;font-size:13px}
+.fp-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fp-dots{display:flex;gap:5px;flex-wrap:wrap}
+.fp-dots button{width:26px;height:26px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--f-mono);font-size:12px;cursor:pointer;padding:0}
+.fp-dots button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.fp-cap{font-size:14px;min-height:3.4em}
+.fp-cap b{font-family:var(--f-mono);color:var(--accent);margin-right:6px}
+/* hover: F12 screenshot on answer phrase */
+.hv{position:relative;color:inherit;text-decoration:underline dotted var(--accent);text-decoration-thickness:2px;text-underline-offset:4px;cursor:help;border-radius:3px}
+.hv:hover,.hv:focus-visible,.hv.open{background:var(--accent-soft);outline:none}
+.hv-pop{display:none;position:fixed;z-index:50;padding-top:8px;width:min(640px,calc(100vw - 24px),calc((100vh - 130px)*1.6));font-size:13px;line-height:1.6;font-weight:400;text-decoration:none;cursor:default;white-space:normal}
+.hv:hover .hv-pop,.hv:focus .hv-pop,.hv.open .hv-pop{display:block}
+.hv-card{display:block;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px;box-shadow:0 12px 36px rgba(0,0,0,.4)}
+.hv-card img{display:block;width:100%;height:auto;border-radius:6px;background:var(--code-bg)}
+.hv-card span{display:block;margin-top:6px;color:var(--muted)}
+.hv-card a{color:var(--accent)}
+/* how the page gets posts */
+.flow{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;counter-reset:f}
+.flow li{counter-increment:f;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.65}
+.flow li>b{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:15px}
+.flow li>b::before{content:counter(f);display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--surface);font-size:12px;flex:none}
+.docid{border-top:1px solid var(--line);padding-top:14px}
+.docid h4{margin:0 0 8px;font-size:15px}
+.docid ul{margin:0;padding-left:20px;font-size:14px;line-height:1.75}
+.docid li+li{margin-top:4px}
+@media (max-width:760px){.flow{grid-template-columns:1fr}}
+/* request anatomy */
+.req{font-family:var(--f-mono);font-size:13px;overflow-x:auto}
+.req .line{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line);min-width:max-content}
+.req .line:last-child{border-bottom:0}
+.req .name{min-width:300px}
+.req .off .name{text-decoration:line-through;color:var(--muted)}
+.chip{font-family:var(--f-mono);font-size:11px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.chip.need{background:var(--bad-soft);color:var(--bad)}
+.chip.opt{background:var(--code-bg);color:var(--muted)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.switch{appearance:none;width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;flex:none;transition:background .15s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:transform .15s}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(14px)}
+.result{border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
+.result.ok{background:var(--ok-soft)}
+.result.bad{background:var(--bad-soft)}
+.result.warn{background:var(--warn-soft)}
+.result .code{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.2;min-width:52px}
+.result.ok .code{color:var(--ok)} .result.bad .code{color:var(--bad)} .result.warn .code{color:var(--warn)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+button.b{font-family:var(--f-body);font-size:13px;padding:5px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button.b:hover{border-color:var(--accent);color:var(--accent)}
+
+/* block strip */
+.strip{display:grid;grid-template-columns:repeat(34,minmax(0,1fr));gap:3px}
+.cell{aspect-ratio:1;border-radius:2px;background:var(--line)}
+.cell.s{background:var(--ok)} .cell.f{background:var(--bad)}
+.cell.cur{outline:2px solid var(--fg);outline-offset:1px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.after{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.after{grid-template-columns:1fr}}
+.after div{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+.after b{font-family:var(--f-mono);display:block;margin-bottom:4px}
+
+ul.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar-row{display:flex;flex-direction:column;gap:5px}
+.bar-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bar-top .cost{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.track{height:12px;background:var(--code-bg);border-radius:3px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:3px;transition:width .25s}
+.fill.dim{background:var(--muted)}
+.bar-note{font-size:12.5px;color:var(--muted)}
+
+/* size rerun */
+.sz{display:flex;flex-direction:column;gap:4px}
+.sz-row{display:grid;grid-template-columns:84px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:13px;padding:2px 4px;border-radius:5px;cursor:pointer;border:0;background:none;color:var(--fg);font-family:var(--f-body);text-align:left;width:100%}
+.sz-row:hover,.sz-row.on{background:var(--accent-soft)}
+.sz-row .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sz-row .lab.anon{color:var(--muted)}
+.sz-row .val{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.sz-row .track{position:relative;overflow:visible}
+.sz-row .mean{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--warn)}
+.legend i.mk{width:2px;height:12px;background:var(--warn);border-radius:0}
+button.b[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+.tw{overflow-x:auto}
+table.t th,table.t td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t th{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.04em}
+table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
+
+.terms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:660px){.terms{grid-template-columns:1fr}}
+.term{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.term h3{font-family:var(--f-mono);font-size:14px}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<nav class="tabs" aria-label="段落"><div class="in">
+  <a href="#q">題目</a><a href="#a">(a) 請求量</a><a href="#b">(b) 防封</a><a href="#c">(c) 成本</a>
+</div></nav>
+
+<div class="wrap">
+
+<section id="q">
+  <div class="sec-head"><span class="tag">Q4</span><h2>題目</h2></div>
+  <div class="question">
+    <p>我們需要建置一套 Threads 貼文爬蟲系統，目標涵蓋 40 萬個帳號，擷取欄位須包含貼文 URL、內文與發文時間。該頁面為公開頁面，無需登入即可存取。每個帳號每次至少擷取 10 篇貼文，每日執行 4 輪抓取。</p>
+    <ol>
+      <li><b>(a)</b><span>根據你的評估，此系統每日需發送多少次 HTTP requests？請說明估算邏輯。以及對於 Threads 網站上頭實質的 requests 呼叫狀況掌握多少？</span></li>
+      <li><b>(b)</b><span>若使用單一 IP 發送請求，將面臨反爬蟲機制的封鎖風險。此外，由於大量開發者已在主流雲端平台上部署類似服務，其對外 IP 段多半已遭 Threads 列入黑名單。請問你會採用什麼策略突破封鎖？如何選擇代理（Proxy）方案？</span></li>
+      <li><b>(c)</b><span>請估算上述方案每月的代理成本，並檢附計算方式，與牌價。</span></li>
+    </ol>
+    <span class="limit">上限 600 字 · 交卷答案 <span id="cnt-all">600</span> 字（連空白與換行），不含空白 <span id="cnt-nows">523</span> 字</span>
+  </div>
+</section>
+
+<!-- (a) -->
+<section id="a">
+  <div class="sec-head"><span class="tag">(a)</span><h2>每日請求量，與實際請求長什麼樣</h2></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="a"></span></div>
+    <p data-ans="a"></p></div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>請求量試算</h3><span class="small muted">GraphQL 每次最多回 25 串（實測伺服器上限）</span></div>
+    <div class="panel-b grid2">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label for="in-acc">帳號數</label><div class="row"><input id="in-acc" type="number" min="1000" step="10000" value="400000"></div></div>
+        <div class="field"><label for="in-rounds">每日輪數</label><div class="row"><input id="in-rounds" type="range" min="1" max="24" value="4"><output id="o-rounds">4</output></div></div>
+        <div class="field"><label for="in-posts">每帳號每輪至少幾篇</label><div class="row"><input id="in-posts" type="range" min="1" max="100" value="10"><output id="o-posts">10</output></div></div>
+      </div>
+      <dl class="kv">
+        <dt>每帳號每輪請求</dt><dd id="r-pages">1 次（first=10）</dd>
+        <dt>每日請求</dt><dd class="big hl" id="r-day">1,600,000</dd>
+        <dt>平均速率</dt><dd id="r-rps">18.5 req/s</dd>
+        <dt>每月請求（×30）</dt><dd id="r-month">48,000,000</dd>
+        <dt>若改抓 profile HTML</dt><dd id="r-html" class="small">只內嵌 4 串，仍要補打 GraphQL</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="panel" id="flow">
+    <div class="panel-h"><h3>網頁怎麼拿到貼文：HTML → JS → GraphQL</h3><span class="small muted">依 2026-11-15、11-16 實抓 threads.com/@zuck</span></div>
+    <div class="panel-b">
+      <ol class="flow">
+        <li><b>HTML：伺服器最先回的文件</b>打開網址時伺服器先回這份（zuck 約 1.1 MB），就是「檢視網頁原始碼」看到的東西。裡面有頁面骨架，還有用 <code>&lt;script type="application/json"&gt;</code> 裝的資料包：它不是程式，瀏覽器不執行，只是借標籤裝資料。未登入時最新 4 串就在這裡（下方實拍的紅框）。</li>
+        <li><b>JS：放進 HTML 的兩種寫法</b>一種直接寫在 <code>&lt;script&gt;…&lt;/script&gt;</code> 裡，一種只寫 <code>&lt;script src="網址"&gt;</code> 讓瀏覽器另外下載。Threads 的 HTML 裡 <code>src</code> 全是 <code>data:</code> 開頭的小載入器；真正的程式拆成幾百個 .js 檔放在 static.cdninstagram.com，網址列在 HTML 的清單（rsrcMap 等）裡，由載入器去下載。</li>
+        <li><b>GraphQL：往下捲再補</b>JS 跑起來先把那 4 串畫出來；往下捲，JS 就送 <code>POST /graphql/query</code> 拿下一批（下方實拍的藍框）。爬蟲跳過前兩步、直接送這個請求，1 次拿最新 10 串，所以不必抓 HTML。</li>
+      </ol>
+      <div class="docid">
+        <h4>doc_id 是什麼，為什麼說「可從網頁 JS 取得」</h4>
+        <ul>
+          <li>一般的 GraphQL 請求要把整段查詢語句（查誰、要哪些欄位）放進請求。Meta 改成把查詢語句先存在伺服器、每段給一個編號，網頁只送編號，這個編號就是 doc_id。抓個人頁貼文這段，11-15 的編號是 <code>29427891256864466</code>。</li>
+          <li>編號不在 HTML 裡，寫死在某個 .js 檔：<code>__d("BarcelonaProfileThreadsTabRefetchableDirectQuery_threadsRelayOperation", …a.exports="29427891256864466"…)</code>。11-15 從 HTML 解出 663 個 JS 網址全部下載，其中 1 個檔案有這行；用無頭瀏覽器開同一頁對照，網頁自己用的也是這個值。</li>
+          <li>編號會換：10-29 抓到的 <code>39551525044493602</code>，11-15 已回 <code>execution error</code>。所以不能寫死；回應裡沒有 <code>data.mediaData</code> 就重跑「抓 HTML → 下載 JS → 搜查詢名 → 取新編號」，純 HTTP 就做得到，不必開瀏覽器。</li>
+          <li>只換編號不夠，還要一起帶 52 個 <code>__relay_internal__pv__*</code> 開關參數，值從 HTML 裡取得。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>GraphQL 請求：逐項拿掉看看</h3><span class="small muted">實拍逐格 · 依 2026-10-29 逐項拿掉的實測</span></div>
+    <div class="panel-b">
+      <div class="fp" id="fp">
+        <div class="fp-stage" id="fp-stage" role="img" aria-label="Playwright 與 DevTools 實拍逐格"></div>
+        <div class="fp-ctl">
+          <button class="b" id="fp-play" aria-pressed="true">暫停</button>
+          <button class="b" id="fp-prev" aria-label="上一格">‹</button>
+          <button class="b" id="fp-next" aria-label="下一格">›</button>
+          <div class="fp-dots" id="fp-dots"></div>
+        </div>
+        <p class="fp-cap" id="fp-cap" aria-live="polite"></p>
+        <p class="small muted">2026-11-15 實拍：Playwright 開 Chromium（iPhone 視窗、未登入、不帶 cookie）連 threads.com/@zuck，旁邊接 Chrome DevTools，Network 篩 graphql/query。紅框＝HTML 內嵌，藍框＝GraphQL 補上。往下滑時第二個 App 推廣窗沒有關閉鈕，用腳本藏掉，不影響請求。</p>
+      </div>
+      <div class="req" id="req">
+        <div class="line"><span class="name" style="color:var(--accent)">POST https://www.threads.com/graphql/query</span></div>
+      </div>
+      <div class="req" style="background:var(--code-bg);padding:10px 12px;border-radius:8px">
+        <div class="muted">body</div>
+        <div>doc_id=<span style="color:var(--accent)">29427891256864466</span> <span class="muted">（11-15 從網頁 JS 取得；10-29 的 39551525044493602 已回 execution error）</span></div>
+        <div>variables={"userID":"…","after":null,"first":10, <span class="muted">＋52 個 __relay_internal__pv__* 旗標</span>}</div>
+        <div>lsd=… &amp; fb_api_req_friendly_name=BarcelonaProfileThreadsTabRefetchableDirectQuery</div>
+      </div>
+      <div class="result ok" id="req-res" aria-live="polite"><span class="code">200</span><div><b>回最新 10 串</b><br><span class="small">每串含 code（組 URL）、全文、taken_at。回應壓縮後 10-29 平均 27.8 KB，11-15 重測 12 帳號平均 26.4 KB。</span></div></div>
+      <div class="btnrow"><button class="b" id="req-all">全部打開</button><button class="b" id="req-min">只留必要的</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>Profile HTML：Sec-Fetch 標頭</h3><span class="small muted">為什麼純 HTTP 以前抓到空殼</span></div>
+    <div class="panel-b">
+      <div class="req">
+        <div class="line"><input type="checkbox" class="switch" id="sf" checked aria-label="Sec-Fetch-Mode 與 Sec-Fetch-Dest"><span class="name">Sec-Fetch-Mode: navigate · Sec-Fetch-Dest: document</span><span class="chip need">必要</span></div>
+      </div>
+      <div class="result ok" id="sf-res" aria-live="polite"></div>
+      <p class="small muted">Python/OpenSSL 與 curl/Schannel 兩種 TLS 實作都成功，空殼跟 TLS 指紋無關。</p>
+    </div>
+  </div>
+</section>
+
+<!-- (b) -->
+<section id="b">
+  <div class="sec-head"><span class="tag">(b)</span><h2>封鎖與代理選擇</h2></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="b"></span></div>
+    <p data-ans="b"></p></div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>單一 IP 壓測重播（2026-10-29，個人網路 IP，5 req/s）</h3><button class="b" id="replay">重播</button></div>
+    <div class="panel-b">
+      <div class="strip" id="strip" aria-label="102 次請求結果"></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>200 有貼文</span><span><i style="background:var(--bad)"></i>401（回應 119 bytes）</span><span class="mono" id="strip-c">第 102 次 · 成功 82 · 401 20</span></div>
+      <div class="after">
+        <div><b>+5 秒</b>GraphQL 401；HTML 200 有貼文</div>
+        <div><b>+60 秒</b>GraphQL 401；<strong>換新 token 也 401</strong>；HTML 200</div>
+        <div><b>+300 秒</b>GraphQL 401；HTML 200</div>
+      </div>
+      <p class="small">結論：封鎖以 IP 為單位、只擋匿名 GraphQL、超過 5 分鐘未解。<span class="muted">10-28 打第 2 頁時衝到 10.7 req/s 共 560 次都沒被擋，和這次矛盾；請求類型與出口 IP 都不同，分不出是哪個造成的。單 IP 可長期撐住的速率與解封時間都還沒測到。</span></p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-h"><h3>防封做法</h3></div>
+      <div class="panel-b">
+        <ul class="steps">
+          <li>住宅輪替代理，每個請求換 IP</li>
+          <li>收到 401 就把該 IP 剔除，退避後再試</li>
+          <li>監控成功率與每次回傳的串數，異常就降速</li>
+          <li>token 由無頭瀏覽器定期更新，跨帳號共用</li>
+          <li>doc_id 會換，從網頁 JS 取得（11-15 已驗證：HTML → JS bundle → doc_id，另帶 HTML 裡的旗標值）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><h3>為什麼不用 ISP 固定 IP 當主力</h3></div>
+      <div class="panel-b">
+        <p class="small">需要幾個 IP，取決於單 IP 能長期撐住的速率，這個沒測到。再加上一旦被封，至少 5 分鐘不會解，固定 IP 池很快就會耗盡。</p>
+        <p class="small muted">雲端 IP：從 GitHub Actions（Azure）打過 1 次是 200、有 10 篇；只有一次，看不出雲端 IP 段會不會直接被封。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>robots.txt</h3><span class="small muted">2026-10-30 抓取 · 8,506 bytes</span></div>
+    <div class="panel-b">
+      <div class="req" style="background:var(--code-bg);padding:10px 12px;border-radius:8px">
+        <div>User-agent: *</div><div>Disallow: /</div>
+      </div>
+      <p class="small">對所有爬蟲整站禁止，並註明未經 Threads 書面許可不得以自動化方式蒐集資料。GPTBot 等 14 組點名的爬蟲也是整站禁止；Googlebot 等 22 組只擋部分路徑。</p>
+      <p class="small muted">robots.txt 是君子協定，沒有技術上的強制力；它的作用是留下「網站已明示拒絕」的紀錄。答案 (b) 最後一句就是在講這個法遵風險。</p>
+    </div>
+  </div>
+</section>
+
+<!-- (c) -->
+<section id="c">
+  <div class="sec-head"><span class="tag">(c)</span><h2>每月代理成本</h2></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="c"></span></div>
+    <p data-ans="c"></p></div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>流量試算</h3><span class="small muted">每月請求數取自 (a)</span></div>
+    <div class="panel-b grid2">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><label for="in-resp">回應大小（壓縮後，KB）· 10-29 平均 27.8／11-15 重測 26.4</label><div class="row"><input id="in-resp" type="range" min="10" max="80" step="0.1" value="27.8"><output id="o-resp">27.8</output></div></div>
+        <div class="field"><label for="in-up">上傳大小（KB）· 10-29 4.08／11-15 4.6</label><div class="row"><input id="in-up" type="range" min="1" max="10" step="0.1" value="4.1"><output id="o-up">4.1</output></div></div>
+        <div class="btnrow" role="group" aria-label="套用實測值"><button class="b" id="pre-old" aria-pressed="true">套用 10-29（答案用的）</button><button class="b" id="pre-new" aria-pressed="false">套用 11-15 重測</button></div>
+        <div class="field"><label for="in-tls">TLS 握手等額外流量（估計，%）</label><div class="row"><input id="in-tls" type="range" min="0" max="50" step="1" value="18"><output id="o-tls">18%</output></div></div>
+      </div>
+      <dl class="kv">
+        <dt>每次請求</dt><dd id="c-per">31.9 KB</dd>
+        <dt>每月請求</dt><dd id="c-req">48,000,000</dd>
+        <dt>每月流量（不含 TLS）</dt><dd id="c-raw">1.53 TB</dd>
+        <dt>每月計費流量</dt><dd class="big" id="c-tb">1.81 TB</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>11-15 重測：第 1 頁回應有多大</h3><span class="small muted">12 個帳號 · 每 3 秒 1 次 · 全部 200、10 串</span></div>
+    <div class="panel-b">
+      <p class="small">起因：zuck 第 1 頁 11-15 壓縮後 62.2 KB，10-29 是 38.6 KB。只看 1 個帳號分不出原因，所以重量 12 個帳號（7 個大帳號，加上它們回應裡出現的 5 個帳號，不列名稱）。</p>
+      <div class="sz" id="sz" role="list"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>壓縮後回應</span><span><i class="mk"></i>12 帳號平均 26.4 KB</span><span class="mono">中位數 23.2 KB · 範圍 5.9–61.4 KB</span></div>
+      <div class="after">
+        <div><b>成因：內容，不是欄位</b>同一刻打 zuck：旗標照 HTML 值 62.2 KB，全部設 false 59.6 KB，只差 4%。今天這 10 串含 20 篇（有串內回覆）。</div>
+        <div><b>同帳號比 10-29</b>zuck 38.6 → 61.4、nba 36.9 → 25.5、nytimes 14.3 → 15.4 KB，有增有減。</div>
+        <div><b>上傳變 4.6 KB</b>旗標從 45 個變 52 個，每次 body 4,637 bytes（10-29 是 4.08 KB）。</div>
+      </div>
+      <div class="tw"><table class="t">
+        <thead><tr><th>量測</th><th>每次</th><th>每月（含 TLS）</th><th>IPRoyal $1.84</th><th>Oxylabs $2.5</th></tr></thead>
+        <tbody>
+          <tr><td>10-29（答案用的）</td><td>27.8＋4.08＝31.9 KB</td><td>1.53（1.81）TB</td><td>$2,816–3,322</td><td>$3,826–4,514</td></tr>
+          <tr><td>11-15 重測</td><td>26.4＋4.6＝31.0 KB</td><td>1.49（1.76）TB</td><td>$2,739–3,232</td><td>$3,721–4,391</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small"><b>結論：</b>每次請求少約 3%，答案 (c) 的 1.5 TB／1.8 TB 與 US$2.8–3.3k、US$3.8–4.5k 在四捨五入內仍成立，不必改答案。<span class="muted">金額區間下緣不含 TLS、上緣含 TLS 18%（估計）。單一帳號差到 10 倍，樣本又偏大帳號，40 萬個一般帳號的平均可能更小。</span></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>住宅代理每月成本（USD）</h3><span class="small muted">牌價查於 2026-11-15</span></div>
+    <div class="panel-b">
+      <div class="bars" id="bars"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><h3>其他家牌價（2026-10-28 查，未放進答案）</h3></div>
+    <div class="tw"><table class="t">
+      <thead><tr><th>供應商</th><th>方案</th><th>價格</th></tr></thead>
+      <tbody>
+        <tr><td>Decodo</td><td>住宅</td><td>$2/GB（1 TB 企業方案 $2,000/月）；按量 $4/GB；TLS 握手流量也計費</td></tr>
+        <tr><td>Bright Data</td><td>住宅</td><td>$5–8/GB（牌價）</td></tr>
+        <tr><td>IPRoyal</td><td>ISP</td><td>每 IP 24 小時 $1.80、30 天 $2.70；「不限流量」實際限速 100 Mbps</td></tr>
+        <tr><td>Oxylabs</td><td>ISP</td><td>$1.1–1.5/IP</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+
+</div>
+
+<script>
+(function(){
+  var ANS = {
+    a:"(a) 請求量：未登入時 profile HTML 只內嵌 4 串，但分頁 GraphQL query 帶 userID、after=null、first=10 即回最新 10 串，含 code（組 URL）、全文、taken_at，不必抓 HTML。每帳號每輪 1 次：40 萬×4＝每日 160 萬次（≈18.5 req/s）。userID 快取一次；csrftoken/lsd 由無頭瀏覽器定期取得、跨帳號共用，免登入與 cookie。",
+    b:"(b) 防封：須帶瀏覽器 Sec-Fetch 標頭與 4 個 x-header，缺一即無貼文。實測單一 IP 以 5 req/s 打約 80–100 次，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）。故採住宅輪替代理、每請求換 IP；遇 401 剔除該 IP、退避，監控成功率與每次串數，異常即降速。另 robots.txt 禁止未經書面許可自動蒐集。",
+    c:"(c) 成本：實測每次回應 27.8 KB、上傳 4.1 KB，每月 4,800 萬次約 1.5 TB，含 TLS 1.8 TB。IPRoyal $1.84/GB（10 TB 起購、不過期）約 US$2.8–3.3k/月；Oxylabs $2.5/GB 約 US$3.8–4.5k/月。ISP 固定 IP 因單 IP 可持續速率未知且封鎖久，不作主力。"
+  };
+  var $ = function(id){return document.getElementById(id)};
+  var fmt = function(n){return Math.round(n).toLocaleString("en-US")};
+  var usd = function(n){return "$"+fmt(n)};
+
+  // answers + char counts
+  var whole = ANS.a+"\n"+ANS.b+"\n"+ANS.c;
+  document.querySelectorAll("[data-ans]").forEach(function(el){el.textContent = ANS[el.dataset.ans]});
+  document.querySelectorAll("[data-cnt]").forEach(function(el){
+    var s = ANS[el.dataset.cnt]; el.textContent = Array.from(s).length+" 字";
+  });
+  $("cnt-all").textContent = Array.from(whole).length;
+  $("cnt-nows").textContent = Array.from(whole.replace(/\s/g,"")).length;
+
+  // answer phrases -> hover shows real F12 / terminal screenshots (red boxes)
+  var HV = [
+    {ans:"b", phrase:"須帶瀏覽器 Sec-Fetch 標頭與 4 個 x-header，缺一即無貼文", href:"shots/f5.webp",
+     imgs:[{src:"shots/f5.webp", alt:"DevTools 的 Request Headers：紅框為必要標頭，灰色為可省略"}],
+     cap:"網頁自己送分頁 query 的 Request Headers（F12 實拍）：紅＝必要（x-csrftoken、x-fb-lsd、x-ig-app-id、x-logged-out-threads-migrated-request、Sec-Fetch-*），灰＝可省略（cookie、x-asbd-id、x-bloks-version-id、x-root-field-name、x-web-session-id、x-fb-friendly-name）。點連結開原尺寸。"}
+    ,{ans:"b", phrase:"單一 IP 以 5 req/s 打約 80–100 次，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）", href:"shots/g0.webp",
+     imgs:[{src:"shots/g0.webp", alt:"DevTools Network：頁面 200、GraphQL query 401；cmd ipconfig 與 ipify 顯示同一個對外 IP"}],
+     cap:"實拍（Playwright 開頁＋F12 Network 實拍，未遮蔽）：被封時 threads.com/@zuck 的 HTML 文件仍 200，網頁自己送的分頁 query 為 401。下方是測試主機的 cmd ipconfig /all（iPhone 熱點 172.20.10.3）與 api.ipify.org 回應，對外 IP 同為 39.10.64.xxx。11/16 換出口 IP（熱點開關飛航）後同一台機器立刻回 200，所以封鎖綁的是 IP。11/16 重測：1 req/s 連發，前 50 次 200、第 51 次起 401；封鎖後休息 30、60、120、300 秒再以 2 req/s 試，皆 0 次成功。點連結開原尺寸。"}
+    ,{ans:"c", phrase:"實測每次回應 27.8 KB、上傳 4.1 KB", href:"shots/g1.webp",
+     imgs:[{src:"shots/g1.webp", alt:"DevTools Network：第 1 頁 query 的 Size 7.7～41.1 kB、請求 Content-Length 4637 B"}],
+     cap:"實拍（Playwright 開頁＋F12 Network 實拍，未遮蔽，11/16 換 IP 後）：7 個大帳號第 1 頁 query 全 200，Size 欄（傳輸量）7.7～41.1 kB，合計 174 kB、平均約 24.8 kB；請求標頭 Content-Length 4637 B。回應為 zstd 壓縮，展開後 JSON 約 547 KB（zuck 第 1 頁）。27.8 KB 是 10/29 的平均、11/15 重測 12 帳號為 26.4 KB，三次都落在 25～28 KB。點連結開原尺寸。"}
+    ,{ans:"c", phrase:"含 TLS 1.8 TB", href:"shots/g2.webp",
+     imgs:[{src:"shots/g2.webp", alt:"Wireshark：同一條新連線的 ClientHello 517 B、伺服器首包 3530 B、Finished 64 B"}],
+     cap:"實拍（Wireshark 抓 threads.com 的 TLS 1.3 新連線，未遮蔽）：每條新連線要先傳 ClientHello 517 B、伺服器首包 2784＋746＝3530 B、Finished 64 B，握手約 4.1 KB，加 session ticket 與關閉通知約 4.2～4.3 KB。每個請求約 30～33 KB，握手約佔 13～14%。誠實說明：答案的 1.8 TB 用的是估計 18%（約 5.6 KB），實測偏低，以 13.5% 重算約 1.7 TB；只有「每次請求都換 IP＝每次新連線」才會每次付握手，代理商按哪一層計費、CONNECT 那一段未量。"}
+  ];
+  var hvAll = [];
+  var hvTouch = matchMedia("(hover: none)");
+  (function(){
+    var byAns = {};
+    HV.forEach(function(h, n){ (byAns[h.ans] = byAns[h.ans] || []).push([n, h]); });
+    Object.keys(byAns).forEach(function(key){
+      var p = document.querySelector('[data-ans="' + key + '"]'), s = ANS[key];
+      if (!p) return;
+      var items = byAns[key].map(function(x){ return {n: x[0], h: x[1], k: s.indexOf(x[1].phrase)}; }).filter(function(x){ return x.k >= 0; }).sort(function(a, b){ return a.k - b.k; });
+      if (!items.length) return;
+      p.textContent = "";
+      var pos = 0;
+      items.forEach(function(it){
+        p.append(s.slice(pos, it.k));
+        var a = document.createElement("a"), pid = "hv-pop-" + it.n;
+        a.className = "hv"; a.href = it.h.href; a.target = "_blank"; a.rel = "noopener";
+        a.setAttribute("aria-describedby", pid);
+        a.append(it.h.phrase);
+        var pop = document.createElement("span");
+        pop.className = "hv-pop"; pop.id = pid; pop.setAttribute("role", "tooltip");
+        pop.innerHTML = '<span class="hv-card">' + it.h.imgs.map(function(m){ return '<img src="' + m.src + '" alt="' + m.alt + '" decoding="async">'; }).join("") + '<span>' + it.h.cap + '</span></span>';
+        a.append(pop);
+        p.append(a);
+        pos = it.k + it.h.phrase.length;
+        var place = function(){
+          var r = a.getBoundingClientRect(), w = Math.min(640, innerWidth - 24, (innerHeight - 130) * 1.6);
+          pop.style.left = Math.max(12, Math.min(r.left, innerWidth - w - 12)) + "px";
+          var h = pop.offsetHeight || 420;
+          if (r.bottom + h > innerHeight - 8 && r.top - h > 8) { pop.style.top = ""; pop.style.bottom = (innerHeight - r.top) + "px"; pop.style.paddingTop = "0"; pop.style.paddingBottom = "8px"; }
+          else { pop.style.bottom = ""; pop.style.top = r.bottom + "px"; pop.style.paddingTop = "8px"; pop.style.paddingBottom = "0"; }
+        };
+        ["mouseenter", "focus"].forEach(function(ev){ a.addEventListener(ev, function(){ place(); requestAnimationFrame(place); }); });
+        addEventListener("scroll", function(){ if (a.matches(":hover,:focus,.open")) place(); }, {passive:true});
+        addEventListener("resize", place);
+        a.addEventListener("click", function(e){
+          if (e.target.closest(".hv-pop") && !e.target.closest(".hv-card img")) return;
+          if (hvTouch.matches && !a.classList.contains("open")) { e.preventDefault(); hvAll.forEach(function(o){ o.classList.remove("open"); }); a.classList.add("open"); place(); requestAnimationFrame(place); }
+        });
+        hvAll.push(a);
+      });
+      p.append(s.slice(pos));
+    });
+    document.addEventListener("click", function(e){ hvAll.forEach(function(a){ if (!a.contains(e.target)) a.classList.remove("open"); }); });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") hvAll.forEach(function(a){ a.classList.remove("open"); a.blur(); }); });
+  })();
+
+  // (a)
+  var state = {monthly:48e6, daily:1.6e6};
+  function calcA(){
+    var acc = Math.max(0, +$("in-acc").value || 0);
+    var rounds = +$("in-rounds").value, posts = +$("in-posts").value;
+    $("o-rounds").textContent = rounds; $("o-posts").textContent = posts;
+    var pages = Math.ceil(posts/25);
+    var first = Math.min(posts,25);
+    var daily = acc*rounds*pages;
+    state.daily = daily; state.monthly = daily*30;
+    $("r-pages").textContent = pages + " 次（first=" + first + (pages>1?"，翻 "+pages+" 頁":"") + "）";
+    $("r-day").textContent = fmt(daily);
+    $("r-rps").textContent = (daily/86400).toFixed(1)+" req/s";
+    $("r-month").textContent = fmt(daily*30);
+    $("r-html").textContent = posts<=4 ? "4 串夠用，但每次 138–172 KB，約 GraphQL 的 5 倍" : "只內嵌 4 串，仍要補打 GraphQL";
+    calcC();
+  }
+  ["in-acc","in-rounds","in-posts"].forEach(function(id){$(id).addEventListener("input",calcA)});
+
+  // frame player
+  (function(){
+    const caps = [
+      "未登入開 @zuck，先跳出 App 推廣，按左上 X 關掉。這時 DevTools 還沒有 graphql/query。",
+      "第 1 串直接畫出來：資料就在 profile HTML 裡。網頁自己發的分頁 query 被 Playwright 攔住，停在 (pending)。",
+      "第 2、3 串也是 HTML 內嵌（第 3 串是連發 2 則的串文）。分頁 query 仍 pending。",
+      "第 4 串後面只剩轉圈和「登入以查看更多」：未登入時 profile HTML 只內嵌 4 串。",
+      "放行分頁 query → 200，GraphQL 從第 5 串起補上 11 串（藍框）。",
+      "網頁自己送的分頁 query 的 Request Headers：紅＝必要（x-csrftoken、x-fb-lsd、x-ig-app-id、x-logged-out-threads-migrated-request、Sec-Fetch-*），灰＝可省略（cookie、x-asbd-id、x-bloks-version-id、x-root-field-name、x-web-session-id、x-fb-friendly-name）。",
+      "自己再送一次：只帶 4 個 x-header、不帶 cookie（credentials: 'omit'），Sec-Fetch-* 由瀏覽器自動帶，回 200 OK。",
+      "Payload：doc_id 只送編號；variables 帶 userID、after:null（從最新開始）、first:10；lsd 從頁面 HTML 拿得到。",
+      "Preview：edges 0–9 正好 10 串，0–3 就是 HTML 內嵌的那 4 串。"];
+    const N = caps.length, stage = $("fp-stage"), dots = $("fp-dots"), cap = $("fp-cap"), play = $("fp-play");
+    const imgs = caps.map((c, i) => {
+      const im = new Image(); im.src = "shots/f"+i+".webp"; im.alt = c; im.decoding = "async"; if (i) im.loading = "lazy";
+      stage.append(im);
+      const d = document.createElement("button"); d.textContent = i; d.setAttribute("aria-label", "第 "+i+" 格");
+      d.onclick = () => { stop(); go(i); }; dots.append(d);
+      return [im];
+    });
+    let cur = 0, timer = null;
+    const link = document.createElement("a"); link.target = "_blank"; link.rel = "noopener"; link.textContent = "開原尺寸"; $("fp-dots").parentNode.append(link);
+    function go(i){
+      cur = (i + N) % N;
+      imgs.forEach(([im], k) => im.classList.toggle("on", k === cur));
+      [...dots.children].forEach((d, k) => d.setAttribute("aria-current", k === cur));
+      cap.innerHTML = "<b>"+cur+"/"+(N-1)+"</b>"; cap.append(caps[cur]);
+      link.href = "shots/f"+cur+".webp";
+    }
+    function start(){ stop(); timer = setInterval(() => go(cur + 1), 4500); play.textContent = "暫停"; play.setAttribute("aria-pressed","true"); }
+    function stop(){ clearInterval(timer); timer = null; play.textContent = "播放"; play.setAttribute("aria-pressed","false"); }
+    play.onclick = () => timer ? stop() : start();
+    $("fp-prev").onclick = () => { stop(); go(cur - 1); };
+    $("fp-next").onclick = () => { stop(); go(cur + 1); };
+    go(0);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) stop(); else start();
+  })();
+
+  // request anatomy
+  var HEADERS = [
+    {k:"x-csrftoken", need:true, fail:{code:"403", cls:"bad", t:"拒絕", d:"實測：拿掉 x-csrftoken 回 403。"}},
+    {k:"x-fb-lsd", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"列為必要。個別拿掉的狀態碼沒有紀錄；只用 HTML 裡的 LSD 自己組標頭是 403。"}},
+    {k:"x-ig-app-id", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"列為必要。個別拿掉的狀態碼沒有紀錄。"}},
+    {k:"x-logged-out-threads-migrated-request", need:true, fail:{code:"200", cls:"warn", t:"空回應", d:"實測：拿掉後仍是 200，但只回 289 bytes，沒有貼文。"}},
+    {k:"Sec-Fetch-*（瀏覽器標頭）", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"答案寫須帶瀏覽器 Sec-Fetch 標頭；GraphQL 上個別拿掉的結果沒有紀錄。"}},
+    {k:"cookie", need:false},
+    {k:"x-asbd-id", need:false},
+    {k:"x-bloks-version-id", need:false},
+    {k:"x-root-field-name", need:false},
+    {k:"x-web-session-id", need:false},
+    {k:"x-fb-friendly-name", need:false}
+  ];
+  var reqEl = $("req");
+  HEADERS.forEach(function(h,i){
+    var line = document.createElement("label"); line.className="line";
+    line.innerHTML = '<input type="checkbox" class="switch" id="h'+i+'" checked><span class="name"></span><span class="chip '+(h.need?'need':'opt')+'">'+(h.need?'必要':'可省略')+'</span>';
+    line.querySelector(".name").textContent = h.k+": …";
+    line.querySelector("input").addEventListener("change",function(e){line.classList.toggle("off",!e.target.checked);calcReq()});
+    reqEl.appendChild(line);
+  });
+  function calcReq(){
+    var off = HEADERS.filter(function(h,i){return !$("h"+i).checked});
+    var needOff = off.filter(function(h){return h.need});
+    var res = $("req-res");
+    if(needOff.length){
+      var f = needOff[0].fail;
+      res.className = "result "+f.cls;
+      res.innerHTML = '<span class="code"></span><div><b></b><br><span class="small"></span></div>';
+      res.querySelector(".code").textContent = f.code;
+      res.querySelector("b").textContent = f.t+"（缺 "+needOff.map(function(h){return h.k}).join("、")+"）";
+      res.querySelector(".small").textContent = f.d + (needOff.length>1?" 實測是一次只拿掉一項。":"");
+    } else {
+      res.className = "result ok";
+      res.innerHTML = '<span class="code">200</span><div><b>回最新 10 串</b><br><span class="small"></span></div>';
+      res.querySelector(".small").textContent = off.length
+        ? "拿掉的 "+off.length+" 項（"+off.map(function(h){return h.k}).join("、")+"）實測不影響。不需要 cookie，也就不需要登入。"
+        : "每串含 code（組 URL）、全文、taken_at。回應壓縮後 10-29 平均 27.8 KB，11-15 重測 12 帳號平均 26.4 KB。";
+    }
+  }
+  $("req-all").addEventListener("click",function(){HEADERS.forEach(function(h,i){$("h"+i).checked=true;$("h"+i).closest(".line").classList.remove("off")});calcReq()});
+  $("req-min").addEventListener("click",function(){HEADERS.forEach(function(h,i){$("h"+i).checked=h.need;$("h"+i).closest(".line").classList.toggle("off",!h.need)});calcReq()});
+
+  function calcSF(){
+    var on = $("sf").checked, r = $("sf-res");
+    r.className = "result "+(on?"ok":"bad");
+    r.innerHTML = on
+      ? '<span class="code">200</span><div><b>完整頁面，內嵌 4 串</b><br><span class="small">16/16 帳號都只內嵌 4 串，因為頁面預排的查詢本身就是 first: 4。壓縮後 138–172 KB。</span></div>'
+      : '<span class="code">200</span><div><b>空殼，0 篇</b><br><span class="small">狀態碼一樣是 200，解壓後約 259 KB，但沒有貼文。舊腳本就是這樣誤判成「純 HTTP 抓不到」。</span></div>';
+  }
+  $("sf").addEventListener("change",calcSF);
+
+  // (b) strip
+  var strip = $("strip"), cells=[];
+  for(var i=0;i<102;i++){var c=document.createElement("div");c.className="cell";strip.appendChild(c);cells.push(c)}
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function paint(n){
+    var ok=0,bad=0;
+    cells.forEach(function(c,i){
+      c.className = "cell"+(i<n?(i<82?" s":" f"):"")+(i===n-1?" cur":"");
+      if(i<n){ if(i<82) ok++; else bad++; }
+    });
+    $("strip-c").textContent = "第 "+n+" 次 · 約 "+(n/5).toFixed(1)+" 秒 · 成功 "+ok+" · 401 "+bad;
+  }
+  var timer=null;
+  function replay(){
+    if(timer) clearInterval(timer);
+    if(reduce){paint(102);return}
+    var n=0; paint(0);
+    timer = setInterval(function(){n+=2; if(n>=102){n=102;clearInterval(timer);timer=null} paint(n)},80);
+  }
+  paint(102);
+  $("replay").addEventListener("click",replay);
+
+  // (c)
+  var PROVIDERS = [
+    {name:"IPRoyal 住宅 · 10 TB 預付", rate:1.84, main:true, note:function(gb){
+      var months = 10000/gb;
+      return "$1.84/GB 須一次買 10 TB 以上（預付 $18,400）；按量流量不過期，以目前用量約可用 "+months.toFixed(1)+" 個月。";}},
+    {name:"Oxylabs 住宅 · 1K+ GB", rate:2.5, main:true, note:function(gb,cost){
+      return "$2.5/GB 屬 Enterprise 方案，月費 $2,500 起、需洽業務"+(cost<2500?"；目前用量不到門檻，實付 $2,500":"")+"。請求與回應流量都計費，不論狀態碼。";}},
+    {name:"IPRoyal 住宅 · 10 GB 方案", rate:5.51, main:false, note:function(){
+      return "不預付 10 TB 時，官網公開的下一級。10 GB 到 10 TB 之間的單價沒有公開。";}}
+  ];
+  var barsEl = $("bars");
+  PROVIDERS.forEach(function(p,i){
+    var row=document.createElement("div"); row.className="bar-row";
+    row.innerHTML='<div class="bar-top"><span></span><span class="cost" id="pc'+i+'"></span></div><div class="track"><div class="fill'+(p.main?'':' dim')+'" id="pf'+i+'"></div></div><div class="bar-note" id="pn'+i+'"></div>';
+    row.querySelector(".bar-top span").textContent = p.name+" · $"+p.rate+"/GB";
+    barsEl.appendChild(row);
+  });
+  function calcC(){
+    var resp=+$("in-resp").value, up=+$("in-up").value, tls=+$("in-tls").value;
+    $("o-resp").textContent=resp.toFixed(1); $("o-up").textContent=up.toFixed(1); $("o-tls").textContent=tls+"%";
+    var per = resp+up;
+    var rawGB = state.monthly*per/1e6;
+    var gb = rawGB*(1+tls/100);
+    $("c-per").textContent = per.toFixed(1)+" KB";
+    $("c-req").textContent = fmt(state.monthly);
+    $("c-raw").textContent = (rawGB/1000).toFixed(2)+" TB";
+    $("c-tb").textContent = (gb/1000).toFixed(2)+" TB";
+    var costs = PROVIDERS.map(function(p,i){
+      var c = gb*p.rate; if(i===1) c=Math.max(c,2500); return c;});
+    var max = Math.max.apply(null,costs)||1;
+    PROVIDERS.forEach(function(p,i){
+      $("pc"+i).textContent = usd(costs[i])+" /月";
+      $("pf"+i).style.width = (costs[i]/max*100).toFixed(1)+"%";
+      $("pn"+i).textContent = p.note(gb,gb*p.rate);
+    });
+  }
+  function setPressed(which){
+    $("pre-old").setAttribute("aria-pressed", which==="old"); $("pre-new").setAttribute("aria-pressed", which==="new");
+    document.querySelectorAll(".sz-row").forEach(function(r){r.classList.toggle("on", which===r.dataset.kb)});
+  }
+  ["in-resp","in-up","in-tls"].forEach(function(id){$(id).addEventListener("input",function(){setPressed(null);calcC()})});
+  function preset(resp,up,which){$("in-resp").value=resp; $("in-up").value=up; setPressed(which); calcC()}
+  $("pre-old").addEventListener("click",function(){preset(27.8,4.1,"old")});
+  $("pre-new").addEventListener("click",function(){preset(26.4,4.6,"new")});
+
+  // 11-15 size rerun (wire bytes, gzip)
+  var SZ = [["zuck",61420],["nasa",46591],["其他 5",36073],["natgeo",30187],["其他 1",27383],["nba",25532],
+            ["instagram",20813],["其他 2",20476],["mosseri",19730],["nytimes",15446],["其他 4",6941],["其他 3",5861]];
+  var szMax = 61420, szMean = 26371;
+  SZ.forEach(function(r){
+    var kb = (r[1]/1000).toFixed(1);
+    var b = document.createElement("button"); b.className="sz-row"; b.type="button"; b.setAttribute("role","listitem"); b.dataset.kb=kb;
+    b.innerHTML='<span class="lab'+(r[0].indexOf("其他")===0?' anon':'')+'"></span><span class="track"><span class="fill" style="display:block;width:'+(r[1]/szMax*100).toFixed(1)+'%"></span><span class="mean" style="left:'+(szMean/szMax*100).toFixed(1)+'%"></span></span><span class="val">'+kb+' KB</span>';
+    b.querySelector(".lab").textContent = r[0];
+    b.setAttribute("aria-label", r[0]+" "+kb+" KB，設為試算的回應大小");
+    b.addEventListener("click",function(){$("in-resp").value=kb; $("in-up").value=4.6; setPressed(kb); calcC()});
+    $("sz").appendChild(b);
+  });
+
+  calcReq(); calcSF(); calcA();
+})();
+</script>
+
+</html>

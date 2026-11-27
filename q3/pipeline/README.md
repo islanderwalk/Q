@@ -5,13 +5,13 @@
 | 答案的環節 | 這裡的實作 | 程式 |
 |---|---|---|
 | Cloud Scheduler `5 * * * *` | 常駐排程：每小時第 5 分跑一輪。一輪超過一小時就跑完接著跑下一輪，兩輪不重疊 | [`q3pipe/scheduler.py`](q3pipe/scheduler.py) |
-| Cloud Run Job「crawl」（discover＋refresh），單 worker，每秒最多 1 次 | 讀列表找新文、抓新文、重抓 7 天內超過 23 小時沒抓的文章。帶 over18 cookie；429／5xx 退避 5、10 秒（有 Retry-After 就照它）；連續 3 次失敗，整體暫停 5 分鐘；閒置超過 60 秒的連線不再沿用；每次失敗的種類記進 log | [`q3pipe/job.py`](q3pipe/job.py)、[`q3pipe/ptt.py`](q3pipe/ptt.py) |
+| Cloud Run Job「crawl」（discover＋refresh），單 worker，每秒最多 1 次 | 讀列表找新文、抓新文、重抓 7 天內超過 23 小時沒抓的文章。帶 over18 cookie；429／5xx 退避 5、10 秒（有 Retry-After 就照它）；連續 3 次失敗，整體暫停 5 分鐘；文章連續 3 篇（每篇最多試 3 次）都抓不到就當成被擋；單一篇一直抓不到的，下一輪排到最後、不算進這 3 篇，寫完手上這批後這輪先停（記 `failed`），不在退避裡空等好幾個小時；閒置超過 60 秒的連線不再沿用；每次失敗的種類記進 log | [`q3pipe/job.py`](q3pipe/job.py)、[`q3pipe/ptt.py`](q3pipe/ptt.py) |
 | 原始 HTML 存 GCS，備重解析 | 每次抓到的列表頁與文章頁都 gzip 存一份到 `gs://qsearch-q3-raw/<看板>/<種類>/<頁碼或文章 ID>/<抓取時間>.html.gz`，`posts.raw_uri` 指向它。用的是 fake-gcs-server | [`q3pipe/rawstore.py`](q3pipe/rawstore.py) |
 | MERGE 進 BigQuery，依發文日分區 | `posts` 依 `DATE(published_at)` 分區，以文章 ID 叢集；每批 50 篇先寫進暫存表，再 MERGE。用的是 BigQuery 模擬器 | [`q3pipe/bq.py`](q3pipe/bq.py) |
 | 失敗下輪補 | 見下方「自動回補」 | `job.py`、`bq.py` |
 | 查詢 API 用 Cloud Run | `/api/search?q=關鍵字&days=7`，另附一個搜尋頁。貼文與留言分開查，再依文章合併；模擬器上 7 天全量（6,230 篇、22.7 萬則留言）搜尋一次 1–3 秒，見[全量預演](#全量預演) | [`q3pipe/search.py`](q3pipe/search.py) |
-| 每日 verify 檢查不變量 | 台灣時間 04 點後的第一輪跑完後檢查：填滿的列表頁恰好 20 格，每格是刪文佔位或已入庫，相鄰文章 ID 的時間戳不倒序 | [`q3pipe/verify.py`](q3pipe/verify.py) |
-| Cloud Monitoring | Pushgateway＋Prometheus＋Grafana。告警只看結果（答案第 5 題） | [`monitoring/`](monitoring) |
+| 每日 verify 檢查不變量 | 台灣時間 04 點後的第一輪跑完後檢查，只有一條：從 PTT 列表最新頁沿著「上頁」一路往回走，走到出現早於 7 天前的文章為止；途中每一頁都要讀取成功，走完時最新頁沒有變；這次走訪看到的每一個未刪除文章 ID（爬蟲那一輪開始前發的），都必須在 `posts` 裡有一筆 status 200。走訪是 verify 自己另外讀的（八卦板約 342 次請求、6 分鐘），不靠爬蟲存的列表。手動：`python -m q3pipe verify [--until 時間]` | [`q3pipe/verify.py`](q3pipe/verify.py) |
+| Cloud Monitoring | Pushgateway＋Prometheus＋Grafana。告警只看結果（答案第 5 題）；被擋時也會響，見下面「被擋時的告警」 | [`monitoring/`](monitoring) |
 
 ## 資料表（dataset `ptt`）
 
@@ -32,7 +32,7 @@
 1. **列表**：從最新頁往回讀，讀到上一輪的最新頁為止。第一次跑則讀到 7 天前。所以停機多久都一樣，中間發的文章都會讀到。讀到一半某頁失敗，就停在那頁，這輪記為 `partial`，下一輪補讀。
 2. **新文**：每輪都算一次「列表上有、`posts` 沒有」的 7 天內文章，全部補抓，舊的先抓。單篇失敗不寫入，下一輪它還在清單上。
 3. **重抓**：7 天內 `last_fetched_at` 超過 23 小時的文章就到期。重抓失敗不更新 `last_fetched_at`，下一輪會再到期。
-4. **刪文**：列表上已經是「本文已被刪除」的格子不抓。之前抓過、重抓時拿到 404 的文章標記 `deleted_at`，舊內容與留言保留，但不出現在搜尋結果。
+4. **刪文**：列表上已經是「本文已被刪除」的格子不抓。之前抓過、重抓時拿到 404 的文章標記 `deleted_at`，舊內容與留言保留，但不出現在搜尋結果。標記後隔 23 小時再抓一次確認：還是 404 就不再抓；變回 200（PTT 暫時異常，不是真的刪文）就恢復成可搜尋，計入看板的「刪文又恢復」。這次確認的 404 不算進品質檢查的 404 比例，免得同一批文章一再被擋下。
 5. **新留言**：重抓時整串留言換成最新版本。每則留言用（帳號、時間與 IP、內容、同一分鐘同一句話的第幾次）識別，所以舊留言保留第一次看到的時間，也算得出這次新增了幾則。看板第 5 區的「重抓的邊際效益」就是用這個數字畫的。
 
 ## 自動 rollback
@@ -163,15 +163,24 @@ python tests/full_scale.py
 
 [`monitoring/build_dashboard.py`](monitoring/build_dashboard.py) 產生 [`q3-ptt-search.json`](monitoring/grafana/dashboards/q3-ptt-search.json)，共 7 區：
 
-1. **兩條資料規格與結果**：新文章最久等了幾分鐘還不能搜尋（規格 1：360 分鐘）、留言最久多少小時沒重抓（規格 2：24 小時）、每日不變量、上一輪結果。只有這一區會告警（[`alerts.yml`](monitoring/alerts.yml)）。
+1. **兩條資料規格與結果**：新文章最久等了幾分鐘還不能搜尋（規格 1：360 分鐘；超過 180 分鐘就告警，留時間處理）、留言最久多少小時沒重抓（規格 2：24 小時）、每日不變量、上一輪結果。只有這一區會告警（[`alerts.yml`](monitoring/alerts.yml)）。
 2. **資料量**：7 天內可搜尋文章、留言、已標記刪文，以及待抓佇列。
-3. **抓取**：每分鐘請求數與每秒 1 次的上限線、PTT 回應時間、24 小時請求數對照答案估算的 6,300 次、退避等待。
+3. **抓取**：每分鐘請求數與每秒 1 次的上限線、PTT 回應時間、24 小時請求數對照答案估算的 6,278 次、退避等待。
 4. **寫入與自動 rollback**：每小時 committed／rolled_back／gate_blocked 批次數、整輪還原次數、發文到可搜尋的延遲。
 5. **重抓的邊際效益**（答案第 3、6 題）：新增留言依文章發文第幾天分開統計。
 6. **只記錄、不告警**（答案第 5 題）：單次請求失敗、事後刪文 404、「檔案過大」被截斷的文章。
 7. **每日不變量明細與查詢 API**：每項檢查的數字、推文數吻合比例、查詢延遲、BigQuery 掃描量。
 
-指標由 crawler 推到 Pushgateway。7 天內的數字在每輪開始、列表讀完、每寫 10 批、每輪結束時更新，第一次回補跑幾個小時也看得到進度；crawler 重啟時先從 BigQuery 的 `crawl_runs`、`verify_runs` 補回上一輪與上次檢查的結果。還沒有資料的面板直接寫原因（例如「還沒有重抓：文章抓到滿 23 小時才重抓」），不顯示 No data。
+指標由 crawler 推到 Pushgateway。7 天內的數字在每輪開始、列表讀完、每輪結束時更新，跑的中途每 10 分鐘也重算一次（抓不到的時候也算），第一次回補跑幾個小時也看得到進度；crawler 重啟時先從 BigQuery 的 `crawl_runs`、`verify_runs` 補回上一輪與上次檢查的結果。還沒有資料的面板直接寫原因（例如「還沒有重抓：文章抓到滿 23 小時才重抓」），不顯示 No data。
+
+### 被擋時的告警
+
+被 PTT 擋的時候，抓取程序會卡在退避等待（每次至少 5 分鐘），幾個小時都不重算「新文章多久可搜尋」。所以：
+
+- 「新文章多久可搜尋」「留言多久沒重抓」的告警與看板，都用「上次算出的值＋算完到現在過了多久」推算現在的值，程序不更新數字也會一路往上長到告警。新文章超過 3 小時（加上持續 10 分鐘，約 3 小時 10 分）就告警，離規格的 6 小時還有約 2 小時 50 分。
+- 每輪第一個請求就是最新列表頁。它從第一次讀不到開始計時（`q3_list_failing_since_timestamp_seconds`），讀到就歸零；連續 90 分鐘（至少連兩輪）讀不到直接告警。
+- 文章連續 3 篇抓不到，這輪就先停，記 `failed`（工單等級）；之後新文進不來，由上面的 3 小時告警接手。
+- 一輪跑超過 2 小時還沒結束（卡住），或上一輪結束超過 2 小時沒開始新的一輪，也告警。
 
 截圖用 Playwright（`pip install playwright`、`playwright install chromium`）：
 

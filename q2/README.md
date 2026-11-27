@@ -13,7 +13,7 @@
 
 ## 正式答案 — [`answer/answer_600.txt`](answer/answer_600.txt)
 
-交卷用的正式答案，590 字（上限 600 字，不含算式；python len，空白與換行都算），算式附在同一檔的「【算式】」段。字數由 `code/tests/test_q2_answer_length.py` 檢查。六題合併版見 [`shared/docs/submission.md`](../shared/docs/submission.md)。
+交卷用的正式答案，596 字（上限 600 字，不含算式；python len，空白與換行都算），算式附在同一檔的「【算式】」段。字數由 `code/tests/test_q2_answer_length.py` 檢查。六題合併版見 [`shared/docs/submission.md`](../shared/docs/submission.md)。
 
 ---
 

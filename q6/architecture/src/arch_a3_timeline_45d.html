@@ -19,13 +19,13 @@
 </style></head>
 <body><script>
 const tasks = [
-  ['基準量測', 1, 2, ''],
+  ['先量現況', 1, 2, ''],
   ['POC（1 渠道 × 1 月）', 3, 5, ''],
   ['字典整併（共用字典）', 8, 10, 'crit'],
-  ['工程化：批次＋串流＋API', 18, 6, ''],
-  ['6 渠道回朔與驗收', 24, 12, 'crit'],
-  ['壓測與切換', 36, 3, ''],
-  ['緩衝', 39, 7, 'buf']
+  ['工程化：批次＋串流＋API', 18, 10, ''],
+  ['6 渠道回朔與驗收', 28, 12, 'crit'],
+  ['壓測與切換', 40, 3, ''],
+  ['緩衝', 43, 3, 'buf']
 ];
 let g = '<div class="gantt"><div class="lbl" style="color:#55646f;font-size:13px">工作天</div>';
 for (let d = 1; d <= 45; d++) g += `<div class="ax">${d === 1 || d % 5 === 0 ? d : ''}</div>`;
@@ -36,30 +36,30 @@ for (const [name, s, len, k] of tasks) {
   if (s + len - 1 < 45) g += `<div style="grid-column: span ${45 - (s + len - 1)}"></div>`;
 }
 g += '<div class="row-sep"></div>';
-g += '<div class="lbl" style="color:#6a3cc0">機器：ES 寫入<small>約 46 小時</small></div>';
-g += '<div style="grid-column: span 23"></div><div class="bar mach" style="grid-column: span 12"></div><div style="grid-column: span 10"></div>';
+g += '<div class="lbl" style="color:#6a3cc0">機器：ES 寫入<small>約 27 小時</small></div>';
+g += '<div style="grid-column: span 27"></div><div class="bar mach" style="grid-column: span 12"></div><div style="grid-column: span 6"></div>';
 g += '<div class="lbl" style="color:#9a5806">里程碑</div>';
 g += '<div style="grid-column: span 6"></div><div class="ms" style="grid-column: span 10">D7 POC 指標過門檻</div>';
-g += '<div style="grid-column: span 6"></div><div class="ms" style="grid-column: span 10">D23 開始回補</div>';
-g += '<div style="grid-column: span 5"></div><div class="ms" style="grid-column: span 8">D38 6 渠道切預設</div>';
+g += '<div style="grid-column: span 11"></div><div class="ms" style="grid-column: span 10">D28 開始回補</div>';
+g += '<div style="grid-column: span 4"></div><div class="ms" style="grid-column: span 4">D42 6 渠道切預設</div>';
 g += '</div>';
 
 const legend = `<div class="legend">
   <span><i class="sw" style="background:#0c6b63"></i>人力工作</span>
   <span><i class="sw" style="background:#b0223d"></i>關鍵路徑：字典與驗收</span>
-  <span><i class="sw" style="background:#6a3cc0"></i>機器時間（離峰背景跑，不加進工期）</span>
+  <span><i class="sw" style="background:#6a3cc0"></i>機器時間（背景跑，不加進工期）</span>
   <span><i class="sw" style="background:repeating-linear-gradient(45deg,#dfe5e8,#dfe5e8 4px,#fff 4px,#fff 8px);border:1px solid #c3cdd3"></i>緩衝</span>
 </div>`;
 const cards = `<div class="two">
   <div class="card"><h3>假設</h3><ol>
-    <li>5 億篇、平均 300 字 → 1.5 × 10<sup>11</sup> 字</li>
+    <li>5 億篇、平均 284 字（自爬 13.2 萬篇）→ 1.42 × 10<sup>11</sup> 字 <span class="chip run">實測</span></li>
     <li>jieba 每核每秒 28.6 萬字 <span class="chip run">VM 實測</span></li>
-    <li>ES 部分更新會重新索引整篇 <span class="chip doc">官方文件</span>；限速每秒 3,000 篇、只在離峰 8 小時 <span class="chip est">假設</span></li>
+    <li>ES 部分更新會重新索引整篇 <span class="chip doc">官方文件</span>；寫入本機實測每秒約 5,170 篇 <span class="chip run">實測</span></li>
     <li>共用字典方案，字典整併約 10 天（題目提示）；PM 每渠道回饋 1–2 天</li>
   </ol></div>
   <div class="card"><h3>機器時間（和人力平行）</h3>
-    斷詞：1.5e11 ÷ 2.86e5 字/秒 ≈ 146 核心小時 → 64 核心約 2.3 小時<br>
-    寫入：5e8 ÷ 3,000 篇/秒 ≈ 46 小時 → 離峰約 6 晚<br>
+    斷詞：1.42e11 ÷ 2.86e5 字/秒 ≈ 138 核心小時 → 64 核心約 2.2 小時<br>
+    寫入：5e8 ÷ 5,170 篇/秒 ≈ 27 小時<br>
     改走不同字典：再加 20 天以上，約 65 天
   </div>
 </div>`;
@@ -67,7 +67,7 @@ const cards = `<div class="two">
 renderDiagram({
   eyebrow: 'QSearch 筆試 · 第 6 題 · (a) 歷史資料回朔',
   title: '(a) 一位工程師 45 個工作天：關鍵路徑是字典與驗收',
-  sub: '機器時間算得出來、而且在背景跑；實際不確定的是字典迭代與 PM 驗收的來回，所以 POC 時就把驗收標準講定，並留 7 天緩衝。',
+  sub: '機器時間算得出來、而且在背景跑；實際不確定的是字典迭代與 PM 驗收的來回，所以 POC 時就把驗收標準講定，並留 3 天緩衝。',
   height: 640,
   blocks: [
     { x: 0, y: 0, w: 1520, html: g },

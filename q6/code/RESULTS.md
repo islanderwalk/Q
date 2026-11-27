@@ -154,7 +154,7 @@ repo 版本是 2026-10-29 在 VM 上跑的（`q6/data/jieba_experiments/verify.l
 |---|---|---|---|
 | 新流程「『高雄市』整詞保留 6 次」，列為新流程的成果 | `shared/docs/python.md` 六、舊版本檔 | 舊流程也是 6 次，這個指標沒有變化；改善在「高雄」：拆開 115 篇降到 0 篇（內建）／1 篇（dict.txt.big） | 「「高雄市」為什麼是 6→6」一節 |
 | 「jieba 內建字典是簡體…正式對照要用同一份繁體字典」「dict.txt.big 本次未下載」 | 舊版本檔、舊版 `PLAN.md` | 已下載（sha256 與 `verify.log` 相同），用 `--base-dict` 在同一份標題上對照 | `dict_big` 區塊 |
-| 工作天 26–28、每核 1,000 則/秒（假設）、120 字、276 批 | 舊版 `PLAN.md` | 與答案稿對齊：45 工作天、每核每秒約 28 萬字（實測）、300 字（假設）、270 批（Threads 2023/07 起） | `q6/code/PLAN.md`、`q6/answer/answer_600.txt`、`q6/architecture/src/arch_a1_partition_grid.html` |
+| 工作天 26–28、每核 1,000 則/秒（假設）、120 字、276 批 | 舊版 `PLAN.md` | 與答案稿對齊：45 工作天、每核每秒約 28 萬字（實測）、284 字（自爬 13.2 萬篇實測）、270 批（Threads 2023/07 起） | `q6/code/PLAN.md`、`q6/answer/answer_600.txt`、`q6/architecture/src/arch_a1_partition_grid.html` |
 | 「外部依據未上網查證」 | 舊版 `PLAN.md`、`shared/docs/python.md` 十之 4 | 已查證，來源見上 | 「外部依據」一節 |
 | 舊版 `segmenter` 直接 `load_userdict(檔案路徑)` | 舊版 `q6/code/segmenter.py` | jieba 不跳過 `#` 註解，`# dict_version: …` 和 `# 格式：…` 兩行被當成詞載入。現在先濾掉註解行再載入。這 6,685 篇的切分結果不受影響：重跑後 `segmented_ab.jsonl` 與舊版輸出逐位元組相同 | jieba `__init__.py` 第 408 行；測試 `test_user_dict_comment_lines_are_not_loaded_as_words` |
 | 舊版 `run_compare.py` 每次覆寫整份 RESULTS.md | 舊版 `q6/code/run_compare.py` | 只改寫 `AUTO` 標記之間的區塊，手寫段落保留 | 測試 `test_upsert_block_keeps_handwritten_text` |
@@ -429,6 +429,6 @@ PLAN 舊稿把 `dict_version` 當 ES external version，這是錯的：內容修
 
 「只影響含新詞的文件」只在固定 jieba total 時成立：不固定時，20 萬篇有 52 篇不含新詞也變了。現在 `Segmenters.build` 預設固定 total，程式註解也改了。
 
-全量重跑的工時：答案寫「ES 限速每秒 3,000 篇、離峰約 6 晚」，這是假設的寫入上限，沒有在正式叢集驗證。本次單節點灌入 `keyword` 欄位是每秒約 6.4 萬篇，但那是沒有其他負載、文件很小的情況，不能直接當正式叢集的上限。
+全量重跑的工時：答案用 `q6/stack` 單節點不限速回補 42.5 萬篇的實測寫入速度（每秒約 5,170 篇）推算約 27 小時，正式環境 POC 時再量。本次單節點灌入 `keyword` 欄位是每秒約 6.4 萬篇，但那是沒有其他負載、文件很小的情況，不能直接當正式叢集的上限。
 
 pytest（2026-10-31，Linux 容器、Python 3.13.17、pytest 9.2.0、jieba 0.42.1）：`PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider q6/code/tests`，28 passed，退出碼 0。`test_segmenter.py` 21 項、`test_kaohsiung_trace.py` 5 項、`test_answer_length.py` 2 項；比 10/30 多的 5 項是答案 600 字內、答案涵蓋審查四點、審查舉的三個例子都留住、指紋涵蓋停用詞與主字典與程式、`content_sha` 不受字典影響。

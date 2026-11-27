@@ -8,7 +8,7 @@ from datetime import datetime
 import requests
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))  # telem.py sits next to this file
-from telem import Telemetry, Throttle, NetGuard, TW, h10, clean_url, now_iso  # noqa: E402
+from telem import Telemetry, Throttle, NetGuard, TW, h10, clean_url, now_iso, atomic_write  # noqa: E402
 
 import os  # noqa: E402
 D = pathlib.Path(os.environ.get("CRAWL_WORKDIR") or pathlib.Path(__file__).parent / "work") / "youtube"
@@ -48,13 +48,13 @@ CH_CAP = UPLOAD_BUDGET // len(CHANNELS)
 
 
 def save():
-    STATE.write_text(json.dumps({**st, "quota_used": sum(quota.values()) + st.get("quota_prev", 0), "updated": now_iso()},
-                                ensure_ascii=False, indent=1), encoding="utf-8")
-    (D / "progress.json").write_text(json.dumps({"updated": now_iso(), "quota_by_endpoint": dict(quota),
+    atomic_write(STATE, json.dumps({**st, "quota_used": sum(quota.values()) + st.get("quota_prev", 0), "updated": now_iso()},
+                                   ensure_ascii=False, indent=1))
+    atomic_write(D / "progress.json", json.dumps({"updated": now_iso(), "quota_by_endpoint": dict(quota),
                                                  "quota_total": sum(quota.values()) + st.get("quota_prev", 0),
                                                  "channels": {k: {x: v.get(x) for x in ("videos", "earliest", "latest", "done", "comments",
                                                                                         "head", "head_last")}
-                                                              for k, v in st["channels"].items()}}, ensure_ascii=False, indent=1), encoding="utf-8")
+                                                              for k, v in st["channels"].items()}}, ensure_ascii=False, indent=1))
 
 
 def used():

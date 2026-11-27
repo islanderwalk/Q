@@ -107,7 +107,7 @@ def must_keep_split(text: str, toks: list, words, freq=None) -> list:
 def segment_detail(dic, channel: str, text: str):
     """v2 斷詞的完整過程：(清洗後原文, jieba 斷點 [(詞, 起, 迄)], 詞表, 被切開的必不可拆詞)。
     品質日報要看「切在哪裡」才用這個；一般斷詞走 segment_checked。"""
-    clean = normalize(channel, text)
+    clean = normalize(channel, text, getattr(dic, "promo_rules", None))   # 宣傳句清單跟著字典版本走；這一版沒帶就和以前一樣
     toks = list(dic.tokenizer.tokenize(clean, HMM=True))
     out = []
     for t, _, _ in toks:
@@ -138,20 +138,27 @@ def month_of(published_at: str) -> str:
     return (published_at or "")[:7] or "unknown"
 
 
+def content_sha(text: str) -> str:
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
+
+
 def base_doc(post: dict) -> dict:
     """文章本體欄位（parser 寫入的部分）。斷詞欄位不在這裡，由各版斷詞服務各寫各的。"""
     keys = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at", "author")
     doc = {k: post.get(k) for k in keys}
     doc["content"] = post.get("text") or post.get("content") or ""
-    doc["content_sha"] = hashlib.sha256(doc["content"].encode("utf-8")).hexdigest()[:16]   # 同一版斷詞下原文改了也看得出來（api/ops.py 同一定義）
+    doc["content_sha"] = content_sha(doc["content"])   # 同一版斷詞下原文改了也看得出來（api/ops.py 同一定義）
     doc["month"] = month_of(post.get("published_at"))
     return doc
 
 
-def seg_fields(dic, terms: list) -> dict:
+def seg_fields(dic, terms: list, text: str) -> dict:
+    """text＝拿去斷詞的那一份原文。seg_sha_<版> 記它的雜湊，seg_guard 拿來和 ES 的 content_sha 比：
+    不一樣＝斷的是舊原文，不寫；一樣但和上次斷詞的不一樣＝改文，同一版也要重寫詞表。"""
     f = dic.pipeline
     return {
         f"terms_{f}": terms,
+        f"seg_sha_{f}": content_sha(text),
         f"seg_ver_{f}": seg_ver(f, dic.version),
         f"dict_version_{f}": dic.version,
         f"seg_build_{f}": config.SEG_BUILD,

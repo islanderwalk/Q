@@ -1,0 +1,29 @@
+{
+ "account": "zuck",
+ "js_loaded_before_scroll": 41,
+ "js_loaded_total": 41,
+ "js_hits_before_scroll": 2,
+ "js_hits": [
+  {
+   "url": "https://static.cdninstagram.com/rsrc.php/v4igMi4/yr/l/en_US-j/u_4VCT6xF1tVI3hAT-sUtvL-xOhmcO4LSEfIZPDqUJOmjOVPcP2tuK-zLUqygJkWy7COpihyUzQH7et8mjHFe9rzxHp6qaH7ddVBajIKvp5n9J.js",
+   "relayop_doc_id": "29427891256864466",
+   "mentions": 10
+  },
+  {
+   "url": "https://static.cdninstagram.com/rsrc.php/v4igMi4/yr/l/en_US-j/u_4VCT6xF1tVI3hAT-sUtvL-xOhmcO4LSEfIZPDqUJOmjOVPcP2tuK-zLUqygJkWy7COpihyUzQH7et8mjHFe9rzxHp6qaH7ddVBajIKvp5n9J.js",
+   "relayop_doc_id": "29427891256864466",
+   "mentions": 10
+  }
+ ],
+ "require_before_scroll": "29427891256864466",
+ "require_after_scroll": "29427891256864466",
+ "graphql": [
+  {
+   "t": 1794751375.5,
+   "friendly": "fetchBarcelonaExperimentQuery",
+   "doc_id": "28873607388967973",
+   "status": 200,
+   "bytes": 216
+  }
+ ]
+}

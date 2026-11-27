@@ -12,6 +12,9 @@
 - 面板的 PromQL 指標名都在程式裡定義（q6/code/tests/test_p0_configs_consistency.py 檢查）；SQL 只讀 pg/init.sql、pg/live.sql 建的表。
 """
 import json
+import os
+import re
+import sys
 from pathlib import Path
 
 P = {"type": "prometheus", "uid": "prom"}
@@ -20,6 +23,20 @@ L = {"type": "loki", "uid": "loki"}
 CHANNEL_COLORS = {"facebook": "#1877f2", "instagram": "#e1306c", "youtube": "#ff0000", "ptt": "#f59e0b", "media": "#10b981", "threads": "#111827",
                   "v0": "#9ca3af", "v1": "#6b7280", "v2": "#047857"}
 SLA_S = 180
+
+
+def alertmanager_url() -> str:
+    """看板上方「Alertmanager」連結的網址。預設 9093（docker-compose.yml）。
+    這台機器若用 docker-compose.local-ports.yml 改了對外埠（例如 9693），照那個埠寫，連結才打得開；Q6_ALERTMANAGER_URL 可直接指定。"""
+    if os.environ.get("Q6_ALERTMANAGER_URL"):
+        return os.environ["Q6_ALERTMANAGER_URL"]
+    override = Path(__file__).resolve().parents[2] / "docker-compose.local-ports.yml"
+    if override.exists():
+        m = re.search(r'alertmanager:.*?"(?:[0-9.]+:)?([0-9]+):9093"', override.read_text(encoding="utf-8"))
+        if m:
+            return f"http://127.0.0.1:{m.group(1)}"
+        print(f"警告：{override.name} 裡找不到 alertmanager 的對外埠（只認單行寫法），連結用預設 9093", file=sys.stderr)
+    return "http://127.0.0.1:9093"
 
 
 class Board:
@@ -56,7 +73,7 @@ class Board:
                 "annotations": {"list": [{"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": True, "hide": True,
                                           "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}] + self.annotations},
                 "links": [{"title": "QSearch Q6 文字雲", "type": "link", "url": "/d/qsearch-q6"}, {"title": "QSearch Q6 採集", "type": "link", "url": "/d/qsearch-q6-collect"},
-                          {"title": "Alertmanager", "type": "link", "url": "http://127.0.0.1:9093", "targetBlank": True},
+                          {"title": "Alertmanager", "type": "link", "url": alertmanager_url(), "targetBlank": True},
                           {"title": "PM 頁", "type": "link", "url": "http://127.0.0.1:8080", "targetBlank": True}]}
         path.write_text(json.dumps(dash, ensure_ascii=False, indent=1), encoding="utf-8")
         return len(self.panels)
@@ -210,9 +227,10 @@ B.add(*gauge("原文有、ES 沒有的比例（passed 分區）", 'qseg_recon_mi
              thr=[(0.001, "orange"), (0.01, "red")], legend="{{channel}}/{{month}}", max_=0.05, desc="提案值：> 0.1% warn", w=5, h=10))
 B.add(*gauge("A/B 覆蓋率（有 terms_v2 ÷ 渠道文章數）", 'qseg_coverage_terms_v2_ratio{channel=~"$channel"}', legend="{{channel}}", thr=[(0.5, "orange"), (0.99, "green")], desc="分母是該渠道全部文章", w=5, h=10))
 B.add(*stat("超過 15 分鐘仍未斷詞", "sum(qseg_coverage_unsegmented_docs) or vector(0)", thr=[(1, "red")], desc="fetched_at 在 1 小時到 15 分鐘前、沒有 seg_ver_v2；SegUnsegmentedDocs（page，15 分鐘）", w=4))
+B.add(*stat("漏斷詞（不限時間）", 'sum by (pipeline) (qseg_coverage_unsegmented_stale_docs) or vector(0)', legend="{{pipeline}}", thr=[(1, "orange")], desc="抓到超過 15 分鐘、這一版沒有 seg_ver；SegUnsegmentedStale（warn，30 分鐘）；用 qseg fill 補", w=4))
 B.add(*stat("缺 published_at", "sum(qseg_coverage_missing_published_at_docs) or vector(0)", thr=[(1, "orange")], desc="month=unknown 的文章不在任何回補分區（ReconUnknownMonthDocs）", w=4))
-B.add(*stat("對帳最後成功", "time() - qseg_recon_last_success_timestamp_seconds", unit="s", thr=[(7200, "orange"), (93600, "red")], desc="ReconStale：26 小時", w=4))
-B.add(*stat("覆蓋檢查最後成功", "time() - qseg_coverage_last_success_timestamp_seconds", unit="s", thr=[(600, "orange")], desc="SegCoverageStale：10 分鐘", w=4))
+B.add(*stat("對帳最後成功", "time() - (qseg_recon_last_success_timestamp_seconds > 0)", unit="s", thr=[(7200, "orange"), (93600, "red")], desc="ReconStale：26 小時；空白＝服務起來之後還沒成功跑過（不是「56 年前」）", w=4))
+B.add(*stat("覆蓋檢查最後成功", "time() - (qseg_coverage_last_success_timestamp_seconds > 0)", unit="s", thr=[(600, "orange")], desc="SegCoverageStale：10 分鐘；空白＝還沒成功跑過", w=4))
 B.add(*ts("ES 篇數依渠道（layer=es）與多出的篇數", [('sum by (channel) (qseg_recon_docs{layer="es", channel=~"$channel"})', "{{channel}}"),
                                                   ('sum by (channel) (qseg_recon_extra_docs{channel=~"$channel"})', "多出 {{channel}}")], w=8,
           desc="多出＝ES 有、原文湖沒有（串流進來的新文章是正常的；回補範圍內多出要查重複 post_id）"))
@@ -229,7 +247,7 @@ B.add(*ts("寫入結果（created／updated／noop／errors）", [('sum by (pipe
 B.add(*ts("刪文 tombstone／改文／bulk 429 重送", [('sum by (pipeline, result) (increase(qseg_tombstones_total{pipeline=~"$pipeline"}[$__rate_interval]))', "刪文 {{pipeline}} {{result}}"),
                                                 ('sum by (pipeline) (increase(qseg_edited_total{pipeline=~"$pipeline"}[$__rate_interval]))', "改文 {{pipeline}}"),
                                                 ('sum by (pipeline, mode) (increase(qseg_bulk_retries_total{pipeline=~"$pipeline"}[$__rate_interval]))', "429 重送 {{pipeline}} {{mode}}")], w=8,
-          desc="刪文只寫 deleted_at（文字雲查詢排除）；改文＝content_sha 不同，seg_guard 重寫本體與詞表；429 等 1、2、4 秒最多重送 3 次"))
+          desc="刪文只寫 deleted_at（文字雲查詢排除）；改文＝collector 先寫新原文，seg_guard 看斷的原文換了，同一版也重寫詞表；斷到舊原文的不寫；429 等 1、2、4 秒最多重送 3 次"))
 B.add(*ts("必不可拆的詞被切開（串流，依渠道）", [('sum by (pipeline, channel) (increase(qseg_must_keep_split_total{pipeline=~"$pipeline"}[$__rate_interval]))', "{{pipeline}} {{channel}}")], w=8,
           desc="segment_checked 看斷點位置（台北市長 → 台北／市長 允許；鳳山區 → 鳳山／區 不允許）；回補 G2 看同一件事"))
 
@@ -283,8 +301,8 @@ B.add(*table("品質日報（最近 7 天）", """SELECT day AS 日, channel AS 
  FROM quality_daily WHERE day > current_date - 7 ORDER BY day DESC, channel""", w=24, h=8, desc="channel='(all)' 那一列放整詞召回、金標、McNemar、暴增；whole_word_worst／surges／split_examples（被切開的詞與上下文）的明細在表的 jsonb 欄"))
 
 B.row("⑧ Elasticsearch 叢集健康（計畫書 P0 第 10 項：elasticsearch_exporter v1.9.0；OTel receiver 的寫入／搜尋速率仍在）")
-B.add(*stat("叢集狀態", 'elasticsearch_cluster_health_status{color="green"} * 0 + elasticsearch_cluster_health_status{color="yellow"} * 1 + elasticsearch_cluster_health_status{color="red"} * 2',
-            thr=[(1, "orange"), (2, "red")], desc="0 green／1 yellow／2 red；本機單節點 0 副本本來就是 yellow；red 立即 page（ElasticsearchClusterRed）", w=3))
+B.add(*stat("叢集狀態", 'sum(elasticsearch_cluster_health_status{color="yellow"}) + 2 * sum(elasticsearch_cluster_health_status{color="red"})',
+            thr=[(1, "orange"), (2, "red")], desc="0 green／1 yellow／2 red；三個顏色是不同標籤的序列，要先 sum 掉標籤才能相加（原本直接相加，對不上標籤所以整格空白）；本機單節點 0 副本本來就是 yellow；red 立即 page（ElasticsearchClusterRed）", w=3))
 B.add(*stat("磁碟用量", "1 - (elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes)", unit="percentunit", thr=[(0.8, "orange"), (0.88, "red")],
             desc="> 80% warn、> 88% 或 4 小時內會滿 page；ES 85% 不再分配分片、90% 搬走、95% 設成唯讀。本機 compose 改用絕對值 4gb／2gb／1gb", w=3))
 B.add(*stat("JVM heap", 'elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"}', unit="percentunit", thr=[(0.75, "orange"), (0.9, "red")], desc="> 90% 持續 10 分鐘 warn", w=3))

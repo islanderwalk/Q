@@ -1,10 +1,13 @@
 """ES 寫入：條件更新（seg_ver 只能前進）＋ scripted upsert。
 
-- 同一篇文章、同一版本重送 → noop（重試安全、冪等）
+- 同一篇文章、同一版本、同一份原文重送 → noop（重試安全、冪等）
 - 舊版本晚到（例如回補用舊字典、串流已用新字典）→ noop，不會倒退
+- 斷的是舊原文（seg_sha_<版> ≠ ES 的 content_sha，例如回補讀到改文前的快照）→ noop，新原文和新詞表不會被蓋回去
+- 改文（collector 先把新原文和 content_sha 寫進 ES，再發 edited=1）：同一版也重寫詞表，因為這次斷的原文和上次不同（seg_sha 不同）
+- 原文本體（content、content_sha…）歸 parser 管：斷詞這條路只在欄位還沒有時補上，不覆寫
 - 文章還沒被 parser 寫進來也沒關係：scripted_upsert 用 base_doc 建出文件，之後 parser 的部分更新不會蓋掉斷詞欄位
 - 只動 terms_<f> 這一組欄位，另一版（例如 terms_v1）原封不動，PM 才能 A/B 並排
-- force=True（修程式、字典不變而要重跑某分區）：同版本可以覆寫，但仍不准倒退
+- force=True（修程式、字典不變而要重跑某分區）：同版本可以覆寫，但仍不准倒退、也不准蓋到新原文
 """
 import json
 import time
@@ -17,16 +20,20 @@ GUARD_SCRIPT = """
 String f = params.f;
 def cur = ctx._source['seg_ver_' + f];
 boolean force = params.containsKey('force') && params.force;
-def newSha = params.base.containsKey('content_sha') ? params.base.content_sha : null;
+def segSha = params.seg.containsKey('seg_sha_' + f) ? params.seg['seg_sha_' + f] : null;
 def curSha = ctx._source.containsKey('content_sha') ? ctx._source.content_sha : null;
-boolean changed = newSha != null && curSha != null && newSha != curSha;
-if (cur != null && !changed && (force ? cur > params.seg_ver : cur >= params.seg_ver)) { ctx.op = 'noop'; return; }
+if (segSha != null && curSha != null && segSha != curSha) { ctx.op = 'noop'; return; }
+if (cur != null) {
+  def lastSha = ctx._source.containsKey('seg_sha_' + f) ? ctx._source['seg_sha_' + f] : null;
+  boolean newText = segSha != null && lastSha != segSha;
+  if (cur > params.seg_ver || (cur == params.seg_ver && !force && !newText)) { ctx.op = 'noop'; return; }
+}
 for (entry in params.base.entrySet()) {
-  if (changed || !ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null) { ctx._source[entry.getKey()] = entry.getValue(); }
+  if (!ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null) { ctx._source[entry.getKey()] = entry.getValue(); }
 }
 for (entry in params.seg.entrySet()) { ctx._source[entry.getKey()] = entry.getValue(); }
 """
-# 版本比大小、內容比雜湊：同一版 seg_ver 下原文改了（content_sha 不同）也要重寫本體與詞表；舊文件沒有 content_sha 時照舊只補空欄位
+# 先比原文（斷的是不是 ES 現在這一份），再比版本（只前進）；同一版時看這次斷的原文和上次斷的是不是同一份，不是就重寫
 BULK_RETRIES = int(__import__("os").environ.get("ES_BULK_RETRIES", "3"))
 
 

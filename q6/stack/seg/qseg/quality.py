@@ -641,15 +641,20 @@ def main(args):
     es = ES()
     if not once:
         metrics.serve(config.QUALITY_PORT, "quality")
+    from .recon import retry_delay
+
+    failures = 0
     while True:
         try:
             with psycopg.connect(config.PG_DSN, autocommit=True) as conn:
                 run_once(es, conn)
+            failures = 0
         except Exception as e:   # 失敗不能讓常駐程序死掉；QUALITY_OK 不更新 → QualityStale 會響
+            failures += 1
             metrics.QUALITY_ERR.inc()
-            log("quality_failed", "ERROR", error=str(e)[:300])
+            log("quality_failed", "ERROR", error=str(e)[:300], failures=failures, retry_in_s=retry_delay(failures, interval))
             if once:
                 return 1
         if once:
             return 0
-        time.sleep(interval)
+        time.sleep(retry_delay(failures, interval))   # 失敗後 60 秒起重試，不等滿一天

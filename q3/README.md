@@ -52,7 +52,7 @@
 
 | 檔案 | 佐證什麼 |
 |---|---|
-| [`chart-spec-cost.png`](answer/3-cost/chart-spec-cost.png) | 規格 1 每天 960 次、規格 2 每天 5,340 次，相差 5.6 倍 |
+| [`chart-spec-cost.png`](answer/3-cost/chart-spec-cost.png) | 規格 1 每天 938 次（首抓 890＋列表 48）、規格 2 每天 5,340 次，相差 5.7 倍 |
 | [`chart-comment-arrival.png`](answer/3-cost/chart-comment-arrival.png) | 留言 92.5% 在 6 小時內、99.3% 在 24 小時內進來，規格 2 的成本集中在幾乎沒有新留言的時段 |
 
 ## 4. 不變量 — [`q3/answer/4-invariant/`](answer/4-invariant)
@@ -72,8 +72,8 @@
 | 檔案 | 佐證什麼 |
 |---|---|
 | [`chart-crawl-stats.png`](answer/5-not-monitored/chart-crawl-stats.png) | 6,237 篇最後狀態都是 200／404（0 篇失敗），另有約 10 篇推測是第一次請求失敗、退避 5 秒後重試成功；回應時間 P95 0.45 秒：單次請求的延遲與失敗不值得告警 |
-| [`ptt-deleted-404.png`](answer/5-not-monitored/ptt-deleted-404.png) | 快照時還在、隔天變 404 的文章（7 天內 0.2%）：每天重抓時標記即可 |
-| [`ptt-truncated-article.png`](answer/5-not-monitored/ptt-truncated-article.png) | 網頁版「檔案過大」截斷留言（6,224 篇中 2 篇）：已知且接受的風險 |
+| [`ptt-deleted-404.png`](answer/5-not-monitored/ptt-deleted-404.png) | 快照時還在、隔天變 404 的文章（7 天內 0.2%）：每天重抓時標記，最多晚 1 天下架；整批 404 過多在寫入前擋下 |
+| [`ptt-truncated-article.png`](answer/5-not-monitored/ptt-truncated-article.png) | 網頁版「檔案過大」截斷留言（6,224 篇中 2 篇）：網頁版本身拿不到，告警也無從處理 |
 
 ## 6. 規格修改 — [`q3/answer/6-spec-change/`](answer/6-spec-change)
 

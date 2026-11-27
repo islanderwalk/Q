@@ -1,0 +1,26 @@
+[
+  {
+    "file": "f12_1_requests.png",
+    "url": "https://www.ptt.cc/bbs/Gossiping/M.1792946240.A.772.html",
+    "dialog_disconnected": false,
+    "summary": "12 requests",
+    "boxed": true,
+    "boxed_text": "12 requests"
+  },
+  {
+    "file": "f12_2_truncated.png",
+    "url": "https://www.ptt.cc/bbs/Gossiping/M.1792462201.A.2BD.html",
+    "dialog_disconnected": false,
+    "summary": "12 requests",
+    "boxed": true,
+    "boxed_text": "M.1792462201.A.2BD.html/bbs/Gossiping200OKdocumentOther377 kB376 kB88 ms87 ms"
+  },
+  {
+    "file": "f12_3_deleted.png",
+    "url": "https://www.ptt.cc/bbs/Gossiping/M.1792887225.A.5F3.html",
+    "dialog_disconnected": false,
+    "summary": "15 requests",
+    "boxed": true,
+    "boxed_text": "role=imgM.1792887225.A.5F3.html/bbs/Gossiping404Not FounddocumentOther2.7 kB2.3 kB71 ms71 ms"
+  }
+]

@@ -1,0 +1,2778 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Q6 回補整合圖</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f7;--panel:#ffffff;--fg:#16202b;--muted:#5a6776;--line:#d3dae2;--line-strong:#a4afbb;
+  --cut:#1d5f8a;--cut-soft:#e3eef5;
+  --run:#a45312;--run-soft:#f8ecdf;
+  --gate:#5f4fa0;--gate-soft:#ece9f5;
+  --ok:#23775a;--ok-soft:#e1f1eb;
+  --bad:#b5382a;--bad-soft:#f8e4e1;
+  --pm:#a3336f;--pm-soft:#f6e3ee;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1318;--panel:#151c23;--fg:#e2e8ee;--muted:#93a0ae;--line:#2a3541;--line-strong:#4a5867;
+    --cut:#6fb3dd;--cut-soft:#16303f;--run:#e0a060;--run-soft:#3a2a17;--gate:#a99be0;--gate-soft:#2a2542;
+    --ok:#6cc7a6;--ok-soft:#15352b;--bad:#ee8273;--bad-soft:#3f1f1b;--pm:#e186b8;--pm-soft:#3c1c2e;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1318;--panel:#151c23;--fg:#e2e8ee;--muted:#93a0ae;--line:#2a3541;--line-strong:#4a5867;
+  --cut:#6fb3dd;--cut-soft:#16303f;--run:#e0a060;--run-soft:#3a2a17;--gate:#a99be0;--gate-soft:#2a2542;
+  --ok:#6cc7a6;--ok-soft:#15352b;--bad:#ee8273;--bad-soft:#3f1f1b;--pm:#e186b8;--pm-soft:#3c1c2e;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;-webkit-text-size-adjust:100%}
+main{max-width:960px;margin:0 auto;padding-block:36px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:56px}
+main>*{min-width:0}
+h1,h2,h3{font-family:var(--display);line-height:1.3;margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,5.2vw,44px);font-weight:900;letter-spacing:.01em}
+h2{font-size:clamp(21px,3.4vw,27px);font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.9em;overflow-wrap:anywhere}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cut);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+.eyebrow,.zoom{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:17px;max-width:44em;margin-top:14px}
+.level{display:grid;gap:6px;margin-bottom:18px}
+.level p{color:var(--muted);max-width:46em}
+
+.pill{border:1px solid var(--line-strong);background:var(--panel);border-radius:999px;padding:5px 14px;min-height:36px;cursor:pointer;font-size:14px;line-height:1.4}
+.pill:hover{border-color:var(--fg)}
+.pill[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.exam{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:22px}
+.exam h2{font-size:19px;margin:4px 0 10px}
+.exam ol{margin:12px 0 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.exam ol li{display:grid;grid-template-columns:2.2em minmax(0,1fr);font-size:15px}
+.exam ol b{font-family:var(--mono);font-weight:600}
+.qfull p{margin:0 0 10px;font-size:15px;line-height:1.75}.qfull .qcond{margin:0 0 12px;padding-left:1.3em;font-size:15px;line-height:1.75}.qfull ol li{line-height:1.75}.qfull .qlim{margin:12px 0 0;color:var(--muted);font-size:13.5px}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0;padding:0;list-style:none}
+.facts li{font-size:13px;border:1px solid var(--line);border-radius:4px;padding:2px 9px;background:var(--bg)}
+.qmap{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.qmap>p:first-child{font-size:13px;color:var(--muted);margin-bottom:8px}
+.out{margin-top:10px;font-size:14.5px;min-height:1.75em}
+.out:empty{margin-top:0;min-height:0}
+main>.quiet{margin-top:-24px}
+
+.model{margin-top:22px;display:flex;flex-wrap:wrap;gap:6px 4px;align-items:center}
+.model .arrow{color:var(--muted);font-family:var(--mono)}
+
+.figure{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:18px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tstep{display:inline-flex;gap:6px;align-items:center;margin-left:auto}.tstep .num{font-size:13px;color:var(--muted);min-width:5.5em;text-align:center}
+.tstep .btn[aria-disabled="true"]{opacity:.4;cursor:default}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.controls .gap{flex:1 1 12px}
+.btn{border:1px solid var(--line-strong);background:var(--panel);border-radius:4px;padding:5px 12px;min-height:36px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--fg)}
+.btn.primary{background:var(--fg);color:var(--bg);border-color:var(--fg);min-width:5.5em}
+.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.narr{display:grid;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--bg);min-height:9.5em;align-content:start}
+.narr .step{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em}
+.narr p{font-size:15px;max-width:52em}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.dots button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line-strong);background:var(--panel);cursor:pointer;font-family:var(--mono);font-size:11px;padding:0}
+.dots button.past{background:var(--line)}
+.dots button[aria-current="step"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.swipe{font-size:12px;color:var(--muted);margin-top:6px}
+.swipe[hidden]{display:none}
+
+.flow{display:block;width:100%;min-width:860px;height:auto;margin-top:8px}
+.flow text{font-family:var(--body);fill:var(--fg)}
+.flow .nt{font-size:13px;font-weight:700}
+.flow .ns{font-size:11.5px;fill:var(--muted)}
+.flow .grp{fill:none;stroke:var(--line-strong);stroke-dasharray:4 4}
+.flow .gt{font-size:13px;font-weight:700;font-family:var(--display)}
+.flow .el{font-size:11px;fill:var(--muted)}
+.node{cursor:pointer;transition:opacity .25s}
+.node rect{fill:var(--k-soft);stroke:var(--k);stroke-width:1.2;transition:fill .25s,stroke .25s}
+.node.k-cut{--k:var(--cut);--k-soft:var(--cut-soft)}
+.node.k-run{--k:var(--run);--k-soft:var(--run-soft)}
+.node.k-gate{--k:var(--gate);--k-soft:var(--gate-soft)}
+.node.k-pm{--k:var(--pm);--k-soft:var(--pm-soft)}
+.node.k-ok{--k:var(--ok);--k-soft:var(--ok-soft)}
+.node.k-bad{--k:var(--bad);--k-soft:var(--bad-soft)}
+.node.s-ok rect{fill:var(--ok-soft);stroke:var(--ok)}
+.node.s-bad rect{fill:var(--bad-soft);stroke:var(--bad)}
+.node.s-wait rect,.node.s-waive rect{fill:var(--pm-soft);stroke:var(--pm)}
+.node .badge{font-size:13px;font-weight:700}
+.node .badge.stamp{transform-box:fill-box;transform-origin:center;animation:q6stamp .4s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes q6stamp{from{transform:scale(2.2);opacity:.15}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){.node .badge.stamp{animation:none}}
+.node.s-ok .badge{fill:var(--ok)}
+.node.s-bad .badge{fill:var(--bad)}
+.node.s-wait .badge,.node.s-waive .badge{fill:var(--pm)}
+.flow.stepping .node:not(.on),.flow.picking .node:not(.pick){opacity:.4}
+.flow.stepping .node.on rect{stroke-width:2.8}
+.flow.picking .node.pick rect{stroke:var(--fg);stroke-width:2.8}
+.node:focus-visible{outline:none}
+.node:focus-visible rect{stroke:var(--fg);stroke-width:3;stroke-dasharray:5 3}
+.edge{fill:none;stroke:var(--line-strong);stroke-width:1.6;transition:stroke .25s}
+.edge.on{stroke:var(--fg);stroke-width:2.4}
+.flow.stepping .node:not(.on).s-ok,.flow.stepping .node:not(.on).s-bad,.flow.stepping .node:not(.on).s-wait,.flow.stepping .node:not(.on).s-waive{opacity:.85}
+.edge.opt,.flow .el.opt{opacity:0;transition:opacity .25s,stroke .25s}
+.edge.opt.on,.flow .el.opt.on{opacity:1}
+.flow .el.opt.on{fill:var(--fg);font-weight:600}
+.node .ns.res{font-weight:700;fill:var(--k)}
+.node.s-ok .ns.res{fill:var(--ok)}
+.node.s-bad .ns.res{fill:var(--bad)}
+.node.s-wait .ns.res,.node.s-waive .ns.res{fill:var(--pm)}
+.tok{pointer-events:none;transition:transform .7s cubic-bezier(.4,0,.2,1)}
+.tok rect{fill:var(--tk);stroke:var(--panel);stroke-width:2;transition:fill .35s}
+.tok text{font-family:var(--mono);font-size:11.5px;font-weight:600;fill:var(--bg)}
+.tok.t-pending{--tk:var(--muted)}
+.tok.t-running{--tk:var(--run)}
+.tok.t-passed{--tk:var(--ok)}
+.tok.t-failed{--tk:var(--bad)}
+.tok.t-awaiting_pm{--tk:var(--pm)}
+.tok.stall rect{stroke:var(--bad);stroke-dasharray:4 3}
+.prog .pl{font-size:11px;fill:var(--muted)}
+.prog .pl b,.prog .pv{fill:var(--fg);font-weight:700}
+.prog .pc{fill:none;stroke:var(--line-strong);stroke-width:1;transition:fill .3s,stroke .3s}
+.prog .pc.done{fill:var(--run);stroke:var(--run)}
+.prog .pc.fly{fill:var(--run-soft);stroke:var(--run);stroke-width:1.6;animation:q6fly 1s ease-in-out infinite alternate}
+.prog .pc.lost{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.6;stroke-dasharray:3 2}
+.prog.full .pc.done{fill:var(--ok);stroke:var(--ok)}
+.prog .dots3{font-size:12px;fill:var(--muted)}
+.prog .pl{font-size:12px;font-weight:700;fill:var(--fg)}
+.prog .pv{font-family:var(--mono);font-size:11.5px;font-weight:600;fill:var(--run)}
+.prog .pv.flash{animation:q6ckfl .7s ease}
+@keyframes q6ckfl{0%{fill:var(--ok)}100%{fill:var(--run)}}
+.prog .ckmk{transition:transform .45s ease}.prog .ckmk path{fill:var(--fg)}
+.prog .pc.bad{fill:var(--bad);stroke:var(--bad)}
+.prog .cktask{font-family:var(--mono);font-size:11.5px;fill:var(--muted)}
+.prog .cktask.bad{fill:var(--bad);font-weight:600}
+.prog .cksay{font-size:12.5px;fill:var(--fg)}
+.prog .cksayb{stroke:var(--run);stroke-width:3}
+.ckctl .ckb{cursor:pointer}.ckctl .ckb rect{fill:var(--panel);stroke:var(--line-strong)}
+.ckctl .ckb:hover rect,.ckctl .ckb:focus-visible rect{stroke:var(--fg)}
+.ckctl .ckb:focus{outline:none}.ckctl .ckb:focus-visible rect{stroke-width:2}
+.ckctl .ckb text{font-size:13px;fill:var(--fg)}
+.ckctl .ckn{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.flow .edge.ckw{stroke:var(--run);stroke-width:2.6;stroke-dasharray:6 4;animation:q6dash .5s linear infinite}
+@keyframes q6fly{from{fill-opacity:.25}to{fill-opacity:1}}
+@media (prefers-reduced-motion: reduce){.prog .pc.fly,.prog .pv.flash,.flow .edge.ckw{animation:none}.prog .ckmk{transition:none}}
+.more{margin-top:16px;border:1px solid var(--line);border-radius:6px}
+.more>summary{cursor:pointer;padding:10px 14px;font-size:13.5px;color:var(--muted);font-weight:500}
+.more>summary:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.more[open]>summary{border-bottom:1px solid var(--line)}
+.more .below{margin:14px}
+.flegend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:13px;color:var(--muted)}
+.flegend span{display:inline-flex;align-items:center;gap:6px}
+.flegend i{display:inline-block;flex:none}
+.flegend .lg-tok{width:34px;height:14px;border-radius:7px;background:var(--run)}
+.flegend .lg-cell{width:14px;height:8px;border-radius:2px;background:var(--run)}
+.flegend .lg-res{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--ok);background:var(--ok-soft)}
+.mnem{margin:10px 0 0;font-size:15px;font-weight:600;color:var(--fg)}
+.mnem small{font-weight:400;font-size:13px;color:var(--muted)}
+.mnem .nw{white-space:nowrap}
+@media (max-width:440px){.dots{gap:4px}.dots button{width:26px;height:26px}}
+.ah{fill:var(--line-strong)}
+.ah-on{fill:var(--fg)}
+.inspect{margin-top:10px;font-size:14.5px;min-height:3.4em;border-top:1px solid var(--line);padding-top:10px}
+
+.below{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;margin-top:16px}
+@media (max-width:760px){.below{grid-template-columns:minmax(0,1fr)}}
+.pane{border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.pane h3{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--muted);font-weight:600;margin-bottom:8px}
+.log{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:12.5px;line-height:1.7;min-height:11em}
+.log li{padding:1px 6px;border-radius:3px;color:var(--muted);overflow-wrap:anywhere}
+.log li.cur{background:var(--cut-soft);color:var(--fg)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;font-size:13px;color:var(--muted)}
+.kv td:first-child{color:var(--muted);white-space:nowrap;width:1%}
+.kv td{font-variant-numeric:tabular-nums}
+.kv td.chg{background:var(--run-soft)}
+.kv tr:last-child td{border-bottom:0}
+
+.gridwrap{padding:4px 2px 8px}
+.grid{display:grid;grid-template-columns:78px repeat(46,16px);gap:2px 1px;min-width:max-content;align-items:center}
+.grid .yr{font-family:var(--mono);font-size:11px;color:var(--muted);border-left:1px solid var(--line-strong);padding-left:4px}
+.grid .lab{font-size:13px;white-space:nowrap}
+.cell{width:16px;height:22px;padding:0;border:1px solid var(--line-strong);border-radius:2px;background:var(--panel);cursor:pointer;display:grid;place-items:center}
+.cell.first::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--pm)}
+.cell.done{background:var(--ok);border-color:var(--ok)}
+.cell.done.first::after{background:var(--panel)}
+.cell.next{background:var(--run-soft);border-color:var(--run);border-width:2px}
+.cell[aria-pressed="true"]{outline:2px solid var(--fg);outline-offset:1px}
+.none{width:16px;height:22px;border:1px dashed var(--line);border-radius:2px;opacity:.7}
+@media (pointer:coarse){.grid{grid-template-columns:78px repeat(46,20px);gap:4px}.cell,.none{width:20px;height:24px}}
+.slider{display:grid;gap:6px;margin:0 0 14px}
+.slider label{font-size:14px;font-weight:500}
+input[type=range]{width:100%;accent-color:var(--cut);min-height:28px;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin:10px 0 0;padding:0;list-style:none}
+.legend li{display:flex;align-items:center;gap:6px}
+.zoomgrid{margin:14px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.zoomgrid>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:12px 14px;cursor:pointer;list-style:none}
+.zoomgrid>summary::-webkit-details-marker{display:none}
+.zoomgrid>summary:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.zoomgrid>summary h3{margin:0;font-size:16px;flex:1 1 220px}
+.zoomgrid>summary::after{content:"展開 ↓";font-size:13px;color:var(--muted);white-space:nowrap}
+.zoomgrid[open]>summary::after{content:"收起 ↑"}
+.gchip{font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:999px;background:var(--run-soft);border:1px solid var(--run);color:var(--fg);max-width:100%}
+.zbody{padding:0 14px 14px}
+.gintro{margin:0 0 12px;font-size:14px;color:var(--muted)}
+.cell::before,.cell::after{grid-area:1/1}
+.cell[data-glyph]::before{content:attr(data-glyph);font-size:11px;line-height:1;color:var(--fg)}
+.cell.done[data-glyph]::before{color:var(--panel)}
+.cell[data-glyph]:not(.first)::after{display:none}
+.cell.first[data-glyph]::after{align-self:start;justify-self:end;width:4px;height:4px;margin:2px 2px 0 0}
+.cell.cur{box-shadow:0 0 0 2px var(--run);position:relative;z-index:1}
+.cell.cur.st-failed{background:var(--bad-soft);border-color:var(--bad)}
+.cell.cur.st-awaiting_pm{background:var(--pm-soft);border-color:var(--pm)}
+.flow .fo{overflow:visible}
+.flow .fobox{font-family:var(--body);font-size:14px;color:var(--fg)}
+.flow .fobox .slider{margin:0 0 6px;gap:2px}
+.flow .fobox .slider label{font-size:13px}
+.flow .fobox .grid{grid-template-columns:78px repeat(46,16px);gap:2px 1px}
+.flow .fobox .cell,.flow .fobox .none{width:16px;height:22px}
+.flow .fobox .none{opacity:1;border-color:var(--line)}
+.flow .fobox .cell.cur{position:static;z-index:auto;box-shadow:none;outline:2.5px solid var(--run);outline-offset:0}
+.flow .cuthd{font-size:12px;fill:var(--muted)}
+.flow .gchipt{font-size:12.5px;font-weight:700;font-family:var(--mono)}
+.legend .lgh{font-weight:700;color:var(--fg)}
+.gnote{margin:8px 0 0}
+.sw.cur{box-shadow:0 0 0 2px var(--run);font-size:9px;line-height:1}
+.sw{width:14px;height:14px;border-radius:2px;border:1px solid var(--line-strong);display:inline-grid;place-items:center;flex:none}
+.sw.done{background:var(--ok);border-color:var(--ok)}
+.sw.next{background:var(--run-soft);border:2px solid var(--run)}
+.sw.first::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--pm)}
+.sw.none{border-style:dashed;border-color:var(--line)}
+.sw.bad{background:var(--bad);border-color:var(--bad)}
+.sw.g3{background:var(--run);border-color:var(--run)}
+.sw.waive{background:var(--pm);border-color:var(--pm)}
+.sw.keep{background:var(--ok-soft);border-color:var(--ok)}
+
+.gtable{min-width:760px}
+.gtable td:first-child{white-space:nowrap;font-weight:700}
+.tag{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:600;border:1px solid var(--k);color:var(--k);background:var(--k-soft);border-radius:3px;padding:0 6px;margin-right:6px}
+.tag.g{--k:var(--gate);--k-soft:var(--gate-soft)}
+.tag.p{--k:var(--pm);--k-soft:var(--pm-soft)}
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 24px;margin-top:14px}
+@media (max-width:640px){.calc{grid-template-columns:minmax(0,1fr)}}
+.calc .slider{margin:0}
+.verdict{grid-column:1/-1;border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--bg);font-size:14.5px}
+.verdict .big{font-family:var(--display);font-size:19px;font-weight:700;display:block;margin-bottom:2px}
+.verdict.pass .big{color:var(--ok)}
+.verdict.over .big{color:var(--bad)}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;font-family:var(--mono);font-size:13px}
+.chain .r{border:1px solid var(--line-strong);border-radius:3px;padding:1px 8px;background:var(--panel)}
+
+.mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;padding:0;margin:0;list-style:none}
+.mods li{border:1px solid var(--line);border-top:4px solid var(--cut);border-radius:6px;padding:12px 14px;background:var(--panel);font-size:14.5px}
+.mods li b{display:block;font-family:var(--display);font-size:17px;margin-bottom:2px}
+
+.bars{display:grid;gap:8px;margin-top:14px}
+.bar{display:grid;grid-template-columns:minmax(0,15em) minmax(0,1fr) 3.6em;gap:10px;align-items:center;font-size:14.5px}
+.bar .track{height:16px;background:var(--bg);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.bar .fill{height:100%;background:var(--cut)}
+.bar .d{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13px}
+.bar.total{border-top:1px solid var(--line-strong);padding-top:8px;font-weight:700}
+@media (max-width:560px){.bar{grid-template-columns:minmax(0,1fr) 3.6em;gap:2px 10px}.bar .lab2{grid-column:1/-1}}
+.note{border-left:3px solid var(--line-strong);padding:2px 0 2px 14px;color:var(--muted);font-size:14.5px;margin-top:16px;max-width:50em}
+
+.rounds{display:grid;gap:18px}
+.round{display:grid;gap:6px}
+.round h3{font-family:var(--body);font-size:15px}
+.sq{display:flex;flex-wrap:wrap;gap:3px}
+.sq i{width:14px;height:14px;border-radius:2px;border:1px solid var(--line-strong);display:block}
+.sq i.ok{background:var(--ok);border-color:var(--ok)}
+.sq i.bad{background:var(--bad);border-color:var(--bad)}
+.sq i.g3{background:var(--run);border-color:var(--run)}
+.sq i.waive{background:var(--pm);border-color:var(--pm)}
+.sq i.keep{background:var(--ok-soft);border-color:var(--ok)}
+.round p{font-size:14.5px;max-width:52em}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:12px;margin:22px 0 0;padding:0;list-style:none}
+.tiles li{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--panel);font-size:14.5px}
+.tiles b{display:block;font-family:var(--display);font-size:22px;line-height:1.3;font-variant-numeric:tabular-nums;margin-bottom:4px}
+footer{border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13.5px;display:grid;gap:6px}
+/* ---------- 三層去重 ---------- */
+.dk-cut{--k:var(--cut);--k-soft:var(--cut-soft)}
+.dk-run{--k:var(--run);--k-soft:var(--run-soft)}
+.dk-gate{--k:var(--gate);--k-soft:var(--gate-soft)}
+.dk-ok{--k:var(--ok);--k-soft:var(--ok-soft)}
+.dk-bad{--k:var(--bad);--k-soft:var(--bad-soft)}
+.dk-pm{--k:var(--pm);--k-soft:var(--pm-soft)}
+.dk-mut{--k:var(--muted);--k-soft:transparent}
+.ddst{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:600;border:1px solid var(--k);color:var(--k);background:var(--k-soft);border-radius:3px;padding:0 6px;line-height:1.6}
+.ddchip{pointer-events:none}
+.ddchip.go{pointer-events:auto;cursor:pointer}
+.flow .node .ddchip rect{fill:var(--panel)!important;stroke:var(--fg)!important;stroke-width:1!important}
+.flow .node .ddchip text{font-size:10.5px;font-weight:700;fill:var(--fg)}
+.flegend .lg-dd{width:30px;height:14px;border-radius:7px;border:1px solid var(--fg);background:var(--panel)}
+.ddcard{border:1px solid var(--line-strong);border-radius:6px;padding:10px 12px;background:var(--bg);min-width:0;margin-top:10px}
+.ddcard .ddsay{margin-top:6px;font-size:14.5px}
+.ddcap{margin-top:10px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.ddmini{font-family:var(--mono);font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--run);border-radius:4px;padding:7px 10px;margin-top:4px}
+.ddhint{margin-top:8px;font-size:13px;color:var(--muted)}
+.ddmrow{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:13.5px;margin-top:4px}
+.ddpeek{position:fixed;z-index:60;left:12px;top:12px;width:min(440px,calc(100vw - 24px));background:var(--panel);color:var(--fg);border:1px solid var(--line-strong);border-radius:8px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.3);pointer-events:none;font-size:14px;line-height:1.6}
+.ddpeek[hidden]{display:none}
+.dkpop{position:absolute;z-index:61;width:min(470px,calc(100vw - 16px));background:var(--panel);color:var(--fg);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.3);font-size:13px;line-height:1.5}
+.dkpop[hidden]{display:none}
+.dkhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dkhd b{font-size:14px;margin-right:auto}
+.dkseg{display:inline-flex;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden}
+.dkbtn{border:0;background:var(--panel);color:var(--muted);padding:4px 10px;min-height:32px;cursor:pointer;font-size:13px}
+.dkbtn.cur{background:var(--fg);color:var(--bg);font-weight:700}
+.dkx{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;width:32px;height:32px;cursor:pointer}
+.dkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;margin-top:8px}
+.dkspan{grid-column:1/3}
+.dkwho{font-weight:700;font-size:12.5px;text-align:center;color:var(--muted)}
+.dkf{border:1px solid var(--line-strong);border-radius:5px;background:var(--bg);min-width:0}
+.dkfn{display:flex;justify-content:space-between;gap:6px;padding:2px 7px;border-bottom:1px solid var(--line-strong);font-family:var(--mono);font-size:11.5px;font-weight:600}
+.dkfn span{white-space:nowrap;flex-shrink:0}
+.dkfn i{min-width:0;font-style:normal;font-weight:400;color:var(--muted);font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dkfl{padding:3px 7px;font-family:var(--mono);font-size:12px}
+.dknew{color:var(--muted);border:1px dashed var(--line-strong);border-radius:3px;padding:0 4px;margin-top:2px}
+.dknew.on{color:var(--ok);border:1px solid var(--ok);background:var(--ok-soft);font-weight:700;animation:dkin .5s ease-out}
+.dkfork{text-align:center;color:var(--muted);font-size:12px;margin-top:2px}
+.dkres{border-radius:5px;padding:4px 6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12.5px;min-height:30px}
+.dkres.ok{background:var(--ok-soft);border:1px solid var(--ok)}.dkres.no{background:var(--bad-soft);border:1px solid var(--bad)}
+.dkcap{color:var(--muted);font-size:11.5px;width:100%}
+.dktk{font-family:var(--mono);border:1px solid currentColor;border-radius:3px;padding:0 5px}
+.dkres.ok .dktk,.dkres.ok .dkmk{color:var(--ok);font-weight:700}.dkres.no .dktk,.dkres.no .dkmk{color:var(--bad);font-weight:700}
+.dkfoot{display:flex;align-items:center;gap:10px;margin-top:8px}.dkgo{min-height:34px}
+.dkcnt{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.dkflow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:8px;font-size:12px}
+.dkst{border:1px solid var(--line-strong);border-radius:8px;padding:1px 8px;color:var(--muted);display:inline-flex;flex-direction:column;align-items:center;line-height:1.3}
+.dkwho{font-size:10.5px;font-weight:400;opacity:.85}
+.dkst.on{border-color:var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:700;animation:dkin .4s ease-out both;animation-delay:var(--d)}
+.dkar{color:var(--muted)}
+.dkdays{margin-top:8px;display:grid;gap:3px}
+.dkday{display:grid;grid-template-columns:34px 1fr 52px;align-items:center;gap:6px;font-size:12px;color:var(--muted);opacity:.55}
+.dkday.cur{opacity:1;color:var(--fg)}
+.dkday i{display:block;height:8px;border-radius:4px;background:var(--ok)}.dkday.bad i{background:var(--bad)}
+.dkday b{font-family:var(--mono);font-size:12px}
+.dkwhy{font-size:12px;color:var(--bad);padding-left:40px}
+.ddpeek .dkcard .dkhd b{font-size:14px}
+@keyframes dkin{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.dknew.on,.dkst.on{animation:none}}
+.ddpeek .ddcard{border:0;padding:0;background:none;margin-top:4px}
+.ddpeek .ddmini{background:var(--bg)}
+.ddids{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:14px}
+.ddid{border:1px solid var(--line);border-left:4px solid var(--k);border-radius:6px;padding:10px 12px;min-width:0;font-size:14.5px}
+.ddid h3{font-family:var(--mono);font-size:14px;font-weight:700}
+.ddid .ex{font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;margin:2px 0 4px}
+.ddkey{margin-top:10px;font-size:14.5px;border-left:3px solid var(--fg);padding-left:10px}
+#v-dedup .tabs{margin-top:16px}
+.ddnarr{min-height:10em}
+.ddterms{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted)}
+.ddterm{font-family:var(--mono);font-size:12.5px;border:1px dashed var(--line-strong);background:none;color:var(--fg);border-radius:12px;padding:3px 9px;cursor:help;line-height:1.5}
+.ddterm:hover,.ddterm.on{border-style:solid;background:var(--cut-soft)}
+.ddtermout{min-height:3.2em}
+/* ---------- G1～G3 點進去 ---------- */
+.gsw,.gcases,.gtabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.gcases .pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:13px}
+.gcases .pill[aria-pressed="true"] .ddst{background:var(--bg)}
+.grule{margin-top:10px;font-size:15.5px;font-weight:500}
+.gviz{border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:12px;margin-top:8px;min-width:0}
+.gvh{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:10px}
+.gvh code{color:var(--fg);font-weight:600}
+.gnote{margin-top:10px;font-size:14.5px;border-left:3px solid var(--gate);padding-left:10px}
+.g1v{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center}
+.g1box{border:1px solid var(--line-strong);border-radius:6px;padding:8px 10px;text-align:center;background:var(--bg);min-width:0}
+.g1box small{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere;line-height:1.4}
+.g1box b{display:block;font-family:var(--display);font-size:clamp(22px,5vw,30px);font-variant-numeric:tabular-nums}
+.g1box.bad{border-color:var(--bad);background:var(--bad-soft)}
+.g1op{font-size:30px;font-weight:700;line-height:1;text-align:center;font-family:var(--mono)}
+.g1op.ok{color:var(--ok)}.g1op.bad{color:var(--bad)}
+.gleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.gleg i{display:inline-block;width:0;height:12px;vertical-align:-1px;margin-right:5px;border-left:2px solid var(--fg)}
+.gleg i.dash{border-left:2px dashed var(--bad)}
+.grow{display:grid;grid-template-columns:8.5em minmax(0,1fr) 9.5em;gap:4px 10px;align-items:center;font-size:13px;margin-top:8px}
+.grow .gv{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.grow .gv.over{color:var(--bad);font-weight:600}
+.gtrack{position:relative;height:18px;background:var(--bg);border:1px solid var(--line);border-radius:3px}
+.gbar{position:absolute;left:0;top:2px;bottom:2px;background:var(--ok);border-radius:2px}
+.gbar.over{background:var(--bad)}
+.gline{position:absolute;top:-5px;bottom:-5px;width:0;border-left:2px solid var(--fg)}
+.gline.dash{border-left:2px dashed var(--bad)}
+.gact{grid-column:2/-1;font-size:12.5px;color:var(--bad)}
+@media (max-width:560px){
+  .grow{grid-template-columns:minmax(0,1fr) auto}
+  .grow .gtrack{grid-column:1/-1;grid-row:2}
+  .gact{grid-column:1/-1}
+}
+.gq{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gate);border-radius:4px;padding:8px 10px;margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.gres{overflow-x:auto;margin-top:6px;max-width:100%}
+.gres table{border-collapse:collapse;font-family:var(--mono);font-size:12px}
+.gres th,.gres td{border:1px solid var(--line);padding:3px 8px;text-align:left;white-space:nowrap}
+.gres th{color:var(--muted);font-weight:600;background:var(--panel)}
+.gcn{display:block;font-family:var(--body);font-size:12.5px;color:var(--muted);margin:2px 0 8px;white-space:normal}
+.gsmall{margin-top:6px;font-size:13px;color:var(--muted)}
+.gmore{margin-top:12px;font-size:14px}
+.gmore summary{cursor:pointer;color:var(--muted)}
+.ddstage{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:14px;margin-top:6px;align-items:start}
+@media (max-width:760px){.ddids,.ddstage{grid-template-columns:minmax(0,1fr)}}
+.ddrows{display:flex;flex-direction:column;gap:6px}
+.ddrow{border:1px solid var(--line);border-radius:5px;padding:6px 10px;min-width:0}
+.ddrow.act{border-color:var(--fg);box-shadow:inset 4px 0 0 var(--run)}
+.ddrow.skip{border-style:dashed}
+.ddrow .r1{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.ddrow .r2{font-size:13px;color:var(--muted);margin-top:2px}
+.ddmark{font-size:13px;font-weight:600}
+.ddq{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-bottom:10px;font-size:13.5px;border:1px dashed var(--line-strong);border-radius:5px;padding:6px 10px}
+.ddtask{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:13px;border:1.5px solid var(--fg);font-family:var(--mono);font-weight:700;font-size:12.5px;padding:0 7px}
+.ddtask.in{background:var(--fg);color:var(--panel)}
+.ddsub{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--muted);margin:10px 0 4px}
+.ddline{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;border:1px solid var(--line);border-radius:5px;padding:5px 10px;min-width:0;font-size:13.5px}
+.ddline .ln{color:var(--muted);font-size:12.5px;flex:none}
+.ddline.keep{border-color:var(--ok);background:var(--ok-soft)}
+.ddline.drop{border-color:var(--bad);background:var(--bad-soft)}
+.ddline.drop code{text-decoration:line-through}
+.ddline.cur{box-shadow:inset 4px 0 0 var(--fg)}
+.ddset{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:13.5px;min-height:28px}
+.ddnums{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:10px}
+.ddnum{border:1px solid var(--line);border-radius:5px;padding:6px 10px;min-width:0}
+.ddnum b{display:block;font-family:var(--display);font-size:22px;line-height:1.2}
+.ddnum span{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.ddnum.warn{border-color:var(--bad);background:var(--bad-soft)}
+.ddnum.good{border-color:var(--ok);background:var(--ok-soft)}
+.dddocs{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
+.dddoc{border:1px solid var(--line-strong);border-radius:5px;padding:7px 9px;min-width:0;font-size:13px}
+.dddoc.none{border-style:dashed}
+.dddoc.cur{box-shadow:inset 0 4px 0 var(--fg)}
+.dddoc h4{font-family:var(--mono);font-size:13px;font-weight:700;margin:0 0 3px}
+.dddoc .f{display:block;font-family:var(--mono);font-size:12px;overflow-wrap:anywhere}
+.dddoc .f.new{font-weight:700;color:var(--ok)}
+.dddoc .res{margin-top:5px}
+.ddbatch{font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:5px;padding:6px 10px;margin-top:8px}
+.ddcase{border:1px solid var(--line);border-radius:5px;padding:6px 10px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.ddfun{border:1px solid var(--line-strong);border-radius:5px;padding:7px 10px;font-size:14px}
+.ddfun.off{border-style:dashed;color:var(--muted)}
+.ddfun b{font-family:var(--display);font-size:20px}
+.ddarrow{font-size:13px;color:var(--muted);padding:2px 0 2px 14px}
+.ddeq{margin-top:10px;border:2px solid var(--k);background:var(--k-soft);border-radius:6px;padding:8px 12px;font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.ddwarn{margin-top:8px;border:1px solid var(--bad);background:var(--bad-soft);border-radius:5px;padding:6px 10px;font-size:13.5px}
+.ddnote{min-height:4.8em;font-size:14px;border:1px dashed var(--line-strong);border-radius:4px;padding:6px 10px;margin-top:2px}
+.ddcode{position:relative;display:flex;flex-direction:column;gap:3px;margin-top:8px;max-height:460px;overflow-y:auto;padding-right:2px}
+.clsep{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px;letter-spacing:.04em}
+.clsep:first-child{margin-top:0}
+.cl{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid transparent;border-left:3px solid var(--line);border-radius:3px;padding:5px 8px;cursor:pointer;min-width:0}
+.cl code{display:block;font-size:12.5px;line-height:1.55}
+code.ddsrc{white-space:normal;font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+code.ddsrc .cln{display:block;white-space:pre-wrap;overflow-wrap:anywhere;text-indent:-2ch}
+.cl .cn{display:block;margin-top:4px;font-size:13.5px;line-height:1.55;font-family:var(--body);border-top:1px dashed var(--line-strong);padding-top:4px}
+.cl .cn[hidden]{display:none}
+.cl.hl{border-left-color:var(--run);background:var(--run-soft)}
+.cl:hover,.cl.sel{border-color:var(--line-strong)}
+.ddopts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.ddgl dt{font-family:var(--mono);font-weight:700;font-size:13.5px;margin-top:10px}
+.ddgl dd{margin:0;font-size:14.5px}
+.ddlist{margin:8px 0 0;padding-left:1.2em;font-size:14.5px}
+.ddlist li{margin-top:8px}
+.ddquiz{border:1px solid var(--line);border-radius:5px;padding:8px 12px;margin-top:8px;font-size:14.5px}
+.ddquiz summary{cursor:pointer;font-weight:600}
+.ddquiz p{margin-top:6px}
+.ddfun.bad{border-color:var(--bad);background:var(--bad-soft)}
+.ddmini code{display:block}
+.ddref{display:block;color:var(--muted);font-size:11.5px;font-family:var(--body);margin-top:4px}
+.ddref:first-child{margin-top:0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+/* 整合版：一塊圖、題目／名詞面板、視圖路由 */
+.figall{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:18px}
+.quiet{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+.titlerow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.tbtn{font:inherit;font-size:14px;line-height:1.4;padding:7px 14px;border:1px solid var(--line-strong);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer}
+.tbtn[aria-expanded="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tbtn:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.tpanel{margin:0 0 14px;padding:16px 18px}
+.tpanel h3{font-size:14px;margin:14px 0 6px}
+.where{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--bg);margin:0 0 12px;font-size:14px}
+.where b{font-weight:600}
+.zchips{display:none;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.homeseg{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.gatecard{margin-top:14px}
+.strip{margin:0 0 14px}
+.diagram{margin:0 0 14px}
+.titlebar{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 12px}
+.tpend{margin-top:14px;text-align:right}
+@media (max-width:640px){
+  .figall{padding:14px 10px}
+  .zchips{display:flex;flex-wrap:nowrap;overflow-x:auto;margin:8px 0 0;padding-bottom:4px}
+  .zchips .pill{flex:none}
+  .strip{position:sticky;top:0;z-index:6;background:var(--panel);margin:0 -10px 14px;padding:6px 10px 2px;border-bottom:1px solid var(--line)}
+  .where{padding:8px 10px;margin:0 0 6px}
+  .tpanel{padding:14px;position:fixed;left:0;right:0;bottom:0;z-index:40;max-height:72vh;overflow-y:auto;margin:0;border-radius:12px 12px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.18)}
+  #fig.zoomed .diagram{display:none}
+  .homeseg{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .homeseg .pill{flex:none}
+  #stage,#homeh,#playh{scroll-margin-top:130px}
+}
+@media (pointer:coarse){
+  .pill,.btn,.tbtn{min-height:40px}
+  input[type=range]{min-height:40px}
+}
+
+.shared{border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:12px 14px;margin:0 0 14px}
+.sh-name{margin:0 0 8px;font-size:14px;font-weight:600}
+.shctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.shspeed{display:flex;gap:6px;margin-left:auto}
+.shared .dots{margin:10px 0 0}
+.shared .narr{margin-top:10px}
+.sh-note{font-size:13.5px;color:var(--muted);margin:6px 0 0}
+.sh-note:empty{display:none}
+h2[tabindex="-1"]:focus{outline:none}
+[hidden]{display:none!important}
+
+/* checkpoint 放大 story-strip（18 步：前 12 checkpoint、後 6 Elasticsearch） */
+.flow .edge.hb{animation:q6hb 1s ease}
+@keyframes q6hb{0%{stroke:var(--run);stroke-width:1.6}14%{stroke:var(--run);stroke-width:4.5}28%{stroke:var(--run);stroke-width:2}42%{stroke:var(--run);stroke-width:4.5}100%{stroke-width:1.6}}
+.flow .el.hb{animation:q6hbt 1s ease}
+@keyframes q6hbt{0%,60%{fill:var(--run);font-weight:700}100%{}}
+.flow .edge.pass{stroke:var(--run);stroke-width:2.6;stroke-dasharray:6 4;animation:q6dash .5s linear infinite}
+@keyframes q6dash{from{stroke-dashoffset:10}to{stroke-dashoffset:0}}
+.flow .node.hb rect{animation:q6nhb .8s ease}
+@keyframes q6nhb{0%{stroke:var(--run);stroke-width:1.2}30%{stroke:var(--run);stroke-width:4}100%{stroke-width:1.2}}
+@media (prefers-reduced-motion: reduce){.flow .edge.hb,.flow .el.hb,.flow .edge.pass,.flow .node.hb rect{animation:none}}
+.q6img-trigger{font:inherit;color:var(--cut);background:none;border:0;padding:0;margin:0;text-align:left;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.q6img-trigger:hover{text-decoration-thickness:2.5px}
+.q6img-trigger:focus-visible{outline:2px solid var(--cut);outline-offset:3px;border-radius:2px}
+.q6img-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(8,12,16,.72)}
+.q6img-modal[hidden]{display:none!important}
+.q6img-box{display:flex;flex-direction:column;width:min(100%,1240px);max-height:min(94vh,100%);background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.q6img-bar{display:flex;align-items:center;gap:8px;flex:none;padding:8px 10px;border-bottom:1px solid var(--line)}
+.q6img-bar .ttl{flex:1 1 auto;min-width:0;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q6img-btn{font:inherit;font-size:13px;line-height:1.4;color:var(--fg);background:var(--bg);border:1px solid var(--line-strong);border-radius:6px;padding:4px 10px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.q6img-btn:focus-visible{outline:2px solid var(--cut);outline-offset:2px}
+.q6img-close{font-size:20px;line-height:1;padding:2px 10px}
+.q6img-view{flex:1 1 auto;min-height:0;overflow:auto;padding:18px 20px 24px;background:var(--bg)}
+@media (max-width:600px){.q6img-modal{padding:0}.q6img-box{width:100%;height:100%;max-height:none;border-radius:0;border:0}.q6img-view{padding:14px max(12px,env(safe-area-inset-left,0px)) 24px}}
+</style>
+
+<main>
+<section class="figall" id="fig" aria-labelledby="playh">
+<div class="exam qfull">
+  <h2>QSearch 筆試第 6 題：文字雲斷詞 Pipeline 重建</h2>
+  <p>你加入一間社群輿情分析 SaaS 公司，主力產品是讓企業客戶輸入關鍵字後，即時查詢跨社群平台（Facebook、Instagram、YouTube、論壇、媒體、Threads）的聲量趨勢與文字雲。</p>
+  <p>目前的文字雲功能使用一份維護多年的繁體中文字典檔進行斷詞，但產出品質有嚴重問題：短網址後綴出現在結果中、電話號碼被當成詞彙、中文助詞（的、了、在）未被過濾、地名變體被拆散（例如「高雄市」被拆成「高」「雄」「市」）、搜尋高頻詞反而沒出現在文字雲中。</p>
+  <p>團隊決定重寫斷詞演算法，你被指派負責整個 Data Pipeline 的設計。以下是已知條件：</p>
+  <ul class="qcond">
+    <li>需處理 6 個渠道、覆蓋 2023 年 1 月至今的所有歷史資料</li>
+    <li>目前 Elasticsearch 中儲存的社群貼文總量約 5 億筆</li>
+    <li>新舊斷詞結果需並行提供，讓 PM 可 A/B 比對驗收</li>
+    <li>產品端的查詢回應時間目標：單次文字雲查詢不超過 3 分鐘（初期可放寬，但正式上線須達標）</li>
+    <li>新資料需透過 Streaming Pipeline 即時斷詞寫入</li>
+  </ul>
+  <ol>
+    <li><b>(a)</b><span>請設計這個「歷史資料回朔斷詞」的執行策略。你會怎麼拆分批次？以什麼為單位排程（年份？渠道？還是其他維度）？每個批次之間需要什麼樣的品質檢查點？請具體估算：如果團隊只有 1 位資料工程師負責，從 POC 驗證到 6 渠道全部完成上線，你<button type="button" class="q6img-trigger" data-alt="(a) 一位工程師 45 個工作天時程（互動）" aria-haspopup="dialog">估計需要多少個工作天？請列出你的假設。</button></span></li>
+    <li><b>(b)</b><span>字典檔品質直接影響斷詞結果。請問你會怎麼設計字典檔的維護流程？如何處理「斷詞用字典」和「搜尋用字典」是否共用的問題？如果走不同字典檔，對系統架構有什麼影響？（提示：原團隊估計走不同字典檔需額外 20+ 工作天，走相同字典檔約 10 天）</span></li>
+    <li><b>(c)</b><span><button type="button" class="q6img-trigger" data-widget="c" data-alt="(c) 一致性與加新詞（互動）" aria-haspopup="dialog">Streaming Pipeline 上線後，如何確保新進資料的斷詞結果與歷史回朔資料的品質一致？如果字典檔日後更新了一個新詞，是否需要重新跑全部歷史資料？你會怎麼設計讓這件事可控？</button></span></li>
+  </ol>
+  <p class="qlim">上限 600 字。</p>
+</div>
+<div class="strip" id="strip">
+<div class="zchips" id="zchips" role="group" aria-label="快速切換視圖"><button type="button" class="pill" data-go="home" data-seg="flow" aria-pressed="true">整張圖</button><button type="button" class="pill" data-go="dedup" aria-pressed="false">去重</button><button type="button" class="pill" data-go="gates" data-gate="g1" aria-pressed="false">G1</button><button type="button" class="pill" data-go="gates" data-gate="g2" aria-pressed="false">G2</button><button type="button" class="pill" data-go="gates" data-gate="g3" aria-pressed="false">G3</button><button type="button" class="pill" data-go="home" data-seg="est" aria-pressed="false">規模估算</button><button type="button" class="pill" data-go="home" data-seg="rounds" aria-pressed="false">沙盤回合</button></div>
+</div>
+<div class="diagram" id="diagram">
+  <div class="tabs" role="group" aria-label="情境" id="tabs"></div>
+  <div class="scroll" id="flowwrap"></div>
+</div>
+<div class="stage" id="stage">
+<div class="view" id="v-home">
+<div class="hsub" id="hs-est" hidden>
+  <div class="level"><span class="zoom">估算</span><h2 id="esth">1 位工程師，約 45 個工作天</h2>
+  <p>兩種分法加起來都是 45 天。交出去的作答用的是第一種。</p></div>
+  <div class="figure">
+    <div class="row" role="group" aria-label="分法" id="estsw"></div>
+    <div class="bars" id="bars"></div>
+    <p class="note" id="estnote"></p>
+  </div>
+  <ul class="tiles">
+    <li><b>約 140 核心小時</b>斷詞運算量：5 億篇 × 平均 284 字 ÷ 每核每秒約 28 萬字。</li>
+    <li><b>約 27 小時</b>純寫入時間：照沙盤不限速每秒 5,170 篇推估 5 億篇。</li>
+  </ul>
+</div>
+<div class="hsub" id="hs-rounds" hidden>
+  <div class="level"><span class="zoom">沙盤驗證</span><h2 id="sandh">46 個月分區實際跑三輪</h2>
+  <p>用 PTT 約 42.5 萬篇、切成 46 個月分區實跑。這些是沙盤數字，不是正式環境。</p></div>
+  <div class="figure">
+    <div class="rounds" id="rounds"></div>
+    <ul class="legend">
+      <li><span class="sw done"></span>通過</li><li><span class="sw bad"></span>G2 沒過</li><li><span class="sw g3"></span>G3 沒過</li>
+      <li><span class="sw waive"></span>人工豁免</li><li><span class="sw keep"></span>上一輪已過，不重跑</li>
+    </ul>
+  </div>
+  <ul class="tiles">
+    <li><b>114 → 192 → 262 ms</b>「全期」這一類查詢的 p95：沒有回補 → 3 個 task 共用每秒 3,000 篇 → 不限速。這是整段實測的另一種量法，跟 G3 探針的基準 74 ms 不是同一個數字。G3 實際把限速降到 750 後通過。</li>
+    <li><b>22,271 篇 · 8.56 秒</b>加新詞「肥宅」只重跑含這個字串的文章（全庫 5.24%）。詞表會變的有 5,253 篇，不含這個字串的 0 篇。</li>
+    <li><b>21–29 → 0</b>六渠道小樣本，文字雲前 30 詞裡的雜訊個數。Facebook 剩 1 個「78th」。</li>
+    <li><b>同映像、同字典、記 seg_ver</b>串流與回補用同一個映像和同一份字典，每篇記下斷詞版本，結果一致。</li>
+  </ul>
+</div>
+<div class="hsub" id="hs-why" hidden>
+  <div class="level"><span class="zoom">為什麼這樣切</span><h2 id="whyh">切批策略五點</h2></div>
+  <ul class="mods">
+    <li><b>可控規模</b>一批平均約 185 萬篇，跑完和驗完都在掌握得住的範圍。</li>
+    <li><b>問題隔離</b>哪一批沒過，人修好後只重跑那一批，已通過的不受影響。</li>
+    <li><b>業務驗收</b>每個渠道的首批先給 PM 看 A/B，簽了才放同渠道其他批（首批被人工豁免也一樣要簽）。</li>
+    <li><b>資源平衡</b>G3 盯線上負載，超過門檻自動降速。</li>
+    <li><b>可追溯</b>每批的狀態、checkpoint、沒過原因都記在批次狀態紀錄（manifest）。</li>
+  </ul>
+</div>
+</div>
+<div class="view" id="v-dedup" hidden>
+  <div class="level"><span class="zoom">放大看 · 三層去重</span><h2 id="ddh" tabindex="-1">同一篇文章怎麼只算一次：三層去重＋G1 對帳</h2>
+  <p>同一篇文章可能被碰到兩次：原文檔裡重抓了一行、程式中斷後重跑、或兩個 task 撞在一起。沒擋住的話，同一篇可能被算兩次（G1 會對不上）、寫成兩份（搜尋會看到重複），或白做兩次工（G1 不一定看得出來）。回補用三道關卡擋掉。下面的資料都是示意；程式碼是 repo 裡實際在跑的程式，只為了好讀把縮排縮小，字沒改。</p></div>
+  <div class="ddids">
+    <div class="ddid dk-cut"><h3>partition_id　分區編號</h3><p class="ex">例：「ptt/2026-09」</p><p>代表<b>一個渠道的一個月</b>（一大包文章）。它管的是「<b>這一包由誰做</b>」。正常情況下，一個分區同一時間只會被一個 task 領走；只有心跳停太久、被別人接手時，才可能短暫兩個 task 重疊，那時靠第三層擋住（見下方「常見誤會」）。用在第一層。</p></div>
+    <div class="ddid dk-ok"><h3>post_id　文章編號</h3><p class="ex">例：「Kaohsiung/M.1793281424.A.0CF」</p><p>代表<b>一篇文章</b>。同一篇不管被抓幾次，編號都一樣。它管的是「<b>這一篇算過沒</b>」。用在第二層、第三層。</p></div>
+  </div>
+  <p class="ddkey">最容易搞混的一點：<b>partition_id 不是拿來去重文章的</b>。它只管分工；真正認「是不是同一篇」的是 post_id。</p>
+  <div class="tabs" role="group" aria-label="三層去重，選一層" id="ddtabs"></div>
+  <div class="ddterms" id="ddterms"></div>
+  <p class="out ddtermout" id="ddtermout"></p>
+  <div class="ddstage">
+    <div class="pane"><h3 id="ddviewh">資料長這樣（示意）</h3><div id="ddviewbody"></div></div>
+    <div class="pane"><h3 id="ddsrc">程式碼</h3>
+      <p class="ddnote" id="ddnote"></p>
+      <div class="ddcode" id="ddcode" tabindex="0" role="group" aria-label="程式碼，一行一個按鈕"></div>
+      <div class="ddopts"><button type="button" class="btn" id="ddall" aria-pressed="false">每一行都顯示白話</button></div>
+    </div>
+  </div>
+  <div class="ddopts"><button type="button" class="btn" id="ddback">↑ 在流程圖上看這一層是哪一塊</button></div>
+</div>
+<div class="view" id="v-gates" hidden>
+  <div class="level"><span class="zoom">③④ 驗收閘門</span><h2 id="gateh" tabindex="-1">四道閘門各擋什麼</h2>
+  <p>G1 到 G3 每批跑完自動檢查，G4 只有每個渠道的首批（最新的那一批）要 PM 簽。</p></div>
+  <div class="figure">
+    <div class="scroll" tabindex="0" role="region" aria-label="閘門表"><table class="gtable">
+      <thead><tr><th>閘門</th><th>目的</th><th>主要檢查</th><th>效果</th><th>沙盤裡怎麼量</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag g">G1</span>筆數守恆</td><td>筆數完整性</td><td>ES 裡版本已到目標的篇數 = 原文去重數</td><td>確保不漏資料</td><td>原文篇數 = ES 裡 <code>seg_ver</code> 已到目標版的篇數（ES <code>_count</code>）</td></tr>
+        <tr><td><span class="tag g">G2</span>斷詞品質</td><td>斷詞品質</td><td>電話號碼、純數字／雜訊、網址殘片、必不可拆詞（如「新北」）、硬停用詞</td><td>提升詞雲品質</td><td>電話與純數字用 ES regexp 查；必不可拆詞看斷點位置</td></tr>
+        <tr><td><span class="tag g">G3</span>線上負載</td><td>線上負載</td><td>查詢 p95（超過上限自動降速）、ES 寫入拒絕數</td><td>不影響線上服務</td><td>寫入拒絕數 0；探針 p95 不超過上限（基準 74 ms → 上限 124 ms）；超過就把全域限速砍半、等 15 秒再量，最多量 3 次、砍 2 次；之後一次就過的批次讓限速回升 25%</td></tr>
+        <tr><td><span class="tag p">G4</span>PM 簽核</td><td>首批業務驗收</td><td>A/B 詞雲並排（<code>terms_v1</code>／<code>terms_v2</code>）</td><td>確認新版效果再全量</td><td>每個渠道的首批（最新的月）；簽之前同渠道其他批不能開跑（首批被人工豁免也一樣要等 PM 簽）</td></tr>
+      </tbody></table></div>
+    <p class="swipe" hidden>表格可以左右滑動</p>
+  </div>
+<div class="gatecard" id="gatecard"></div>
+  <div class="figure" style="margin-top:16px">
+    <h3>G3 試算：p95 多少會觸發降速</h3>
+    <p class="muted" style="font-size:14.5px;margin-top:4px">上限 = min( max( 基準 × 1.5，基準 + 50 ms )，180 秒 )。180 秒只是公式的天花板，跟題目的 3 分鐘不是同一個檢查。這組參數出自沙盤實作（<code>job.py</code>），作答稿沒有列。</p>
+    <div class="calc">
+      <div class="slider"><label for="g3base">沒有回補時的基準 p95：<span class="num" id="g3baseout"></span></label><input type="range" id="g3base" min="20" max="300" value="74"></div>
+      <div class="slider"><label for="g3meas">回補中量到的 p95：<span class="num" id="g3measout"></span></label><input type="range" id="g3meas" min="20" max="500" value="127"></div>
+      <div class="verdict" id="g3verdict" aria-live="polite"></div>
+    </div>
+    <div class="chain" role="group" aria-label="降速階梯"><span>全域限速</span><span class="r">3,000 篇/秒</span><span>→</span><span class="r">1,500</span><span>→</span><span class="r">750</span></div>
+  </div>
+  <p class="note">作答文字（<code>answer_600.txt</code>）另外列了兩個檢查：金標詞召回不低於上一版、文字雲查詢不超過 3 分鐘（每批寫完後，對熱門 30 個查詢的新版文字雲計時）。原圖的 G3 寫的是線上負載，跟沙盤實作一致，這裡照原圖。</p>
+</div>
+</div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+var SVGNS='http://www.w3.org/2000/svg';
+function $(id){return document.getElementById(id)||document.createElement('div');}
+function mk(ns,tag,a,kids){
+  var e=ns?document.createElementNS(SVGNS,tag):document.createElement(tag);
+  if(a){for(var k in a){var v=a[k];if(v==null)continue;
+    if(k==='text')e.textContent=v;else if(typeof v==='function')e.addEventListener(k,v);else e.setAttribute(k,v);}}
+  for(var i=0;i<kids.length;i++){if(kids[i]!=null)e.append(kids[i]);}
+  return e;
+}
+function h(t,a){return mk(false,t,a,Array.prototype.slice.call(arguments,2));}
+function s(t,a){return mk(true,t,a,Array.prototype.slice.call(arguments,2));}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:1});}
+var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* ---------- 資料 ---------- */
+var NODES=[
+ {id:'cut',k:'cut',x:16,y:-282,w:908,h:270,t:'① 切批與排程',sub:[],
+  info:'把約 5 億篇舊文切成一批一批：一批＝一個渠道 × 一個月，約 270 批（示意），平均一批約 185 萬篇（示意）。先做最新的月份，再往回做。一格就是一批；播放時被框起來的那一格，就是回補 Job 正在跑的批。點任一格看它的狀態。'},
+ {id:'job',k:'run',x:212,y:82,w:124,h:96,t:'回補 Job',sub:['多個 task 並行'],
+  info:'回補 Job 開好幾個 task（可以想成幾個同時動手的人），各自去批次狀態紀錄領下一批來跑，一個 task 一次領一批，共用一個全域限速（上限 ÷ 正在跑的批數）。沙盤：1 個 task 限速 3,000 時每秒約 2,900 篇；3 個 task 共用 3,000 時合計約每秒 2,770 篇。'},
+ {id:'read',k:'run',x:354,y:82,w:124,h:96,t:'讀取原文',sub:['依 checkpoint 續跑'],
+  info:'從 checkpoint 記的行數往下讀原文，一段 500 篇。'},
+ {id:'seg',k:'run',x:496,y:82,w:124,h:96,t:'斷詞',sub:['同一份字典'],
+  info:'用跟串流同一個映像、同一份字典斷詞，並記下 seg_ver（斷詞版本）。沙盤每 500 篇斷詞的 p50 是 89.9 ms。'},
+ {id:'bulk',k:'run',x:638,y:82,w:124,h:96,t:'Bulk 寫入 ES',sub:['每批 500 篇'],
+  info:'500 篇一次 bulk，寫進 ES 的新欄位 terms_v2；舊欄位 terms_v1 不動，線上查詢照舊，PM 才能新舊並排比。沙盤 bulk 寫入的 p50 是 60.1 ms。bulk 回報寫入錯誤時，這一批當場標成 failed，不進閘門。'},
+ {id:'ckpt',k:'run',x:780,y:82,w:124,h:96,t:'更新 checkpoint',sub:['已處理行數、狀態'],
+  info:'每 500 篇 bulk 成功後，才把已處理行數寫回狀態紀錄。心跳另由背景執行緒每 20 秒更新。task 中途死掉，接手的從 checkpoint 往下做；同一批最多被領 3 次。'},
+ {id:'g1',k:'gate',x:208,y:284,w:120,h:68,t:'G1 筆數守恆',sub:['達標篇數 = 原文數'],
+  info:'ES 裡版本已到目標（seg_ver_v2 不低於目標版）的文件數，要等於原文去重後的篇數，確保不漏、也不多。這個數字看的是 ES 最後的狀態，不是這次寫了幾篇：重送時已經是新版的文件會 noop，但照樣算數。'},
+ {id:'g2',k:'gate',x:340,y:284,w:120,h:68,t:'G2 斷詞品質',sub:['雜訊、不可拆詞'],
+  info:'電話號碼、純數字／雜訊、網址殘片、硬停用詞漏進詞表，或必不可拆詞（如「新北」）被切開，都算洩漏。作答寫的是洩漏為 0；沙盤實作現在的預設是每一類洩漏數 ÷ 這一批的篇數超過 0.1% 才算沒過（提案值），第 2 輪當時是零容忍。'},
+ {id:'g3',k:'gate',x:472,y:284,w:120,h:68,t:'G3 線上負載',sub:['p95、寫入拒絕'],
+  info:'ES 寫入拒絕數要是 0，查詢探針 p95 不能超過上限（沙盤基準 74 ms，上限 124 ms）。超過就把全域限速砍半、等 15 秒再量：3,000 → 1,500 → 750 篇/秒，最多量 3 次、砍 2 次。現在的程式還會回升：之後有批次一次就過 G3，限速每次加 25%，最多回到設定的上限。'},
+ {id:'g4',k:'pm',x:650,y:266,w:130,h:86,t:'④ G4 PM 簽核',sub:['各渠道首批','A/B 詞雲並排'],
+  info:'每個渠道的首批（最新的月），由 PM 在 A/B 頁並排看 terms_v1 和 terms_v2 的詞雲，簽核後才放行。簽之前同渠道其他批不能開跑。首批就算沒過又被人工豁免（--waive），也只是改成等 PM 簽，不會直接放行。'},
+ {id:'pass',k:'ok',x:814,y:266,w:110,h:86,t:'放行 passed',sub:['開放同渠道','其他的批'],
+  info:'這一批標成「已通過」（passed），並開放同渠道其他批。'},
+ {id:'fail',k:'bad',x:325,y:404,w:150,h:56,t:'未通過 failed',sub:['記錄原因：G2、G3…'],
+  info:'三關是讀完後一起算的，任何一關沒過就標成 failed，三關的結果都記進狀態紀錄。另外兩種情況也會變 failed：bulk 寫入出錯（當場停，不進閘門）、同一批被領了 3 次還沒做完。failed 不會被自動重領，要等人處理。'},
+ {id:'retry',k:'bad',x:16,y:404,w:150,h:56,t:'人修好後指定重跑',sub:['不會自動重跑'],
+  info:'failed 的批次不會被自動領走。要人看過閘門結果、修好原因，再用 --partition 指定這一批重跑；加 --force 就從第 0 行整批重寫。已通過的批次不動。'}
+];
+var GROUPS=[
+ {x:196,y:22,w:728,h:184,t:'② 批次執行（分段處理）',tx:212,ty:46},
+ {x:196,y:240,w:408,h:128,t:'③ G1～G3 自動驗收（讀完後三關一起算）',tx:208,ty:263}
+];
+var EDGES=[
+ {id:'cut_job',d:'M880 -12 V8 H100 V110 H209',label:'領走這一格',lx:108,ly:66,anchor:'start'},
+ {id:'job_read',d:'M336 130 H351'},
+ {id:'read_seg',d:'M478 130 H493'},
+ {id:'seg_bulk',d:'M620 130 H635'},
+ {id:'bulk_ckpt',d:'M762 130 H777'},
+ {id:'loop',d:'M842 82 V62 H416 V79',label:'還沒讀完：再讀下一個 500 篇',lx:629,ly:56},
+ {id:'ckpt_g',d:'M862 178 V224 H268 V237',label:'這一批讀完',lx:640,ly:219},
+ {id:'g1_g2',d:'M328 318 H337'},
+ {id:'g2_g3',d:'M460 318 H469'},
+ {id:'g_g4',d:'M592 304 H647',label:'首批',lx:621,ly:297},
+ {id:'g_pass',d:'M592 338 H626 V388 H869 V355',label:'非首批：直接放行',lx:748,ly:404},
+ {id:'g4_pass',d:'M780 309 H811',label:'簽核',lx:796,ly:301},
+ {id:'g_fail',d:'M400 352 V401',label:'任何一關沒過',lx:409,ly:390,anchor:'start'},
+ {id:'fail_retry',d:'M325 432 H169'},
+ {id:'retry_job',d:'M91 404 V222 H188 V150 H209',label:'人工指定重跑',lx:99,ly:320,anchor:'start'},
+ {id:'g3_job',d:'M532 284 V214 H345 V165 H339',label:'限速砍半',lx:539,ly:262,anchor:'start',opt:1}
+];
+var RUN=['job','read','seg','bulk','ckpt'];
+var KV=[['part','這一批'],['status','批次狀態'],['ckpt','checkpoint'],['rate','全域限速'],['p95','探針 p95（線上查詢）']];
+var GL={ok:'✓',bad:'✕',wait:'等',waive:'豁'};
+var edgeLab={};
+
+var SC=[
+{name:'順利通過',g:10,init:{part:'論壇 × 2026-09（第 10 批，示意）',status:'pending',ckpt:'第 0 行',rate:'3,000 篇/秒',p95:'還沒量'},from:'cut',pf:0,steps:[
+ {t:'領下一批',d:'回補 Job 的 task 去批次狀態紀錄領「下一批」：一個渠道的一個月份，由新到舊。最上面 ① 格子裡被框起來的那一格就是它：論壇 × 2026-09，第 10 批（示意）。',on:['cut','job'],e:['cut_job'],c:{status:'running'},log:'領到第 10 批，狀態 pending → running'},
+ {t:'讀取原文',d:'從 checkpoint 記的位置往下讀 500 篇。這一批第一次跑，所以從第 0 行開始。',on:['read'],e:['job_read'],fly:1,log:'從第 0 行讀 500 篇'},
+ {t:'斷詞',d:'用跟串流同一個映像、同一份字典斷詞。沙盤量到每 500 篇斷詞的 p50 是 89.9 ms。',on:['seg'],e:['read_seg'],fly:1,log:'斷詞 500 篇（同一份字典）'},
+ {t:'Bulk 寫入 ES',d:'500 篇一次 bulk，寫進新欄位 terms_v2 並記下 seg_ver。舊欄位 terms_v1 不動，線上查詢照舊。沙盤 bulk 寫入的 p50 是 60.1 ms。',on:['bulk'],e:['seg_bulk'],fly:1,log:'bulk 寫入 terms_v2，500 篇'},
+ {t:'更新 checkpoint',d:'每寫完 500 篇，把已處理行數和狀態寫回狀態紀錄。心跳另由背景執行緒每 20 秒更新；超過 2 分鐘沒更新，另一個 task 就會接手。',on:['ckpt'],e:['bulk_ckpt'],c:{ckpt:'第 500 行'},pf:1,log:'checkpoint = 500'},
+ {t:'還沒讀完就繞回去',d:'讀取、斷詞、寫入、記 checkpoint 這四步一直重複，直到這一批的文章全部讀完。',on:['read','seg','bulk','ckpt'],e:['loop','read_seg','seg_bulk','bulk_ckpt'],c:{ckpt:'每 500 行前進中'},pf:8,fly:1,log:'… 重複到這一批讀完'},
+ {t:'G1 筆數守恆',d:'寫進 ES 的篇數要等於原文去重後的篇數，一篇都不能少。程式是讀完後先量 G3 探針，再把三關一起算；這裡照順序一關一關看結果。',on:['g1'],e:['ckpt_g'],st:{g1:'ok'},c:{ckpt:'讀完'},sub:{g1:'筆數相等'},pf:9,log:'G1 通過：筆數相等'},
+ {t:'G2 斷詞品質',d:'查新詞表裡有沒有電話號碼、純數字、網址殘片、硬停用詞，還有必不可拆詞（如「新北」）有沒有被切開。',on:['g2'],e:['g1_g2'],st:{g2:'ok'},sub:{g2:'沒雜訊、沒切錯'},log:'G2 通過：沒有雜訊、沒有切錯'},
+ {t:'G3 線上負載',d:'ES 寫入拒絕數是 0，線上查詢探針的 p95 沒超過上限 124 ms，表示回補沒有拖慢 PM 查詢。',on:['g3'],e:['g2_g3'],st:{g3:'ok'},c:{p95:'沒超過 124 ms'},sub:{g3:'拒絕 0、p95 沒超標'},log:'G3 通過：寫入拒絕 0，p95 在上限內'},
+ {t:'放行',d:'這一批不是該渠道的首批（首批已由 PM 簽過），不用再等：三關都過，就直接標成 passed，格子也跟著變綠。',on:['pass'],e:['g_pass'],st:{pass:'ok'},c:{status:'passed'},log:'狀態 running → passed'}
+]},
+{name:'G2 沒過，只重跑這一批',g:94,init:{part:'沙盤第 2 輪的一批（示意：論壇（ptt）× 2025-07，第 94 批）',status:'running',ckpt:'讀完',rate:'3,000 篇/秒',p95:'還沒量'},from:'ckpt',pf:9,steps:[
+ {t:'這一批跑完，進驗收',d:'整批讀完、寫完，先過 G1：筆數相等。',on:['ckpt','g1'],e:['ckpt_g'],st:{g1:'ok'},sub:{g1:'筆數相等'},log:'G1 通過'},
+ {t:'G2 抓到「新北」被切開',d:'必不可拆詞是看斷點位置。沙盤第 2 輪的閘門是零容忍：「新北」中間被切一刀就算沒過，第 2 輪有 7 批卡在這裡。現在的預設改成每一類洩漏數 ÷ 這一批的篇數不超過 0.1%（提案值）。',on:['g2'],e:['g1_g2'],st:{g2:'bad'},sub:{g2:'「新北」被切開'},log:'G2 沒過：「新北」被切開'},
+ {t:'標成 failed，記下原因',d:'這一批不放行。三關一起算，每一關的結果都寫進狀態紀錄。failed 不會被自動重領，要等人處理。',on:['fail'],e:['g_fail'],st:{fail:'bad'},c:{status:'failed'},sub:{fail:'原因：G2 必不可拆詞'},log:'狀態 → failed，原因：G2 必不可拆詞'},
+ {t:'修字典',d:'字典發新版 r4：把「新北」的詞頻調到 1000、「新北投」500。已通過的 34 批不整批重跑，只定向重跑含這些字串的 787 篇，0.28 秒做完。',on:['retry'],e:['fail_retry'],sub:{retry:'字典 r4：調高「新北」詞頻'},log:'字典 r4：新北 → 1000、新北投 → 500'},
+ {t:'人工指定，只重跑沒過的',d:'failed 不會自動重跑：要人修好後指定這一批重跑（--partition，要從頭整批重寫再加 --force）。沙盤第 3 輪：沒過的 12 批整批用新字典重跑，共 111,747 篇。其他批次不受影響。',on:['retry','job','read','seg','bulk','ckpt'],e:['retry_job','job_read','read_seg','seg_bulk','bulk_ckpt'],st:{g1:null,g2:null,fail:null},c:{status:'running',ckpt:'整批重跑'},sub:{g1:null,g2:null,fail:null,retry:null},at:'job',pf:0,fly:1,log:'人工指定重跑這一批（字典 r4）'},
+ {t:'再驗一次，通過',d:'沙盤第 3 輪：重跑的 12 批裡 10 個通過。',on:['g1','g2','g3','pass'],e:['ckpt_g','g1_g2','g2_g3','g_pass'],st:{g1:'ok',g2:'ok',g3:'ok',pass:'ok'},c:{status:'passed',ckpt:'讀完',p95:'沒超過 124 ms'},sub:{g1:'筆數相等',g2:'沒雜訊、沒切錯',g3:'拒絕 0、p95 沒超標'},pf:9,log:'G1～G3 通過，狀態 → passed'},
+ {t:'還是切錯的，人工豁免',d:'另外 2 個靠人工豁免：有 2 篇文章把詞頻拉到 3,000 仍然切錯，字典負責人用 approve --waive G2 --note 豁免，理由寫進狀態紀錄。',on:['g2','pass'],e:[],st:{g2:'waive'},sub:{g2:'另 2 批人工豁免'},log:'另 2 批：豁免 G2（附說明）'}
+]},
+{name:'G3 自動降速',g:100,init:{part:'論壇（ptt）× 2025-06（第 100 批，示意）',status:'running',ckpt:'前進中',rate:'3,000 篇/秒',p95:'還沒量'},from:'job',pf:3,steps:[
+ {t:'回補進行中',d:'多個 task 共用一個全域限速，一開始是每秒 3,000 篇。沙盤 3 個 task 共用 3,000 時，合計約每秒 2,770 篇。',on:RUN,e:['job_read','read_seg','seg_bulk','bulk_ckpt','loop'],sub:{job:'限速 3,000 篇/秒'},fly:1,log:'全域限速 3,000 篇/秒'},
+ {t:'G3 量線上查詢探針',d:'上限 = min( max( 基準 × 1.5，基準 + 50 ms )，180 秒 )。沙盤的基準是發版前、沒有回補時量的 74 ms，所以上限是 124 ms。另外 ES 寫入拒絕數必須是 0。',on:['g3'],e:['ckpt_g','g1_g2','g2_g3'],c:{p95:'量測中（上限 124 ms）',ckpt:'讀完'},sub:{g3:'p95 上限 124 ms'},pf:9,log:'G3：量探針 p95，上限 124 ms'},
+ {t:'超過上限，限速砍半',d:'探針 p95 超過上限，表示回補已經拖慢線上查詢。把全域限速砍半成每秒 1,500 篇，等 15 秒再量一次。',on:['g3','job'],e:['g3_job'],st:{g3:'bad'},c:{rate:'1,500 篇/秒',p95:'超過 124 ms'},sub:{job:'限速 1,500 篇/秒',g3:'p95 超過 124 ms'},at:'g3',log:'G3 自動降速：3,000 → 1,500，等 15 秒'},
+ {t:'還是超過，再砍半',d:'再降到每秒 750 篇。沙盤的限速表最後停在 750，原因欄寫的是「G3 自動降速：ptt 探針 p95 127 ms > 上限 124 ms」。',on:['g3','job'],e:['g3_job'],c:{rate:'750 篇/秒',p95:'127 ms（超過 124）'},sub:{job:'限速 750 篇/秒',g3:'p95 127 > 124 ms'},at:'g3',log:'G3 自動降速：1,500 → 750（p95 127 ms > 124 ms）'},
+ {t:'再量一次，通過',d:'降到 750 之後探針 p95 回到上限內，G3 通過。沙盤第 2 輪有 5 批卡在 G3，第 3 輪降速後全部通過。最多量 3 次、砍半 2 次，第 3 次還超過這一批就是 failed。現在的程式還會回升：之後有批次一次就過 G3，限速每次加 25%，最多回到設定的上限。',on:['g3','pass'],e:['g_pass'],st:{g3:'ok',pass:'ok'},c:{status:'passed',p95:'沒超過 124 ms'},sub:{g3:'p95 回到上限內'},log:'G3 通過，限速維持 750'}
+]},
+{name:'task 中途被砍，接續',g:16,init:{part:'論壇 × 2026-08（第 16 批，示意）',status:'running',ckpt:'第 2,500 行',rate:'3,000 篇/秒',p95:'還沒量'},from:'job',pf:5,steps:[
+ {t:'回補進行中',d:'一段 500 篇：讀取、斷詞、寫入、記 checkpoint。',on:['read','seg','bulk','ckpt'],e:['read_seg','seg_bulk','bulk_ckpt','loop'],c:{ckpt:'第 3,000 行'},pf:6,log:'checkpoint = 3,000'},
+ {t:'task 被砍掉',d:'沙盤故意在 checkpoint 到第 3,000 行時把 task 砍掉（exit 137）。狀態紀錄裡的 checkpoint 停在第 3,000 行，心跳不再更新。',on:['job'],e:[],st:{job:'bad'},c:{status:'running（心跳停了）'},sub:{job:'exit 137，心跳停了'},fly:'lost',log:'task 結束（exit 137），checkpoint 停在 3,000'},
+ {t:'心跳過期，別的 task 接手',d:'心跳超過 2 分鐘沒更新，這一批就會被另一個 task 領走。同一批最多被領 3 次，3 次都沒做完就轉成 failed，等人來看。',on:['cut','job'],e:['cut_job'],st:{job:null},c:{status:'running'},sub:{job:'另一個 task 接手'},log:'心跳過期，由另一個 task 接手'},
+ {t:'從第 3,000 行接續',d:'接手的 task 先讀 checkpoint，從第 3,000 行往下做，前面做過的不用重來。',on:['read','seg','bulk','ckpt'],e:['job_read','read_seg','seg_bulk','bulk_ckpt'],c:{ckpt:'第 3,000 行 → 往下'},sub:{job:null,read:'從第 3,000 行接續'},at:'read',fly:1,log:'從第 3,000 行接續'},
+ {t:'讀完照常驗收',d:'跑完一樣要過 G1～G3。中途被砍有沒有漏掉文章，G1 的筆數核對看得出來。要注意：中途接續時，必不可拆詞切開與網址殘片的統計只算接續的那一段，要完整數字得加 --force 從頭跑；電話、純數字、硬停用詞是整批的 ES 計數，不受影響。',on:['g1','g2','g3'],e:['ckpt_g','g1_g2','g2_g3'],c:{ckpt:'讀完'},sub:{read:null},pf:9,log:'這一批讀完，進 G1～G3'}
+]},
+{name:'首批等 PM 簽核',g:4,init:{part:'論壇（ptt）× 2026-10（首批，第 4 批，示意）',status:'pending',ckpt:'第 0 行',rate:'3,000 篇/秒',p95:'還沒量'},from:'cut',pf:0,steps:[
+ {t:'每個渠道的首批',d:'某個渠道還沒有任何一批通過時，只先放行它最新的那一批，也就是首批。由新到舊，所以是最新的月。沙盤是論壇（ptt）× 2026-10，6,260 篇，2.6 秒跑完。',on:['cut','job'],e:['cut_job'],c:{status:'running'},fly:1,log:'領到首批：論壇（ptt）× 2026-10'},
+ {t:'跑完，G1～G3 通過',d:'三關都過了，但首批還不能直接放行。',on:['g1','g2','g3'],e:['ckpt_g','g1_g2','g2_g3'],st:{g1:'ok',g2:'ok',g3:'ok'},c:{ckpt:'讀完',p95:'沒超過上限'},sub:{g1:'筆數相等',g2:'沒雜訊、沒切錯',g3:'拒絕 0、p95 沒超標'},pf:9,log:'G1～G3 通過'},
+ {t:'停在 G4，等 PM',d:'狀態變成 awaiting_pm。簽之前同渠道其他批不能開跑：沙盤裡另一個 task 這時去領同渠道的批，領到 0 批。',on:['g4'],e:['g_g4'],st:{g4:'wait'},c:{status:'awaiting_pm'},sub:{g4:'等 PM 簽核'},log:'狀態 → awaiting_pm；同渠道其他批領到 0 批'},
+ {t:'PM 在 A/B 頁並排看',d:'同一批文章，舊的 terms_v1 和新的 terms_v2 兩朵詞雲並排，PM 抽查新版有沒有比較好。',on:['g4'],e:[],log:'PM 抽查：terms_v1 vs terms_v2'},
+ {t:'簽核，放行',d:'PM 簽核後狀態變成 passed，簽核人與時間寫進狀態紀錄。',on:['g4','pass'],e:['g4_pass'],st:{g4:'ok',pass:'ok'},c:{status:'passed'},sub:{g4:'PM 已簽核'},log:'G4 簽核，狀態 → passed'},
+ {t:'開放同渠道其他批',d:'之後同渠道的批，G1～G3 過了就放行，不用每一批都找 PM。',on:['pass','cut','job'],e:['cut_job'],at:'pass',log:'開放論壇（ptt）其他批'}
+]}
+];
+
+var MODEL=[
+ {k:'切批',ids:['cut'],t:'切批：一批＝一個渠道 × 一個月（約 270 批），由新到舊。'},
+ {k:'執行',ids:RUN,t:'執行：分段處理，斷詞後寫入 ES。'},
+ {k:'驗收',ids:['g1','g2','g3','g4'],t:'驗收：G1～G3 自動檢查，各渠道首批的 G4 由 PM 簽核。'},
+ {k:'恢復',ids:['ckpt','fail','retry'],t:'恢復：task 死掉從 checkpoint 接續（最多領 3 次）；failed 要人修好後指定重跑該批。'},
+ {k:'估算',ids:[],t:'估算：1 位工程師約 45 個工作天。分項在下面的「估算」一節。'}
+];
+var QMAP=[
+ {k:'批次拆分',ids:['cut'],t:'(a) 批次拆分：一批＝一個渠道 × 一個月，約 270 批；流程圖最上面的 ① 就是格子圖。'},
+ {k:'執行策略',ids:RUN,t:'(a) 執行策略：多個 task 並行，500 篇一段，邊跑邊記 checkpoint。'},
+ {k:'品質檢查點',ids:['g1','g2','g3','g4'],t:'(a) 品質檢查點：G1 筆數、G2 品質、G3 線上負載、G4 PM 簽核。'},
+ {k:'新舊並行供 PM A/B',ids:['bulk','g4'],t:'新結果寫 terms_v2、舊欄位不動，PM 在 A/B 頁並排比。'},
+ {k:'查詢不超過 3 分鐘',ids:[],t:'題目的 3 分鐘：作答的做法是每批寫完後，對熱門 30 個查詢的新版文字雲計時。原圖沒有畫這一項，所以圖上沒有亮任何一塊；圖上的 G3 量的是線上查詢探針 p95，是另一道門檻。'},
+ {k:'中途失敗怎麼辦',ids:['ckpt','fail','retry'],t:'task 死掉：別的 task 從 checkpoint 接續，最多領 3 次。閘門沒過或寫入出錯：標成 failed，不會自動重跑，人修好後指定只重跑那一批。'},
+ {k:'串流與回朔一致',ids:['seg'],t:'(c) 回補和串流用同一個映像、同一份字典，每篇記 seg_ver。'}
+];
+
+/* ---------- 流程圖 ---------- */
+var nodeEl={},badgeEl={},edgeEl={},subEl={},nodeAt={};
+function marker(id,cls){
+  return s('marker',{id:id,markerUnits:'userSpaceOnUse',markerWidth:9,markerHeight:9,refX:8,refY:4.5,orient:'auto'},
+    s('path',{d:'M0 0 L9 4.5 L0 9 z','class':cls}));
+}
+/* ② 下方 checkpoint 那一排加高：y≥200 的東西整體往下移 GAPY */
+var GAPY=90;
+(function(){
+  function f(y){return y>=200?y+GAPY:y}
+  NODES.forEach(function(n){n.y=f(n.y)});
+  GROUPS[0].h+=GAPY;GROUPS[1].y=f(GROUPS[1].y);GROUPS[1].ty=f(GROUPS[1].ty);
+  EDGES.forEach(function(e){
+    e.d=e.d.replace(/([MLHV])\s*([-\d.]+)(?:\s+([-\d.]+))?/g,function(m,c,a,b){
+      if(c==='H')return c+a;
+      if(c==='V')return c+f(+a);
+      return c+a+' '+f(+b);
+    });
+    if(e.ly!=null)e.ly=f(e.ly);
+  });
+})();
+var svg=s('svg',{viewBox:'0 0 940 '+(476+GAPY),'class':'flow',role:'group','aria-label':'回補流程圖'},
+  s('defs',null,marker('q6ah','ah'),marker('q6ahOn','ah-on')));
+GROUPS.forEach(function(g){
+  svg.append(s('rect',{x:g.x,y:g.y,width:g.w,height:g.h,rx:8,'class':'grp'}),
+             s('text',{x:g.tx,y:g.ty,'class':'gt',text:g.t}));
+});
+EDGES.forEach(function(e){
+  var p=s('path',{d:e.d,'data-edge':e.id,'class':'edge'+(e.opt?' opt':''),'marker-end':'url(#q6ah)'});
+  edgeEl[e.id]=p;svg.append(p);
+  if(e.label){var lt=s('text',{x:e.lx,y:e.ly,'data-edge-lab':e.id,'class':'el'+(e.opt?' opt':''),'text-anchor':e.anchor||'middle',text:e.label});
+    if(e.opt)edgeLab[e.id]=lt;svg.append(lt);}
+});
+NODES.forEach(function(n){
+  var lines=1+n.sub.length,lh=17,top=n.y+(n.h-lines*lh)/2,cx=n.x+n.w/2,band=n.id==='cut';
+  var g=s('g',{'class':'node k-'+n.k,tabindex:0,role:'button','data-node':n.id,'aria-label':n.t+'，看說明'},
+    s('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:6}),
+    band?s('text',{x:n.x+14,y:n.y+22,'class':'nt',text:n.t}):s('text',{x:cx,y:top+13,'class':'nt','text-anchor':'middle',text:n.t}));
+  if(band)g.append(s('text',{x:n.x+112,y:n.y+22,'class':'cuthd',text:'一格＝一批（渠道 × 月），共 270 批（示意），由新到舊'}),
+    s('text',{x:n.x+n.w-14,y:n.y+22,'class':'gchipt','text-anchor':'end',id:'gchip'}));
+  n.sub.forEach(function(t,i){
+    var te=s('text',{x:cx,y:top+13+lh*(i+1),'class':'ns','text-anchor':'middle',text:t});
+    g.append(te);
+    if(i===n.sub.length-1)subEl[n.id]={el:te,base:t};
+  });
+  var b=s('text',{x:n.x+n.w-8,y:n.y+15,'class':'badge','text-anchor':'end','aria-hidden':'true'});
+  g.append(b);badgeEl[n.id]=b;nodeEl[n.id]=g;
+  var DDCHIP={job:'去重①',read:'去重②',seg:'字典',bulk:'去重③',ckpt:'重跑',g1:'對帳',g2:'抓漏',g3:'測速'};
+  if(DDCHIP[n.id]){
+    var cw=DDCHIP[n.id].length*11+12,cy=n.k==='gate'?n.y+n.h-8:n.y+n.h-22;
+    var chip=s('g',{'class':'ddchip'+(n.id==='read'?' go':''),'aria-hidden':'true'},
+      s('rect',{x:n.x+6,y:cy,width:cw,height:16,rx:8}),
+      s('text',{x:n.x+6+cw/2,y:cy+12,'text-anchor':'middle',text:DDCHIP[n.id]}));
+    g.append(chip);
+    /* 「讀取原文」身上的「去重②」小標點了直接去三層去重 */
+    if(n.id==='read')chip.addEventListener('click',function(ev){
+      ev.stopPropagation();ddPeekHide();openerId=n.id;pick([n.id],null);ddGo(DDPK.read.t,DDPK.read.i,true);
+    });
+    g.setAttribute('aria-label',n.t+(n.id==='seg'?'（字典長怎樣），看說明':n.k==='gate'?'（有圖、實際案例和程式碼），看說明':'（有去重細節），看說明'));
+  }
+  function show(){ddPeekHide();described=false;openerId=n.id;nodeRoute(n);}
+  g.addEventListener('pointerenter',function(ev){if(ev.pointerType==='mouse'&&!band)ddPeekShow(n,g);});
+  g.addEventListener('pointerleave',ddPeekHide);
+  g.addEventListener('focus',function(){var fv=false;try{fv=g.matches(':focus-visible');}catch(e){}if(fv&&!band)ddPeekShow(n,g);});
+  g.addEventListener('blur',ddPeekHide);
+  g.addEventListener('click',show);
+  g.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();show();}});
+  svg.append(g);
+});
+NODES.forEach(function(n){nodeAt[n.id]=n;});
+
+/* checkpoint 進度格：畫在 ② 批次執行的框內、五個步驟下面 */
+var PCELLS=9,progCells=[];
+var progVal=s('text',{'class':'pv','text-anchor':'middle'}),ckMk,ckTask,ckSay;
+var prog=s('g',{'class':'prog','aria-hidden':'true'},
+  s('text',{x:212,y:205,'class':'pl',text:'checkpoint'}));
+(function(){
+  for(var i=0;i<PCELLS;i++){
+    var last=i===PCELLS-1;
+    var c=s('rect',{x:last?772:424+i*40,y:194,width:last?66:34,height:14,rx:2,'class':'pc'});
+    progCells.push(c);prog.append(c);
+  }
+  prog.append(s('text',{x:754,y:205,'class':'dots3','text-anchor':'middle',text:'⋯'}));
+  /* ▼ = checkpoint 的位置，數字跟著走 */
+  ckMk=s('g',{'class':'ckmk'},s('path',{d:'M-4.5 0 L4.5 0 L0 6 Z'}),progVal);
+  progVal.setAttribute('x',0);progVal.setAttribute('y',22);
+  prog.append(ckMk);
+  ckTask=s('text',{x:212,y:228,'class':'cktask'});
+  prog.append(ckTask);
+  prog.append(s('line',{x1:416,y1:240,x2:416,y2:290,'class':'cksayb'}));
+  ckSay=s('text',{x:424,y:252,'class':'cksay'});
+  prog.append(ckSay);
+})();
+svg.append(prog);
+
+/* 狀態牌：這一批目前的狀態，停在它所在的那一塊左上角 */
+var tokRect=s('rect',{x:0,y:0,height:20,rx:10,width:60});
+var tokText=s('text',{x:30,y:14,'text-anchor':'middle'});
+var tok=s('g',{'class':'tok t-pending','aria-hidden':'true'},tokRect,tokText);
+/* ① 格子圖直接畫在流程圖最上面一排 */
+var FOX=28;
+var fo=s('foreignObject',{x:FOX,y:-248,width:884,height:230,'class':'fo'});
+var fob=document.createElement('div');fob.className='fobox';
+fob.innerHTML='<div class="slider"><label for="prog">拖動預覽回補做到哪一批：<span class="num" id="progout"></span></label>'+
+  '<input type="range" id="prog" min="0" max="270" value="9" step="1"></div><div class="grid" id="grid" role="group" aria-label="270 批格子圖"></div>';
+fo.append(fob);svg.append(fo);
+svg.append(tok);
+var TOP=290;
+svg.setAttribute('viewBox','0 0 940 '+(476+GAPY+TOP));
+var flowBody=s('g',{transform:'translate(0,'+TOP+')'});
+Array.prototype.slice.call(svg.childNodes).forEach(function(c){if(c.nodeName!=='defs')flowBody.append(c);});
+svg.append(flowBody);
+function setTok(nodeId,status){
+  var n=nodeAt[nodeId]||nodeAt.cut,base=String(status).split('（')[0];
+  var w=18+base.length*7.4;
+  tokRect.setAttribute('width',w);tokText.setAttribute('x',w/2);tokText.textContent=base;
+  tok.setAttribute('class','tok t-'+base+(base!==status?' stall':''));
+  tok.style.transform='translate('+Math.max(4,n.x-16)+'px,'+(n.y-11)+'px)';
+}
+function ckMarkAt(done){
+  var x=done<=0?421:done>=PCELLS?838:done===PCELLS-1?741:424+done*40-3;
+  ckMk.setAttribute('transform','translate('+x+',213)');
+  progVal.setAttribute('text-anchor',done>=PCELLS?'end':done<=0?'start':'middle');
+  progVal.setAttribute('x',done>=PCELLS?8:done<=0?-6:0);
+}
+function setProg(done,fly,label,full){
+  if(CK.on)ckStop(true);
+  ckTask.textContent='';ckTask.setAttribute('class','cktask');ckSayShow('');
+  ckMarkAt(done);
+  progVal.textContent=label;
+  prog.classList.toggle('full',!!full);
+  progCells.forEach(function(c,i){
+    var was=c.classList.contains('done'),is=i<done;
+    c.style.transitionDelay=(is&&!was&&!reduce)?(Math.max(0,i-progWas)*70)+'ms':'0ms';
+    c.setAttribute('class','pc'+(is?' done':(i===done&&fly?(fly==='lost'?' lost':' fly'):'')));
+  });
+  if(done>progWas&&!reduce)ckBeat();
+  progWas=done;
+}
+/* checkpoint 每前進一格：更新 checkpoint 方塊 → 上方「再讀下一個 500 篇」箭頭跳一下 */
+function ckBeat(){
+  [['[data-node="ckpt"]',0],['[data-edge="loop"]',180],['[data-edge-lab="loop"]',180]].forEach(function(a){
+    var e=svg.querySelector(a[0]);if(!e)return;
+    setTimeout(function(){e.classList.remove('hb');void e.getBoundingClientRect();e.classList.add('hb');
+      setTimeout(function(){e.classList.remove('hb')},1100)},a[1]);
+  });
+}
+var progWas=0;
+/* 原本的 checkpoint 概念：一格 = 一次寫入 500 篇；▼ 是 checkpoint；task A 斷線 → task B 接手 */
+var CKS=[
+ {task:'task A',done:0,say:'task A 領到這個分區（約 185 萬篇，依 post_id 排好）。checkpoint = 0，從第 1 篇開始。'},
+ {task:'task A',done:0,work:0,say:'第 1 次寫入：拿第 1–500 篇 → 斷詞 → Bulk 寫入 ES。還沒寫完，checkpoint 不動。'},
+ {task:'task A',done:1,say:'Bulk 成功，才把 checkpoint 改成 500。',flash:1},
+ {task:'task A',done:1,work:1,say:'第 2 次寫入（501–1,000）處理中。'},
+ {task:'task A',done:2,say:'Bulk 成功 → checkpoint = 1,000。',flash:1},
+ {task:'task A',done:2,work:2,say:'第 3 次寫入（1,001–1,500）處理中，可能已經寫進 ES 一部分。'},
+ {task:'task A 斷線',taskBad:1,done:2,bad:2,say:'task A 掛了。這次寫入沒完成，checkpoint 還停在 1,000。'},
+ {task:'（沒有心跳）',taskBad:1,done:2,bad:2,say:'心跳每 20 秒更新一次；超過 2 分鐘沒更新，就判定 task A 死了。'},
+ {task:'task B 接手',done:2,say:'task B 讀到 checkpoint = 1,000，從第 1,001 篇接著做，前 1,000 篇不重做。'},
+ {task:'task B',done:2,work:2,say:'第 3 次寫入的 500 篇整份重做。之前寫進去的那幾篇 seg_ver 相同 → noop，不會重複。'},
+ {task:'task B',done:3,say:'Bulk 成功 → checkpoint = 1,500。',flash:1},
+ {task:'task B',done:PCELLS,say:'（中間省略）一路做到分區最後，約 3,700 次寫入 → 狀態改成「完成」。checkpoint 只管「做到第幾篇」，表裡有沒有重複行是讀取時的去重在管。',flash:1}
+];
+var CK={on:false,i:0,timer:null,was:0};
+function ckWrap(str,max){
+  var out=[],line='',w=0;
+  for(var i=0;i<str.length;i++){var ch=str[i],cw=/[\x00-\x7f]/.test(ch)?.55:1;
+    if(w+cw>max){out.push(line);line='';w=0;}line+=ch;w+=cw;}
+  if(line)out.push(line);return out;
+}
+function ckSayShow(str){
+  while(ckSay.firstChild)ckSay.removeChild(ckSay.firstChild);
+  ckWrap(str,34).forEach(function(l,i){ckSay.append(s('tspan',{x:424,dy:i?17:0,text:l}));});
+}
+function ckDraw(){
+  var st=CKS[CK.i];
+  prog.classList.toggle('full',st.done>=PCELLS);
+  progCells.forEach(function(c,i){
+    c.style.transitionDelay='0ms';
+    c.setAttribute('class','pc'+(i<st.done?' done':st.work===i?' fly':st.bad===i?' bad':''));
+  });
+  ckMarkAt(st.done);
+  progVal.textContent=st.done>=PCELLS?'≈ 185 萬篇（讀完）':fmt(st.done*500);
+  progVal.classList.remove('flash');
+  if(st.flash&&!reduce){void progVal.getBBox();progVal.classList.add('flash');}
+  ckTask.textContent=st.task;ckTask.setAttribute('class','cktask'+(st.taskBad?' bad':''));
+  ckSayShow(st.say);
+  ['read_seg','seg_bulk','bulk_ckpt'].forEach(function(id){var e=edgeEl[id];if(e)e.classList.toggle('ckw',st.work!=null&&!reduce);});
+  if(st.done>CK.was&&!reduce)ckBeat();
+  CK.was=st.done;progWas=st.done;
+  $('ck-n').textContent=(CK.i+1)+'／'+CKS.length;
+  $('ck-play').firstChild.nextSibling.textContent=CK.timer?'⏸':'▶';
+}
+function ckTick(){CK.i=(CK.i+1)%CKS.length;if(CK.i===0)CK.was=0;ckDraw();}
+function ckStop(toScene){
+  if(CK.timer)clearInterval(CK.timer);CK.timer=null;
+  if(toScene){CK.on=false;['read_seg','seg_bulk','bulk_ckpt'].forEach(function(id){var e=edgeEl[id];if(e)e.classList.remove('ckw');});
+    $('ck-n').textContent='概念 '+CKS.length+' 步';}
+  $('ck-play').firstChild.nextSibling.textContent='▶';
+}
+function ckStart(){
+  if(!CK.on){CK.on=true;CK.was=0;}
+  if(CK.timer)clearInterval(CK.timer);
+  CK.timer=setInterval(ckTick,2600);ckDraw();
+}
+function ckGo(d){
+  if(!CK.on){CK.on=true;CK.was=0;CK.i=d>0?-1:1;}
+  ckStop(false);CK.i=Math.max(0,Math.min(CKS.length-1,CK.i+d));if(CK.i===0)CK.was=0;ckDraw();
+}
+(function(){
+  var ctl=s('g',{'class':'ckctl'});
+  function btn(id,x,w,label,aria,fn){
+    var b=s('g',{id:id,'class':'ckb',role:'button',tabindex:0,'aria-label':aria},
+      s('rect',{x:x,y:244,width:w,height:22,rx:4}),
+      s('text',{x:x+w/2,y:259,'text-anchor':'middle',text:label}));
+    b.addEventListener('click',function(ev){ev.stopPropagation();fn();});
+    b.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();ev.stopPropagation();fn();}});
+    ctl.append(b);return b;
+  }
+  btn('ck-prev',212,26,'‹','checkpoint 概念上一步',function(){ckGo(-1);});
+  btn('ck-play',242,26,'▶','checkpoint 概念播放／暫停',function(){if(CK.timer)ckStop(false);else ckStart();});
+  btn('ck-next',272,26,'›','checkpoint 概念下一步',function(){ckGo(1);});
+  ctl.append(s('text',{id:'ck-n',x:212,y:284,'class':'ckn'}));
+  flowBody.append(ctl);
+})();
+setTimeout(function(){if(reduce){CK.on=true;CK.i=0;ckDraw();}else ckStart();},0);
+$('flowwrap').append(svg);
+
+/* ---------- 播放器 ---------- */
+var st={sc:0,i:0};
+var tabBtns=[];
+function cur(){return SC[st.sc];}
+function clearPressed(){
+  var bs=document.querySelectorAll('#qmap button,#model button');
+  for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed','false');
+}
+var followOn=false,cutFocus=null;
+function centerOn(ids){
+  var w=$('flowwrap'),a=1e9,b=-1e9;
+  ids.forEach(function(id){var n=(id==='cut'&&cutFocus)?cutFocus:nodeAt[id];if(n){a=Math.min(a,n.x);b=Math.max(b,n.x+n.w);}});
+  if(b<a||w.scrollWidth<=w.clientWidth+2)return;
+  var k=svg.getBoundingClientRect().width/940;
+  var want=(b-a)*k>w.clientWidth?a*k-12:(a+b)/2*k-w.clientWidth/2;
+  var left=Math.max(0,Math.min(w.scrollWidth-w.clientWidth,want));
+  if(w.scrollTo)w.scrollTo({left:left,behavior:reduce?'auto':'smooth'});else w.scrollLeft=left;
+}
+function follow(nodeId){if(followOn)centerOn([nodeId]);}
+function render(){
+  var sc=cur(),step=sc.steps[st.i],marks={},kv={},subs={},pf=sc.pf||0,k;
+  for(k in sc.init)kv[k]=sc.init[k];
+  for(var j=0;j<=st.i;j++){
+    var sj=sc.steps[j];
+    if(sj.st)for(k in sj.st)marks[k]=sj.st[k];
+    if(sj.c)for(k in sj.c)kv[k]=sj.c[k];
+    if(sj.sub)for(k in sj.sub)subs[k]=sj.sub[k];
+    if(sj.pf!=null)pf=sj.pf;
+  }
+  for(k in subEl){
+    var se=subEl[k],ov=subs[k];
+    se.el.textContent=ov||se.base;
+    se.el.setAttribute('class',ov?'ns res':'ns');
+  }
+  setProg(pf,step.fly,kv.ckpt,pf>=PCELLS&&kv.status==='passed');
+  setTok(step.at||step.on[step.on.length-1],kv.status);
+  follow(step.at||step.on[step.on.length-1]);
+  svg.classList.add('stepping');svg.classList.remove('picking');
+  NODES.forEach(function(n){
+    var g=nodeEl[n.id],m=marks[n.id];
+    g.classList.toggle('on',step.on.indexOf(n.id)>=0);
+    g.classList.remove('pick','s-ok','s-bad','s-wait','s-waive');
+    if(m)g.classList.add('s-'+m);
+    var bd=badgeEl[n.id];bd.textContent=m?GL[m]:'';
+    bd.classList.remove('stamp');
+    if(step.st&&step.st[n.id]){bd.getBoundingClientRect();bd.classList.add('stamp');}
+  });
+  EDGES.forEach(function(e){
+    var on=step.e.indexOf(e.id)>=0;
+    edgeEl[e.id].classList.toggle('on',on);
+    edgeEl[e.id].setAttribute('marker-end',on?'url(#q6ahOn)':'url(#q6ah)');
+    if(edgeLab[e.id])edgeLab[e.id].classList.toggle('on',on);
+  });
+  var log=$('log');log.replaceChildren();
+  for(j=0;j<=st.i;j++){
+    if(sc.steps[j].log)log.append(h('li',{'class':j===st.i?'cur':null,text:sc.steps[j].log}));
+  }
+  var body=$('kv');body.replaceChildren();
+  KV.forEach(function(r){
+    var td=h('td',{text:r[0]==='status'?dispSt(kv[r[0]]):kv[r[0]]});
+    if(step.c&&Object.prototype.hasOwnProperty.call(step.c,r[0]))td.className='chg';
+    body.append(h('tr',null,h('td',{text:r[1]}),td));
+  });
+  clearPressed();
+  gridSync(sc,kv);
+  shSync();
+}
+/* ---------- 共用播放列：一次只控制眼前這一塊（流程這一步、讀取原文、三層去重） ---------- */
+var TM=[],playing=false,tick=null,speed=1,shKey=null,speedBtns=[];
+function later(fn,ms){var rec={h:null,iv:false};rec.h=setTimeout(function(){drop(rec);fn();},ms);TM.push(rec);return rec;}
+function every(fn,ms){var rec={h:null,iv:true};rec.h=setInterval(fn,ms);TM.push(rec);return rec;}
+function drop(rec){var i=TM.indexOf(rec);if(i>=0)TM.splice(i,1);}
+function unlater(rec){if(!rec)return;if(rec.iv)clearInterval(rec.h);else clearTimeout(rec.h);drop(rec);}
+function clearAll(){while(TM.length)unlater(TM[0]);tick=null;}
+function activeKey(){
+  if(curView==='dedup')return 'dd';
+  if(flowShowing())return 'flow';
+  if(curView==='gates'&&$('flowwrap').getClientRects().length)return 'flow';
+  return null;
+}
+var PL={
+  flow:{
+    key:function(){return 'flow'+st.sc;},
+    name:function(){return '流程總覽・'+cur().name;},
+    count:function(){return cur().steps.length;},
+    idx:function(){return st.i;},
+    step:function(){return '第 '+(st.i+1)+' 步／共 '+cur().steps.length+' 步';},
+    title:function(){return cur().steps[st.i].t;},
+    text:function(){return cur().steps[st.i].d;},
+    label:function(k){return '第 '+(k+1)+' 步：'+cur().steps[k].t;},
+    note:function(){return '';},
+    go:function(i){st.i=i;render();},
+    move:function(d){var n=cur().steps.length;st.i=Math.max(0,Math.min(n-1,st.i+d));render();},
+    atStart:function(){return st.i===0;},
+    atEnd:function(){return st.i>=cur().steps.length-1;},
+    done:function(){return st.i>=cur().steps.length-1;},
+    delay:function(){return 2200/speed;}
+  },
+  dd:{
+    key:function(){return 'dd'+dd.t;},
+    name:function(){return '三層去重・'+DDT[dd.t].name;},
+    count:function(){return DDT[dd.t].steps.length;},
+    idx:function(){return dd.i;},
+    step:function(){return DDT[dd.t].name+' · 第 '+(dd.i+1)+'／'+DDT[dd.t].steps.length+' 步';},
+    title:function(){return DDT[dd.t].steps[dd.i].t;},
+    text:function(){return DDT[dd.t].steps[dd.i].x;},
+    label:function(k){return '第 '+(k+1)+' 步：'+DDT[dd.t].steps[k].t;},
+    note:function(){return '';},
+    go:function(i){dd.i=i;ddRender();},
+    move:function(d){
+      var n=DDT[dd.t].steps.length;
+      if(d>0){if(dd.i<n-1){dd.i++;ddRender();}else if(dd.t<DDT.length-1)ddSetTab(dd.t+1,0);}
+      else{if(dd.i>0){dd.i--;ddRender();}else if(dd.t>0)ddSetTab(dd.t-1,DDT[dd.t-1].steps.length-1);}
+    },
+    atStart:function(){return dd.t===0&&dd.i===0;},
+    atEnd:function(){return dd.t===DDT.length-1&&dd.i===DDT[dd.t].steps.length-1;},
+    done:function(){return dd.i>=DDT[dd.t].steps.length-1;},
+    nextLabel:function(){return (dd.i===DDT[dd.t].steps.length-1&&dd.t<DDT.length-1)?'下一層 ›':'下一步 ›';},
+    delay:function(){return 5500/speed;}
+  }
+};
+function stop(){clearAll();playing=false;shSync();}
+function shSync(){
+  var k=activeKey(),P=k?PL[k]:null,j;
+  $('shared').hidden=!P;
+  if(!P)return;
+  var key=P.key(),n=P.count(),i=P.idx();
+  $('sh-name').textContent='正在播：'+P.name();
+  if(shKey!==key){
+    shKey=key;
+    var dots=$('sh-dots');dots.replaceChildren();
+    for(j=0;j<n;j++)dots.append(h('button',{type:'button','aria-label':P.label(j),text:String(j+1),click:shDot(j)}));
+  }
+  var ds=$('sh-dots').children;
+  for(j=0;j<ds.length;j++){
+    ds[j].classList.toggle('past',j<i);
+    if(j===i)ds[j].setAttribute('aria-current','step');else ds[j].removeAttribute('aria-current');
+  }
+  $('sh-nstep').textContent=P.step();
+  $('sh-ntitle').textContent=P.title();
+  $('sh-ntext').textContent=P.text();
+  $('sh-note').textContent=P.note();
+  $('sh-prev').setAttribute('aria-disabled',String(P.atStart()));
+  $('sh-next').setAttribute('aria-disabled',String(P.atEnd()));
+  $('sh-next').textContent=P.nextLabel?P.nextLabel():'下一步 ›';
+  $('sh-play').textContent=playing?'⏸ 暫停':'▶ 播放';
+  $('sh-narr').setAttribute('aria-live',playing?'off':'polite');
+  if(k==='flow'&&$('ts-n')){$('ts-n').textContent=(st.i+1)+'／'+cur().steps.length+' 步';$('ts-prev').setAttribute('aria-disabled',String(P.atStart()));$('ts-next').setAttribute('aria-disabled',String(P.atEnd()));}
+}
+function shDot(j){return function(){shGo(j);};}
+function shGo(i){var k=activeKey();if(!k)return;stop();PL[k].go(i,true);shSync();}
+function shMove(d){
+  var k=activeKey(),P=k?PL[k]:null;
+  if(!P||(d>0?P.atEnd():P.atStart()))return;
+  stop();P.move(d,true);shSync();
+}
+function shPlay(){
+  var k=activeKey(),P=k?PL[k]:null;
+  if(!P||reduce)return;
+  if(playing){stop();return;}
+  if(P.done())P.go(0,true);
+  playing=true;shSync();schedule();
+}
+function schedule(){
+  var k=activeKey(),P=k?PL[k]:null;
+  if(!P||!playing)return;
+  tick=later(function(){
+    tick=null;
+    var k2=activeKey(),Q=k2?PL[k2]:null;
+    if(!Q||!playing)return;
+    if(Q.done()){playing=false;shSync();return;}
+    Q.move(1,true);
+    if(Q.done())playing=false;
+    shSync();
+    if(playing)schedule();
+  },P.delay());
+}
+function setSpeed(v){
+  speed=v;
+  speedBtns.forEach(function(x,j){x.setAttribute('aria-pressed',String([0.5,1,2][j]===v));});
+  if(playing&&tick){unlater(tick);tick=null;schedule();}
+}
+function arrowKey(ev){
+  if(ev.defaultPrevented||ev.altKey||ev.ctrlKey||ev.metaKey)return;
+  var tn=ev.target&&ev.target.tagName;
+  if(tn==='INPUT'||tn==='TEXTAREA'||tn==='SELECT')return;
+  if(ev.key==='ArrowRight'){ev.preventDefault();shMove(1);}
+  else if(ev.key==='ArrowLeft'){ev.preventDefault();shMove(-1);}
+}
+function setScenario(i){
+  stop();st.sc=i;st.i=0;
+  tabBtns.forEach(function(b,k){b.setAttribute('aria-pressed',k===i?'true':'false');});
+  tok.style.transition='none';
+  setTok(cur().from||'cut',cur().init.status);
+  progWas=cur().pf||0;
+  tok.getBoundingClientRect();
+  tok.style.transition='';
+  render();
+}
+SC.forEach(function(sc,i){
+  var b=h('button',{type:'button','class':'pill','aria-pressed':'false',text:sc.name,click:function(){if(!flowShowing())showView('home',{seg:'flow',noscroll:true});setScenario(i);}});
+  tabBtns.push(b);$('tabs').append(b);
+});
+(function(){
+  var w=h('span',{'class':'tstep',role:'group','aria-label':'手動一步一步看'},
+    h('button',{type:'button','class':'btn',id:'ts-prev',text:'‹ 上一步',click:function(){shMove(-1);}}),
+    h('span',{'class':'num',id:'ts-n','aria-live':'polite',text:''}),
+    h('button',{type:'button','class':'btn',id:'ts-next',text:'下一步 ›',click:function(){shMove(1);}}));
+  $('tabs').append(w);
+})();
+$('tabs').addEventListener('keydown',arrowKey);
+$('flowwrap').addEventListener('keydown',arrowKey);
+$('shared').addEventListener('keydown',arrowKey);
+$('stage').addEventListener('keydown',arrowKey);
+$('sh-prev').addEventListener('click',function(){shMove(-1);});
+$('sh-next').addEventListener('click',function(){shMove(1);});
+$('sh-play').addEventListener('click',shPlay);
+$('sh-restart').addEventListener('click',function(){var k=activeKey();if(!k)return;stop();PL[k].go(0,false);shSync();});
+[0.5,1,2].forEach(function(v){
+  var b=h('button',{type:'button','class':'btn','aria-pressed':v===1?'true':'false','aria-label':v+'× 播放速度',text:v+'×',click:function(){setSpeed(v);}});
+  speedBtns.push(b);$('sh-speed').append(b);
+});
+$('sh-play').hidden=reduce;$('sh-speed').hidden=reduce;
+
+/* ---------- 題目／重點 對到圖 ---------- */
+function pick(ids,btn){
+  stop();
+  svg.classList.remove('stepping');
+  svg.classList.toggle('picking',ids.length>0);
+  NODES.forEach(function(n){nodeEl[n.id].classList.toggle('pick',ids.indexOf(n.id)>=0);});
+  EDGES.forEach(function(e){edgeEl[e.id].classList.remove('on');edgeEl[e.id].setAttribute('marker-end','url(#q6ah)');
+    if(edgeLab[e.id])edgeLab[e.id].classList.remove('on');});
+  clearPressed();
+  if(btn)btn.setAttribute('aria-pressed','true');
+}
+function scrollToEl(el,block){
+  if(el.scrollIntoView)el.scrollIntoView({behavior:reduce?'auto':'smooth',block:block});
+}
+/* ---------- 視圖路由：舞台一次只露出一個視圖（home／read／dedup／gates） ---------- */
+var VIEWNAME={home:'流程總覽',dedup:'三層去重＋G1 對帳',gates:'驗收閘門'};
+var HSUB={flow:'hs-flow',est:'hs-est',rounds:'hs-rounds',why:'hs-why'};
+var HEADID={home:'playh',dedup:'ddh',gates:'gateh'};
+var curView='home',curSeg='flow',openerId=null,curGate=null;
+function flowShowing(){return curView==='home'&&curSeg==='flow';}
+/* 你在這裡：標示目前的視圖、分頁或閘門；舞台標題與快速切換鈕同步更新 */
+function whereSync(){
+  var t;
+  if(curView==='home')t={flow:'整張圖',est:'規模估算',rounds:'沙盤回合',why:'為什麼這樣切'}[curSeg]||'整張圖';
+  else if(curView==='dedup')t='三層去重 › '+DDT[dd.t].name;
+  else t='驗收閘門 › '+(GATES[curGate]?GATES[curGate].short:'');
+  $('whereTxt').textContent=t;
+  $('homeh').textContent=t;
+  document.querySelectorAll('.zchips [data-go]').forEach(function(b){
+    var g=b.getAttribute('data-go'),on;
+    if(g==='gates')on=curView==='gates'&&curGate===b.getAttribute('data-gate');
+    else if(g==='home')on=curView==='home'&&curSeg===b.getAttribute('data-seg');
+    else on=curView===g;
+    b.setAttribute('aria-pressed',String(on));
+  });
+}
+function setHomeSeg(k){
+  if(!HSUB[k])k='flow';
+  stop();
+  curSeg=k;
+  Object.keys(HSUB).forEach(function(x){
+    $(HSUB[x]).hidden=(x!==k);
+    var b=document.querySelector('.homeseg [data-hs="'+x+'"]');
+    if(b)b.setAttribute('aria-pressed',String(x===k));
+  });
+  whereSync();
+  shSync();
+}
+function showView(name,opts){
+  opts=opts||{};
+  if(!VIEWNAME[name])name='home';
+  var changed=name!==curView;
+  stop();
+  curView=name;
+  Object.keys(VIEWNAME).forEach(function(v){$('v-'+v).hidden=(v!==name);});
+  if(opts.seg)setHomeSeg(opts.seg);
+  whereSync();
+  $('fig').classList.toggle('zoomed',!flowShowing());
+  $('wherehome').hidden=(name==='home');
+  if(opts.focusHead){var hd=$(HEADID[name]);if(hd&&hd.focus)hd.focus({preventScroll:true});}
+  var stTop=$('stage').getBoundingClientRect().top;
+  if(changed&&!opts.noscroll&&(stTop<0||stTop>innerHeight*0.6))scrollToEl($('stage'),'start');
+  shSync();
+}
+function showNode(id){
+  showView('home',{seg:'flow',noscroll:true});
+  openerId=id;
+  pick([id],null);ddPeekHide();ddInspect(nodeAt[id]);
+  scrollToEl($('flowwrap'),'center');centerOn([id]);
+}
+function showGate(id,keepFocus){
+  curGate=id;
+  showView('gates',{focusHead:!keepFocus});
+  var box=$('gatecard');
+  box.replaceChildren(gateCard(nodeAt[id]),
+    h('div',{'class':'ddopts'},h('button',{type:'button','class':'btn',text:'↑ 在流程圖上看這一塊',click:function(){showNode(id);}}),
+      id==='g1'?h('button',{type:'button','class':'btn',text:'看 G1 對帳怎麼算 →',click:function(){ddGo(3,0,true);}}):null));
+  if(keepFocus){var b=box.querySelector('.gsw [aria-pressed="true"]');if(b)b.focus();}
+}
+function nodeRoute(n){
+  openerId=n.id;pick([n.id],null);
+  if(n.id==='seg'){dkOpen();return;}
+  if(GATES[n.id]){showGate(n.id);return;}
+  if((n.id==='job'||n.id==='bulk')&&DDPK[n.id]){ddGo(DDPK[n.id].t,DDPK[n.id].i,true);return;}
+  pick([n.id],null);ddInspect(n);
+}
+function goView(name,o){
+  o=o||{};openerId=null;
+  if(name==='home')showView('home',{seg:o.seg||'flow'});
+  else if(name==='gates')showGate(o.gate||'g1');
+  else showView(name);
+}
+QMAP.forEach(function(q){
+  var b=h('button',{type:'button','class':'pill','aria-pressed':'false',text:q.k,click:function(){
+    showView('home',{seg:'flow',noscroll:true});pick(q.ids,b);$('qout').textContent=q.t;$('mout').textContent='';
+    if(q.ids.length){scrollToEl($('flowwrap'),'center');centerOn(q.ids);}
+  }});
+  $('qmap').append(b);
+});
+MODEL.forEach(function(m,i){
+  if(i)$('model').append(h('span',{'class':'arrow','aria-hidden':'true',text:'→'}));
+  var b=h('button',{type:'button','class':'pill','aria-pressed':'false',text:m.k,click:function(){
+    showView('home',{seg:m.ids.length?'flow':'est',noscroll:true});pick(m.ids,b);$('mout').textContent=m.t;$('qout').textContent='';centerOn(m.ids);
+    if(!m.ids.length)scrollToEl($('hs-est'),'start');
+  }});
+  $('model').append(b);
+});
+
+/* ---------- 渠道 × 月 ---------- */
+var CH=['Facebook','Instagram','YouTube','論壇','媒體','Threads'];
+var MON=[];
+for(var y=2023;y<=2026;y++){for(var mo=1;mo<=12;mo++){if(y===2026&&mo>10)break;MON.push(y+'-'+(mo<10?'0':'')+mo);}}
+var LAST=MON.length-1;
+function has(c,mi){return c!==5||mi>=6;}
+var order={},byOrder=[null],total=0;
+for(var mi=LAST;mi>=0;mi--){for(var c=0;c<CH.length;c++){if(has(c,mi)){total++;order[c+'_'+mi]=total;byOrder.push({c:c,mi:mi});}}}
+var cells={},sel={c:0,mi:LAST},grid=$('grid');
+$('gtotal').textContent=total;
+$('prog').max=total;
+grid.append(h('span',null));
+[['2023',12],['2024',12],['2025',12],['2026',10]].forEach(function(yy){
+  grid.append(h('span',{'class':'yr',style:'grid-column:span '+yy[1],text:yy[0]}));
+});
+CH.forEach(function(name,c){
+  grid.append(h('span',{'class':'lab',text:name}));
+  MON.forEach(function(m,mi){
+    if(!has(c,mi)){grid.append(h('span',{'class':'none',title:'Threads 從 2023-07 才有資料','aria-hidden':'true'}));return;}
+    var n=order[c+'_'+mi];
+    var b=h('button',{type:'button','class':'cell'+(mi===LAST?' first':''),tabindex:(c===0&&mi===LAST)?0:-1,'aria-pressed':'false',
+      'aria-label':name+' '+m+'，第 '+n+' 批',click:function(){select(c,mi,false);}});
+    cells[c+'_'+mi]=b;grid.append(b);
+  });
+});
+function select(c,mi,focus){
+  var old=cells[sel.c+'_'+sel.mi];
+  if(old){old.setAttribute('aria-pressed','false');old.tabIndex=-1;}
+  sel={c:c,mi:mi};
+  var b=cells[c+'_'+mi];b.setAttribute('aria-pressed','true');b.tabIndex=0;
+  if(focus)b.focus();
+  described=true;if(!flowShowing())showView('home',{seg:'flow',noscroll:true});describe();
+}
+function describe(){
+  var c=sel.c,mi=sel.mi,b=cells[c+'_'+mi];
+  var n=order[c+'_'+mi],v=+$('prog').value,isCur=(b===curCell),stt;
+  if(isCur)stt='流程現在：'+(STXT[curSt]||curSt)+'。';
+  else if(n<=v)stt='已通過。';
+  else if(n===v+1)stt='下一批。';
+  else stt='還沒跑，前面還有 '+(n-v-1)+' 批。';
+  var passed=isCur?curSt==='passed':n<=v;
+  $('inspect').replaceChildren(h('b',{text:'① '+CH[c]+' × '+MON[mi]+'：第 '+n+' 批'}),
+    '（共 '+total+' 批，示意）。'+stt+
+    (mi===LAST?(passed?'這是首批，PM 已簽過（G4）。'
+                      :'這是首批（每個渠道最新的一批）：三關過了，還要等 PM 在 A/B 頁簽（G4），簽了才開放這個渠道其他批。')
+              :'不是首批：三關過了就直接放行。')+
+    '平均一批約 185 萬篇（示意）。');
+}
+grid.addEventListener('keydown',function(ev){
+  var d={ArrowLeft:[0,-1],ArrowRight:[0,1],ArrowUp:[-1,0],ArrowDown:[1,0]}[ev.key];
+  if(!d)return;
+  var c=sel.c+d[0],mi=sel.mi+d[1];
+  if(c<0||c>=CH.length||mi<0||mi>LAST||!has(c,mi))return;
+  ev.preventDefault();select(c,mi,true);
+});
+function updGrid(){
+  var v=+$('prog').value;
+  for(var key in cells){
+    var n=order[key];
+    cells[key].classList.toggle('done',n<=v);
+    cells[key].classList.toggle('next',n===v+1);
+  }
+  var txt='已通過 '+v+'／'+total+' 批';
+  if(v>0)txt+='，做到 '+MON[byOrder[v].mi]+'，約 '+(v*185<10000?v*185+' 萬篇':(v*185/10000).toFixed(1)+' 億篇')+'（示意）';
+  else txt+='，還沒開始';
+  $('progout').textContent=txt;
+}
+$('prog').addEventListener('input',function(){stop();updGrid();if(described&&flowShowing())describe();});
+var STXT={pending:'排隊',running:'跑中',passed:'已通過',failed:'未通過',awaiting_pm:'等 PM 簽'};
+var GLY={pending:'·',running:'▶',passed:'✓',failed:'✕',awaiting_pm:'!'};
+var curCell=null,curSt='',described=false;
+function dispSt(v){var b=String(v).split('（')[0];return (STXT[b]&&b===String(v))?v+'（'+STXT[b]+'）':v;}
+function gridSync(sc,kv){
+  if(!sc.g||!byOrder[sc.g])return;
+  var o=byOrder[sc.g],base=String(kv.status).split('（')[0];
+  var D=sc.g-1+(base==='passed'?1:0);
+  $('prog').value=D;
+  if(curCell){curCell.classList.remove('cur','st-failed','st-awaiting_pm');curCell.removeAttribute('data-glyph');curCell.removeAttribute('aria-current');}
+  curCell=cells[o.c+'_'+o.mi];curSt=base;
+  curCell.classList.add('cur');curCell.setAttribute('aria-current','step');
+  if(base==='failed'||base==='awaiting_pm')curCell.classList.add('st-'+base);
+  curCell.setAttribute('data-glyph',GLY[base]||'▶');
+  var se=subEl.cut;
+  if(se){se.base='已通過 '+D+'／'+total+' 批';if(se.el.getAttribute('class')==='ns')se.el.textContent=se.base;}
+  $('gchip').textContent=(GLY[base]||'▶')+' 第 '+sc.g+' 批：'+CH[o.c]+' × '+MON[o.mi]+'・'+(STXT[base]||base);
+  updGrid();
+  if(described&&flowShowing())describe();
+  var cx=FOX+78+1+o.mi*17+8;
+  cutFocus={x:cx-60,w:120};
+  edgeEl.cut_job.setAttribute('d','M'+cx+' -12 V8 H100 V110 H209');
+}
+updGrid();
+
+/* ---------- G3 試算 ---------- */
+function g3(){
+  var b=+$('g3base').value,m=+$('g3meas').value,a=b*1.5,c2=b+50,cap=Math.min(Math.max(a,c2),180000),over=m>cap;
+  $('g3baseout').textContent=b+' ms';
+  $('g3measout').textContent=m+' ms';
+  var v=$('g3verdict');
+  v.className='verdict '+(over?'over':'pass');
+  v.replaceChildren(
+    h('span',{'class':'big',text:over?'超過上限：全域限速砍半，等 15 秒再量':'沒超過上限：p95 這一項通過（G3 還要寫入拒絕數 = 0）'}),
+    '上限 = max( '+b+' × 1.5 = '+fmt(a)+'，'+b+' + 50 = '+c2+' ) = '+fmt(cap)+' ms'+
+    (a>c2?'（基準 × 1.5 那一項比較大）':a===c2?'（兩項一樣大）':'（基準 + 50 ms 那一項比較大）')+
+    '。量到 '+m+' ms，'+(over?'比上限多 '+fmt(m-cap)+' ms。':'在上限內。'));
+}
+$('g3base').addEventListener('input',g3);
+$('g3meas').addEventListener('input',g3);
+g3();
+
+/* ---------- 估算 ---------- */
+var EST=[
+ {name:'作答版',note:'作答（answer_600.txt）的分法。「六渠道回朔與驗收」是 6 個渠道 × 2 天。',
+  items:[['先量現況',2],['POC',5],['字典整併',10],['工程化',10],['六渠道回朔與驗收',12],['壓測與切換',3],['緩衝',3]]},
+ {name:'原圖版',note:'原圖的分法。項目切得不一樣，合計一樣是 45 天。',
+  items:[['字典整併與規則調整',10],['回補流程開發（切批、Job、閘門）',12],['驗收工具（A/B 頁、簽核流程）',6],['測試調參與沙盤驗證',10],['緩衝',7]]}
+];
+var estBtns=[];
+function showEst(i){
+  var e=EST[i],sum=0,bars=$('bars');bars.replaceChildren();
+  estBtns.forEach(function(b,k){b.setAttribute('aria-pressed',k===i?'true':'false');});
+  e.items.forEach(function(it){
+    sum+=it[1];
+    bars.append(h('div',{'class':'bar'},
+      h('span',{'class':'lab2',text:it[0]}),
+      h('div',{'class':'track','aria-hidden':'true'},h('div',{'class':'fill',style:'width:'+(it[1]/12*100).toFixed(1)+'%'})),
+      h('span',{'class':'d',text:it[1]+' 天'})));
+  });
+  bars.append(h('div',{'class':'bar total'},h('span',{'class':'lab2',text:'合計'}),h('span',null),h('span',{'class':'d',text:sum+' 天'})));
+  $('estnote').textContent=e.note;
+}
+EST.forEach(function(e,i){
+  var b=h('button',{type:'button','class':'pill','aria-pressed':'false',text:e.name,click:function(){showEst(i);}});
+  estBtns.push(b);$('estsw').append(b);
+});
+showEst(0);
+
+/* ---------- 沙盤三輪 ---------- */
+var RD=[
+ {t:'第 1 輪（字典 r2）：46 個全部沒過',cells:[['bad',46]],
+  d:'全部卡在 G2 的「網址殘片」。查原文才發現是檢查規則本身錯：PTT 的 www 是在笑、NET 是服飾品牌、PHP 是話題。同時抓到首批關卡有洞：首批還沒簽，同渠道其他 45 批就跑完了。'},
+ {t:'第 2 輪（r3）：34 過、12 沒過',cells:[['ok',34],['bad',7],['g3',5]],
+  d:'沒過的 12 個裡，7 個是「新北」被切開（G2），5 個是 G3 線上負載。'},
+ {t:'第 3 輪（r4）：只重跑那 12 個，10 過、2 人工豁免',cells:[['keep',34],['ok',10],['waive',2]],
+  d:'G3 自動降速 3,000 → 1,500 → 750 後，這 12 個分區的 G3 全部通過。剩 2 篇把詞頻拉到 3,000 仍切錯（G2），由字典負責人豁免，理由寫進狀態紀錄。最後：r3 通過 34 個、r4 通過 12 個（其中 2 個是人工豁免）。'}
+];
+RD.forEach(function(r){
+  var sq=h('div',{'class':'sq','aria-hidden':'true'});
+  r.cells.forEach(function(cc){for(var i=0;i<cc[1];i++)sq.append(h('i',{'class':cc[0]}));});
+  $('rounds').append(h('div',{'class':'round'},h('h3',{text:r.t}),sq,h('p',{text:r.d})));
+});
+
+/* ---------- 三層去重：程式碼（從 stack/seg/qseg/ledger.py 原始檔抽出，字沒改，行號就是檔案裡的行號） ---------- */
+var DDCODE={"c0": {"c": "    def claim(self, max_attempts: int, worker: str, stale_sec: int = STALE_SEC, partition_id: str = None):", "f": "ledger.py", "a": 275, "b": 275}, "c1": {"c": "        if partition_id:\n            d = self.get(partition_id)\n            return self._take(d, worker, now_iso()) if d else None", "f": "ledger.py", "a": 277, "b": 279}, "c2": {"c": "        for _ in range(CLAIM_ROUNDS):", "f": "ledger.py", "a": 280, "b": 280}, "c3": {"c": "            self.refresh()\n            cands = self.search(self._claimable_query(max_attempts, stale_sec), size=1000)", "f": "ledger.py", "a": 281, "b": 282}, "c4": {"c": "            if not cands:\n                return None", "f": "ledger.py", "a": 283, "b": 284}, "c5": {"c": "            contended = False\n            for d in cands:\n                pid, ch = d[\"partition_id\"], d[\"channel\"]\n                if not self.channel_open(ch, pid):\n                    continue", "f": "ledger.py", "a": 285, "b": 289}, "c6": {"c": "                took = self._take(d, worker, now_iso())\n                if took is None:            # 別人先搶到了\n                    contended = True\n                    continue", "f": "ledger.py", "a": 290, "b": 293}, "c7": {"c": "                if self.channel_open(ch, pid):   # refresh 後重查：同渠道沒有別人也在跑\n                    return took", "f": "ledger.py", "a": 294, "b": 295}, "c8": {"c": "                contended = True            # 同渠道另一篇也在跑：退回，換下一篇\n                # 退回失敗（別人已改過）：不再動它；它的心跳不會更新，超過 STALE_SEC 後會被其他人回收\n                self._give_back(d, took)", "f": "ledger.py", "a": 296, "b": 298}, "c9": {"c": "            if not contended:\n                return None                 # 候選都被渠道規則擋住：和原本 PG 版一樣，回傳沒有\n            time.sleep(random.uniform(0.01, 0.05))\n        return None", "f": "ledger.py", "a": 299, "b": 302}, "cas": {"c": "        body = {\"doc\": {k: to_iso(v) for k, v in fields.items()}}\n        path = (f\"/{self.index}/_update/{self._id(pid)}?if_seq_no={seq_no}&if_primary_term={primary_term}\"\n                \"&refresh=wait_for\")\n        status, out = self.raw(\"POST\", path, body)\n        if status == 409:\n            return None\n        if status >= 400:\n            raise LedgerError(f\"cas {pid} -> {status}: {str(out)[:300]}\")\n        return {\"_seq_no\": out[\"_seq_no\"], \"_primary_term\": out[\"_primary_term\"]}", "f": "ledger.py", "a": 202, "b": 210}, "hb": {"c": "        status, out = self.raw(\"POST\", f\"/{self.index}/_update/{self._id(pid)}\", {\"script\": {\n            \"lang\": \"painless\", \"source\": HEARTBEAT_SRC, \"params\": {\"t\": now_iso()}}})\n        return status < 400 and out.get(\"result\") == \"updated\"", "f": "ledger.py", "a": 225, "b": 227}, "r0": {"c": "def load_partition_lines(raw: Path):", "f": "job.py", "a": 99, "b": 99}, "r1": {"c": "  lines, seen, total = [], set(), 0", "f": "job.py", "a": 101, "b": 101}, "r2": {"c": "  for line in raw.read_text(encoding=\"utf-8\").splitlines():", "f": "job.py", "a": 102, "b": 102}, "r3": {"c": "    if not line.strip():\n      continue", "f": "job.py", "a": 103, "b": 104}, "r4": {"c": "    total += 1", "f": "job.py", "a": 105, "b": 105}, "r5": {"c": "    pid = json.loads(line).get(\"post_id\")", "f": "job.py", "a": 106, "b": 106}, "r6": {"c": "    if pid in seen:\n      continue", "f": "job.py", "a": 107, "b": 108}, "r7": {"c": "    seen.add(pid)", "f": "job.py", "a": 109, "b": 109}, "r8": {"c": "    lines.append(line)", "f": "job.py", "a": 110, "b": 110}, "r9": {"c": "  return lines, total", "f": "job.py", "a": 111, "b": 111}, "r10": {"c": "lines, raw_lines = load_partition_lines(raw)", "f": "job.py", "a": 211, "b": 211}, "r11": {"c": "raw_count = len(lines)   # 不重複 post_id 數（G1 比這個；原始行數另記 raw_lines）", "f": "job.py", "a": 212, "b": 212}, "r12": {"c": "    led.set(pid, {\"raw_count\": raw_count, \"raw_lines\": raw_lines})", "f": "job.py", "a": 210, "b": 210}, "b0": {"c": "def _bulk_lines(self, items, force):", "f": "es.py", "a": 48, "b": 48}, "b1": {"c": "    lines.append(json.dumps({\"update\": {\"_index\": self.index, \"_id\": pid, \"retry_on_conflict\": 3}}))", "f": "es.py", "a": 52, "b": 52}, "b2": {"c": "      \"scripted_upsert\": True,", "f": "es.py", "a": 54, "b": 54}, "b3": {"c": "      \"script\": {\"id\": \"seg_guard\", \"params\": {\"f\": f, \"seg_ver\": ver, \"base\": base, \"seg\": seg, \"force\": force}},", "f": "es.py", "a": 55, "b": 55}, "b4": {"c": "      \"upsert\": {},", "f": "es.py", "a": 56, "b": 56}, "s1": {"c": "String f = params.f;", "f": "es.py", "a": 17, "b": 17}, "s2": {"c": "def cur = ctx._source['seg_ver_' + f];", "f": "es.py", "a": 18, "b": 18}, "s3": {"c": "boolean force = params.containsKey('force') && params.force;", "f": "es.py", "a": 19, "b": 19}, "s4": {"c": "def newSha = params.base.containsKey('content_sha') ? params.base.content_sha : null;", "f": "es.py", "a": 20, "b": 20}, "s5": {"c": "def curSha = ctx._source.containsKey('content_sha') ? ctx._source.content_sha : null;", "f": "es.py", "a": 21, "b": 21}, "s6": {"c": "boolean changed = newSha != null && curSha != null && newSha != curSha;", "f": "es.py", "a": 22, "b": 22}, "s7": {"c": "if (cur != null && !changed && (force ? cur > params.seg_ver : cur >= params.seg_ver)) { ctx.op = 'noop'; return; }", "f": "es.py", "a": 23, "b": 23}, "s8": {"c": "for (entry in params.base.entrySet()) {\n if (changed || !ctx._source.containsKey(entry.getKey()) || ctx._source[entry.getKey()] == null) { ctx._source[entry.getKey()] = entry.getValue(); }\n}", "f": "es.py", "a": 24, "b": 26}, "s9": {"c": "for (entry in params.seg.entrySet()) { ctx._source[entry.getKey()] = entry.getValue(); }", "f": "es.py", "a": 27, "b": 27}, "p1": {"c": "return self.req(\"PUT\", \"/_scripts/seg_guard\", {\"script\": {\"lang\": \"painless\", \"source\": GUARD_SCRIPT}})", "f": "es.py", "a": 46, "b": 46}, "k0": {"c": "res = es.bulk_seg(items, force=force) if items else {\"created\": 0, \"updated\": 0, \"noop\": 0, \"errors\": 0, \"rejected\": 0, \"took_ms\": 0, \"failed_ids\": []}", "f": "job.py", "a": 245, "b": 245}, "k1": {"c": "        i += len(chunk)\n        processed += len(items)\n        led.progress(pid, checkpoint_line=i, written=res[\"created\"] + res[\"updated\"], noop=res[\"noop\"])", "f": "job.py", "a": 264, "b": 266}, "q1": {"c": "es.req(\"POST\", f\"/{es.index}/_refresh\")", "f": "job.py", "a": 136, "b": 136}, "q2": {"c": "target = seg_ver(\"v2\", dic.version)", "f": "job.py", "a": 137, "b": 137}, "q3": {"c": "scope = [{\"term\": {\"channel\": part[\"channel\"]}}, {\"term\": {\"month\": part[\"month\"]}}]", "f": "job.py", "a": 138, "b": 138}, "q4": {"c": "done = es.count({\"bool\": {\"filter\": scope + [{\"range\": {\"seg_ver_v2\": {\"gte\": target}}}]}})", "f": "job.py", "a": 139, "b": 139}, "q5": {"c": "g1 = {\"pass\": done == raw_count, \"raw\": raw_count, \"es_at_target\": done, \"basis\": \"distinct post_id\"}", "f": "job.py", "a": 140, "b": 140}};
+/* 每一段程式的白話 */
+var DDN={
+ c0:'定義「領一篇」這個動作（ES 版）。每個 task 開工前都會呼叫它；領到就回傳那一列，沒有就回傳沒有。',
+ c1:'指定分區（--partition）時直接取那一列，不看狀態、不看渠道：這是拿來重跑的路徑。',
+ c2:'最多重來 50 輪。每一輪都是「重新整理、重新找、重新搶」。搶輸了就再來一輪，每次隨機等 0.01 到 0.05 秒，免得大家同時撞。',
+ c3:'先請 ES 整理一次（refresh），讓別人剛寫進去的狀態看得到，再找候選：pending，或心跳超過 120 秒的 running；attempts 還沒到上限。依月份新到舊、渠道排序。',
+ c4:'一個候選都沒有，就回傳沒有（沒工作了）。',
+ c5:'一個一個試候選。先看渠道規則：渠道裡已經有 passed 就放行；還沒有的話，同渠道只要有別篇在 running、awaiting_pm 或 failed，這篇就先跳過。',
+ c6:'真正的「搶」：把這一篇改成 running，並附上它讀到的 if_seq_no、if_primary_term。版本對不上（ES 回 409）＝別人先改了它，就換下一篇。',
+ c7:'搶到之後再整理一次，再查一次渠道。如果同渠道沒有別篇也在跑，這篇就算贏，回傳它。',
+ c8:'搶到之後發現同渠道另一篇也在跑（兩人幾乎同時搶到），就把自己退回原狀態，換下一篇。退回也用版本號條件更新；如果那一步也失敗（別人已改過），就不再動它，交給心跳過期機制回收。',
+ c9:'這一輪有搶輸或退回才會再來一輪（隨機等一下）；候選全都被渠道規則擋住，就回傳沒有，不硬等。',
+ cas:'條件更新的基礎：只有 seq_no 和 primary_term 都還對得上（沒人改過），才寫入；對不上 ES 回 409，這裡回傳 None。這就是 ES 版的「搶位」，取代原本 PG 的 FOR UPDATE。',
+ hb:'背景每 20 秒執行一次，把心跳時間改成「現在」。腳本只在狀態還是 running 時才改；已經被別人接手或已結束，就不動（回傳 noop）。',
+ r0:'定義「讀一個分區的原文檔」這個動作。raw 就是那個檔案。',
+ r1:'準備三樣東西：lines＝留下來的行（先是空的）；seen＝看過的 post_id（空的 set，一種不會放進重複東西的袋子）；total＝讀了幾行（先是 0）。',
+ r2:'把整個檔案讀進來，切成一行一行，下面的動作每一行做一次。',
+ r3:'這一行是空白的就跳過（continue＝直接看下一行），不算數。',
+ r4:'讀了幾行，加 1。重複的行也算。',
+ r5:'這一行是一段 JSON 文字，把它解開，拿出裡面的 post_id，暫時叫它 pid。',
+ r6:'去重就靠這兩行：pid 已經在 seen 袋子裡了嗎？在 → continue，整行丟掉，直接看下一行。',
+ r7:'走到這裡表示沒看過：把這個 post_id 放進 seen。',
+ r8:'這一行留下來，加到 lines 的最後面。',
+ r9:'全部讀完，交回兩樣東西：去重後的行、總共讀了幾行。',
+ r10:'呼叫上面那個動作。lines＝去重後的行；raw_lines＝讀了幾行（這個例子是 5）。',
+ r11:'raw_count＝留下幾行＝不重複的文章數（這個例子是 3）。後面那句註解是原作者寫的：G1 比的是這個數字。',
+ r12:'把兩個數字寫回狀態紀錄裡這個分區的那一列。',
+ b0:'定義「把一批文章排成要送給 ES 的文字」這個動作。',
+ b1:'每篇的第一行：告訴 ES「我要更新 _id 是 pid 的那份文件」。pid 就是 post_id。_id 一樣就是同一份文件，不會多一份。retry_on_conflict: 3＝剛好和別人同時改到同一份時，ES 自動重試最多 3 次。',
+ b2:'每篇的第二行開始：scripted_upsert＝就算文件還不存在，也照樣跑腳本。',
+ b3:'用哪一段腳本（seg_guard），以及交給它的材料：f＝哪一版斷詞、seg_ver＝這次的版本號、base＝文章本體、seg＝斷詞結果、force＝要不要強制覆寫。',
+ b4:'文件不存在時，先放進去的那份「空白文件」。接著由腳本把內容填上。',
+ s1:'f＝這次寫的是哪一版斷詞（例如 v2）。params 是程式交給腳本的材料。',
+ s2:'cur＝ES 裡這份文件目前的版本號。ctx._source 就是「ES 裡現在這份文件」；沒有這個欄位時 cur 是空的（null）。',
+ s3:'force＝這次有沒有要求強制覆寫。',
+ s4:'newSha＝這次送來的原文指紋（content_sha）。',
+ s5:'curSha＝ES 裡那一份的原文指紋。',
+ s6:'changed＝兩邊都有指紋，而且不一樣＝原文被改過。',
+ s7:'最關鍵的一行。三件事都成立就什麼都不做（noop）：這份文件已經有版本號；原文沒改過；ES 裡的版本不比這次舊（強制覆寫時要「比這次新」才算）。',
+ s8:'沒有 noop 才會走到這裡。文章本體的欄位：缺的才補上；原文改過的話就全部換新。',
+ s9:'把這一版的斷詞結果寫進去。只動這一版的欄位（terms_v2 這一組），舊版 terms_v1 不碰。',
+ p1:'程式啟動時做一次：把上面那段腳本存進 ES，取名 seg_guard。所以它不是 ES 內建的。painless 是 ES 寫腳本用的語言。',
+ k0:'把這一批送給 ES，拿回結果 res：created、updated、noop、errors 各幾篇。',
+ k1:'整批沒有錯誤才會走到這裡：記下做到第幾行（checkpoint_line）、累加寫了幾篇（written）、沒動幾篇（noop），順便更新心跳。',
+ q1:'先請 ES「整理一下」（refresh），讓剛寫進去的文件數得到。不做的話可能少算。',
+ q2:'target＝這次回補要達到的版本號。',
+ q3:'scope＝只看這個渠道、這個月的文件。',
+ q4:'done＝在這個範圍裡，v2 版本號已經到 target 的文件有幾份。這就是 es_at_target。',
+ q5:'G1 過不過＝done 等不等於 raw_count。最後的 basis 寫明：比的是「不重複的 post_id 數」。'
+};
+/* 每一層右邊要列哪些程式 */
+var DDBLK=[
+ [['claim()：領一篇（ES 版）',['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','cas']],['Heartbeat：背景報平安',['hb']]],
+ [['load_partition_lines()：讀原文、去重',['r0','r1','r2','r3','r4','r5','r6','r7','r8','r9']],['run_partition()：記下兩個數字',['r10','r11','r12']]],
+ [['_bulk_lines()：每篇送給 ES 的兩行',['b0','b1','b2','b3','b4']],['seg_guard 腳本：ES 收到後照這段決定',['s1','s2','s3','s4','s5','s6','s7','s8','s9']],['put_guard_script()：啟動時把腳本存進 ES',['p1']],['run_partition()：送出一批，成功才記進度',['k0','k1']]],
+ [['G1 對帳',['q1','q2','q3','q4','q5']]]
+];
+/* 名詞小辭典 */
+var DDG={
+ '分區':'把要回補的文章切成一包一包。一包＝一個渠道的一個月。',
+ 'partition_id':'分區的編號，例如「ptt/2026-09」（ptt 這個渠道、2026 年 9 月）。只管分工，不管去重文章。',
+ 'post_id':'一篇文章的編號。同一篇不管被抓幾次，編號都一樣。',
+ 'task':'一個正在跑的回補程式。同時開好幾個一起做，比較快。',
+ '狀態紀錄':'ES 索引 backfill_ledger。一篇文件＝一個分區（_id＝分區編號），記著狀態、誰在做、做到哪裡。',
+ 'status':'一個分區現在的狀態：pending 還沒做／running 有人在做／awaiting_pm 等 PM 看／passed 過了／failed 失敗，要人看。',
+ 
+ '鎖':'「這個我正在用，別人先等一下」的記號。',
+ '條件更新（CAS）':'ES 沒有交易也沒有鎖。搶一篇時附上它讀到的 if_seq_no、if_primary_term；別人先改過，版本就對不上，ES 回 409，這一篇就搶輸。',
+ 'if_seq_no':'文件的修改序號，每改一次就變大。條件更新時要求它還是我讀到的那個數字。',
+ '409':'ES 回的衝突碼：條件更新時版本已經變了。搶的 task 就換下一篇，不等。',
+ 'heartbeat_at':'心跳：「我還活著」的時間。做事的 task 每 20 秒更新一次。停超過 2 分鐘，別人就可以接手。',
+ 'attempts':'這個分區被領過幾次。上限是 3 次：領滿 3 次還沒做完、心跳又停超過 2 分鐘，下一次有人來領工作時就把它改成 failed。',
+ 'checkpoint_line':'存檔點：這個分區做到第幾行了。中斷後從這裡接著做，不用從頭來。',
+ 'jsonl':'一種文字檔：一行一筆資料，每一行是一段 JSON。',
+ 'JSON':'一種記資料的文字寫法，長得像 {"名字": "值"}。',
+ 'set':'程式裡的一種袋子：同樣的東西放兩次也只算一個，而且查「裡面有沒有」很快。',
+ 'raw_lines':'原文檔讀了幾行（不算空白行，重複的也算）。只是記錄，不拿來對帳。',
+ 'raw_count':'去重後剩幾篇＝不重複的 post_id 數。G1 比的是這個。',
+ 'ES':'Elasticsearch：存文章、給人搜尋的系統。',
+ '索引':'ES 裡放文件的大資料夾。',
+ '文件':'ES 裡的一筆資料。這裡一篇文章＝一份文件。',
+ '_id':'ES 文件的身分證號碼。同一個索引裡 _id 不會重複，所以用同一個 _id 再寫一次，只會寫到同一份。',
+ 'bulk':'把很多筆寫入打包成一次送給 ES。這裡一批最多 500 篇。',
+ 'upsert':'update 加 insert：有就更新，沒有就新增。',
+ 'scripted_upsert':'文件還不存在時，也照樣跑腳本（先放一份空白文件，再讓腳本填）。',
+ 'script':'腳本：存在 ES 裡的一小段程式，每次更新文件時由 ES 執行。這裡用的語言叫 painless。',
+ 'seg_guard':'這個專案自己寫的腳本名字。它決定「要寫，還是什麼都不做」。',
+ 'retry_on_conflict':'同一份文件剛好被兩邊同時改時，ES 自動重試幾次。這裡是 3 次。',
+ 'created/updated/noop':'ES 對每一篇的回報：created 新建了／updated 更新了／noop 沒動（已經是對的）。三種都算成功。',
+ 'seg_ver':'斷詞版本號，是一個整數（由演算法版本和字典日期組成，例如 22026103002）。數字越大越新。',
+ 'content_sha':'原文的指紋：內容一樣，指紋就一樣；改一個字，指紋就不同。',
+ 'force':'人工重跑時的選項：同版本也覆寫，並把這個分區的進度歸零、整個重做。',
+ '429':'ES 回的一種訊息：「我現在太忙，等一下再送」。',
+ 'refresh':'請 ES 把剛寫入的資料整理好。整理後才數得到、搜得到。',
+ 'G1':'第一道閘門：數量對帳。原文不重複的篇數，要等於 ES 裡版本已到目標的文件數。'
+};
+var DDMYTH=[
+ ['partition_id 是用來去重文章的。','它只管「這一包由誰做」。認「是不是同一篇」的是 post_id。'],
+ ['搶輸的那個 task 是因為看到別人的鎖才跳過那一列的。','ES 沒有鎖。它只是在條件更新時拿到 409，就換下一篇；那一列如果已經是 running、心跳又新，本來就不在候選裡。'],
+ ['noop 代表出錯或漏寫。','noop 是成功的一種：已經是對的，不用重做。'],
+ ['raw_lines 和 raw_count 是同一個數字。','raw_lines 含重複行（例子裡是 5）；raw_count 是去重後（3）。G1 用 raw_count。'],
+ ['重跑一次，ES 裡就會多一份。','_id 就是 post_id，同一篇永遠寫到同一份文件。'],
+ ['心跳停超過 2 分鐘，task 一定死了。','那只是推斷。程式卡住、被暫停，或心跳連不上 ES 時，心跳也會停，但 task 還沒死。（只是做得慢的 task 不會被誤判：心跳由另一條背景執行緒每 20 秒更新一次。）所以有可能短暫兩個 task 重疊，這時靠第三層擋住。'],
+ ['版本號只會變大，所以新的一定不會被蓋掉。','原文沒改時才成立。原文改過（指紋不同）時不比版本，直接用新內容覆寫。']
+];
+var DDQUIZ=[
+ ['原文檔 5 行的 post_id 依序是 A、B、A、C、B。raw_lines 和 raw_count 各是多少？留下的是哪幾行？','raw_lines = 5，raw_count = 3。留下第 1、2、4 行（每個 post_id 第一次出現的那一行）。'],
+ ['task 中斷後由別人接手，把同一批重送。某一篇在 ES 裡已經是最新版，原文也沒改。ES 會回什麼？文件會變幾份？','回 noop（沒動）。還是 1 份，因為 _id 相同就是同一份文件。'],
+ ['某個分區狀態是 running，心跳是 30 秒前。另一個 task 來領，領得到嗎？','領不到。running 的分區要心跳停超過 2 分鐘才可以被重領；30 秒表示有人正在做。']
+];
+
+/* ---------- 三層去重：左邊的示意資料 ---------- */
+var DDSTK={pending:'mut',running:'run',passed:'ok',failed:'bad',created:'ok',updated:'cut',noop:'mut'};
+function ddChip(txt,k){return h('span',{'class':'ddst dk-'+k,text:txt});}
+function ddCodeNode(c){
+  var el=h('code',{'class':'ddsrc'});
+  c.split('\n').forEach(function(ln,i){
+    var t=ln.replace(/^ +/,''),sp=h('span',{'class':'cln',text:t});
+    sp.style.paddingLeft=(ln.length-t.length+2)+'ch';
+    if(i)el.append('\n');
+    el.append(sp);
+  });
+  return el;
+}
+function ddLn(u){return u.f+' 第 '+(u.a===u.b?u.a:u.a+'–'+u.b)+' 行';}
+var DDP5=['ptt/2026-11','ptt/2026-10','ptt/2026-09','ptt/2026-08','ptt/2026-07'];
+function ddTasks(box,label,arr,on){
+  if(!arr||!arr.length)return;
+  box.append(h('span',{text:label}));
+  arr.forEach(function(t){box.append(h('span',{'class':'ddtask'+(on?' in':''),text:t}));});
+}
+function ddV1(v){
+  var box=h('div',null),q=v.q||{},qs=h('div',{'class':'ddq'});
+  qs.append(h('span',{text:'領取窗口（一次只進一個）：'}));
+  if(q['in'])qs.append(h('span',{'class':'ddtask in',text:q['in']}));else qs.append(h('span',{text:'（空）'}));
+  ddTasks(qs,'排隊中：',q.wait,false);
+  ddTasks(qs,'已領到工作：',q.done,false);
+  box.append(qs);
+  var rows=h('div',{'class':'ddrows'});
+  DDP5.forEach(function(p){
+    var r=(v.rows&&v.rows[p])||(p==='ptt/2026-11'?['passed','（做完了）','—',1]:['pending','—','—',0]);
+    rows.append(h('div',{'class':'ddrow'+(r[5]?' '+r[5]:'')},
+      h('div',{'class':'r1'},h('code',{text:p}),ddChip(r[0],DDSTK[r[0]]),r[4]?h('span',{'class':'ddmark',text:r[4]}):null),
+      h('div',{'class':'r2',text:'誰在做：'+r[1]+'　心跳：'+r[2]+'　被領次數：'+r[3]})));
+  });
+  box.append(rows);
+  box.append(h('p',{'class':'ddhint',text:'每一列的欄位（實際欄位名）：partition_id｜status｜worker｜heartbeat_at｜attempts'}));
+  return box;
+}
+var DDL=['A','B','A','C','B'];
+function ddNum(big,label,cls){return h('div',{'class':'ddnum'+(cls?' '+cls:'')},h('b',{text:String(big)}),h('span',{text:label}));}
+function ddV2(v){
+  var box=h('div',null),seen=[],kept=[],k=v.k||0;
+  box.append(h('div',{'class':'ddsub',text:'原文檔「ptt/2026-09.jsonl」（5 行，A、B、C 是 post_id 的代號）'}));
+  var rows=h('div',{'class':'ddrows'});
+  DDL.forEach(function(p,i){
+    var cls='ddline',mark=null;
+    if(i<k){
+      if(seen.indexOf(p)>=0){cls+=' drop';mark='✗ 丟掉（'+p+' 看過了）';}
+      else{seen.push(p);kept.push(p);cls+=' keep';mark='✓ 留下';}
+      if(i===k-1&&!v.fin)cls+=' cur';
+    }
+    rows.append(h('div',{'class':cls},h('span',{'class':'ln',text:'第 '+(i+1)+' 行'}),
+      h('code',{text:'{"post_id": "'+p+'", "content": "…"}'}),mark?h('span',{'class':'ddmark',text:mark}):null));
+  });
+  box.append(rows);
+  box.append(h('div',{'class':'ddsub',text:'seen：看過的 post_id（袋子）'}));
+  var st=h('div',{'class':'ddset'});
+  st.append('{');
+  seen.forEach(function(p){st.append(h('span',{'class':'ddtask',text:p}));});
+  st.append(seen.length?'}':'}　（空的）');
+  box.append(st);
+  var nums=h('div',{'class':'ddnums'});
+  if(v.fin){
+    nums.append(ddNum(5,'raw_lines：讀了幾行（只記錄，不拿來比）'));
+    nums.append(ddNum(3,'raw_count：不重複的文章數（G1 比這個）','good'));
+  }else{
+    nums.append(ddNum(k,'total：讀了幾行'));
+    nums.append(ddNum(kept.length,'lines：留下幾行'+(kept.length?'（'+kept.join('、')+'）':'')));
+  }
+  box.append(nums);
+  return box;
+}
+var DDSHA={A:'9f2c…',B:'41d7…',C:'c80e…'};
+function ddDoc(id,stt,res,cur){
+  /* stt：0 不存在｜1 只有 v1｜2 v1＋v2｜3 剛新建（只有 v2）｜4 v1＋剛補上 v2｜5 只有 v2 */
+  var el=h('div',{'class':'dddoc'+(stt===0?' none':'')+(cur?' cur':'')});
+  el.append(h('h4',{text:'_id: '+id}));
+  if(stt===0){el.append(h('span',{'class':'f',text:'（ES 裡還沒有這一份）'}));}
+  else{
+    var v1=(stt===1||stt===2||stt===4),v2=stt===1?0:((stt===3||stt===4)?2:1),nw=v2===2?' ← 新寫入':'';
+    el.append(h('span',{'class':'f',text:'terms_v1: '+(v1?'[舊版斷詞]':'（無）')}));
+    el.append(h('span',{'class':'f'+(v2===2?' new':''),text:'terms_v2: '+(v2?'[新版斷詞]'+nw:'（無）')}));
+    el.append(h('span',{'class':'f'+(v2===2?' new':''),text:'seg_ver_v2: '+(v2?'22026103002'+nw:'（無）')}));
+    el.append(h('span',{'class':'f'+(stt===3?' new':''),text:'content_sha: '+DDSHA[id]+(stt===3?' ← 新寫入':'')}));
+  }
+  if(res)el.append(h('div',{'class':'res'},ddChip('ES 回報：'+res,DDSTK[res])));
+  return el;
+}
+function ddCase(a,res,b){return h('div',{'class':'ddcase'},h('span',{text:a}),res?ddChip(res,DDSTK[res]):null,b?h('span',{'class':'ddmark',text:b}):null);}
+function ddV3(v){
+  var box=h('div',null);
+  if(v.cases){
+    box.append(h('div',{'class':'ddsub',text:'同一份文件再寫一次，會發生什麼'}));
+    var rows=h('div',{'class':'ddrows'});
+    rows.append(ddCase('版本已經到了、原文沒改 →','noop','什麼都不做'));
+    rows.append(ddCase('文件在，但這一版還沒寫過 →','updated','補上新版欄位'));
+    rows.append(ddCase('原文改過（指紋不同）→','updated','不比版本，用新內容'));
+    rows.append(ddCase('字典升級，這次版本號比較大 →','updated','換成新版斷詞'));
+    rows.append(ddCase('人工加 force 重跑（版本一樣）→','updated','照樣覆寫'));
+    box.append(rows);
+    box.append(h('div',{'class':'ddeq dk-ok',text:'共同點：_id 沒變，所以永遠是同一份文件，不會多一份。'}));
+    return box;
+  }
+  box.append(h('div',{'class':'ddsub',text:'ES 裡的文件（_id 就是 post_id；A、B、C 是代號）'}));
+  var docs=h('div',{'class':'dddocs'});
+  ['A','B','C'].forEach(function(id){var d=v.d[id];docs.append(ddDoc(id,d[0],d[1],v.cur===id));});
+  box.append(docs);
+  if(v.batch){
+    box.append(h('div',{'class':'ddsub',text:'送給 ES 的一批（示意，只列 A 這一篇的兩行）'}));
+    box.append(h('div',{'class':'ddbatch',text:'{"update": {"_index": "（索引名）", "_id": "A", "retry_on_conflict": 3}}\n{"scripted_upsert": true, "script": {"id": "seg_guard", "params": {…}}, "upsert": {}}'}));
+  }
+  if(v.cnt){
+    box.append(h('div',{'class':'ddsub',text:'ES 對這一批的回報'}));
+    box.append(h('div',{'class':'ddnums'},ddNum(v.cnt[0],'created 新建'),ddNum(v.cnt[1],'updated 更新'),ddNum(v.cnt[2],'noop 沒動')));
+  }
+  if(v.ck){
+    box.append(h('div',{'class':'ddsub',text:'狀態紀錄裡這個分區的那一列'}));
+    box.append(h('div',{'class':'ddnums'},ddNum(v.ck[0],'checkpoint_line：做到第幾行',v.lost?'warn':''),ddNum(v.ck[1],'written：寫了幾篇'),ddNum(v.ck[2],'noop：沒動幾篇')));
+    if(v.lost)box.append(h('div',{'class':'ddwarn',text:'ES 已經寫好 3 篇，但進度沒記到，還停在第 0 行。'}));
+  }
+  return box;
+}
+function ddFun(title,big,sub,bad){return h('div',{'class':'ddfun'+(bad?' bad':'')},h('div',{text:title}),h('b',{text:big}),sub?h('code',{text:'　'+sub}):null);}
+function ddV4(v){
+  var box=h('div',null);
+  if(v.sum){
+    var rows=h('div',{'class':'ddrows'});
+    [['第一層','cut','認 partition_id','擋：兩個 task 做同一個分區。做在狀態紀錄。'],
+     ['第二層','run','認 post_id','擋：原文檔裡重複的行。做在讀原文的時候。'],
+     ['第三層','ok','認 post_id（當成 _id）','擋：重跑、重送、兩個 task 短暫重疊。做在 ES。'],
+     ['G1','gate','比兩個數量','檢查前面三層有沒有做對：不能漏寫，也不能多寫。']].forEach(function(r){
+      rows.append(h('div',{'class':'ddcase'},ddChip(r[0],r[1]),h('b',{text:r[2]}),h('span',{text:r[3]})));
+    });
+    box.append(rows);
+    return box;
+  }
+  var show=v.show||3;
+  box.append(ddFun('原文檔','5 行','A B A C B'));
+  box.append(h('div',{'class':'ddarrow',text:v.bad==='mid'?'↓ （假設沒有第二層：不去重）':'↓ 第二層：同一個 post_id 只留第一行'}));
+  box.append(ddFun('不重複的文章',v.mid?v.mid[0]:'3 篇',v.mid?v.mid[1]:'raw_count = 3',v.bad==='mid'));
+  if(show>=2){
+    box.append(h('div',{'class':'ddarrow',text:v.bad==='right'?'↓ （假設沒有第三層：ES 自己隨機編 _id）':'↓ 第三層：_id 就是 post_id，同一篇寫到同一份'}));
+    box.append(ddFun('ES 裡版本已到目標的文件',v.right?v.right[0]:'3 份',v.right?v.right[1]:'es_at_target = 3',v.bad==='right'));
+  }
+  if(v.eq)box.append(h('div',{'class':'ddeq dk-'+v.eq[1],text:v.eq[0]+'　'+v.eq[2]}));
+  if(v.warn)box.append(h('div',{'class':'ddwarn',text:v.warn}));
+  return box;
+}
+
+/* ---------- 三層去重：每一層的步驟 ---------- */
+var DDR3={'ptt/2026-10':['running','task A','剛剛',1],'ptt/2026-09':['running','task B','剛剛',1],'ptt/2026-08':['running','task C','剛剛',1]};
+var DDT=[
+ {name:'① 分區不重複領',node:'job',cap:'狀態紀錄（ES 索引 backfill_ledger）',view:ddV1,tm:['分區','partition_id','task','狀態紀錄','status'],steps:[
+  {t:'一個分區同時只給一個 task',
+   x:'每個分區（一個渠道的一個月）在 ES 索引 backfill_ledger 裡是一篇文件，_id＝分區編號。task 來領時，只挑 pending，或 running 但心跳停超過 2 分鐘的文件；有人在做、心跳新鮮的不碰。搶的時候用 if_seq_no、if_primary_term 做條件更新：版本對不上（別人先改了）就換下一篇。所以同一分區同時只有一個 task 在跑。萬一心跳停太久被接手、短暫兩個 task 重疊，寫進 ES 文章索引時以 post_id 當 _id，同一篇只會是同一份文件，ES 不會多出文件（見第三層）。',
+   hl:['c5','c6','c7'],tm:['partition_id','status','heartbeat_at'],v:{q:{done:['A','B','C']},rows:DDR3}}
+ ]},
+ {name:'② 讀的時候去重',node:'read',cap:'原文檔與 seen 袋子',view:ddV2,tm:['post_id','jsonl','set'],steps:[
+  {t:'打開原文檔：一行就是一篇文章',
+   x:'分區「ptt/2026-09」的原文放在一個檔案「ptt/2026-09.jsonl」裡，一行一篇。這個例子有 5 行，但因為爬蟲重抓過，A 和 B 各出現了兩次。A、B、C 是代號，真正的 post_id 長得像「Kaohsiung/M.1793281424.A.0CF」。程式先準備一個空的袋子 seen，用來記「看過哪些 post_id」。',
+   hl:['r0','r1','r2'],tm:['jsonl','JSON','post_id','set'],v:{k:0}},
+  {t:'第 1 行：A，沒看過 → 留下',
+   x:'拿出這一行的 post_id：A。seen 裡沒有 A，所以把 A 放進 seen，這一行留下來。「讀了幾行」變成 1。',
+   hl:['r4','r5','r7','r8'],v:{k:1}},
+  {t:'第 2 行：B，沒看過 → 留下',
+   x:'一樣的動作：B 不在 seen 裡，放進去，這一行留下來。',
+   hl:['r4','r5','r7','r8'],v:{k:2}},
+  {t:'第 3 行：又是 A → 整行丟掉',
+   x:'post_id 是 A，seen 裡已經有了。程式遇到 continue，直接跳去看下一行，後面的「放進 seen」「留下來」都不會做。注意「讀了幾行」還是有加 1：它數的是讀過的行，重複的也算。',
+   hl:['r4','r6'],v:{k:3}},
+  {t:'第 4 行：C，沒看過 → 留下',
+   x:'C 不在 seen 裡，放進去，這一行留下來。現在留下了 3 行。',
+   hl:['r5','r7','r8'],v:{k:4}},
+  {t:'第 5 行：又是 B → 丟掉',
+   x:'B 已經在 seen 裡，整行丟掉。5 行都讀完了。',
+   hl:['r4','r6'],v:{k:5}},
+  {t:'讀完了：記下兩個數字',
+   x:'5 行讀完，留下 3 行（A、B、C）。程式把兩個數字寫回狀態紀錄：raw_lines = 5（讀了幾行，只是記錄）；raw_count = 3（不重複的文章數）。之後 G1 對帳用的是 raw_count，不是 raw_lines。',
+   hl:['r9','r10','r11','r12'],tm:['raw_lines','raw_count','G1','狀態紀錄'],v:{k:5,fin:true}},
+  {t:'三個容易誤會的細節',
+   x:'（1）留的是「第一次出現」的那一行，後面重複的都丟。（2）空白行直接跳過，不算在 raw_lines 裡。（3）這裡只處理「重複」，不處理「壞資料」：某一行如果不是正確的 JSON，程式會直接停下來報錯，不會偷偷跳過。另外，存檔點 checkpoint 數的是「去重後清單」的第幾行。',
+   hl:['r3','r5','r6'],tm:['raw_lines','JSON','checkpoint_line'],v:{k:5,fin:true}}
+ ]},
+ {name:'③ 寫的時候去重',node:'bulk',cap:'ES 裡的文件',view:ddV3,tm:['ES','文件','_id'],steps:[
+  {t:'ES 裡每份文件都有一個 _id：拿 post_id 來當',
+   x:'ES 是存文章、給人搜尋的地方，一篇文章在裡面是一份「文件」。每份文件都有一個不會重複的編號 _id。程式把 post_id 當成 _id，所以同一篇文章不管寫幾次，都是寫到同一份文件上，不會變成兩份。現在 ES 裡的樣子：A 還沒有；B 只有舊版斷詞（v1）；C 之前已經補過新版（v2）。',
+   hl:['b1'],tm:['ES','文件','_id','post_id'],v:{d:{A:[0],B:[1],C:[2]}}},
+  {t:'一批送出去：每篇兩行',
+   x:'文章斷好詞之後，一批最多 500 篇，打包一次送給 ES。每篇是兩行：第一行說「我要更新 _id 是這個的文件」；第二行說「怎麼更新」，交給一段叫 seg_guard 的小腳本決定。這段腳本不是 ES 內建的，是程式啟動時先存進 ES 的。',
+   hl:['b1','b2','b3','b4','p1'],tm:['bulk','upsert','scripted_upsert','script','seg_guard','retry_on_conflict'],v:{d:{A:[0],B:[1],C:[2]},batch:true}},
+  {t:'A：ES 裡沒有 → created（新建）',
+   x:'ES 找不到 _id 是 A 的文件，就先放一份空白的，再跑腳本。腳本看這份文件「目前的版本號」是空的，所以不會走 noop 那一行，而是把文章本體和斷詞結果填進去。ES 回報 created。',
+   hl:['b2','b4','s2','s7','s8','s9'],tm:['scripted_upsert','seg_ver','created/updated/noop'],v:{d:{A:[3,'created'],B:[1],C:[2]},cur:'A'}},
+  {t:'B：只有舊版 v1 → updated（更新）',
+   x:'文件在，但沒有 v2 的版本號（一樣是空的），所以不是 noop。腳本只把 v2 這一組欄位補上去；舊版的 terms_v1 一個字都不動，線上的搜尋照常用舊版。ES 回報 updated。',
+   hl:['s2','s7','s9'],tm:['seg_ver','created/updated/noop'],v:{d:{A:[5],B:[4,'updated'],C:[2]},cur:'B'}},
+  {t:'C：已經是 v2、原文也沒改 → noop（不動）',
+   x:'腳本檢查三件事：這份文件有這一版的版本號嗎？有。原文改過嗎（比指紋）？沒有。ES 裡的版本比這次送來的舊嗎？不舊。三個都成立，就什麼都不做，ES 回報 noop。noop 不是錯誤，意思是「已經是對的，不用重做」。',
+   hl:['s4','s5','s6','s7'],tm:['content_sha','seg_ver','created/updated/noop'],v:{d:{A:[5],B:[2],C:[2,'noop']},cur:'C'}},
+  {t:'整批沒有錯誤，才記進度',
+   x:'ES 回報：created 1、updated 1、noop 1，沒有錯誤。這時程式才在狀態紀錄記下「做到第 3 行」（checkpoint），並累加 written = 2（新建加更新）、noop = 1。先寫 ES、後記進度，這個順序很重要，下一步就會看到為什麼。',
+   hl:['k0','k1'],tm:['checkpoint_line','狀態紀錄','created/updated/noop'],v:{d:{A:[5],B:[2],C:[2]},cnt:[1,1,1],ck:[3,2,1]}},
+  {t:'假設：寫完 ES，還沒記進度就被砍掉',
+   x:'換一個情況：三篇都寫進 ES 了，但 task 在記 checkpoint 之前當掉。ES 那邊三篇都是 v2；狀態紀錄卻還停在上一個存檔點（第 0 行）。接手的 task 不知道這一批其實做過了，只能把同一批再送一次。',
+   hl:['k1'],tm:['checkpoint_line','task'],v:{tag:'假設',d:{A:[5],B:[2],C:[2]},ck:[0,0,0],lost:true}},
+  {t:'重送同一批 → 三篇都 noop，文件還是 3 份',
+   x:'同樣三篇再送一次。每一篇的 _id 都已經存在，所以是「同一份文件」；腳本一看：版本已經到了、原文沒改，三篇都 noop。ES 裡還是 3 份文件，一份都沒多。這就是「重跑不會重複」的原因。',
+   hl:['b1','s7','k1'],tm:['_id','created/updated/noop','checkpoint_line'],v:{tag:'假設',d:{A:[5,'noop'],B:[2,'noop'],C:[2,'noop']},cnt:[0,0,3],ck:[3,0,3]}},
+  {t:'什麼時候不是 noop？',
+   x:'會真的改寫的情況有四種：文件在，但這一版還沒寫過（沒有新版的版本號，這次補上新版欄位）；原文被改過（指紋不一樣，這時不比版本，直接用新內容）；字典升級，這次的版本號比 ES 裡的大；人工加上 force 重跑（版本一樣也覆寫）。不管哪一種，改的都是「同一份文件」，結果是 updated，不會多出一份。',
+   hl:['s3','s6','s7'],tm:['content_sha','seg_ver','force'],v:{cases:true}},
+  {t:'ES 太忙，或真的出錯的時候',
+   x:'ES 太忙時會回「429」，意思是等一下再送。程式會等 1 秒、2 秒、4 秒各重送一次（最多 3 次）：整批被拒就整批重送，只有幾篇被拒就只重送那幾篇。重送是安全的，原因同上：_id 一樣，該 noop 的就 noop。如果重送完還是有幾篇失敗，這個分區會被標成 failed，不記進度，停下來等人看。如果是整個請求出錯（整批 429 重試用完，或 500 這類錯誤），程式會直接中止，狀態停在 running；等心跳停超過 2 分鐘，別的 task 會自動重領，領滿 3 次還不行才標成 failed。',
+   hl:['k0'],tm:['429','status','created/updated/noop'],v:{d:{A:[5],B:[2],C:[2]}}}
+ ]},
+ {name:'合起來：G1 對帳',node:'g1',cap:'兩個數字對帳',view:ddV4,tm:['G1','raw_count'],steps:[
+  {t:'第二層做的事：5 行 → 3 篇',
+   x:'原文檔有 5 行，其中 A、B 各重複一次。第二層把重複的行丟掉，剩下 3 篇不重複的文章。這個數字記成 raw_count = 3。',
+   hl:[],tm:['raw_count','raw_lines','post_id'],v:{show:1}},
+  {t:'第三層做的事：3 篇 → ES 裡 3 份',
+   x:'這 3 篇寫進 ES。因為 _id 就是 post_id，不管中間重送幾次，ES 裡都只有 3 份文件，而且 v2 的版本號都到了這次的目標。',
+   hl:[],tm:['_id','seg_ver','ES'],v:{show:2}},
+  {t:'G1 對帳：兩個數字要一樣',
+   x:'整個分區寫完後，程式先請 ES 整理一下（refresh），讓剛寫進去的都數得到；然後數「這個渠道、這個月、版本已到目標」的文件有幾份，叫 es_at_target。它必須等於 raw_count。3 = 3，G1 通過。G1 只管數量；內容斷得對不對，是後面 G2 的事。',
+   hl:['q1','q2','q3','q4','q5'],tm:['G1','refresh','raw_count','seg_ver'],v:{show:3,eq:['raw_count 3 ＝ es_at_target 3','ok','✓ G1 通過']}},
+  {t:'假設拿掉第二層（讀的時候不去重）',
+   x:'那 raw_count 會是 5。ES 那邊因為 _id 相同，還是只有 3 份。5 ≠ 3，G1 會判成不通過，看起來像少了 2 篇。其實一篇都沒少，這是假警報，會讓人白查一場。',
+   hl:['q5'],tm:['raw_count','G1'],v:{tag:'假設',mid:['5 篇（沒去重）','raw_count = 5'],bad:'mid',eq:['raw_count 5 ≠ es_at_target 3','bad','✗ G1 不過（假警報）']}},
+  {t:'假設拿掉第三層（_id 不用 post_id）',
+   x:'如果讓 ES 自己隨機編 _id，每送一次就多一份新文件。第一次跑完是 3 份；只要中途重跑一次，就變成 6 份。3 ≠ 6，G1 不過。更糟的是，使用者搜尋時會看到同一篇文章出現兩次。',
+   hl:['q5'],tm:['_id','G1'],v:{tag:'假設',right:['6 份（重跑一次之後）','es_at_target = 6'],bad:'right',eq:['raw_count 3 ≠ es_at_target 6','bad','✗ G1 不過，搜尋結果也真的重複了']}},
+  {t:'假設拿掉第一層（兩個 task 做同一個分區）',
+   x:'ES 裡還是 3 份（第三層擋住了），G1 也會過。但是代價不小：同一份工做了兩次，浪費時間和機器；兩個 task 輪流改同一列的 checkpoint，進度互相覆蓋；noop 這個計數會被多算（另一個 task 先寫好的文件，這一邊會記成 noop），數字不能信。',
+   hl:['q5'],tm:['partition_id','checkpoint_line','task'],v:{tag:'假設',eq:['raw_count 3 ＝ es_at_target 3','ok','✓ G1 會過，但是…'],warn:'白做一份工；checkpoint 互相覆蓋；noop 計數被多算。'}},
+  {t:'合起來看：三層各管一件事',
+   x:'第一層管「分工」，第二層管「原文檔裡的重複」，第三層管「重跑和重送」，G1 在最後用數量檢查前面有沒有做對。少任何一層，不是多做白工，就是數字對不上。',
+   hl:[],tm:['partition_id','post_id','_id','G1'],v:{sum:true}}
+ ]}
+];
+
+/* ---------- 三層去重：播放器（播放列共用，這裡只負責內容） ---------- */
+var dd={t:0,i:0,all:false,sel:null};
+var ddTabBtns=[],ddCodeEl={};
+function ddSel(id){
+  dd.sel=id;
+  for(var k in ddCodeEl){
+    ddCodeEl[k].classList.toggle('sel',k===id);
+  }
+  var out=$('ddnote');
+  if(!id){out.textContent='把滑鼠移到（或點一下）下面任何一行程式，這裡會用白話說它在做什麼。';return;}
+  out.replaceChildren(h('b',{text:ddLn(DDCODE[id])+'：'}),DDN[id]);
+}
+function ddTermShow(key,btn){
+  Array.prototype.forEach.call($('ddterms').querySelectorAll('button'),function(b){b.classList.toggle('on',b===btn);});
+  $('ddtermout').replaceChildren(h('b',{text:key+'：'}),DDG[key]);
+}
+function ddTerms(tm){
+  var box=$('ddterms');
+  box.replaceChildren(h('span',{text:'這一步的名詞：'}));
+  tm.forEach(function(key){
+    if(!DDG[key])return;
+    var b=h('button',{type:'button','class':'ddterm',text:key});
+    b.addEventListener('click',function(){ddTermShow(key,b);});
+    b.addEventListener('mouseenter',function(){ddTermShow(key,b);});
+    box.append(b);
+  });
+  $('ddtermout').textContent='看不懂的字，點一下（或把滑鼠移上去）就有白話解釋。';
+}
+function ddBuildTab(){
+  var box=$('ddcode');
+  box.replaceChildren();ddCodeEl={};
+  DDBLK[dd.t].forEach(function(b){
+    var f=DDCODE[b[1][0]],l=DDCODE[b[1][b[1].length-1]];
+    box.append(h('div',{'class':'clsep',text:f.f+' 第 '+(f.a===l.b?f.a:f.a+'–'+l.b)+' 行（節錄）· '+b[0]}));
+    b[1].forEach(function(id){
+      var btn=h('button',{type:'button','class':'cl'},
+        ddCodeNode(DDCODE[id].c),h('span',{'class':'cn',text:'白話：'+DDN[id]}));
+      btn.lastChild.hidden=!dd.all;
+      btn.addEventListener('click',function(){ddSel(id);});
+      btn.addEventListener('mouseenter',function(){ddSel(id);});
+      btn.addEventListener('focus',function(){ddSel(id);});
+      ddCodeEl[id]=btn;box.append(btn);
+    });
+  });
+  box.scrollTop=0;
+}
+function ddRender(){
+  var T=DDT[dd.t],stp=T.steps[dd.i],v=stp.v||{},hl=stp.hl||[],first=null,box=$('ddcode');
+  ddTabBtns.forEach(function(b,i){b.setAttribute('aria-pressed',i===dd.t?'true':'false');});
+  $('ddviewh').textContent='資料長這樣（示意）· '+T.cap;
+  var body=$('ddviewbody');
+  body.replaceChildren();
+  if(v.tag)body.append(h('div',{'class':'ddopts'},ddChip('這一步是「假設」的情況，用來說明，不是真的發生','pm')));
+  body.append(T.view(v));
+  ddTerms(stp.tm||T.tm);
+  DDBLK[dd.t].forEach(function(b){b[1].forEach(function(id){
+    var on=hl.indexOf(id)>=0;
+    ddCodeEl[id].classList.toggle('hl',on);
+    if(on&&!first)first=id;
+  });});
+  ddSel(first);
+  if(first&&box.scrollHeight>box.clientHeight+2)box.scrollTop=Math.max(0,ddCodeEl[first].offsetTop-34);
+  $('ddsrc').textContent='程式碼（實際程式節錄；亮起來的是這一步用到的）';
+  $('ddback').textContent='↑ 在流程圖上看這一塊：'+nodeAt[T.node].t;
+  whereSync();
+  shSync();
+}
+function ddSetTab(t,i){dd.t=t;dd.i=i||0;ddBuildTab();ddRender();}
+function ddGo(t,i,fh){showView('dedup',{focusHead:!!fh});ddSetTab(t,i);}
+(function(){
+  DDT.forEach(function(T,i){
+    var b=h('button',{type:'button','class':'pill','aria-pressed':'false',text:T.name,click:function(){stop();ddSetTab(i,0);}});
+    ddTabBtns.push(b);$('ddtabs').append(b);
+  });
+  $('ddall').addEventListener('click',function(){
+    dd.all=!dd.all;
+    this.setAttribute('aria-pressed',dd.all?'true':'false');
+    for(var k in ddCodeEl)ddCodeEl[k].lastChild.hidden=!dd.all;
+  });
+  $('ddback').addEventListener('click',function(){showNode(DDT[dd.t].node);});
+  var gl=$('ddgloss');
+  for(var key in DDG){gl.append(h('dt',{text:key}),h('dd',{text:DDG[key]}));}
+  DDMYTH.forEach(function(m){$('ddmyth').append(h('li',null,h('b',{text:'✗ 誤會：'}),m[0],h('br',null),h('b',{text:'✓ 其實：'}),m[1]));});
+  DDQUIZ.forEach(function(q,i){$('ddquiz').append(h('details',{'class':'ddquiz'},h('summary',{text:'第 '+(i+1)+' 題：'+q[0]}),h('p',{text:'答：'+q[1]})));});
+  ddSetTab(0,0);
+})();
+
+/* ---------- 流程圖節點：滑鼠移上去的小卡、點一下留住的卡 ---------- */
+var DDPK={
+ job:{t:0,i:0,ti:'去重第一層：一個分區只給一個 task',
+  say:'多個 task 同時來領，都用版本號去搶同一篇，搶輸的換下一篇；有人在做（running 而且心跳新鮮）的分區，不會被別人領走。',
+  code:['c5','c6','c7'],
+  data:function(b){[['ptt/2026-10','task A'],['ptt/2026-09','task B'],['ptt/2026-08','task C']].forEach(function(r){
+    b.append(h('div',{'class':'ddmrow'},h('code',{text:r[0]}),ddChip('running','run'),h('span',{text:r[1]+' 在做'})));});}},
+ read:{t:1,i:3,ti:'去重第二層：讀原文時，同一篇只留一行',
+  say:'同一個 post_id 在原文檔裡出現兩次，只留第一行，後面的整行丟掉。',
+  code:['r6','r7','r8'],
+  data:function(b){
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'5 行：'}),h('code',{text:'A B A C B'}),h('span',{text:'→ 留下：'}),h('code',{text:'A B C'})));
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'raw_lines = 5（只記錄）　raw_count = 3（G1 比這個）'})));}},
+ bulk:{t:2,i:2,ti:'去重第三層：寫進 ES 時，同一篇只有一份',
+  say:'拿 post_id 當 ES 文件的 _id，同一篇永遠寫到同一份文件；已經是新版、原文沒改，就什麼都不做（noop）。',
+  code:['b1','s7'],
+  data:function(b){
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'ES 裡沒有這一份 →'}),ddChip('created','ok')));
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'只有舊版 v1 →'}),ddChip('updated','cut')));
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'已經是 v2、原文沒改 →'}),ddChip('noop','mut')));}},
+ ckpt:{t:2,i:5,ti:'重跑也不會重複：先寫 ES，成功才記進度',
+  say:'整批寫成功才記 checkpoint。萬一寫完還沒記就中斷，接手的 task 會整批重送，靠前一塊的 noop 不會重複。',
+  code:['k1'],
+  data:function(b){
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'這一批 3 篇都成功 → checkpoint_line 記成 3'})));
+    b.append(h('div',{'class':'ddmrow'},h('span',{text:'沒記到就被砍 → 整批重送 → 3 篇都'}),ddChip('noop','mut')));}},
+ g1:{t:3,i:2,ti:'G1 對帳：兩個數字要相等',
+  say:'原文不重複的篇數（raw_count），要等於 ES 裡版本已到目標的文件數（es_at_target）。',
+  code:['q4','q5'],
+  data:function(b){b.append(h('div',{'class':'ddmrow'},h('span',{text:'5 行 → 3 篇 → ES 3 份：raw_count 3 ＝ es_at_target 3'}),ddChip('✓ 通過','ok')));}}
+};
+/* ---------- G1～G3 點進去：一句規則、圖、實際案例、程式碼／ES／SQL 證據 ---------- */
+var GCODE={
+ e136:{c:'es.req("POST", f"/{es.index}/_refresh")',f:'job.py',a:136,b:136},
+ e138:{c:'scope = [{"term": {"channel": part["channel"]}}, {"term": {"month": part["month"]}}]',f:'job.py',a:138,b:138},
+ s129:{c:'def count(self, query):\n    return self.req("POST", f"/{self.index}/_count", {"query": query})["count"]',f:'es.py',a:129,b:130},
+ g31:{c:'G2_MAX_RATIO = float(os.environ.get("G2_MAX_LEAK_RATIO", "0.001"))   # 提案值：每類洩漏 ÷ 分區篇數 ≤ 0.1%',f:'job.py',a:31,b:31},
+ g34:{c:'LEAK_REGEX = {\n    "phone_like": "[0-9][0-9\\\\-]{6,}",\n    "pure_number": "[0-9]+",\n}',f:'job.py',a:34,b:37},
+ g141:{c:'leaks = {k: es.count({"bool": {"filter": scope + [{"regexp": {"terms_v2": v}}]}}) for k, v in LEAK_REGEX.items()}\nleaks["url_fragment"] = sum((url_leak or {}).values())\nleaks["hard_stopwords"] = es.count({"bool": {"filter": scope + [{"terms": {"terms_v2": sorted(dic.stopwords)}}]}})',f:'job.py',a:141,b:143},
+ g89:{c:'n = max(1, raw_count or 0)\nout = {k: v / n for k, v in leaks.items()}\nout["must_keep_split"] = sum((split or {}).values()) / n',f:'job.py',a:89,b:91},
+ g96:{c:'return all(v <= (G2_MAX_RATIO if max_ratio is None else max_ratio) for v in ratios.values())',f:'job.py',a:96,b:96},
+ g59:{c:'body = {"size": 0, "query": {"term": {"channel": channel}},\n        "aggs": {"t": {"terms": {"field": field or CANARY_FIELD, "size": 50}}}}\ntook = [es.req("POST", f"/{es.index}/_search?request_cache=false", body)["took"] for _ in range(n)]\nreturn float(sorted(took)[max(0, int(round(0.95 * n)) - 1)])',f:'job.py',a:59,b:62},
+ g65:{c:'def g3_limit(baseline: float) -> float:\n    return min(max(baseline * 1.5, baseline + 50), 180_000)',f:'job.py',a:65,b:66},
+ g72:{c:'for k in range(tries):\n    p95 = canary_p95(es, channel)\n    log_.append(p95)\n    if p95 <= g3_limit(baseline) or k == tries - 1:\n        return p95, log_',f:'job.py',a:72,b:76},
+ g79:{c:'new = max(250, int(min(c["max_docs_per_sec"], 3000) / 2))',f:'job.py',a:79,b:79},
+ g83:{c:'time.sleep(15)',f:'job.py',a:83,b:83},
+ g147:{c:'g3 = {"pass": rejected_delta == 0 and p95_after <= g3_limit(p95_before),',f:'job.py',a:147,b:147},
+ s132:{c:'def write_rejected_total(self) -> int:\n    st = self.req("GET", "/_nodes/stats/thread_pool")\n    return sum(n["thread_pool"]["write"]["rejected"] for n in st["nodes"].values())',f:'es.py',a:132,b:134}
+};
+function gcode(id){return GCODE[id]||DDCODE[id];}
+function gfmt(x){return Number(x).toLocaleString('en-US');}
+function gpct(r){return (r*100).toFixed(r&&r<0.0001?4:3).replace(/\.?0+$/,'')+'%';}
+var G2KEYS=[['phone_like','電話號碼'],['pure_number','純數字'],['url_fragment','網址殘片'],['hard_stopwords','硬停用詞'],['must_keep_split','不可拆詞被切開']];
+function gsum(o){var s=0;for(var k in (o||{}))s+=o[k];return s;}
+function gsel(c){return c.pid.split('/')[1];}
+var GATES={
+ g1:{short:'G1 筆數守恆',
+  rule:'原文去重後有幾篇，ES 裡已經是新版本的就要有幾份：兩個數字必須一樣。',
+  cases:[
+   {lab:'ptt/2026-04',pid:'ptt/2026-04',ch:'ptt',k:'ok',chip:'通過',src:'final_ledger.json',tgt:22026103004,raw:9338,es:9338,
+    note:'原文去重後 9,338 篇，ES 裡已到目標版本的也是 9,338 份：一篇不漏、一篇不多，G1 通過。'},
+   {lab:'不通過（示意）',pid:'ptt/2026-04',ch:'ptt',k:'bad',chip:'示意',demo:true,tgt:22026103004,raw:9338,es:9336,
+    note:'實測 4 輪裡 G1 一次都沒失敗過，這一格是假想：如果有 2 篇在 ES 裡還停在舊版本（例如被別的程式用舊版覆寫），ES 只數得到 9,336，兩邊對不上，這一批就標 failed、不放行。'}],
+  code:[['e136','先 refresh，剛寫進去的文件才數得到。'],['e138','範圍＝這一批的渠道＋月份。'],['q4','數 ES 裡這個範圍、seg_ver_v2 已到目標版本的有幾份。'],['q5','兩個數字相等才算過。'],['r11','raw_count 是讀原文時去重後的篇數。'],['s129','es.count 就是打 ES 的 _count API。']],
+  es:function(c){return 'POST /posts/_refresh\n\nPOST /posts/_count\n{"query": {"bool": {"filter": [\n  {"term": {"channel": "'+c.ch+'"}},\n  {"term": {"month": "'+gsel(c)+'"}},\n  {"range": {"seg_ver_v2": {"gte": '+c.tgt+'}}}\n]}}}\n\n→ {"count": '+c.es+'}';},
+  esnote:function(c){return c.demo?'回應數字是假想的。':'回應的數字就是帳本記下的 es_at_target。';},
+  sql:'GET /backfill_ledger/_doc/{pid}\n\n→ 只看 _source 裡這幾欄：\n  raw_count\n  gates.G1.es_at_target\n  gates.G1.pass',
+  row:function(c){return [['partition_id',c.pid],['status',c.demo?'failed':'passed'],['raw_count',c.raw],['es_at_target',c.es],['g1_pass',String(c.raw===c.es)]];}},
+ g2:{short:'G2 斷詞品質',
+  rule:'電話、純數字、網址殘片、停用詞漏進詞表，或「新北」這種詞被切開，每一類佔這批篇數不能超過 0.1%。',
+  cases:[
+   {lab:'ptt/2026-04',pid:'ptt/2026-04',ch:'ptt',k:'ok',chip:'通過',src:'final_ledger.json',tgt:22026103004,raw:9338,
+    v:{phone_like:0,pure_number:0,url_fragment:0,hard_stopwords:0,must_keep_split:{}},pass:true,
+    note:'5 類全部是 0 篇，乾淨通過。'},
+   {lab:'ptt/2025-07',pid:'ptt/2025-07',ch:'ptt',k:'pm',chip:'沒過→人工豁免',src:'final_ledger.json',tgt:22026103004,raw:9373,
+    v:{phone_like:0,pure_number:0,url_fragment:0,hard_stopwords:0,must_keep_split:{'新北':1}},pass:false,
+    waiver:'gqa-110114「夜市痛電新北耶誕城」→ 電新。新北 詞頻試到 3000 仍切錯（HMM 把單字串黏起來），單篇豁免並列入下版觀察',
+    note:'9,373 篇裡只有 1 篇把「新北」切開（「痛電新北」切成 電新／北）。那一輪還是零容忍，1 篇就不過，所以字典負責人（模擬）人工豁免。照現在的 0.1% 提案值，0.011% 會直接過。'},
+   {lab:'ptt/2026-10',pid:'ptt/2026-10',ch:'ptt',k:'bad',chip:'不通過',src:'run1_ledger_r2.json',tgt:22026103002,raw:6685,
+    v:{phone_like:0,pure_number:0,url_fragment:17,hard_stopwords:0,must_keep_split:{}},pass:false,
+    note:'第 1 輪：17 篇的詞表裡混進網址殘片，佔 6,685 篇的 0.254%，就算照現在的 0.1% 也不過 → failed。修好網址處理後，最後一輪重跑這批是 0 篇、通過。'}],
+  code:[['g31','門檻：每一類 ÷ 篇數 ≤ 0.1%（提案值，可用環境變數改）。'],['g34','「電話」和「純數字」用正規表示式去 ES 找。'],['g141','前兩類、停用詞查 ES；網址殘片是斷詞當下逐篇記的。'],['g89','每一類除以這批篇數；被切開的詞也算一類。'],['g96','每一類都在門檻內才算過。']],
+  es:function(c){var f='  {"term": {"channel": "'+c.ch+'"}}, {"term": {"month": "'+gsel(c)+'"}},\n';
+   return '# 電話號碼（phone_like）\nPOST /posts/_count\n{"query": {"bool": {"filter": [\n'+f+'  {"regexp": {"terms_v2": "[0-9][0-9\\\\-]{6,}"}}\n]}}}\n→ {"count": '+c.v.phone_like+'}\n\n# 純數字（pure_number）\nPOST /posts/_count\n{"query": {"bool": {"filter": [\n'+f+'  {"regexp": {"terms_v2": "[0-9]+"}}\n]}}}\n→ {"count": '+c.v.pure_number+'}\n\n# 硬停用詞（hard_stopwords）\nPOST /posts/_count\n{"query": {"bool": {"filter": [\n'+f+'  {"terms": {"terms_v2": [ …字典裡的停用詞表… ]}}\n]}}}\n→ {"count": '+c.v.hard_stopwords+'}';},
+  esnote:function(c){return '網址殘片（'+c.v.url_fragment+'）和不可拆詞被切開（'+gsum(c.v.must_keep_split)+'）不查 ES：斷詞當下逐篇比對、記下來。回應的數字取自帳本。';},
+  sql:'GET /backfill_ledger/_doc/{pid}\n\n→ 只看 _source 裡這幾欄：\n  raw_count\n  gates.G2.phone_like、pure_number、url_fragment、hard_stopwords\n  gates.G2.must_keep_split\n  gates.G2.pass',
+  row:function(c){return [['partition_id',c.pid],['raw_count',c.raw],['phone_like',c.v.phone_like],['pure_number',c.v.pure_number],['url_fragment',c.v.url_fragment],['hard_stopwords',c.v.hard_stopwords],['must_keep_split',JSON.stringify(c.v.must_keep_split).replace(/:/g,': ')],['g2_pass',String(c.pass)],['waiver_note',c.waiver||'NULL']];}},
+ g3:{short:'G3 線上負載',
+  rule:'回補寫入不能拖慢線上：ES 寫入拒絕要是 0，查詢探針 p95 不能超過上限（基準 74 ms → 上限 124 ms）。',
+  cases:[
+   {lab:'ptt/2026-04',pid:'ptt/2026-04',ch:'ptt',k:'ok',chip:'一次就過',src:'final_ledger.json',base:74,tries:[87],rej:0,pass:true,
+    note:'跑完量探針 p95 87 ms，在上限 124 ms 內；寫入拒絕 0 次，通過。'},
+   {lab:'ptt/2026-02',pid:'ptt/2026-02',ch:'ptt',k:'run',chip:'降速後通過',src:'final_ledger.json',base:74,tries:[142,107],rej:0,pass:true,
+    note:'第 1 次量到 142 ms，超過上限 124 ms → 全域限速砍半、等 15 秒再量；第 2 次 107 ms，過了。G3 沒過不是資料錯，是寫太快，所以自己降速而不是重跑。'},
+   {lab:'ptt/2025-12',pid:'ptt/2025-12',ch:'ptt',k:'bad',chip:'不通過',src:'run2_ledger_r3.json',base:104,tries:[195],rej:0,pass:false,old:true,
+    note:'第 2 輪：那時基準是每批開跑前現量（104 ms），跑完量到 195 ms，超過上限 156 ms → failed；當時還沒有自動降速。後來改成發版前量一次固定基準 74 ms、超過就砍半重量，最後一輪重跑這批量到 110 ms、通過。'}],
+  code:[['g59','探針：跑 5 次線上在用的文字雲聚合，取 p95（用 ES 回傳的 took）。'],['g65','上限＝基準 × 1.5 和基準 + 50 取大的。'],['g72','量一次；沒超過上限（或已經量滿 3 次）就停。'],['g79','超過：全域限速砍半，最低 250 篇/秒。'],['g83','等 15 秒再量。'],['s132','寫入拒絕：讀所有節點 write thread pool 的 rejected 累計，跑前跑後相減。'],['g147','拒絕數 0 而且 p95 不超過上限，才算過。']],
+  es:function(c){var s='# 寫入拒絕：開跑前、跑完各讀一次，相減\nGET /_nodes/stats/thread_pool\n→ nodes.*.thread_pool.write.rejected 加總（這批相減 = '+c.rej+'）\n\n# 探針：連跑 5 次，取 p95（看每次回應的 "took" 毫秒）\nPOST /posts/_search?request_cache=false\n{"size": 0, "query": {"term": {"channel": "'+c.ch+'"}},\n "aggs": {"t": {"terms": {"field": "terms_v1", "size": 50}}}}\n';
+   c.tries.forEach(function(t,i){s+='\n→ 第 '+(i+1)+' 次量：p95 '+t+' ms';});return s;},
+  esnote:function(c){return '探針查的是線上客戶正在用的舊欄位 terms_v1：要看的是回補有沒有拖慢它。';},
+  sql:'',
+  row:null}
+};
+GATES.g3.sqlf=function(c){
+  var p=encodeURIComponent(c.pid);
+  if(c.old)return 'GET /backfill_ledger/_doc/'+p+'\n\n→ 只看 _source 裡這幾欄：\n  gates.G3.canary_p95_ms_before\n  gates.G3.canary_p95_ms_after\n  gates.G3.write_rejected\n  gates.G3.pass';
+  return 'GET /backfill_ledger/_doc/'+p+'\n\n→ 只看 _source 裡這幾欄：\n  gates.G3.canary_baseline_ms\n  gates.G3.limit_ms\n  gates.G3.canary_tries_ms\n  gates.G3.write_rejected\n  gates.G3.pass';};
+GATES.g3.rowf=function(c){
+  if(c.old)return [['partition_id',c.pid],['status','failed'],['before_ms',c.base],['after_ms',c.tries[0]],['write_rejected',c.rej],['g3_pass','false']];
+  return [['partition_id',c.pid],['status','passed'],['baseline_ms',c.base],['limit_ms',glimit(c.base)],['tries_ms','['+c.tries.join(', ')+']'],['write_rejected',c.rej],['g3_pass',String(c.pass)]];};
+function glimit(b){return Math.min(Math.max(b*1.5,b+50),180000);}
+var GSTATE={g1:{c:0,t:0},g2:{c:0,t:0},g3:{c:0,t:0}};
+function gVizG1(c){
+  var same=c.raw===c.es,w=h('div',{'class':'gviz'});
+  w.append(h('div',{'class':'gvh'},h('span',{text:'兩個數字並排比：'}),h('code',{text:'raw_count'}),h('span',{text:'vs'}),h('code',{text:'es_at_target'})));
+  w.append(h('div',{'class':'g1v'},
+    h('div',{'class':'g1box'},h('small',{text:'原文去重後的篇數'}),h('b',{text:gfmt(c.raw)})),
+    h('div',{'class':'g1op '+(same?'ok':'bad'),text:same?'＝':'≠','aria-label':same?'等於':'不等於'}),
+    h('div',{'class':'g1box'+(same?'':' bad')},h('small',{text:'ES 裡已是新版本的份數'}),h('b',{text:gfmt(c.es)}))));
+  if(!same)w.append(h('p',{'class':'gsmall',text:'差 '+(c.raw-c.es)+' 篇 → 這一批 failed'}));
+  return w;
+}
+function gVizG2(c){
+  var w=h('div',{'class':'gviz'}),rs=G2KEYS.map(function(k){var n=k[0]==='must_keep_split'?gsum(c.v[k[0]]):c.v[k[0]];return {k:k,n:n,r:n/Math.max(1,c.raw)};});
+  var mx=Math.max(0.002,Math.max.apply(null,rs.map(function(x){return x.r;}))*1.15),th=0.001/mx*100;
+  w.append(h('div',{'class':'gvh'},h('span',{text:'這一批 '+gfmt(c.raw)+' 篇；每一類 = 有洩漏的篇數 ÷ '+gfmt(c.raw)})));
+  w.append(h('div',{'class':'gleg'},h('span',{},h('i',{'class':'dash'}),h('span',{text:'0.1% 上限（提案值）'}))));
+  rs.forEach(function(x){
+    var over=x.r>0.001,tr=h('div',{'class':'gtrack'});
+    var bar=h('div',{'class':'gbar'+(over?' over':'')});bar.style.width=(x.n?Math.max(1.2,x.r/mx*100):0)+'%';
+    var ln=h('div',{'class':'gline dash'});ln.style.left=th+'%';
+    tr.append(bar,ln);
+    w.append(h('div',{'class':'grow'},h('span',{text:x.k[1],title:x.k[0]}),tr,h('span',{'class':'gv'+(over?' over':''),text:x.n+' 篇 · '+gpct(x.r)})));
+  });
+  return w;
+}
+function gVizG3(c){
+  var w=h('div',{'class':'gviz'}),lim=glimit(c.base),mx=Math.max(lim,Math.max.apply(null,c.tries))*1.15;
+  w.append(h('div',{'class':'gvh'},h('span',{text:'上限 = max(基準 × 1.5, 基準 + 50) = max('+(c.base*1.5)+', '+(c.base+50)+') = '+lim+' ms'})));
+  w.append(h('div',{'class':'gleg'},h('span',{},h('i'),h('span',{text:'基準 '+c.base+' ms'})),h('span',{},h('i',{'class':'dash'}),h('span',{text:'上限 '+lim+' ms'}))));
+  c.tries.forEach(function(t,i){
+    var over=t>lim,tr=h('div',{'class':'gtrack'});
+    var bar=h('div',{'class':'gbar'+(over?' over':'')});bar.style.width=(t/mx*100)+'%';
+    var b0=h('div',{'class':'gline'});b0.style.left=(c.base/mx*100)+'%';
+    var b1=h('div',{'class':'gline dash'});b1.style.left=(lim/mx*100)+'%';
+    tr.append(bar,b0,b1);
+    w.append(h('div',{'class':'grow'},h('span',{text:c.old?'跑完量':'第 '+(i+1)+' 次量'}),tr,h('span',{'class':'gv'+(over?' over':''),text:'p95 '+t+' ms'})));
+    if(over)w.append(h('div',{'class':'grow'},h('span'),h('span',{'class':'gact',text:c.old?'超過上限 → 當時沒有自動降速，直接 failed':(i<c.tries.length-1?'超過上限 → 全域限速砍半、等 15 秒再量':'量滿 3 次還超過 → failed')})));
+  });
+  w.append(h('p',{'class':'gsmall',text:'ES 寫入拒絕：'+c.rej+' 次'+(c.rej?'（不是 0 → 不通過）':'（要是 0）')}));
+  return w;
+}
+function gTable(pairs){
+  var t=h('table'),hr=h('tr'),dr=h('tr');
+  pairs.forEach(function(p){hr.append(h('th',{text:p[0]}));dr.append(h('td',{text:String(p[1])}));});
+  t.append(h('thead',{},hr),h('tbody',{},dr));
+  return h('div',{'class':'gres',tabindex:'0','aria-label':'查詢結果'},t);
+}
+function gateCard(n){
+  var G=GATES[n.id],st=GSTATE[n.id],box=h('div',{'class':'ddcard gcard'});
+  var sw=h('div',{'class':'gsw',role:'group','aria-label':'切換閘門'});
+  ['g1','g2','g3'].forEach(function(id){
+    sw.append(h('button',{type:'button','class':'pill','aria-pressed':String(id===n.id),text:GATES[id].short,click:function(){
+      if(id===n.id)return;showGate(id,true);}}));
+  });
+  box.append(sw,h('p',{'class':'grule',text:G.rule}));
+  box.append(h('div',{'class':'ddcap',text:'實際案例（取自實測帳本，點一個切換）'}));
+  var cs=h('div',{'class':'gcases',role:'group','aria-label':'案例'}),body=h('div');
+  var cbtn=G.cases.map(function(c,i){
+    var b=h('button',{type:'button','class':'pill','aria-pressed':String(i===st.c),click:function(){st.c=i;cbtn.forEach(function(x,j){x.setAttribute('aria-pressed',String(j===i));});draw();}},
+      h('span',{text:c.lab}),ddChip(c.chip,c.k));
+    cs.append(b);return b;});
+  box.append(cs,body);
+  function draw(){
+    var c=G.cases[st.c];
+    body.replaceChildren();
+    body.append(n.id==='g1'?gVizG1(c):n.id==='g2'?gVizG2(c):gVizG3(c));
+    body.append(h('p',{'class':'gnote',text:c.note}));
+    if(c.waiver)body.append(h('p',{'class':'gsmall',text:'帳本裡的豁免紀錄：'+c.waiver}));
+    var tabs=h('div',{'class':'gtabs',role:'group','aria-label':'證據'}),pane=h('div');
+    var names=['程式碼','ES 查詢','SQL 查帳本'];
+    var tb=names.map(function(nm,i){var b=h('button',{type:'button','class':'btn','aria-pressed':String(i===st.t),text:nm,click:function(){st.t=i;tb.forEach(function(x,j){x.setAttribute('aria-pressed',String(j===i));});fill();}});tabs.append(b);return b;});
+    body.append(h('div',{'class':'ddcap',text:'證據'}),tabs,pane);
+    function fill(){
+      pane.replaceChildren();
+      if(st.t===0){
+        var mini=h('div',{'class':'ddmini'});
+        G.code.forEach(function(x){var u=gcode(x[0]);mini.append(h('span',{'class':'ddref',text:ddLn(u)}),ddCodeNode(u.c),h('span',{'class':'gcn',text:x[1]}));});
+        pane.append(mini);
+      }else if(st.t===1){
+        pane.append(h('pre',{'class':'gq',text:G.es(c)}),h('p',{'class':'gsmall',text:G.esnote(c)}));
+      }else{
+        var sql=G.sqlf?G.sqlf(c):G.sql.replace('{pid}',encodeURIComponent(c.pid)),row=G.rowf?G.rowf(c):G.row(c);
+        pane.append(h('pre',{'class':'gq',text:sql}),gTable(row),
+          h('p',{'class':'gsmall',text:c.demo?'這一列是假想的（G1 實測沒失敗過）。':'結果取自 '+c.src+'（帳本 backfill_ledger 的匯出）。'}));
+      }
+    }
+    fill();
+  }
+  draw();
+  return box;
+}
+function ddCard(n){
+  var p=DDPK[n.id],box=h('div',{'class':'ddcard'});
+  box.append(h('b',{text:p.ti}),h('p',{'class':'ddsay',text:p.say}));
+  box.append(h('div',{'class':'ddcap',text:'程式碼（實際程式節錄）'}));
+  var mini=h('div',{'class':'ddmini'});
+  p.code.forEach(function(id){mini.append(h('span',{'class':'ddref',text:ddLn(DDCODE[id])}),ddCodeNode(DDCODE[id].c));});
+  box.append(mini);
+  box.append(h('div',{'class':'ddcap',text:'資料長這樣（示意）'}));
+  p.data(box);
+  return box;
+}
+function ddInspect(n){
+  var box=$('inspect'),p=DDPK[n.id];
+  if(GATES[n.id]){
+    box.replaceChildren(h('b',{text:n.t+'：規則、圖、實際案例和證據在閘門頁'}),h('p',{text:n.info}));
+    box.append(h('div',{'class':'ddopts'},h('button',{type:'button','class':'btn primary',text:'到閘門頁看 →',click:function(){showGate(n.id);}}),p?h('button',{type:'button','class':'btn',text:'看一步一步怎麼跑 ↓',click:function(){ddGo(p.t,p.i);}}):null));
+    return;
+  }
+  box.replaceChildren(h('b',{text:n.t.replace(/^[①-④] /,'')+'：'}),n.info);
+  if(!p)return;
+  box.append(ddCard(n));
+  var opts=h('div',{'class':'ddopts'},h('button',{type:'button','class':'btn primary',text:'看一步一步怎麼跑 ↓',click:function(){ddGo(p.t,p.i);}}));
+  box.append(opts);
+}
+
+/* ---------- 字典小卡：掛在「斷詞」下面 ---------- */
+var DK={mode:'share',add:0};
+var W='低軌衛星';
+var dkPop=h('div',{'class':'dkpop',id:'dkpop',role:'dialog','aria-label':'字典長這樣',hidden:''});
+document.body.append(dkPop);
+function dkFile(name,fmt,lines,newLine,on){
+  var f=h('div',{'class':'dkf'},h('div',{'class':'dkfn'},h('span',{text:name}),h('i',{text:fmt})));
+  var pre=h('div',{'class':'dkfl'});
+  lines.forEach(function(l){pre.append(h('div',{text:l}));});
+  if(newLine)pre.append(h('div',{'class':'dknew'+(on?' on':''),text:on?newLine:'＋ '+newLine}));
+  f.append(pre);return f;
+}
+function dkRes(kind,ok,seg){
+  var box=h('div',{'class':'dkres '+(ok?'ok':'no')});
+  if(kind==='seg'){
+    box.append(h('span',{'class':'dkcap',text:'文字雲'}));
+    (ok?[W]:['低軌','衛星']).forEach(function(w){box.append(h('span',{'class':'dktk',text:w}));});
+  }else{
+    box.append(h('span',{'class':'dkcap',text:'搜「'+W+'」'}));
+    box.append(h('span',{'class':'dkmk',text:ok?'✓ 同一批文章':seg?'✕ 切法不同，對不上':'✕ 還沒加詞，兩邊都切成「低軌」「衛星」'}));
+  }
+  return box;
+}
+function dkCard(live){
+  var share=DK.mode==='share'||!live, a=live?DK.add:0;
+  var segOn=a>=1, srchOn=share?a>=1:a>=2;
+  var c=h('div',{'class':'dkcard'});
+  var head=h('div',{'class':'dkhd'},h('b',{text:'字典長這樣'}));
+  if(live){
+    var seg=h('div',{'class':'dkseg',role:'group','aria-label':'字典要不要共用'});
+    [['share','共用一份'],['split','分開兩份']].forEach(function(m){
+      seg.append(h('button',{type:'button','class':'dkbtn'+(DK.mode===m[0]?' cur':''),'aria-pressed':String(DK.mode===m[0]),text:m[1],
+        click:function(){DK.mode=m[0];DK.add=0;dkDraw();}}));
+    });
+    head.append(seg,h('button',{type:'button','class':'dkx','aria-label':'關閉',text:'×',click:dkClose}));
+  }
+  c.append(head);
+  var grid=h('div',{'class':'dkgrid'});
+  grid.append(h('div',{'class':'dkcol'},h('div',{'class':'dkwho',text:'斷詞'})),h('div',{'class':'dkcol'},h('div',{'class':'dkwho',text:'搜尋（ES）'})));
+  if(share){
+    grid.append(h('div',{'class':'dkspan'},dkFile('詞表.txt','詞 詞頻 詞性',['高雄市 5 ns','颱風假 5 n'],W+' 5 n',segOn),h('div',{'class':'dkfork',text:'↙　同一份，兩邊都用　↘'})));
+  }else{
+    grid.append(dkFile('user_dict.txt','詞 詞頻 詞性',['高雄市 5 ns','颱風假 5 n'],W+' 5 n',segOn));
+    grid.append(dkFile('ik_custom.dic','一行一個詞',['高雄市','颱風假'],W,srchOn));
+  }
+  grid.append(dkFile('停用詞.txt','不算進結果',['的','了'],null,false));
+  grid.append(dkFile('同義詞.txt','搜一個找到另一個',['台北, 臺北','捷運, MRT'],null,false));
+  grid.append(dkRes('seg',segOn),dkRes('srch',srchOn,segOn));
+  c.append(grid);
+  if(live){
+    var foot=h('div',{'class':'dkfoot'});
+    var label=share?(a?'重來':'＋ 加「'+W+'」'):(a===0?'＋ 加進斷詞的檔':a===1?'＋ 也加進搜尋的檔':'重來');
+    foot.append(h('button',{type:'button','class':'btn primary dkgo',text:label,click:function(){
+      var max=share?1:2;DK.add=DK.add>=max?0:DK.add+1;dkDraw();}}));
+    foot.append(h('span',{'class':'dkcnt',text:'改了 '+(share?(a?1:0):a)+' 個檔'}));
+    c.append(foot);
+    var fl=h('div',{'class':'dkflow'});
+    [['收集','自動'],['審核','PM'],['發 PR','工程師'],['CI 檢查','自動'],['發版 v202646','自動'],['只重跑含新詞的文章','自動'],['驗收','兩個數字 = 0']].forEach(function(x,i){
+      if(i)fl.append(h('span',{'class':'dkar',text:'→'}));
+      fl.append(h('span',{'class':'dkst'+(segOn?' on':''),style:'--d:'+(i*.15)+'s'},h('span',{text:x[0]}),h('small',{'class':'dkwho',text:x[1]})));
+    });
+    c.append(fl);
+    var days=h('div',{'class':'dkdays'});
+    days.append(h('div',{'class':'dkday'+(share?' cur':'')},h('span',{text:'共用'}),h('i',{style:'width:25%'}),h('b',{text:'≈ 10 天'})));
+    days.append(h('div',{'class':'dkday bad'+(share?'':' cur')},h('span',{text:'分開'}),h('i',{style:'width:75%'}),h('b',{text:'+20 天'})));
+    if(!share)days.append(h('div',{'class':'dkwhy',text:'多出：兩份要同步、對帳、各測一次'}));
+    c.append(days);
+  }
+  return c;
+}
+function dkPlace(){
+  var g=nodeEl.seg;if(!g||dkPop.hidden)return;
+  var r=g.getBoundingClientRect(),w=dkPop.offsetWidth,vw=document.documentElement.clientWidth;
+  var left=Math.max(8,Math.min(vw-w-8,r.left+r.width/2-w/2));
+  dkPop.style.left=(left+window.scrollX)+'px';dkPop.style.top=(r.bottom+8+window.scrollY)+'px';
+}
+function dkDraw(){dkPop.replaceChildren(dkCard(true));dkPlace();}
+function dkOpen(){ddPeekHide();DK.add=0;dkPop.hidden=false;dkDraw();var b=dkPop.querySelector('.dkgo');if(b)b.focus({preventScroll:true});}
+function dkClose(){if(dkPop.hidden)return;dkPop.hidden=true;var g=nodeEl.seg;if(g)g.focus({preventScroll:true});}
+window.addEventListener('resize',dkPlace);
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape')dkClose();});
+document.addEventListener('pointerdown',function(ev){if(!dkPop.hidden&&!dkPop.contains(ev.target)&&!(nodeEl.seg&&nodeEl.seg.contains(ev.target)))dkClose();});
+var ddPeekEl=h('div',{'class':'ddpeek',id:'ddpeek',role:'tooltip',hidden:''});
+document.body.append(ddPeekEl);
+function ddPeekHide(){ddPeekEl.hidden=true;}
+var ddPeekAnchor=null,ddPeekNode=null,ddPeekRaf=0;
+function ddPeekShow(n,g){
+  ddPeekAnchor=g;ddPeekNode=n;
+  var p=DDPK[n.id];
+  ddPeekEl.replaceChildren();
+  if(n.id==='seg'){if(!dkPop.hidden)return;ddPeekEl.append(dkCard(false),h('p',{'class':'ddhint',text:'點一下可以自己加詞試試'}));}
+  else if(GATES[n.id]){ddPeekEl.append(h('b',{text:n.t}),h('p',{'class':'ddsay',text:GATES[n.id].rule}),h('p',{'class':'ddhint',text:'點一下看圖、實際案例、程式碼和查詢'}));}
+  else if(p){ddPeekEl.append(ddCard(n),h('p',{'class':'ddhint',text:'點一下這一塊：卡片會留在圖的下方，還能跳去看一步一步怎麼跑。'}));}
+  else{ddPeekEl.append(h('b',{text:n.t.replace(/^[①-④] /,'')}),h('p',{'class':'ddsay',text:n.info}));}
+  ddPeekEl.hidden=false;
+  var r=g.getBoundingClientRect(),w=ddPeekEl.offsetWidth,ht=ddPeekEl.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
+  var left=Math.max(8,Math.min(vw-w-8,r.left+r.width/2-w/2)),top=r.bottom+10;
+  if(top+ht>vh-8)top=r.top-ht-10;
+  if(top<8){
+    top=Math.max(8,Math.min(vh-ht-8,r.top+r.height/2-ht/2));
+    if(r.right+10+w<=vw-8)left=r.right+10;
+    else if(r.left-10-w>=8)left=r.left-10-w;
+  }
+  ddPeekEl.style.left=left+'px';ddPeekEl.style.top=top+'px';
+}
+window.addEventListener('scroll',function(){
+  if(ddPeekEl.hidden)return;
+  if(!ddPeekAnchor||document.activeElement!==ddPeekAnchor){ddPeekHide();return;}
+  if(ddPeekRaf)return;
+  ddPeekRaf=requestAnimationFrame(function(){
+    ddPeekRaf=0;
+    if(ddPeekEl.hidden)return;
+    var r=ddPeekAnchor.getBoundingClientRect();
+    if(r.bottom<0||r.top>window.innerHeight)ddPeekHide();else ddPeekShow(ddPeekNode,ddPeekAnchor);
+  });
+},true);
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape')ddPeekHide();});
+
+/* ---------- 題目／名詞面板、首頁內容切換、手機站點小標 ---------- */
+(function(){
+  var TB=['tb-exam','tb-gloss'];
+  function tpSet(bid,open){
+    var b=$(bid),p=$(b.getAttribute('aria-controls'));
+    if(open){stop();TB.forEach(function(x){if(x!==bid)tpSet(x,false);});}
+    b.setAttribute('aria-expanded',String(open));p.hidden=!open;
+  }
+  TB.forEach(function(bid){
+    var b=$(bid);
+    b.addEventListener('click',function(){tpSet(bid,$(b.getAttribute('aria-controls')).hidden);});
+  });
+  document.querySelectorAll('[data-tpclose]').forEach(function(b){
+    b.addEventListener('click',function(){var bid=b.getAttribute('data-tpclose');tpSet(bid,false);$(bid).focus();});
+  });
+  document.querySelectorAll('[data-gp]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var k=b.getAttribute('data-gp');
+      document.querySelectorAll('[data-gp]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
+      document.querySelectorAll('[data-gpane]').forEach(function(p){p.hidden=(p.getAttribute('data-gpane')!==k);});
+    });
+  });
+  document.addEventListener('keydown',function(ev){
+    if(ev.key!=='Escape')return;
+    TB.forEach(function(bid){
+      var b=$(bid);
+      if(b.getAttribute('aria-expanded')==='true'){tpSet(bid,false);b.focus();}
+    });
+  });
+  document.querySelectorAll('.homeseg [data-hs]').forEach(function(b){
+    b.addEventListener('click',function(){setHomeSeg(b.getAttribute('data-hs'));});
+  });
+  document.querySelectorAll('.zchips [data-go]').forEach(function(b){
+    b.addEventListener('click',function(){goView(b.getAttribute('data-go'),{seg:b.getAttribute('data-seg'),gate:b.getAttribute('data-gate')});});
+  });
+  $('wherehome').addEventListener('click',function(){
+    var o=openerId;openerId=null;
+    showView('home',{seg:'flow',noscroll:true});
+    scrollToEl($('diagram'),'start');
+    if(o&&nodeEl[o])nodeEl[o].focus({preventScroll:true});
+  });
+})();
+showView('home',{seg:'flow',noscroll:true});
+setScenario(0);
+followOn=true;
+
+/* ---------- 只有真的會捲動時才顯示「可以左右滑動」 ---------- */
+function hints(){
+  Array.prototype.forEach.call(document.querySelectorAll('.swipe'),function(p){
+    var el=p.previousElementSibling;
+    p.hidden=!(el&&el.scrollWidth>el.clientWidth+1);
+  });
+}
+hints();
+window.addEventListener('resize',hints);
+if(window.ResizeObserver){var ro=new ResizeObserver(hints);Array.prototype.forEach.call(document.querySelectorAll('.scroll'),function(el){ro.observe(el);});}
+})();
+/* (a) 45 工作天互動時程圖：Q6TL.mount(root) */
+(function(){
+var CSS=`
+.tl{color:var(--fg);font-family:var(--body);line-height:1.6}
+.tl h3{font-family:var(--display);font-size:22px;margin:0 0 4px;line-height:1.35}
+.tl .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.tl .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;margin:0 0 16px}
+.tl .seg button{font:inherit;font-size:14px;border:0;background:var(--panel);color:var(--fg);padding:6px 14px;cursor:pointer}
+.tl .seg button+button{border-left:1px solid var(--line-strong)}
+.tl .seg button[aria-pressed="true"]{background:var(--cut);color:var(--panel);font-weight:700}
+.tl .total{font-family:var(--display);font-size:20px;font-weight:900;margin-left:12px;vertical-align:middle}
+.tl .grid{display:grid;grid-template-columns:200px 1fr;column-gap:12px;row-gap:8px;align-items:center}
+.tl .lbl{font-size:14px;font-weight:700;display:flex;justify-content:space-between;gap:8px}
+.tl .lbl small{font-family:var(--mono);font-weight:400;color:var(--muted);font-size:12px;white-space:nowrap}
+.tl .track{position:relative;height:30px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(var(--u) - 1px),var(--line) calc(var(--u) - 1px),var(--line) var(--u));border-radius:4px}
+.tl .ax{position:relative;height:18px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tl .ax span{position:absolute;transform:translateX(-50%)}
+.tl .bar{position:absolute;top:0;height:30px;border:0;border-radius:6px;background:var(--ok);color:#fff;font:700 12px var(--mono);padding:0 8px;text-align:left;white-space:nowrap;overflow:hidden;cursor:pointer;transition:left .35s,width .35s,box-shadow .15s}
+.tl .bar.crit{background:var(--bad)}
+.tl .bar.buf{background:repeating-linear-gradient(45deg,var(--line),var(--line) 5px,var(--panel) 5px,var(--panel) 10px);color:var(--fg);border:1.5px solid var(--line-strong)}
+.tl .bar:hover{box-shadow:0 0 0 2px var(--fg)}
+.tl .bar[aria-pressed="true"]{box-shadow:0 0 0 3px var(--fg)}
+.tl .bar:focus-visible{outline:2px solid var(--cut);outline-offset:2px}
+.tl .mach{position:absolute;top:9px;height:12px;border-radius:6px;background:var(--gate);transition:left .35s}
+.tl .ms{position:absolute;top:2px;transform:translateX(-6px);font-size:12px;font-weight:700;white-space:nowrap;transition:left .35s}
+.tl .ms::before{content:"◆ ";color:var(--run)}
+.tl .ms.lo{top:24px}
+.tl .ms.r{transform:translateX(calc(-100% + 6px))}
+.tl .sep{grid-column:1/-1;border-top:1px dashed var(--line);margin:2px 0}
+.tl .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:14px 0}
+.tl .legend i{display:inline-block;width:20px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tl .detail{border:1px solid var(--line);border-left:5px solid var(--ok);background:var(--panel);border-radius:8px;padding:14px 16px;margin:4px 0 16px}
+.tl .detail.crit{border-left-color:var(--bad)}.tl .detail.buf{border-left-color:var(--line-strong)}
+.tl .detail h4{margin:0 0 6px;font-size:17px}
+.tl .detail h4 small{font-family:var(--mono);font-weight:400;color:var(--muted);font-size:13px;margin-left:8px}
+.tl .detail dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14.5px}
+.tl .detail dt{color:var(--muted);white-space:nowrap}.tl .detail dd{margin:0}
+.tl .cards{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
+.tl .card{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:12px 16px;font-size:14px}
+.tl .card b.h{display:block;font-size:15px;margin-bottom:4px}
+.tl .card ol{margin:0;padding-left:20px}
+.tl .chip{display:inline-block;font-size:11.5px;border:1px solid currentColor;border-radius:999px;padding:0 7px;margin-left:4px;color:var(--ok);white-space:nowrap}
+.tl .chip.doc{color:var(--cut)}.tl .chip.q{color:var(--pm)}
+.tl .hint{font-size:13px;color:var(--muted);margin:0 0 8px}
+.tl .tip{position:fixed;z-index:2000;width:min(380px,calc(100vw - 24px));background:var(--panel);color:var(--fg);border:1px solid var(--line-strong);border-left:5px solid var(--ok);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.6;box-shadow:0 8px 24px rgba(0,0,0,.22);pointer-events:none}
+.tl .tip.crit{border-left-color:var(--bad)}.tl .tip.buf{border-left-color:var(--line-strong)}
+.tl .tip b{display:block;font-size:14.5px}.tl .tip small{font-family:var(--mono);color:var(--muted);font-size:12px}
+.tl .tip p{margin:6px 0 0}.tl .tip p span{color:var(--muted);margin-right:6px}
+@media (max-width:640px){
+  .tl .grid{grid-template-columns:1fr;row-gap:2px}
+  .tl .grid .lbl{margin-top:8px}.tl .grid .lbl.ax-l{display:none}
+  .tl .cards{grid-template-columns:1fr}
+  .tl .bar{font-size:10.5px;padding:0 4px}
+  .tl .ms{font-size:11px}
+}`;
+var PH=[
+ {n:'先量現況',d:2,k:'',
+  doing:'動手之前，先把現在的系統量一遍：沒在回補時線上搜尋多快、ES 一秒能寫幾篇、一篇平均幾個字、jieba 一核一秒能斷幾個字。',
+  out:'後面所有工期和「搜尋變慢就自動降速」的門檻，都拿這幾個數字當比較標準（沙盤量到：搜尋 74 毫秒、寫入每秒 5,170 篇、平均 284 字、每核每秒 28.6 萬字）。',
+  why:'2 天：量測本身不難，但要在沒有回補的時段量、而且要量到穩定。'},
+ {n:'POC（1 渠道 × 1 月）',d:5,k:'',
+  doing:'挑 1 個渠道的 1 個月，整條流程真的跑一遍：讀原文 → 斷詞 → 寫回 ES → 品質檢查。同時跟 PM 把「怎樣才算過」講定。',
+  out:'第 7 天里程碑：小量試跑的指標都過門檻，證明這套做法可行。',
+  why:'5 天：第一次串起整條流程，會踩到格式、清洗規則、權限之類的坑。'},
+ {n:'字典整併（共用字典）',d:10,k:'crit',alt:30,
+  doing:'把「斷詞用」和「搜尋用」的字典整成同一份。字典一改，斷詞結果就跟著變，要反覆看結果、調整。',
+  out:'一份兩邊共用的字典，之後回補和線上新資料都用它。',
+  why:'10 天：題目提示走相同字典約 10 天。這段最不確定，所以是關鍵路徑。改走兩份不同字典要再加 20 天以上（切到上方「不同字典」可以看）。'},
+ {n:'工程化：批次＋串流＋API',d:10,k:'',
+  doing:'把 POC 的手動流程寫成能自動跑的程式：批次回補（一批 = 一個渠道的一個月）、新資料進來時的即時斷詞、給 PM 新舊對照的 API。',
+  out:'按一個鍵就能一批一批跑、每批自動檢查、沒過的批次單獨重跑。',
+  why:'10 天：一位工程師要同時顧批次、串流、API 三塊。'},
+ {n:'6 渠道回朔與驗收',d:12,k:'crit',
+  doing:'6 個渠道各約 2 天：跑完一個渠道的批次 → 過品質檢查 → PM 抽查、簽核，下一個渠道再開始。',
+  out:'6 個渠道的舊資料都換成新斷詞結果，而且每個渠道都有 PM 簽過。',
+  why:'12 天：機器寫入全部加起來只要約 27 小時，在背景跑；真正花時間的是 PM 每個渠道 1–2 天的來回確認，所以也是關鍵路徑。'},
+ {n:'壓測與切換',d:3,k:'',
+  doing:'加大流量測試：文字雲查詢要在 3 分鐘內、線上搜尋不能變慢。都過了，就把搜尋切到新的斷詞結果。',
+  out:'6 個渠道正式改用新結果（里程碑）。',
+  why:'3 天：測試 1–2 天，切換和觀察 1 天。'},
+ {n:'緩衝',d:3,k:'buf',
+  doing:'不排工作，留給字典調整、PM 驗收來回超出預期的部分。',
+  out:'前面任何一段延誤 3 天以內，總工期不變。',
+  why:'3 天：風險集中在字典和驗收，這兩段已經是關鍵路徑。'}
+];
+function el(t,a,c){var e=document.createElement(t);if(a)for(var k in a){if(k==='text')e.textContent=a[k];else if(k==='html')e.innerHTML=a[k];else e.setAttribute(k,a[k]);}(c||[]).forEach(function(x){e.appendChild(typeof x==='string'?document.createTextNode(x):x);});return e;}
+function mount(root){
+  if(!document.getElementById('q6tl-css')){var s=el('style',{id:'q6tl-css'});s.textContent=CSS;document.head.appendChild(s);}
+  var alt=false,sel=2;
+  var wrap=el('div',{'class':'tl'});
+  wrap.appendChild(el('h3',{text:'(a) 一位工程師 45 個工作天：關鍵路徑是字典與驗收'}));
+  wrap.appendChild(el('p',{'class':'sub',text:'機器時間算得出來、而且在背景跑；真正不確定的是字典調整和 PM 驗收的來回。滑鼠移到任一段就會跳出說明，點下去會固定顯示在下方。'}));
+  var tip=el('div',{'class':'tip',role:'tooltip'});tip.hidden=true;
+  var b1=el('button',{type:'button',text:'共用字典'}),b2=el('button',{type:'button',text:'不同字典'});
+  var total=el('span',{'class':'total'});
+  wrap.appendChild(el('div',{},[el('div',{'class':'seg',role:'group','aria-label':'字典方案'},[b1,b2]),total]));
+  var grid=el('div',{'class':'grid'});wrap.appendChild(grid);
+  var detail=el('div',{'class':'detail','aria-live':'polite'});
+  var legend=el('div',{'class':'legend',html:'<span><i style="background:var(--ok)"></i>人力工作</span><span><i style="background:var(--bad)"></i>關鍵路徑：字典與驗收</span><span><i style="background:var(--gate)"></i>機器時間（背景跑，不加進工期）</span><span><i style="background:repeating-linear-gradient(45deg,var(--line),var(--line) 4px,var(--panel) 4px,var(--panel) 8px);border:1px solid var(--line-strong)"></i>緩衝</span>'});
+  wrap.appendChild(legend);wrap.appendChild(detail);
+  wrap.appendChild(el('div',{'class':'cards',html:
+   '<div class="card"><b class="h">假設</b><ol>'+
+   '<li>5 億篇、平均 284 字（自爬 13.2 萬篇）→ 1.42 × 10<sup>11</sup> 字<span class="chip">實測</span></li>'+
+   '<li>jieba 每核每秒 28.6 萬字<span class="chip">VM 實測</span></li>'+
+   '<li>ES 部分更新會重新索引整篇<span class="chip doc">官方文件</span>；寫入本機實測每秒約 5,170 篇<span class="chip">實測</span></li>'+
+   '<li>共用字典，字典整併約 10 天<span class="chip q">題目提示</span>；PM 每渠道回饋 1–2 天</li></ol></div>'+
+   '<div class="card"><b class="h">機器時間（和人力同時進行）</b>斷詞：1.42e11 ÷ 2.86e5 字/秒 ≈ 138 核心小時 → 64 核約 2.2 小時<br>寫入：5e8 ÷ 5,170 篇/秒 ≈ 27 小時<br>改走不同字典：再加 20 天以上，約 65 天</div>'}));
+  wrap.appendChild(tip);
+  root.appendChild(wrap);
+  var bars=[];
+  function why(p){return (alt&&p.alt)?'30 天：走兩份不同字典，題目提示要額外 20 天以上，總工期變成約 65 天。':p.why;}
+  function showTip(i,b,a,z,d){var p=PH[i];tip.className='tip '+p.k;
+    tip.replaceChildren(el('b',{},[p.n+' ',el('small',{text:'第 '+a+'–'+z+' 天 · '+d+' 天'})]),el('p',{},[el('span',{text:'在做什麼'}),p.doing]),el('p',{},[el('span',{text:'做完拿到'}),p.out]),el('p',{},[el('span',{text:'為什麼這麼久'}),why(p)]));
+    tip.hidden=false;var r=b.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
+    var x=Math.max(12,Math.min(r.left,vw-w-12)),y=r.bottom+8;if(y+h>vh-8)y=Math.max(8,r.top-h-8);
+    tip.style.left=x+'px';tip.style.top=y+'px';}
+  function hideTip(){tip.hidden=true;}
+  function draw(){
+    var T=alt?65:45,u=100/T,s=1,starts=[];
+    PH.forEach(function(p){starts.push(s);s+=(alt&&p.alt?p.alt:p.d);});
+    b1.setAttribute('aria-pressed',String(!alt));b2.setAttribute('aria-pressed',String(alt));
+    total.textContent='合計 '+T+' 個工作天';
+    grid.replaceChildren();bars=[];
+    grid.style.setProperty('--u',u+'%');
+    var ax=el('div',{'class':'ax'});[1].concat(Array.from({length:Math.floor(T/5)},function(_,i){return (i+1)*5;})).forEach(function(d){ax.appendChild(el('span',{style:'left:'+((d-.5)*u)+'%',text:d}));});
+    grid.appendChild(el('div',{'class':'lbl ax-l',html:'<span style="color:var(--muted);font-weight:400">工作天</span>'}));grid.appendChild(ax);
+    PH.forEach(function(p,i){
+      var d=alt&&p.alt?p.alt:p.d,a=starts[i],z=a+d-1;
+      grid.appendChild(el('div',{'class':'lbl'},[el('span',{text:p.n}),el('small',{text:d+' 天'})]));
+      var tr=el('div',{'class':'track',style:'--u:'+u+'%'});
+      var b=el('button',{type:'button','class':'bar '+p.k,style:'left:'+((a-1)*u)+'%;width:'+(d*u)+'%','aria-pressed':String(i===sel),'aria-label':p.n+'，第 '+a+' 到 '+z+' 天',text:'D'+a+'–'+z});
+      b.addEventListener('click',function(){sel=i;hideTip();draw();bars[i].focus();});
+      b.addEventListener('mouseenter',function(){showTip(i,b,a,z,d);});b.addEventListener('mouseleave',hideTip);
+      b.addEventListener('focus',function(){if(b.matches(':focus-visible'))showTip(i,b,a,z,d);});b.addEventListener('blur',hideTip);
+      bars.push(b);tr.appendChild(b);grid.appendChild(tr);
+    });
+    grid.appendChild(el('div',{'class':'sep'}));
+    var bk=starts[4],bd=PH[4].d;
+    grid.appendChild(el('div',{'class':'lbl',html:'<span style="color:var(--gate)">機器：ES 寫入</span><small>約 27 小時</small>'}));
+    var mt=el('div',{'class':'track',style:'background:none'});mt.appendChild(el('div',{'class':'mach',style:'left:'+((bk-1)*u)+'%;width:'+(bd*u)+'%',title:'寫入約 27 小時，分散在回朔這段背景跑'}));grid.appendChild(mt);
+    grid.appendChild(el('div',{'class':'lbl',html:'<span style="color:var(--run)">里程碑</span>'}));
+    var ms=el('div',{'class':'track',style:'background:none;height:46px'});
+    [[starts[1]+PH[1].d-1,'D'+(starts[1]+PH[1].d-1)+' POC 指標過門檻',''],[bk,'D'+bk+' 開始回補','lo'],[starts[5]+PH[5].d-1,'D'+(starts[5]+PH[5].d-1)+' 6 渠道切預設','r']].forEach(function(m){ms.appendChild(el('span',{'class':'ms '+m[2],style:'left:'+((m[0]-.5)*u)+'%',text:m[1]}));});
+    grid.appendChild(ms);
+    var p=PH[sel],d=alt&&p.alt?p.alt:p.d,a=starts[sel];
+    detail.className='detail '+p.k;
+    detail.replaceChildren(el('h4',{},[p.n,el('small',{text:'第 '+a+'–'+(a+d-1)+' 天 · '+d+' 天'})]),
+      el('dl',{},[el('dt',{text:'在做什麼'}),el('dd',{text:p.doing}),el('dt',{text:'做完拿到'}),el('dd',{text:p.out}),el('dt',{text:'為什麼這麼久'}),el('dd',{text:why(p)})]));
+  }
+  b1.addEventListener('click',function(){alt=false;hideTip();draw();});
+  b2.addEventListener('click',function(){alt=true;hideTip();draw();});
+  window.addEventListener('scroll',hideTip,true);
+  draw();
+}
+window.Q6TL={mount:mount};
+})();
+/* (c) 一致性與加新詞互動圖：Q6CC.mount(root) */
+(function(){
+var CSS=`
+.cc{color:var(--fg);font-family:var(--body);line-height:1.6}
+.cc h3{font-family:var(--display);font-size:22px;margin:0 0 4px;line-height:1.35}
+.cc .cc-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.cc .cc-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;margin:0 0 16px}
+.cc .cc-seg button{font:inherit;font-size:14px;border:0;background:var(--panel);color:var(--fg);padding:7px 14px;cursor:pointer;min-height:36px}
+.cc .cc-seg button+button{border-left:1px solid var(--line-strong)}
+.cc .cc-seg button[aria-pressed="true"]{background:var(--cut);color:var(--panel);font-weight:700}
+.cc .cc-hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+.cc .cc-flow{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:stretch}
+.cc .cc-flow .cc-full{grid-column:1/-1}
+.cc .cc-nd{display:block;width:100%;text-align:left;font:inherit;color:var(--fg);background:var(--panel);border:1.5px solid var(--line-strong);border-left:5px solid var(--k,var(--line-strong));border-radius:8px;padding:10px 14px;cursor:pointer;transition:box-shadow .15s,background .15s}
+.cc .cc-nd:hover{box-shadow:0 0 0 2px var(--k,var(--fg))}
+.cc .cc-nd[aria-pressed="true"]{background:var(--k-soft,var(--panel));box-shadow:0 0 0 2px var(--k,var(--fg))}
+.cc .cc-nd small{display:block;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.02em}
+.cc .cc-nd b{display:block;font-size:16px;line-height:1.4}
+.cc .cc-nd span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+.cc .cc-k-same{--k:var(--cut);--k-soft:var(--cut-soft)}
+.cc .cc-k-path{--k:var(--ok);--k-soft:var(--ok-soft)}
+.cc .cc-k-es{--k:var(--gate);--k-soft:var(--gate-soft)}
+.cc .cc-k-chk{--k:var(--run);--k-soft:var(--run-soft)}
+.cc .cc-ar{display:flex;align-items:center;justify-content:center;gap:8px;min-height:34px;font-size:12.5px;color:var(--muted);text-align:center}
+.cc .cc-ar::before{content:"↓";font-size:18px;color:var(--line-strong);font-weight:700}
+.cc .cc-ar.cc-same{color:var(--cut);font-weight:700}
+.cc .cc-ar.cc-same::before{color:var(--cut)}
+.cc .cc-detail{border:1px solid var(--line);border-left:5px solid var(--k,var(--line-strong));background:var(--panel);border-radius:8px;padding:14px 16px;margin:16px 0 0}
+.cc .cc-detail h4{margin:0 0 6px;font-size:17px}
+.cc .cc-detail dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14.5px}
+.cc .cc-detail dt{color:var(--muted);white-space:nowrap}.cc .cc-detail dd{margin:0}
+.cc .cc-chip{display:inline-block;font-size:11.5px;border:1px solid currentColor;border-radius:999px;padding:0 7px;margin-right:6px;white-space:nowrap;vertical-align:1px}
+.cc .cc-chip.cc-run{color:var(--ok)}.cc .cc-chip.cc-code{color:var(--cut)}.cc .cc-chip.cc-est{color:var(--muted)}
+.cc .cc-ask{font-size:15px;font-weight:700;margin:0 0 8px}
+.cc .cc-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
+.cc .cc-opt{font:inherit;text-align:left;color:var(--fg);background:var(--panel);border:1.5px solid var(--line-strong);border-top:5px solid var(--k);border-radius:8px;padding:10px 12px;cursor:pointer}
+.cc .cc-opt:hover{box-shadow:0 0 0 2px var(--k)}
+.cc .cc-opt[aria-pressed="true"]{background:var(--k-soft);box-shadow:0 0 0 2px var(--k)}
+.cc .cc-opt b{display:block;font-size:15px}
+.cc .cc-opt span{display:block;font-size:13px;color:var(--muted)}
+.cc .cc-k-none{--k:var(--ok);--k-soft:var(--ok-soft)}
+.cc .cc-k-part{--k:var(--run);--k-soft:var(--run-soft)}
+.cc .cc-k-all{--k:var(--bad);--k-soft:var(--bad-soft)}
+.cc .cc-verdict{border:1px solid var(--line);border-left:5px solid var(--k);background:var(--panel);border-radius:8px;padding:14px 16px}
+.cc .cc-verdict .cc-big{font-family:var(--display);font-size:21px;font-weight:900;color:var(--k);margin:0 0 4px}
+.cc .cc-verdict p{margin:0 0 10px;font-size:14.5px}
+.cc .cc-steps{margin:0;padding-left:22px;font-size:14.5px;display:grid;gap:4px}
+.cc .cc-meter{margin:14px 0 4px}
+.cc .cc-meter .cc-row{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;font-size:13.5px;margin:4px 0}
+.cc .cc-meter .cc-tr{height:14px;background:var(--bg);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.cc .cc-meter .cc-tr i{display:block;height:100%;background:var(--k);min-width:2px;transition:width .4s}
+.cc .cc-meter .cc-n{font-family:var(--mono);font-size:12.5px;text-align:right;white-space:nowrap}
+.cc .cc-note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.cc .cc-why{border:1px dashed var(--line-strong);border-radius:8px;padding:12px 14px;margin-top:14px;font-size:14px;background:var(--panel)}
+.cc .cc-why b.cc-h{display:block;font-size:15px;margin-bottom:4px}
+@media (max-width:640px){
+  .cc .cc-flow{grid-template-columns:1fr}
+  .cc .cc-flow .cc-ar.cc-two{display:none}
+  .cc .cc-flow .cc-p2{margin-top:10px}
+  .cc .cc-opts{grid-template-columns:1fr}
+  .cc .cc-meter .cc-row{grid-template-columns:1fr 92px}
+  .cc .cc-meter .cc-row .cc-tr{grid-column:1/-1;grid-row:2}
+  .cc .cc-detail dl{grid-template-columns:1fr}
+  .cc .cc-detail dt{margin-top:4px}
+}`;
+var N={
+ dict:{k:'same',tag:'同一份',t:'字典（同一個版本）',s:'每版一個版本號；total 固定',
+  doing:'每次發版產生一個新版本的字典，例如 qsearch-q6-2026.10.30.6，每個檔案附指紋。回補和串流都載入同一個版本。',
+  how:'換版時整份重新載入，不在執行中一個一個加詞、刪詞。jieba 的 total 固定成這一版的常數。',
+  ev:'<span class="cc-chip cc-run">實測</span>執行中加詞，total 和整份重載差 129；加 1 個詞，total 不固定時 20 萬篇裡有 52 篇不含這個詞也變了，固定後 0 篇。'},
+ img:{k:'same',tag:'同一支',t:'斷詞程式（同一個映像）',s:'清洗、過濾規則都寫在程式裡',
+  doing:'回補和串流跑的是同一個程式映像，網址、電話、停用詞的過濾規則都在程式碼裡。',
+  how:'不會有「批次改了規則、串流還是舊規則」的情況。每篇文章記下程式版本（seg_build），出問題查得到是哪一版程式切的。',
+  ev:'<span class="cc-chip cc-code">程式</span>stack/seg/qseg/pipeline.py 的 seg_fields 寫入 seg_build_v2。'},
+ batch:{k:'path',tag:'回朔（批次）',t:'回補舊資料',s:'從 ES 帳本領「渠道×月」分區；從 ES 分批限速讀原文',
+  doing:'每個工作從 ES 帳本領一個「渠道×月」分區，從 ES 分批讀原文、斷詞，寫回 terms_v2，舊欄位不動。',
+  how:'用的是上面同一版字典、同一個程式，所以跟串流切出來的結果一樣。讀取要限速，避免跟線上查詢搶 ES。',
+  ev:'<span class="cc-chip cc-code">程式</span>帳本在 ES 索引 backfill_ledger，領分區用條件更新，兩個工作不會領到同一區。'},
+ stream:{k:'path',tag:'串流',t:'新貼文即時斷詞',s:'新資料進來就斷；換版時重新載入字典',
+  doing:'新貼文進來就斷詞，寫進同一個 terms_v2 欄位。',
+  how:'發新版字典時，串流服務收到通知，整份重新載入新版字典，之後的新貼文都用新版切。',
+  ev:'<span class="cc-chip cc-code">程式</span>PM 頁「建版並發佈」→ 發通知 → 串流服務重新載入字典。'},
+ es:{k:'es',tag:'Elasticsearch',t:'每篇存詞表＋版本號',s:'條件寫入：版本只能前進',
+  doing:'每篇文章存 terms_v2（詞表）、seg_ver（版本號）、dict_version（字典版本）、seg_build（程式版本）、content_sha（原文指紋）。',
+  how:'寫入時比版本號：新版本才寫得進去。慢的回補工作拿舊版本，蓋不掉串流已經寫好的新版結果。同一版本但原文改了（指紋不同）也會重寫。',
+  ev:'<span class="cc-chip cc-code">程式</span>stack/seg/qseg/es.py 的條件更新：版本只能前進。'},
+ shadow:{k:'chk',tag:'每天',t:'抽樣重算：差異必須 = 0',s:'從 ES 抽 1000 篇 → 同字典＋同程式重算 → 逐詞比對',
+  doing:'每天從 ES 隨機抽 1000 篇已經是目前版本的文章，用目前的字典和程式重算一次，跟 ES 裡存的詞表逐詞比。',
+  how:'兩條路用同一份字典、同一支程式，理論上差異一定是 0。不是 0，就代表某條路用了別的版本或別的程式，馬上告警。',
+  ev:'<span class="cc-chip cc-code">程式</span>stack/seg/qseg/shadow.py，預設抽 1000 篇，結果寫進比對紀錄。'}
+};
+var C={
+ none:{k:'none',t:'改停用詞、合併「台／臺」',s:'只改顯示，不改斷詞',
+  big:'不用重跑',
+  p:'這類改動只影響文字雲「顯示哪些詞」，存在 ES 的詞表不用動。查詢時把停用詞排除、把變體合併就好，改完馬上生效，也能隨時改回來。',
+  steps:['字典發新版','文字雲查詢時套用新的排除、合併規則','完成，ES 裡的資料一篇都不用重寫'],
+  rows:[['要重跑的文章',0,'0 篇']],
+  note:'<span class="cc-chip cc-est">設計</span>ES 的 terms 聚合可以在查詢時排除指定的詞。'},
+ part:{k:'part',t:'加一個新詞（例：肥宅）',s:'只影響原文含這個字串的文章',
+  big:'只重跑含這個字串的文章',
+  p:'只有原文出現「肥宅」這兩個字的文章，斷詞結果才可能變。用 ES 查出這些文章重跑就好，其他文章不動。',
+  steps:['PM 頁按「建版並發佈」，產生新版字典','串流服務收到通知，整份重新載入新版字典','用 ES 查出原文含「肥宅」、而且版本還比較舊的文章','限速重算，條件寫入（版本只前進，中斷再跑也不會重複）','驗收：不含新詞卻變了的文章數必須 = 0'],
+  rows:[['全部文章',425000,'42.5 萬篇'],['原文含「肥宅」→ 重跑',22271,'22,271 篇'],['詞表真的變了',5253,'5,253 篇'],['不含「肥宅」卻變了',0,'0 篇']],
+  note:'<span class="cc-chip cc-run">實測</span>42.5 萬篇加「肥宅」，定向重跑 22,271 篇花 8.6 秒。'},
+ all:{k:'all',t:'換斷詞演算法',s:'所有文章都可能變',
+  big:'要全量重跑',
+  p:'換演算法、改過濾邏輯或改 total，每一篇的結果都可能不一樣，只能全部重跑。開一個新欄位跑，舊欄位不動，PM 新舊並排比對過了再切換。',
+  steps:['開新欄位（例如 terms_v3），舊的 terms_v2 照常服務','照 (a) 的「渠道×月」批次流程回補全部歷史資料','PM 新舊並排比對、驗收','切到新欄位'],
+  rows:[['要重跑的文章',500000000,'約 5 億篇']],
+  note:'<span class="cc-chip cc-est">設計</span>這是最貴的一種，所以只有換演算法時才做。'}
+};
+function el(t,a,c){var e=document.createElement(t);if(a)for(var k in a){if(k==='text')e.textContent=a[k];else if(k==='html')e.innerHTML=a[k];else e.setAttribute(k,a[k]);}(c||[]).forEach(function(x){e.appendChild(typeof x==='string'?document.createTextNode(x):x);});return e;}
+/* ES 原本的樣子：Kibana 實測截圖，不重畫 */
+var ESCSS=`
+.cc .cc-es{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:16px;margin:14px 0 0}
+.cc .cc-es h4{font-family:var(--display);font-size:19px;margin:0 0 2px}
+.cc .cc-es .cc-esub{font-size:13.5px;color:var(--muted);margin:0 0 12px}
+.cc .cc-es figure{margin:0 0 16px}
+.cc .cc-es figure a{display:block;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden}
+.cc .cc-es figure img{display:block;width:100%;height:auto}
+.cc .cc-es figcaption{font-size:13.5px;margin:6px 0 0}
+.cc .cc-es figcaption b{margin-right:6px}
+`;
+function esInside(){
+  var shots=[
+    ['img/es-index-management-1115.png','① 索引','Kibana 索引管理（2026-11-15 拍）：posts 索引 3 個分片、0 個副本、743,667 篇、1018.68 MB；backfill_ledger 是回補帳本，177 筆＝177 個分區。'],
+    ['img/es-discover-terms-1115.png','② 文章','Kibana Discover 查 terms_v2:肥宅（最近 90 天 301 篇）：每一列是一篇文章，欄位原樣顯示（content 原文、terms_v1 舊版詞表、terms_v2 新版詞表、dict_version_v2、seg_ver_v2、seg_build_v2）。']
+  ];
+  var box=el('div',{'class':'cc-es'});
+  box.appendChild(el('h4',{text:'ES 原本的樣子'}));
+  box.appendChild(el('p',{'class':'cc-esub',text:'實測環境 ES 的 Kibana 截圖，沒有重畫。點圖看原尺寸。'}));
+  shots.forEach(function(x){
+    box.appendChild(el('figure',{},[el('a',{href:x[0],target:'_blank',rel:'noopener'},[el('img',{src:x[0],alt:x[2],loading:'lazy'})]),el('figcaption',{},[el('b',{text:x[1]}),x[2]])]));
+  });
+  return box;
+}
+function mount(root){
+  if(!document.getElementById('q6cc-css')){var s=el('style',{id:'q6cc-css'});s.textContent=CSS+ESCSS;document.head.appendChild(s);}
+  var tab=0,selN='es',selC='part';
+  var wrap=el('div',{'class':'cc'});
+  wrap.appendChild(el('h3',{text:'(c) 新舊資料怎麼保持一致？加一個新詞要不要全部重跑？'}));
+  wrap.appendChild(el('p',{'class':'cc-sub',text:'同一份原文、同一個版本，不管走回補還是串流，切出來的詞必須一模一樣；字典改了，只重跑真的會受影響的文章。'}));
+  var t1=el('button',{type:'button',text:'① 新舊結果怎麼保持一致'}),t2=el('button',{type:'button',text:'② 加新詞要不要全部重跑'});
+  wrap.appendChild(el('div',{'class':'cc-seg',role:'group','aria-label':'切換問題'},[t1,t2]));
+  var body=el('div');wrap.appendChild(body);
+  root.replaceChildren(wrap);
+  function nodeBtn(id,extra){
+    var n=N[id];
+    var b=el('button',{type:'button','class':'cc-nd cc-k-'+n.k+(extra?' cc-'+extra:''),'aria-pressed':String(id===selN)},[el('small',{text:n.tag}),el('b',{text:n.t}),el('span',{text:n.s})]);
+    b.addEventListener('click',function(){selN=id;draw();var f=body.querySelector('[data-id="'+id+'"]');if(f)f.focus();});
+    b.setAttribute('data-id',id);return b;
+  }
+  function drawFlow(){
+    var f=el('div',{'class':'cc-flow'});
+    f.appendChild(nodeBtn('dict'));f.appendChild(nodeBtn('img','p2'));
+    f.appendChild(el('div',{'class':'cc-ar cc-same cc-full',text:'兩條路載入同一版字典、同一支程式'}));
+    f.appendChild(nodeBtn('batch'));f.appendChild(nodeBtn('stream','p2'));
+    f.appendChild(el('div',{'class':'cc-ar cc-two',text:'寫回 terms_v2'}));f.appendChild(el('div',{'class':'cc-ar cc-two',text:'寫進 terms_v2'}));
+    f.appendChild(el('div',{'class':'cc-full cc-p2'},[nodeBtn('es')]));
+    f.appendChild(el('div',{'class':'cc-ar cc-full',text:'每天抽樣檢查'}));
+    f.appendChild(el('div',{'class':'cc-full'},[nodeBtn('shadow')]));
+    var n=N[selN];
+    var d=el('div',{'class':'cc-detail cc-k-'+n.k,'aria-live':'polite'},[el('h4',{text:n.t}),el('dl',{},[el('dt',{text:'在做什麼'}),el('dd',{text:n.doing}),el('dt',{text:'怎麼保證一致'}),el('dd',{text:n.how}),el('dt',{text:'根據'}),el('dd',{html:n.ev})])]);
+    body.replaceChildren(el('p',{'class':'cc-hint',text:'點任一個方塊，下面會顯示它在做什麼。'}),f,d);
+    if(selN==='es')body.appendChild(esInside());
+  }
+  function drawChange(){
+    var opts=el('div',{'class':'cc-opts',role:'group','aria-label':'字典改了什麼'});
+    Object.keys(C).forEach(function(id){
+      var c=C[id];
+      var b=el('button',{type:'button','class':'cc-opt cc-k-'+c.k,'aria-pressed':String(id===selC)},[el('b',{text:c.t}),el('span',{text:c.s})]);
+      b.addEventListener('click',function(){selC=id;draw();var x=body.querySelector('.cc-opt[aria-pressed="true"]');if(x)x.focus();});
+      opts.appendChild(b);
+    });
+    var c=C[selC],max=c.rows[0][1]||1;
+    var meter=el('div',{'class':'cc-meter'});
+    c.rows.forEach(function(r){
+      var w=r[1]===0?0:Math.max(.4,r[1]/max*100);
+      meter.appendChild(el('div',{'class':'cc-row'},[el('span',{text:r[0]}),el('div',{'class':'cc-tr'},[el('i',{style:'width:'+w+'%'})]),el('span',{'class':'cc-n',text:r[2]})]));
+    });
+    var v=el('div',{'class':'cc-verdict cc-k-'+c.k,'aria-live':'polite'},[el('div',{'class':'cc-big',text:c.big}),el('p',{text:c.p}),el('ol',{'class':'cc-steps'},c.steps.map(function(s){return el('li',{text:s});})),meter,el('div',{'class':'cc-note',html:c.note})]);
+    var why=el('div',{'class':'cc-why',html:'<b class="cc-h">為什麼加一個詞，不含這個詞的文章不會變？</b>jieba 切詞時會用到一個「total」（所有詞頻加總）。加詞會讓 total 變大，原本不含新詞的句子分數也跟著動，就可能切得不一樣。所以把 total 固定成字典版本的常數。<br><span class="cc-chip cc-run">實測</span>20 萬篇加 1 個詞：total 不固定，52 篇不含該詞也變了；固定後 0 篇。'});
+    body.replaceChildren(el('p',{'class':'cc-ask',text:'這次字典改了什麼？'}),opts,v,why);
+  }
+  function draw(){
+    t1.setAttribute('aria-pressed',String(tab===0));t2.setAttribute('aria-pressed',String(tab===1));
+    if(tab===0)drawFlow();else drawChange();
+  }
+  t1.addEventListener('click',function(){tab=0;draw();});
+  t2.addEventListener('click',function(){tab=1;draw();});
+  draw();
+}
+window.Q6CC={mount:mount};
+})();
+
+(function(){
+  var W={
+    a:{url:'https://claude.ai/artifact/6ZeJjhtWNmPvk8SX3eiAEt',mount:function(r){window.Q6TL.mount(r);}},
+    c:{url:'https://claude.ai/artifact/QwYuLak2bt9AfZCxnwCyTW',mount:function(r){window.Q6CC.mount(r);}}
+  };
+  var modal=null,view=null,ttl=null,nw=null,closeBtn=null,lastFocus=null,panes={};
+  function build(){
+    modal=document.createElement('div');modal.className='q6img-modal';modal.hidden=true;
+    modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+    var box=document.createElement('div');box.className='q6img-box';
+    var bar=document.createElement('div');bar.className='q6img-bar';
+    ttl=document.createElement('span');ttl.className='ttl';
+    nw=document.createElement('a');nw.className='q6img-btn';nw.target='_blank';nw.rel='noopener';nw.textContent='在新分頁開';
+    closeBtn=document.createElement('button');closeBtn.type='button';closeBtn.className='q6img-btn q6img-close';closeBtn.setAttribute('aria-label','關閉');closeBtn.textContent='×';
+    closeBtn.addEventListener('click',close);
+    bar.appendChild(ttl);bar.appendChild(nw);bar.appendChild(closeBtn);
+    view=document.createElement('div');view.className='q6img-view';
+    box.appendChild(bar);box.appendChild(view);modal.appendChild(box);document.body.appendChild(modal);
+    modal.addEventListener('click',function(e){if(e.target===modal)close();});
+  }
+  function open(t){
+    if(!modal)build();
+    var k=t.getAttribute('data-widget')||'a',w=W[k]||W.a;
+    lastFocus=t;ttl.textContent=t.getAttribute('data-alt')||'';
+    modal.setAttribute('aria-label',ttl.textContent);nw.href=w.url;
+    if(!panes[k]){panes[k]=document.createElement('div');view.appendChild(panes[k]);w.mount(panes[k]);}
+    for(var p in panes)panes[p].hidden=(p!==k);
+    modal.hidden=false;view.scrollTop=0;document.body.style.overflow='hidden';closeBtn.focus();
+  }
+  function close(){
+    if(!modal||modal.hidden)return;
+    modal.hidden=true;document.body.style.overflow='';
+    if(lastFocus&&lastFocus.focus)lastFocus.focus();
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target&&e.target.closest?e.target.closest('.q6img-trigger'):null;
+    if(t){e.preventDefault();open(t);}
+  });
+  document.addEventListener('keydown',function(e){
+    if(!modal||modal.hidden)return;
+    if(e.key==='Escape'||e.key==='Esc'){e.preventDefault();close();return;}
+    if(e.key==='Tab'){
+      var f=Array.prototype.slice.call(modal.querySelectorAll('a[href],button:not([disabled])')).filter(function(n){return n.offsetParent!==null;});
+      if(!f.length)return;
+      var i=f.indexOf(document.activeElement);
+      if(e.shiftKey){if(i<=0){e.preventDefault();f[f.length-1].focus();}}
+      else if(i===f.length-1||i===-1){e.preventDefault();f[0].focus();}
+    }
+  });
+})();
+</script>
+
+</body></html>

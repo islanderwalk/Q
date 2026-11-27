@@ -1,0 +1,22 @@
+[
+  {
+    "n": 1,
+    "file": "not_monitored_1_503.png",
+    "status": 503,
+    "real": false
+  },
+  {
+    "n": 2,
+    "file": "not_monitored_2_404.png",
+    "status": 404,
+    "real": true,
+    "aid": "M.1792887225.A.5F3"
+  },
+  {
+    "n": 3,
+    "file": "not_monitored_3_truncated.png",
+    "status": 200,
+    "real": true,
+    "aid": "M.1792462201.A.2BD"
+  }
+]

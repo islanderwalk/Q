@@ -18,7 +18,9 @@ q4/code/threads_q4_measure.py 已在 10-30 修正（wire 改記壓縮後大小�
 [B. 最終做法]
 每帳號每輪 1 次 POST https://www.threads.com/graphql/query
   doc_id 39551525044493602（10-29 的值；10-30 已看到 28880431481598345、39825889313693314，會換。
-    實作需從網頁 JS 取得，取得方式未驗證：存下的 HTML 只有 query 名稱，沒有 doc_id）
+    HTML 只有 query 名稱，沒有 doc_id。2026-11-15 驗證：從 HTML 解出的 JS bundle 可取得
+    （當天值 29427891256864466，10-29 的舊值已回 execution error），另需帶 query 定義列的
+    __relay_internal__pv__* 旗標，見 threads_q4_verification.md §12）
   variables：userID、after=null、first=10（伺服器上限 25）
   回應：10 串最新貼文，含 code（組 URL：/@帳號/post/{code}）、全文、taken_at
 前置：userID 每帳號查一次快取；csrftoken/lsd 由無頭瀏覽器定期取得，可跨帳號共用，不需登入、不帶 cookie
@@ -26,17 +28,24 @@ q4/code/threads_q4_measure.py 已在 10-30 修正（wire 改記壓縮後大小�
 [C. 規模與成本]
 每日請求：400,000 × 4 = 1,600,000 次（≈ 18.5 req/s）
 每次大小（實測）：回應 27.8 KB（壓縮後）＋上傳 4.08 KB ≈ 32 KB
+  2026-11-15 重測 12 帳號：回應平均 26.4 KB（5.9–61.4 KB）＋上傳 4.6 KB ≈ 31 KB，
+  每月 1.49 TB、含 TLS 1.76 TB，成本少約 3%，下面的範圍仍成立（verification §13）
 每月流量：48,000,000 × 32 KB ≈ 1.5 TB；加 TLS 握手（估計）≈ 1.8 TB
 每 IP 限制（實測）：單一 IP 5 req/s，約 80–100 次後 GraphQL 全部 401；換新 token 無效、5 分鐘未解封；HTML 不受影響
 → 住宅輪替代理，每次請求換 IP：
    IPRoyal $1.84/GB（按量）≈ US$2,800–3,300/月
+     2026-11-15 官網：$1.84/GB 限一次買 10 TB 以上；按量流量不過期，預付 10 TB ≈ US$18,400，
+     每月 1.5–1.8 TB 約用 5.6–6.7 個月。公開的下一級是 10 GB 方案 $5.51/GB（≈ US$8.3–9.9k/月）；
+     10 GB 到 10 TB 之間的單價官網未公開
    Oxylabs $2.5/GB ≈ US$3,800–4,500/月
+     2026-11-15 官網：$2.5/GB 是 1K+ GB 級距，屬 Enterprise 方案（月費 $2,500 起、需洽業務）；
+     請求與回應流量都計費，不論 HTTP 狀態碼
 → ISP 固定 IP：需要的 IP 數取決於單 IP 可持續速率，未測得，不建議作主力
 
-[D. 第 4 題答案（600 字，連空白與換行；不含空白 521 字。2026-10-31 補 robots.txt 一句）]
-(a) 請求量：未登入時 profile HTML 只內嵌 4 串，但網頁的分頁 GraphQL query 帶 userID、after=null、first=10 即回最新 10 串，含 code（組 URL）、全文、taken_at，不必抓 HTML。每帳號每輪 1 次：40 萬×4＝每日 160 萬次（約 18.5 req/s）。userID 快取一次；csrftoken/lsd 由無頭瀏覽器定期取得、跨帳號共用，免登入與 cookie。
-(b) 防封：須帶瀏覽器 Sec-Fetch 標頭與 4 個 x-header，缺一即取不到貼文。實測單一 IP 以 5 req/s 打約 80–100 次，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 不受影響）。故採住宅輪替代理、每請求換 IP；遇 401 剔除該 IP、退避，監控成功率與每次串數，異常即降速。另 robots.txt 禁止未經書面許可自動蒐集。
-(c) 成本：實測每次回應 27.8 KB、上傳 4.1 KB，每月 4,800 萬次約 1.5 TB，含 TLS 約 1.8 TB。IPRoyal 住宅 $1.84/GB 約 US$2.8–3.3k/月；Oxylabs $2.5/GB 約 US$3.8–4.5k/月。ISP 固定 IP 因單 IP 可持續速率未知且封鎖久，不作主力。
+[D. 第 4 題答案（600 字，連空白與換行；不含空白 523 字。2026-10-31 補 robots.txt 一句；2026-11-15 補 IPRoyal 10 TB 起購條件）]
+(a) 請求量：未登入時 profile HTML 只內嵌 4 串，但分頁 GraphQL query 帶 userID、after=null、first=10 即回最新 10 串，含 code（組 URL）、全文、taken_at，不必抓 HTML。每帳號每輪 1 次：40 萬×4＝每日 160 萬次（≈18.5 req/s）。userID 快取一次；csrftoken/lsd 由無頭瀏覽器定期取得、跨帳號共用，免登入與 cookie。
+(b) 防封：須帶瀏覽器 Sec-Fetch 標頭與 4 個 x-header，缺一即無貼文。實測單一 IP 以 5 req/s 打約 80–100 次，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）。故採住宅輪替代理、每請求換 IP；遇 401 剔除該 IP、退避，監控成功率與每次串數，異常即降速。另 robots.txt 禁止未經書面許可自動蒐集。
+(c) 成本：實測每次回應 27.8 KB、上傳 4.1 KB，每月 4,800 萬次約 1.5 TB，含 TLS 1.8 TB。IPRoyal $1.84/GB（10 TB 起購、不過期）約 US$2.8–3.3k/月；Oxylabs $2.5/GB 約 US$3.8–4.5k/月。ISP 固定 IP 因單 IP 可持續速率未知且封鎖久，不作主力。
 
 驗證細節：threads_q4_verification.md
 == 結果結束 ==

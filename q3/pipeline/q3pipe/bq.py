@@ -349,9 +349,15 @@ class Warehouse:
                     "AND first_fetched_at < TIMESTAMP_ADD(published_at, INTERVAL 24 HOUR)")
         else:
             cond = "last_fetched_at < @cutoff"
-        rows = self.q(f"""SELECT aid, url, title, author, published_at, comment_count, last_fetched_at
+        # 第二段：上次抓到 404 而標記刪文、之後還沒再抓過的文章，隔天（refresh_after_hours 後）再抓一次確認。
+        # 再 404 就確定（last_fetched_at 會晚於 deleted_at，不再複查）；抓得到就恢復可搜尋（MERGE 把 deleted_at 清掉）。
+        rows = self.q(f"""SELECT aid, url, title, author, published_at, comment_count, last_fetched_at,
+                                 status = 404 AS recheck
                           FROM {self.t('posts')}
-                          WHERE board = @b AND published_at >= @since AND status = 200 AND deleted_at IS NULL AND {cond}
+                          WHERE board = @b AND published_at >= @since
+                            AND ((status = 200 AND deleted_at IS NULL AND {cond})
+                                 OR (status = 404 AND deleted_at IS NOT NULL AND last_fetched_at <= deleted_at
+                                     AND last_fetched_at < @cutoff))
                           ORDER BY last_fetched_at LIMIT @lim""",
                       b=board, since=since, cutoff=now - timedelta(hours=refresh_after_hours),
                       cut24=now - timedelta(hours=24), lim=limit)
@@ -473,6 +479,7 @@ class Warehouse:
         waiting = [s["ts"] for a, s in slots.items() if a not in have]
         oldest = min(waiting) if waiting else None
         return {
+            "at": now,  # 這組數字是哪個時間點的：告警用「數字＋算完到現在的時間」推算
             "searchable": p.searchable or 0, "deleted": p.deleted or 0, "empty": p.empty or 0,
             # 可搜尋文章的 comment_count 就是存下的留言數，不必再數巢狀陣列
             "comment_sum": p.comment_sum or 0, "comments": p.comment_sum or 0, "truncated": p.truncated or 0,
@@ -493,6 +500,17 @@ class Warehouse:
         rows = self.q(f"""SELECT status, started_at, finished_at FROM {self.t('crawl_runs')}
                           WHERE board = @b ORDER BY started_at DESC LIMIT 1""", b=board)
         return dict(rows[0].items()) if rows else None
+
+    def list_failing_since(self, board):
+        """最近連續幾輪都因為「讀不到最新列表頁」失敗的話，回傳第一輪的開始時間（程序重啟後補回告警用）。"""
+        rows = self.q(f"""SELECT status, note, started_at FROM {self.t('crawl_runs')}
+                          WHERE board = @b ORDER BY started_at DESC LIMIT 48""", b=board)
+        since = None
+        for r in rows:
+            if r.status != "failed" or "讀不到最新列表頁" not in (r.note or ""):
+                break
+            since = r.started_at
+        return since
 
     def last_verify(self, board):
         rows = self.q(f"""SELECT run_at, pages_checked, pages_not_20, missing_ids, out_of_order_pairs, nrec_checked,

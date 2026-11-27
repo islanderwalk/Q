@@ -7,7 +7,8 @@
 # Stops a PLATFORM only on logout / checkpoint / lock. Resumable from deep/state/*.json.
 # Every run starts each target that already has posts with a head increment: replay from the top of the timeline until a
 # page holds nothing newer than the previous run's latest post, then switch back to the saved backfill cursor (finished
-# targets stay finished). Local network loss pauses the crawl (telem.NetGuard) instead of counting as an anomaly.
+# targets stay finished). A target whose last head increment finished less than HEAD_MIN_GAP_S ago gets none, and page
+# loads are spaced OPEN_GAP_S apart across all platforms, so a restart does not reopen every target back to back. Local network loss pauses the crawl (telem.NetGuard) instead of counting as an anomaly.
 import json, time, sys, re, random, ctypes, ctypes.wintypes as wt, pathlib, traceback
 from datetime import datetime
 from urllib.parse import urlencode, parse_qsl
@@ -19,7 +20,7 @@ _argv = sys.argv
 sys.argv = [sys.argv[0], "0"]
 import crawl_loggedin as C  # noqa: E402  (parse_json_multi, walk, find_window, user32, PROFILE, devtools prefs)
 import redact  # noqa: E402
-from telem import Telemetry, Throttle, NetGuard, net_up, TW, h10, clean_url, now_iso  # noqa: E402
+from telem import Telemetry, Throttle, NetGuard, net_up, TW, h10, clean_url, now_iso, atomic_write  # noqa: E402
 sys.argv = _argv
 
 import os  # noqa: E402
@@ -31,6 +32,16 @@ SHOTS = DEEP / "evidence" / "redacted"
 CUTOFF = datetime(2023, 1, 1, tzinfo=TW).timestamp()
 ONLY = set(sys.argv[1].split(",")) if len(sys.argv) > 1 else None
 HEAD_MAX_PAGES = 300
+# A page load (target open) is the browser fetching the whole profile page: 100-300 sub-requests for scripts, images and
+# video segments, on top of our own throttled replay. On 2026-11-08 each restart reopened all 11 targets back to back for a
+# head increment (finished ones too) and Grafana showed 200-350 requests/min for ~5 min after every restart.
+HEAD_MIN_GAP_S = 6 * 3600  # no new head increment on restart if the last one finished within this window
+OPEN_GAP_S = 90            # min seconds from the end of one page load to the start of the next, across all platforms
+_OPEN = {"last": 0.0}
+# Videos do not autoplay in our tabs: on Instagram the autoplaying reels alone were ~200 video-segment fetches a minute.
+NO_AUTOPLAY = """(() => { const P = HTMLMediaElement.prototype;
+  P.play = function () { try { this.autoplay = false; this.preload = 'none'; this.pause(); } catch (e) {} return Promise.resolve(); };
+})();"""
 REPLAYING = ("replay", "head")  # modes in which the page's own pagination requests are ignored
 
 # 民視 is pinned to FTVNews53: logged in, its tab title is "(1) Facebook" and the follower count renders after the first
@@ -56,6 +67,80 @@ FORBID_HDR = re.compile(r"^(cookie|content-length|host|origin|referer|user-agent
 
 FORCE = """m => { window.__t = document.title; window.__qsev = setInterval(() => {
   if (!document.title.startsWith(m)) document.title = m + ' ' + (window.__t || ''); }, 150); }"""
+# The DevTools (F12) window shot maximizes the browser and pulls it to the foreground, which takes focus away from whoever
+# is working on this PC. Off by default: only the page screenshot is taken, in the background. CRAWL_F12_SHOTS=1 brings it back.
+F12_SHOTS = os.environ.get("CRAWL_F12_SHOTS") == "1"
+
+
+class _NoF12(Exception):
+    pass
+
+
+# Keeping the browser off the user's screen. A plain ctx.new_page() restores a minimized window and takes the foreground
+# (every target opens a page, so the window kept popping up mid-work). So: the window starts off-screen and minimized,
+# pages are created as background tabs through CDP, and on Windows a watcher re-minimizes any of our browser windows
+# that still become visible, with SW_SHOWMINNOACTIVE (no focus change). CRAWL_F12_SHOTS=1 turns all of this off.
+_HIDE = {"cdp": None}
+
+
+def new_tab(ctx):
+    cdp = _HIDE["cdp"]
+    if F12_SHOTS or cdp is None:
+        return ctx.new_page()
+    with ctx.expect_page() as pi:
+        cdp.send("Target.createTarget", {"url": "about:blank", "background": True})
+    return pi.value
+
+
+def _own_pids():
+    class PE(ctypes.Structure):
+        _fields_ = [("dwSize", wt.DWORD), ("cntUsage", wt.DWORD), ("th32ProcessID", wt.DWORD),
+                    ("th32DefaultHeapID", ctypes.c_size_t), ("th32ModuleID", wt.DWORD), ("cntThreads", wt.DWORD),
+                    ("th32ParentProcessID", wt.DWORD), ("pcPriClassBase", ctypes.c_long), ("dwFlags", wt.DWORD),
+                    ("szExeFile", ctypes.c_wchar * 260)]
+    k32 = ctypes.windll.kernel32
+    k32.CreateToolhelp32Snapshot.restype = wt.HANDLE
+    snap = k32.CreateToolhelp32Snapshot(2, 0)
+    kids, e = {}, PE()
+    e.dwSize = ctypes.sizeof(PE)
+    ok = k32.Process32FirstW(snap, ctypes.byref(e))
+    while ok:
+        kids.setdefault(e.th32ParentProcessID, []).append(e.th32ProcessID)
+        ok = k32.Process32NextW(snap, ctypes.byref(e))
+    k32.CloseHandle(snap)
+    out, todo = set(), [os.getpid()]
+    while todo:
+        for c in kids.get(todo.pop(), []):
+            if c not in out:
+                out.add(c)
+                todo.append(c)
+    return out
+
+
+def _keep_hidden():
+    u = ctypes.windll.user32
+    proto = ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
+    while True:
+        try:
+            pids, hits = _own_pids(), []
+
+            def cb(h, _):
+                pid = wt.DWORD()
+                u.GetWindowThreadProcessId(h, ctypes.byref(pid))
+                if pid.value in pids and u.IsWindowVisible(h) and not u.IsIconic(h):
+                    hits.append(h)
+                return True
+            u.EnumWindows(proto(cb), 0)
+            fg = u.GetForegroundWindow()
+            for h in hits:
+                # SW_SHOWMINNOACTIVE keeps a foreground window active (keyboard focus stays on the hidden browser);
+                # SW_MINIMIZE hands the foreground to the next window, i.e. back to the user
+                u.ShowWindow(h, 6 if h == fg else 7)
+        except Exception as e:
+            print("keep_hidden:", e, flush=True)
+        time.sleep(0.5)
+
+
 UNFORCE = """() => { clearInterval(window.__qsev); if (window.__t !== undefined) document.title = window.__t; }"""
 JS_FETCH = """async ({url, headers, body}) => {
   const t0 = performance.now();
@@ -176,6 +261,13 @@ def blur_save(im, name):
     return name
 
 
+def head_recent(head_last):
+    try:
+        return time.time() - datetime.fromisoformat(head_last["finished"]).timestamp() < HEAD_MIN_GAP_S
+    except Exception:
+        return False
+
+
 class Target:
     def __init__(self, plat, slug):
         self.plat, self.slug = plat, slug
@@ -186,7 +278,8 @@ class Target:
         self.earliest, self.latest = s.get("earliest"), s.get("latest")
         self.head_last = s.get("head_last")
         self.head = s.get("head") or ({"floor": self.latest, "resume_cursor": self.cursor, "cursor": None, "added": 0, "pages": 0,
-                                       "errors": 0, "started": now_iso()} if self.posts and self.latest else None)
+                                       "errors": 0, "started": now_iso()}
+                                      if self.posts and self.latest and not head_recent(self.head_last) else None)
         self.seen = set()
         raw = DEEP / "raw" / f"{plat}.jsonl"
         if raw.exists():
@@ -209,10 +302,10 @@ class Target:
         if self.head is not None and self.mode == "head":
             self.head["cursor"] = self.cursor
         cur = self.head["resume_cursor"] if self.head is not None else self.cursor
-        self.f_state.write_text(json.dumps({"cursor": cur, "done": self.done, "reason": self.reason, "pages": self.pages,
+        atomic_write(self.f_state, json.dumps({"cursor": cur, "done": self.done, "reason": self.reason, "pages": self.pages,
                                             "posts": self.posts, "dropped": self.dropped, "earliest": self.earliest,
                                             "latest": self.latest, "head": self.head, "head_last": self.head_last,
-                                            "updated": now_iso()}, ensure_ascii=False, indent=1), encoding="utf-8")
+                                            "updated": now_iso()}, ensure_ascii=False, indent=1))
 
 
 class Platform:
@@ -285,7 +378,9 @@ class Platform:
                     fn, doc = rq.headers.get("x-fb-friendly-name") or fd.get("fb_api_req_friendly_name"), fd.get("doc_id")
                 except Exception:
                     pass
-            api = bool(API_RE.search(rq.url)) or rq.resource_type == "document"
+            # api (p95, the 2x-p95 rule) = page documents + the timeline query we replay. The page's own background GraphQL
+            # (Threads ScreenTime*/NotificationBadge, long-lived subscriptions) stays open for minutes by design.
+            api = rq.resource_type == "document" or bool(fn and API_RE.search(rq.url) and TPL_RE[self.plat].match(fn))
             st = resp.status if resp else None
             rec = {"platform": self.plat, "target": t.slug, "method": rq.method, "url": u, "query_names": qn,
                    "resource_type": rq.resource_type, "status": st, "latency_ms": round(lat, 1) if isinstance(lat, (int, float)) else None,
@@ -347,11 +442,14 @@ class Platform:
         base = f"{self.plat}_{t.slug.replace('.', '_')}_{stamp}_{reason}"
         names = []
         try:
-            t.page.bring_to_front()
+            if F12_SHOTS:
+                t.page.bring_to_front()
             tmp = DEEP / "_tmp.png"
-            t.page.screenshot(path=str(tmp))
+            t.page.screenshot(path=str(tmp), timeout=30000)  # CDP capture: works on a background tab / minimized window
             names.append(blur_save(Image.open(tmp), f"{base}_top.png"))
             tmp.unlink(missing_ok=True)
+            if not F12_SHOTS:
+                raise _NoF12
             marker = f"QSEV{int(time.time() * 1000)}"
             t.page.evaluate(FORCE, marker)
             hwnd = None
@@ -368,6 +466,8 @@ class Platform:
                 C.user32.GetWindowRect(hwnd, ctypes.byref(r))
                 names.append(blur_save(ImageGrab.grab(bbox=(r.left, r.top, r.right, r.bottom), all_screens=True), f"{base}_devtools_F12.png"))
             t.page.evaluate(UNFORCE)
+        except _NoF12:
+            pass
         except Exception as e:
             self.tel.event("shot_error", platform=self.plat, target=t.slug, reason=reason, error=str(e)[:200])
         self.tel.event("screenshot", platform=self.plat, target=t.slug, reason=reason, files=names)
@@ -431,7 +531,7 @@ class Platform:
     # ---- FTV slug discovery (the old 'ftvnews53' showed "content not available")
     def resolve_ftv(self):
         # A page counts only if its name (h1 / og:title / tab title) has 民視 and it has >= 100k followers (not a fan or copycat page).
-        page = self.ctx.new_page()
+        page = new_tab(self.ctx)
         found = None
 
         def probe(url, label):
@@ -485,20 +585,26 @@ class Platform:
     def step(self):
         self.steps += 1
         if self.cur is None:
-            if self.want_ftv:
-                self.want_ftv = False
-                slug = self.resolve_ftv()
-                if slug:
-                    self.queue.append(Target("facebook", slug))
-                self.next_at = time.time() + self.thr.delay
-                return
             while self.queue and self.queue[0].done and self.queue[0].head is None:
                 self.queue.pop(0)
-            if not self.queue:
+            if not self.want_ftv and not self.queue:
                 self.stopped = self.stopped or "all_targets_done"
                 return
-            self.cur = self.queue.pop(0)
-            self.open_target(self.cur)
+            wait = _OPEN["last"] + OPEN_GAP_S - time.time()
+            if wait > 0:  # page loads are spaced out across all platforms
+                self.next_at = time.time() + wait
+                return
+            try:
+                if self.want_ftv:
+                    self.want_ftv = False
+                    slug = self.resolve_ftv()
+                    if slug:
+                        self.queue.append(Target("facebook", slug))
+                else:
+                    self.cur = self.queue.pop(0)
+                    self.open_target(self.cur)
+            finally:
+                _OPEN["last"] = time.time()
             self.next_at = time.time() + self.thr.delay
             return
         t = self.cur
@@ -518,7 +624,7 @@ class Platform:
         self.write_progress()
 
     def open_target(self, t):
-        t.page = self.ctx.new_page()
+        t.page = new_tab(self.ctx)
         t.mode = "load"
         self.attach(t)
         url = URL[self.plat].format(t.slug) if not t.slug.startswith("profile.php") else f"https://www.facebook.com/{t.slug}"
@@ -718,17 +824,26 @@ class Platform:
                                                 "pages": t.pages, "done": t.done, "reason": t.reason,
                                                 "head": t.head, "head_last": t.head_last}
                                        for t in ([self.cur] if self.cur else []) + self.queue + DONE[self.plat]}}
-        (DEEP / "progress.json").write_text(json.dumps({"updated": now_iso(), **PROG}, ensure_ascii=False, indent=1), encoding="utf-8")
+        atomic_write(DEEP / "progress.json", json.dumps({"updated": now_iso(), **PROG}, ensure_ascii=False, indent=1))
 
 
 PROG, DONE = {}, {"facebook": [], "instagram": [], "threads": []}
 
 
+LAUNCH_ARGS = (["--auto-open-devtools-for-tabs", "--start-maximized"] if F12_SHOTS
+               else ["--window-position=-32000,-32000", "--window-size=1500,950"]) + \
+              ["--hide-crash-restore-bubble", "--disable-session-crashed-bubble", "--disable-features=Translate"]
+
+
 def main():
     C.set_devtools_network_pref()
+    if not F12_SHOTS and sys.platform == "win32":
+        import threading
+        threading.Thread(target=_keep_hidden, daemon=True, name="keep_hidden").start()
     with sync_playwright() as p:
         ctx = p.chromium.launch_persistent_context(str(C.PROFILE), headless=False, locale="zh-TW", timezone_id="Asia/Taipei",
-                                                   no_viewport=True, args=["--auto-open-devtools-for-tabs", "--start-maximized"])
+                                                   no_viewport=True, args=LAUNCH_ARGS)
+        ctx.add_init_script(NO_AUTOPLAY)
         plats = {k: Platform(k, ctx) for k in TARGETS if not ONLY or k in ONLY}
         for pl in plats.values():
             st = pl.check_cookie()
@@ -736,7 +851,15 @@ def main():
             if st == "missing":
                 pl.stopped = "not_logged_in_at_start"
                 pl.tel.event("PLATFORM_STOPPED", platform=pl.plat, reason=pl.stopped)
-        keep = ctx.new_page()  # idle pump page so events keep flowing while every platform sleeps
+        keep = ctx.pages[0] if ctx.pages else ctx.new_page()  # idle pump page so events keep flowing while every platform sleeps
+        if not F12_SHOTS:  # nothing needs the window on screen: minimize it through CDP (no focus change)
+            try:
+                cdp = ctx.new_cdp_session(keep)
+                wid = cdp.send("Browser.getWindowForTarget")["windowId"]
+                cdp.send("Browser.setWindowBounds", {"windowId": wid, "bounds": {"windowState": "minimized"}})
+                _HIDE["cdp"] = cdp  # kept open: new_tab() uses it to open background tabs
+            except Exception as e:
+                print("minimize failed:", e, flush=True)
         while True:
             active = [pl for pl in plats.values() if not pl.stopped]
             if not active:

@@ -2,7 +2,7 @@
 
   loop                 常駐：每小時跑一輪＋每日不變量檢查（docker compose 的 crawler 用這個）
   run                  只跑一輪
-  verify               現在跑一次不變量檢查
+  verify [--until T]   現在跑一次不變量檢查（另外走一次 PTT 列表，比對 posts）
   serve                搜尋頁與查詢 API
   search 關鍵字         在終端機查
   status               最近幾輪、7 天內統計、上次檢查
@@ -29,7 +29,9 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("loop")
     sub.add_parser("run")
-    sub.add_parser("verify")
+    v = sub.add_parser("verify")
+    v.add_argument("--until", type=datetime.fromisoformat, default=None,
+                   help="只要求這個時間點以前發的文（ISO 8601，含時區）；預設是爬蟲最近一輪的開始時間")
     sub.add_parser("serve")
     s = sub.add_parser("search")
     s.add_argument("keyword")
@@ -54,7 +56,7 @@ def main(argv=None):
                 res = job.run(ctx)
             ctx.metrics.stop()
             return 0 if res["status"] in ("ok", "partial") else 1
-        res = verify.run(ctx)
+        res = verify.run(ctx, until=a.until)
         return 0 if res["ok"] else 1
 
     cfg = Config.from_env()

@@ -205,3 +205,75 @@ def test_labelled_counters_start_at_zero():
         assert val("q3_comments_new_total", {"fetch": "refresh", "age_day": age}) == 0
     assert val("q3_posts_deleted_total", {"when": "refresh"}) == 0
     assert val("q3_http_requests_total", {"kind": "article_new", "status": "error"}) == 0
+
+
+def test_gate_ignores_404_of_deleted_post_recheck():
+    """隔天複查上次已 404 的文章，再 404 是預期的，不算進「突然大量 404」，否則刪文一多複查那批就一直被擋。"""
+    recheck = [{"status": 404, "refresh": True, "recheck": True} for _ in range(30)]
+    assert job.gate(CFG, recheck + flags(n200=20, refresh=20)) is None
+    assert "404" in job.gate(CFG, [{**f, "recheck": False} for f in recheck] + flags(n200=20, refresh=20))
+
+
+def test_list_head_failing_since_keeps_first_failure_until_ok():
+    from q3pipe.metrics import Metrics
+    m = Metrics(Config())
+    val = lambda: m.reg.get_sample_value("q3_list_failing_since_timestamp_seconds")
+    assert val() == 0
+    m.list_head(False, 1000.0)
+    m.list_head(False, 4600.0)   # 下一輪還是讀不到：維持第一次失敗的時間，告警才算得出連續多久
+    assert val() == 1000.0
+    m.list_head(True, 8200.0)
+    assert val() == 0
+
+
+def test_ptt_last_ok_tracks_list_and_article_separately():
+    from q3pipe.metrics import Metrics
+    m = Metrics(Config())
+    get = lambda k: m.reg.get_sample_value("q3_ptt_last_ok_timestamp_seconds", {"kind": k})
+    assert get("list") > 0 and get("article") > 0   # 剛啟動先當成現在，看板不會顯示成 1970 年
+    m.ptt_last_ok.labels("article").set(1)
+    m.on_request(kind="article_refresh", status=503, latency_s=0.1, nbytes=0, url="u", attempt=3, error="HTTP 503")
+    assert get("article") == 1                      # 失敗不算正常回應
+    m.on_request(kind="article_new", status=404, latency_s=0.1, nbytes=0, url="u", attempt=1, error=None)
+    assert get("article") > 1                       # 404（刪文）是 PTT 正常回應
+    m.ptt_last_ok.labels("list").set(1)
+    m.on_request(kind="list", status=200, latency_s=0.1, nbytes=0, url="u", attempt=1, error=None)
+    assert get("list") > 1
+
+
+def test_window_gauges_refresh_on_a_timer_even_when_fetches_fail():
+    """一輪跑很久（回補、被擋）時每隔 gauge_refresh_s 重算 7 天內的數字；查詢失敗也等下一個間隔，不要每篇都查。"""
+    from q3pipe.metrics import Metrics
+    t = [datetime(2026, 11, 16, 1, 0, tzinfo=timezone.utc)]
+    calls = []
+
+    class WH:
+        fail = False
+
+        def window_stats(self, board, now, days):
+            calls.append(now)
+            if self.fail:
+                raise RuntimeError("模擬器沒回應")
+            return {"at": now, "searchable": 1, "deleted": 0, "comments": 0, "truncated": 0,
+                    "unsearchable_oldest_min": 200.0, "staleness_max_h": 3.0, "unsearchable": 2}
+
+    wh = WH()
+    ctx = SimpleNamespace(cfg=Config(gauge_refresh_s=600), wh=wh, metrics=Metrics(Config()), now=lambda: t[0],
+                          gauges_at=None)
+    job.maybe_refresh_window_gauges(ctx)
+    assert len(calls) == 1
+    assert ctx.metrics.reg.get_sample_value("q3_window_stats_timestamp_seconds") == t[0].timestamp()
+    t[0] += timedelta(minutes=9)
+    job.maybe_refresh_window_gauges(ctx)
+    assert len(calls) == 1
+    t[0] += timedelta(minutes=1)
+    wh.fail = True
+    job.maybe_refresh_window_gauges(ctx)
+    assert len(calls) == 2
+    t[0] += timedelta(minutes=5)
+    job.maybe_refresh_window_gauges(ctx)
+    assert len(calls) == 2                          # 失敗後也等滿 10 分鐘
+    t[0] += timedelta(minutes=5)
+    job.maybe_refresh_window_gauges(ctx)
+    assert len(calls) == 3
+
