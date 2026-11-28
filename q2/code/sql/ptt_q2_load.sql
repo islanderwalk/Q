@@ -1,4 +1,4 @@
--- PTT 文章 → Q2 粉絲頁貼文表（q2_ptt.fb_posts）
+-- PTT 文章 → FB 貼文搜尋的粉絲頁貼文表（q2_ptt.fb_posts）
 --
 -- 來源：q2_ptt.ptt_articles（由 q2/code/ptt_q2_crawl.py 寫入）。本檔只讀 ptt_articles，不改它的結構和資料。
 -- 欄位與 sql/01_schema.sql 相同；q2_bigrams() 也與 01_schema.sql 相同。

@@ -7,8 +7,8 @@
   * repo q6/stack/data/channels/*.jsonl（六渠道公開頁樣本，共約 267 則）
   * 歷史爬蟲 YouTube 樣本 hist_youtube_2026-10.jsonl（13 則）
 - 斷詞：直接呼叫 repo 的 qseg（q6/stack/seg 的 qseg 複製到 $SCALE_ROOT/code，不在 repo 內執行、不寫 repo）。
-  * terms_v2 = qseg.pipeline.segment(dict v2)，字典 = dictsrv 的 current（= qsearch-q6-2026.10.30.2）
-  * terms_v1 = qseg.pipeline.segment(dict v1)，字典 = qsearch-q6-2026.10.30.1（舊流程：純字典、HMM 關、不清洗）
+  * terms_v2 = qseg.pipeline.segment(dict v2)，字典 = dictsrv 的 current（= argus-q6-2026.10.30.2）
+  * terms_v1 = qseg.pipeline.segment(dict v1)，字典 = argus-q6-2026.10.30.1（舊流程：純字典、HMM 關、不清洗）
   * terms_v0 = 近似 ES standard analyzer（CJK 逐字、西文依 \\w+、小寫、去重）；用 Python 重現，不是 ES 本身跑出來的
 - 輸出 pickle：每個來源一筆（文字、渠道、三組詞的 vocab id），之後灌入時組合成文件。
 """
@@ -72,7 +72,7 @@ def main():
     t0 = time.time()
     src = load_sources()
     print(f"sources={len(src)} load_s={time.time() - t0:.1f}", flush=True)
-    dic1 = dd.load("qsearch-q6-2026.10.30.1", pipeline="v1")
+    dic1 = dd.load("argus-q6-2026.10.30.1", pipeline="v1")
     dic2 = dd.load("current", pipeline="v2")
     print(f"dict v1={dic1.version} v2={dic2.version} total_pinned={dic2.manifest.get('total_pinned')}", flush=True)
 

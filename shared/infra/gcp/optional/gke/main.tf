@@ -12,7 +12,7 @@ data "google_compute_subnetwork" "crawler" {
 }
 
 locals {
-  gke_labels = { app = "qsearch", component = "crawler" }
+  gke_labels = { app = "argus", component = "crawler" }
 }
 
 # 節點專用 SA（不用 Compute Engine 預設 SA，避免節點／Pod 拿到過大權限）。
@@ -44,7 +44,7 @@ resource "google_container_cluster" "crawler_autopilot" {
 
   resource_labels = local.gke_labels
 
-  # 節點只有私有 IP，出站走 crawler-nat 的固定 IP（Q4 白名單前提）。
+  # 節點只有私有 IP，出站走 crawler-nat 的固定 IP（Threads 爬蟲 白名單前提）。
   private_cluster_config {
     enable_private_nodes    = true
     enable_private_endpoint = false

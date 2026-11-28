@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""產生 Q5 回補示範用的原始資料目錄（模擬 GCS），並附上「正確答案」expected.json。
+"""產生新指標上線回補示範用的原始資料目錄（模擬 GCS），並附上「正確答案」expected.json。
 
 不連網、固定亂數種子，同樣參數產生位元組相同的檔。資料是合成的，規則取自 q5/evidence 的實測：
 - Threads 計數在 post.text_post_app_info.{repost_count, quote_count, reshare_count}；
@@ -152,7 +152,7 @@ def write_sample(out: Path, posts=2000, reels=200, seed=5, faults=True):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="產生 Q5 回補示範用的合成原始資料")
+    ap = argparse.ArgumentParser(description="產生回補示範用的合成原始資料")
     ap.add_argument("--out", required=True, type=Path, help="輸出目錄（會建立 src/ 與 expected.json）")
     ap.add_argument("--posts", type=int, default=2000)
     ap.add_argument("--reels", type=int, default=200)

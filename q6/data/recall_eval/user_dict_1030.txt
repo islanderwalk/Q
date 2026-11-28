@@ -1,4 +1,4 @@
-# dict_version: qsearch-q6-2026.10.30.1
+# dict_version: argus-q6-2026.10.30.1
 # 格式：詞 詞頻 詞性（jieba user dict）。地名保護用，避免被拆成「高」「雄」「市」。
 高雄市 5 ns
 新北市 5 ns

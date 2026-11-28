@@ -18,7 +18,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "seg"))
 from qseg.ledger import Ledger  # noqa: E402
 
 API = "http://localhost:8080/api/wordcloud"
-PG = "postgresql://qsearch:qsearch@localhost:55433/qsearch"
+PG = "postgresql://argus:argus@localhost:55433/argus"
 ES = "http://localhost:9200"
 SCOPES = {
     "all": {},

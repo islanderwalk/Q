@@ -14,13 +14,13 @@ const URL = process.argv[2], OUT = process.argv[3];
   };
   await p.goto(URL + '#shape/int', { waitUntil: 'load' });
   await p.waitForTimeout(1000);
-  await shot('qsearch-architecture.png', '#shape/int');
-  await shot('qsearch-architecture-q6.png', '#shape/int', () => p.click('.qbar button[data-q="6"]'));
+  await shot('argus-architecture.png', '#shape/int');
+  await shot('argus-architecture-q6.png', '#shape/int', () => p.click('.qbar button[data-q="6"]'));
   await p.click('.qbar button[data-q="6"]');
-  await shot('qsearch-architecture-node-deploy.png', '#shape/int/crawl', async () => {
+  await shot('argus-architecture-node-deploy.png', '#shape/int/crawl', async () => {
     await p.evaluate(() => { const d = document.querySelector('.panel .dep'); if (d) d.scrollIntoView({ block: 'center' }); });
   });
-  await shot('qsearch-q5-dataflow.png', '#q5flow', async () => { await p.evaluate(() => document.querySelector('#pane-q5flow .dg').scrollIntoView({ block: 'start' })); await p.click('#pane-q5flow [data-q5="threads"]'); });
-  await shot('qsearch-evidence.png', '#evidence');
+  await shot('argus-q5-dataflow.png', '#q5flow', async () => { await p.evaluate(() => document.querySelector('#pane-q5flow .dg').scrollIntoView({ block: 'start' })); await p.click('#pane-q5flow [data-q5="threads"]'); });
+  await shot('argus-evidence.png', '#evidence');
   await b.close();
 })();

@@ -1,4 +1,4 @@
-"""3 分鐘 SLO 不漏報（計畫書「如果要改，建議順序」第 1 項）：
+"""3 分鐘 SLO 不漏報（規劃書「如果要改，建議順序」第 1 項）：
 ES 逾時 (3, 180)、ES 查詢帶 timeout、失敗也記耗時與 over_180s、label 啟動時預建、
 快取鍵（已結束範圍不含 ES 狀態 token）、single-flight、Alertmanager webhook 寫 live_events。
 全部用 monkeypatch fake，不連 ES／PostgreSQL。"""

@@ -1,4 +1,4 @@
-"""QSearch 文字雲 API：讀 ES 的 terms 聚合，seg=v1|v2 切換新舊詞表，給 PM 並排比對與客戶文字雲；
+"""ARGUS｜文字雲斷詞 API：讀 ES 的 terms 聚合，seg=v1|v2 切換新舊詞表，給 PM 並排比對與客戶文字雲；
 加上 PM 頁「資料工程端」的實際操作（字典發版、回補簽核、重播樣本、限速、採集器），全部打到同一套 ES／PostgreSQL／Pub/Sub。
 
 - 一次請求一個 ES 搜尋：query 決定文章範圍，terms 聚合算「範圍內有幾篇文章提到這個詞」
@@ -50,8 +50,8 @@ LEDGER_INDEX = os.environ.get("LEDGER_INDEX", "backfill_ledger")   # 回補帳�
 INDEX = os.environ.get("ES_INDEX", "posts")
 DICT_BASE_URL = os.environ.get("DICT_BASE_URL", "http://dictsrv").rstrip("/")
 DICT_ROOT = Path(os.environ.get("DICT_ROOT", "/dict"))
-PG_DSN = os.environ.get("PG_DSN", "postgresql://qsearch:qsearch@pg:5432/qsearch")
-PROJECT = os.environ.get("PUBSUB_PROJECT", "qsearch-local")
+PG_DSN = os.environ.get("PG_DSN", "postgresql://argus:argus@pg:5432/argus")
+PROJECT = os.environ.get("PUBSUB_PROJECT", "argus-local")
 EMULATOR = os.environ.get("PUBSUB_EMULATOR_HOST", "")
 PARSED_TOPIC = os.environ.get("PARSED_TOPIC", "parsed-posts")
 CONTROL_TOPIC = os.environ.get("CONTROL_TOPIC", "dict-releases")
@@ -75,8 +75,8 @@ HARD_STOP = set("的 了 在 是 和 與 及 或 也 都 就 而 等 啊 吧 呢
 NUM_RE = re.compile(r"^[\d\W_]*\d[\d\W_]*$")
 SYMBOL_RE = re.compile(r"^[\W_]+$")
 ASCII_MIX_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{4,}$|^(?:http|https|www|com|cc|tw|ly|html|php)$", re.I)
-V1_NOTE = "舊流程 v1 = jieba 預設主字典、HMM 關、不清洗、不過濾。公司現行字典拿不到，這是對應元件；v1 的詞表是實際算出來的，但不是公司現在線上的詞表。"
-V0_NOTE = "舊系統重現 v0 = 凍結於 2019-12-31 的字典（教育部 2015＋jieba-tw 2016＋公司詞表 2019＋舊行政區名）＋逆向最長匹配，不清洗、不過濾。依題目線索推論的對應元件，非公司原碼；重現「維護多年、停在某一年」的舊文字雲。"
+V1_NOTE = "舊流程 v1 = jieba 預設主字典、HMM 關、不清洗、不過濾。舊系統現行字典拿不到，這是對應元件；v1 的詞表是實際算出來的，但不是舊系統現在線上的詞表。"
+V0_NOTE = "舊系統重現 v0 = 凍結於 2019-12-31 的字典（教育部 2015＋jieba-tw 2016＋舊系統詞表 2019＋舊行政區名）＋逆向最長匹配，不清洗、不過濾。依假設情境推論的對應元件，非舊系統原始碼；重現「維護多年、停在某一年」的舊文字雲。"
 
 DUR = Histogram("wordcloud_duration_seconds", "API 總耗時；status=ok 成功、error 失敗（失敗也記耗時）。SLI 分母用 _count，分子用 le=180 且 status=ok 的桶",
                 ["seg", "cache", "status"], buckets=(0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 120, 180, 300))
@@ -295,7 +295,7 @@ async def lifespan(_app):
     yield
 
 
-app = FastAPI(title="QSearch 文字雲 API（Q6）", lifespan=lifespan)
+app = FastAPI(title="ARGUS｜文字雲斷詞 API", lifespan=lifespan)
 
 
 # ---------- 字典 overlay 與 ES 狀態 token ----------

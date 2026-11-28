@@ -11,13 +11,13 @@ import logging
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-app = FastAPI(title="QSearch PubSub Parser Lab")
+app = FastAPI(title="ARGUS PubSub Parser Lab")
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
 class Event(BaseModel):
-    # Mirrors schemas/qsearch-crawl-event-v1.avsc: every field required, same order.
+    # Mirrors schemas/argus-crawl-event-v1.avsc: every field required, same order.
     # strict: Avro rejects "1", 1.0 and true for an int field, so the parser does too.
     # Do not rely on the topic schema alone: a Seek replay or a schemaless topic bypasses it.
     model_config = ConfigDict(strict=True)

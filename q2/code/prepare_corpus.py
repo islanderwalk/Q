@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QSearch 第 2 題：把中文語料切成「每則 250 字」的貼文檔，給 run_q2.py --mode corpus 用。
+"""ARGUS｜FB 貼文搜尋：把中文語料切成「每則 250 字」的貼文檔，給 run_q2.py --mode corpus 用。
 
 頁面與 repeat／distinct 兩種造資料方式都是隨機 CJK 字，字頻是均勻分布；中文語料是齊夫分布，
 索引體積會落在兩者之間。這支腳本產生符合實際字頻的內文，一行一則（UTF-8，行內不含換行與 tab）。
@@ -122,7 +122,7 @@ def write_posts(posts: list, out: Path) -> dict:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="QSearch Q2：中文語料切成 250 字貼文")
+    ap = argparse.ArgumentParser(description="ARGUS｜FB 貼文搜尋：中文語料切成 250 字貼文")
     sub = ap.add_subparsers(dest="source", required=True)
     w = sub.add_parser("wiki")
     w.add_argument("--parquet", nargs="+", required=True)

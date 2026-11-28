@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PTT 看板文章清單收集器（Q2 用）：翻看板目錄頁（index<N>.html），把文章網址寫成清單，給 ptt_q2_crawl.py 抓內文。
+"""PTT 看板文章清單收集器（FB 貼文搜尋模組用）：翻看板目錄頁（index<N>.html），把文章網址寫成清單，給 ptt_q2_crawl.py 抓內文。
 
 用法（WSL，以 root 身分執行）：
   /root/q2ptt-venv/bin/python ptt_q2_lists.py                 # 預設看板、預設目標筆數
@@ -146,7 +146,7 @@ def parse_index(html, board):
 
 def main():
     global GAP_BASE, GAP_JITTER, TAG
-    ap = argparse.ArgumentParser(description="PTT 看板文章清單收集器（Q2）")
+    ap = argparse.ArgumentParser(description="PTT 看板文章清單收集器（FB 貼文搜尋模組用）")
     ap.add_argument("--boards", default=",".join(BOARDS), help="逗號分隔的看板名")
     ap.add_argument("--target", type=int, default=TARGET, help="所有看板合計寫到幾筆就停")
     ap.add_argument("--max-pages", type=int, default=0, help="本次最多翻幾頁（0 = 不限，測試用）")

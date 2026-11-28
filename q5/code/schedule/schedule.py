@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Q5 (b) 工時、關鍵路徑、日曆天的重算（q5/answer/b-c-d.md 的數字由這支程式產生）。
+"""ARGUS｜新指標上線 瓶頸二：工時、關鍵路徑、日曆天的重算（q5/design/b-c-d.md 的數字由這支程式產生）。
 
 模型：每個角色一個人，同一人手上的工作依序做；工作要等依賴完成才開始（finish-to-start），
-同一人有多件可做時先做編號小的。每日 8 小時；先算純工時，再乘審查修正係數、加緩衝天數。
+同一人有多件可做時先做編號小的。每日 8 小時；先算純工時，再乘複查修正係數、加緩衝天數。
 
 依賴有兩種讀法（b-c-d.md 表格的「依賴」欄）：
 - strict：4 要等 1 做完、7 要等 5 做完。
@@ -14,7 +14,7 @@ import argparse
 import math
 
 HOURS_PER_DAY = 8
-REVIEW_FACTOR = 1.3  # 審查與修正
+REVIEW_FACTOR = 1.3  # 複查與修正
 BUFFER_DAYS = 1
 
 # 編號: (甘特圖標籤, 角色, 工時, strict 依賴, contract 依賴)；依賴寫成 (編號, "end" 或 "start")
@@ -141,7 +141,7 @@ def gantt(times, tasks=TASKS, cell=2):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Q5 (b) 工時與日程重算")
+    ap = argparse.ArgumentParser(description="ARGUS｜新指標上線 工時與日程重算")
     ap.add_argument("--mode", choices=("contract", "strict"), default="contract")
     ap.add_argument("--start-weekday", type=int, default=0, help="0＝週一 … 4＝週五")
     args = ap.parse_args(argv)

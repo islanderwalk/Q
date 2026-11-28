@@ -5,10 +5,10 @@
 
 子命令：
   setup         建 topic、DLQ、push 訂閱（parser 與 header-echo 各一條），並回報模擬器接受／拒絕哪些設定
-  publish       發佈 a～d 四則測試訊息到 qsearch-crawl-fetched
+  publish       發佈 a～d 四則測試訊息到 argus-crawl-fetched
   probe-schema  建 Avro schema 與綁 schema 的探測 topic，看模擬器在 publish 時擋下哪些訊息
-  dlq           從 qsearch-parser-dlq-inspect 拉訊息（確認死信轉送）
-  seek          把 qsearch-parser-sub Seek 回 N 分鐘前（確認保留已 ACK 訊息後可重播）
+  dlq           從 argus-parser-dlq-inspect 拉訊息（確認死信轉送）
+  seek          把 argus-parser-sub Seek 回 N 分鐘前（確認保留已 ACK 訊息後可重播）
   count         從 stdin 讀 parser 容器 log，統計每一類訊息被投遞幾次
 """
 from __future__ import annotations
@@ -33,22 +33,22 @@ from google.pubsub_v1.types import (
     SchemaSettings,
 )
 
-PROJECT = os.environ.get("PUBSUB_PROJECT_ID", "qsearch-local")
+PROJECT = os.environ.get("PUBSUB_PROJECT_ID", "argus-local")
 HERE = Path(__file__).resolve().parent
 FIXTURES = HERE.parent / "tests" / "fixtures"
-AVSC = HERE.parents[2] / "schemas" / "qsearch-crawl-event-v1.avsc"
+AVSC = HERE.parents[2] / "schemas" / "argus-crawl-event-v1.avsc"
 
-TOPIC = "qsearch-crawl-fetched"
-DLQ_TOPIC = "qsearch-parser-dlq"
-DLQ_SUB = "qsearch-parser-dlq-inspect"
-PARSER_SUB = "qsearch-parser-sub"
-ECHO_SUB = "qsearch-header-echo-sub"  # 本機專用，pubsub.tf 沒有
-PROBE_TOPIC = "qsearch-crawl-fetched-schema-probe"  # 本機專用
-SCHEMA_ID = "qsearch-crawl-event-v1"
+TOPIC = "argus-crawl-fetched"
+DLQ_TOPIC = "argus-parser-dlq"
+DLQ_SUB = "argus-parser-dlq-inspect"
+PARSER_SUB = "argus-parser-sub"
+ECHO_SUB = "argus-header-echo-sub"  # 本機專用，pubsub.tf 沒有
+PROBE_TOPIC = "argus-crawl-fetched-schema-probe"  # 本機專用
+SCHEMA_ID = "argus-crawl-event-v1"
 # 模擬器容器看得到的 compose 服務名稱（不是 127.0.0.1）。
 PARSER_ENDPOINT = os.environ.get("PARSER_PUSH_ENDPOINT", "http://parser:8080/events/crawl-fetched")
 ECHO_ENDPOINT = os.environ.get("ECHO_PUSH_ENDPOINT", "http://header-echo:8080/echo")
-PUSH_SA = "qsearch-push@qsearch-local.iam.gserviceaccount.com"  # 假的 SA，模擬器不驗證
+PUSH_SA = "argus-push@argus-local.iam.gserviceaccount.com"  # 假的 SA，模擬器不驗證
 
 SAMPLES = {
     "a_valid": (FIXTURES / "a_valid.json").read_bytes().strip(),
@@ -115,7 +115,7 @@ def setup() -> None:
              "ack_deadline_seconds": 60, "push_config": echo_push}))
 
     got = sub.get_subscription(subscription=sub.subscription_path(PROJECT, PARSER_SUB))
-    print("--- 模擬器回傳的 qsearch-parser-sub 設定 ---")
+    print("--- 模擬器回傳的 argus-parser-sub 設定 ---")
     print(type(got).to_json(got, indent=2) if hasattr(type(got), "to_json") else got)
 
 

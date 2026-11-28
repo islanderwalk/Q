@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QSearch 第 4 題：Threads 公開 profile 的實測量測（純量測，無規避工具）。
+"""ARGUS｜Threads 爬蟲：Threads 公開 profile 的實測量測（純量測，無規避工具）。
 
 對每個公開帳號各抓一次，兩種抓法做對照：
   (1) HTTP client：requests 帶一組正常瀏覽器 header，抓 profile HTML 一次。
@@ -448,7 +448,7 @@ def fmt_kb(n):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="QSearch 第 4 題：Threads 公開頁實測")
+    ap = argparse.ArgumentParser(description="ARGUS｜Threads 爬蟲：Threads 公開頁實測")
     ap.add_argument("--accounts", help="帳號清單檔（一行一個），預設用內建 7 個知名公開帳號")
     ap.add_argument("--delay", type=float, default=6.0, help="每個帳號之間等幾秒")
     ap.add_argument("--scroll-check", type=int, default=5, help="瀏覽器往下捲幾次，看會不會載入更多")

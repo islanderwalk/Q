@@ -1,10 +1,10 @@
-"""排程器（答案：Cloud Scheduler 每小時第 5 分觸發 Cloud Run Job）。本機用常駐程序模擬同一個排程。
+"""排程器（設計：Cloud Scheduler 每小時第 5 分觸發 Cloud Run Job）。本機用常駐程序模擬同一個排程。
 
 - 一啟動先跑一輪，之後每小時第 5 分跑；一輪跑超過一小時（第一次補 7 天）就跑完立刻接下一輪，不會重疊。
 - 每日不變量檢查：台灣時間 04 點後的第一輪結束後跑；從沒跑過的話，第一輪結束就先跑一次。
 - 收到 SIGTERM／SIGINT：當前這篇抓完、這批寫完就停，沒抓的下一輪補。
 - 單一 worker：每一輪（含手動的 run、rollback）都先拿同一把檔案鎖，另一輪還在跑就等它跑完，
-  對應答案 Cloud Run Job 的 parallelism 1。
+  對應設計 Cloud Run Job 的 parallelism 1。
 """
 from __future__ import annotations
 

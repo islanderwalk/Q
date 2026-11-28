@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""對 ES 跑 Q5 三個情境，把「顯示的程式碼＝實際執行的程式碼」與 ES 的實際回應錄成 trace.json（給頁面動畫用）。
+"""ARGUS｜新指標上線：對 ES 跑三個情境，把「顯示的程式碼＝實際執行的程式碼」與 ES 的實際回應錄成 trace.json（給頁面動畫用）。
 用法：python3 record_trace.py <ES 位址> <輸出 trace.json>"""
 import json
 import sys
@@ -80,7 +80,7 @@ r = requests.post(f"{ES}/{IDX}/_update/T-0001?refresh=true", json={"script": {
          '''r = requests.post(f"{ES}/{IDX}/_update/T-0001?refresh=true", json={"script": {
     "lang": "painless", "source": GUARD_SCRIPT,
     "params": {"obj": "text_post_app_info", "values": values, "at": at}}})''', ["T-0001"]),
-        ("b3", "對照：只有整篇一個時間戳的寫法", "這不是交卷的設計。T-0003 先由爬蟲寫 repost=20（T2），再用整篇 T3 回補。",
+        ("b3", "對照：只有整篇一個時間戳的寫法", "這不是正式採用的設計。T-0003 先由爬蟲寫 repost=20（T2），再用整篇 T3 回補。",
          '''requests.put(f"{ES}/{IDX}-naive/_doc/T-0003?refresh=true", json={
     "post_id": "T-0003", "crawled_at": T2,
     "text_post_app_info": {"repost_count": 20}})

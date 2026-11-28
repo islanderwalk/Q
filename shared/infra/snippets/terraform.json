@@ -33,34 +33,34 @@
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
   },
   {
-    "key": "pubsub-schema-qsearch-v1",
+    "key": "pubsub-schema-argus-v1",
     "product": "Pub/Sub",
     "resources": [
       "google_pubsub_schema"
     ],
-    "hcl": "resource \"google_pubsub_schema\" \"qsearch_event_v1\" {\n  name       = \"qsearch-crawl-event-v1\"\n  type       = \"AVRO\"\n  definition = file(\"${path.module}/schemas/qsearch-crawl-event-v1.avsc\")\n}",
+    "hcl": "resource \"google_pubsub_schema\" \"argus_event_v1\" {\n  name       = \"argus-crawl-event-v1\"\n  type       = \"AVRO\"\n  definition = file(\"${path.module}/schemas/argus-crawl-event-v1.avsc\")\n}",
     "say": "AVRO schema 定義事件欄位，topic 綁定後不符合格式的訊息會被擋下。",
     "gotcha": "schema 不能原地改已發布版本，要新增 revision 並考慮相容性。",
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema"
   },
   {
-    "key": "pubsub-topic-qsearch-fetched",
+    "key": "pubsub-topic-argus-fetched",
     "product": "Pub/Sub",
     "resources": [
       "google_pubsub_topic"
     ],
-    "hcl": "resource \"google_pubsub_topic\" \"qsearch_fetched\" {\n  name = \"qsearch-crawl-fetched\"\n  schema_settings {\n    schema   = google_pubsub_schema.qsearch_event_v1.id\n    encoding = \"JSON\"\n  }\n}",
+    "hcl": "resource \"google_pubsub_topic\" \"argus_fetched\" {\n  name = \"argus-crawl-fetched\"\n  schema_settings {\n    schema   = google_pubsub_schema.argus_event_v1.id\n    encoding = \"JSON\"\n  }\n}",
     "say": "topic 綁定 schema 並指定 JSON 編碼，下游 parser 拿到的訊息格式一定正確。",
     "gotcha": "ENCODING_UNSPECIFIED 是預設值，要明確寫 JSON 或 BINARY。",
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic"
   },
   {
-    "key": "pubsub-sub-qsearch-parser",
+    "key": "pubsub-sub-argus-parser",
     "product": "Pub/Sub",
     "resources": [
       "google_pubsub_subscription"
     ],
-    "hcl": "resource \"google_pubsub_subscription\" \"qsearch_parser_sub\" {\n  name                       = \"qsearch-parser-sub\"\n  topic                      = google_pubsub_topic.qsearch_fetched.id\n  ack_deadline_seconds       = 60\n  retain_acked_messages      = true\n  message_retention_duration = \"604800s\"\n\n  push_config {\n    push_endpoint = \"${google_cloud_run_v2_service.parser.uri}/push\"\n    oidc_token {\n      service_account_email = google_service_account.push.email\n    }\n  }\n}",
+    "hcl": "resource \"google_pubsub_subscription\" \"argus_parser_sub\" {\n  name                       = \"argus-parser-sub\"\n  topic                      = google_pubsub_topic.argus_fetched.id\n  ack_deadline_seconds       = 60\n  retain_acked_messages      = true\n  message_retention_duration = \"604800s\"\n\n  push_config {\n    push_endpoint = \"${google_cloud_run_v2_service.parser.uri}/push\"\n    oidc_token {\n      service_account_email = google_service_account.push.email\n    }\n  }\n}",
     "say": "parser 用 Push 訂閱：Pub/Sub 帶 OIDC token 打 Cloud Run；保留已確認訊息 7 天，解析出錯時用 Seek 回放重跑，不必重新爬。",
     "gotcha": "Seek 回放已確認訊息需要 retain_acked_messages = true；保留期預設 7 天、上限 31 天，會增加儲存成本。Push SA 要有 run.invoker，Pub/Sub 服務代理要能替它簽 token。",
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
@@ -71,7 +71,7 @@
     "resources": [
       "google_pubsub_subscription"
     ],
-    "hcl": "resource \"google_pubsub_subscription\" \"qsearch_to_bq\" {\n  name  = \"qsearch-fetched-to-bq\"\n  topic = google_pubsub_topic.qsearch_fetched.id\n  bigquery_config {\n    table            = \"${var.project_id}.${google_bigquery_dataset.sentiment.dataset_id}.${google_bigquery_table.ingest_events.table_id}\"\n    use_topic_schema = true\n    write_metadata   = true\n  }\n}",
+    "hcl": "resource \"google_pubsub_subscription\" \"argus_to_bq\" {\n  name  = \"argus-fetched-to-bq\"\n  topic = google_pubsub_topic.argus_fetched.id\n  bigquery_config {\n    table            = \"${var.project_id}.${google_bigquery_dataset.sentiment.dataset_id}.${google_bigquery_table.ingest_events.table_id}\"\n    use_topic_schema = true\n    write_metadata   = true\n  }\n}",
     "say": "Pub/Sub BigQuery 訂閱直接寫進 BQ，不用自己寫 consumer，可當成替代方案來講。",
     "gotcha": "忘記給 Pub/Sub 服務代理寫入該 BigQuery 表的權限，寫入會失敗。",
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription"
@@ -150,18 +150,18 @@
       "google_cloud_run_v2_service"
     ],
     "hcl": "resource \"google_cloud_run_v2_service\" \"parser\" {\n  name                = \"parser\"\n  location            = \"asia-east1\"\n  deletion_protection = false\n  template {\n    service_account = google_service_account.parser.email\n    scaling { max_instance_count = 20 }\n    containers { image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/parser:latest\" }\n  }\n}",
-    "say": "parser 是 Cloud Run 服務，從 qsearch-parser-sub 取訊息解析，負載高時自動擴容。",
+    "say": "parser 是 Cloud Run 服務，從 argus-parser-sub 取訊息解析，負載高時自動擴容。",
     "gotcha": "pull 型消費者放 Cloud Run 會因無請求被 CPU 節流，改用 push 或讓 CPU 常開。",
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service"
   },
   {
-    "key": "cloud-run-v2-job-qsearch-backfill",
+    "key": "cloud-run-v2-job-argus-backfill",
     "product": "Cloud Run",
     "resources": [
       "google_cloud_run_v2_job"
     ],
-    "hcl": "resource \"google_cloud_run_v2_job\" \"qsearch_backfill\" {\n  name                = \"qsearch-backfill\"\n  location            = \"asia-east1\"\n  deletion_protection = false\n  template {\n    template {\n      timeout     = \"3600s\"\n      max_retries = 2\n      containers { image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/backfill:latest\" }\n    }\n  }\n}",
-    "say": "qsearch-backfill 是 Cloud Run Job，跑完就結束，適合一次性或排程回補，不用常駐。",
+    "hcl": "resource \"google_cloud_run_v2_job\" \"argus_backfill\" {\n  name                = \"argus-backfill\"\n  location            = \"asia-east1\"\n  deletion_protection = false\n  template {\n    template {\n      timeout     = \"3600s\"\n      max_retries = 2\n      containers { image = \"asia-east1-docker.pkg.dev/${var.project_id}/crawler/backfill:latest\" }\n    }\n  }\n}",
+    "say": "argus-backfill 是 Cloud Run Job，跑完就結束，適合一次性或排程回補，不用常駐。",
     "gotcha": "Job 沒有 HTTP 入口，template 是雙層 template.template，少一層會報錯。",
     "doc": "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_job"
   },

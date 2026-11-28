@@ -1,6 +1,6 @@
-"""QSearch 第 2 題：離線換算與頁面數字的一致性（不連資料庫）。
+"""ARGUS｜FB 貼文搜尋：離線換算與頁面數字的一致性（不連資料庫）。
 
-PAGE 是 q2/answer/fb_q2_posts_table.html 內 const D 的數字（PG 16.15 的實測）。
+PAGE 是 q2/design/fb_q2_posts_table.html 內 const D 的數字（PG 16.15 的實測）。
 run_q2.py 的實測結果用 compare 對照，差異照實寫在 RESULTS.md。
 """
 import math

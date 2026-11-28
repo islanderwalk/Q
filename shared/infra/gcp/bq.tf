@@ -1,5 +1,5 @@
 # BigQuery：分析資料集與分區表（ingest_events）。
-# 表結構與 Avro schema（qsearch-crawl-event-v1）逐欄一致，供 Pub/Sub BigQuery 訂閱 use_topic_schema 寫入。
+# 表結構與 Avro schema（argus-crawl-event-v1）逐欄一致，供 Pub/Sub BigQuery 訂閱 use_topic_schema 寫入。
 
 resource "google_bigquery_dataset" "sentiment" {
   dataset_id                 = "sentiment_analytics"
@@ -21,7 +21,7 @@ resource "google_bigquery_table" "ingest_events" {
     expiration_ms = 7776000000 # 90 天
   }
 
-  # 欄位對應 qsearch-crawl-event-v1.avsc。mode 為 NULLABLE（與 Avro 的 required 對應未驗證，見 README）。
+  # 欄位對應 argus-crawl-event-v1.avsc。mode 為 NULLABLE（與 Avro 的 required 對應未驗證，見 README）。
   schema = jsonencode([
     { name = "event_id", type = "STRING", mode = "NULLABLE" },
     { name = "schema_version", type = "INTEGER", mode = "NULLABLE" },

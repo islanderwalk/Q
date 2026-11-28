@@ -1,4 +1,4 @@
-"""原始 HTML 存檔（答案：原始 HTML 存 GCS 備重解析）。gzip 壓縮後依看板／種類／編號／抓取時間存一份。"""
+"""原始 HTML 存檔（設計：原始 HTML 存 GCS 備重解析）。gzip 壓縮後依看板／種類／編號／抓取時間存一份。"""
 from __future__ import annotations
 
 import gzip

@@ -1,7 +1,7 @@
 """兩種抓法的代價：請求次數 vs 留言抓到比例。全部用離線資料重算，不連 PTT。
 
     python q3/evidence/playwright/build_tradeoff.py          # 算數字、產三張截圖（紅框）＋寫 tradeoff.json
-    python q3/evidence/playwright/build_tradeoff.py --embed  # 把三張嵌進 architecture.html 第 6 題的彈窗
+    python q3/evidence/playwright/build_tradeoff.py --embed  # 把三張嵌進 architecture.html 瓶頸 6 的彈窗
 
 數字來源：q3/data/ptt_q3_census_out/articles.jsonl（7 天普查，6,224 篇成功、234,577 則留言）。
 請求數：首抓 890＋列表 48＋重抓（A: 890×6；B: 890×1）。每日 890 篇取自 RESULTS.md。
@@ -228,7 +228,7 @@ def embed(d, frames):
     if old_li in html:
         html = html.replace(old_li, new_li, 1)
     elif 'data-ev="s"' not in html:
-        raise RuntimeError("找不到第 6 題的 li")
+        raise RuntimeError("找不到瓶頸 6 的 li")
 
     HTML.write_text(html, encoding="utf-8")
     print("embedded", len(frames), "frames into", HTML)

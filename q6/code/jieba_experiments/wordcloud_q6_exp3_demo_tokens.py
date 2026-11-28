@@ -1,4 +1,4 @@
-"""Q6 實驗三：產生研究頁用的示意資料（v1/v2 斷詞、問題標記、搜尋粒度對照）。
+"""文字雲斷詞實驗三：產生研究頁用的示意資料（v1/v2 斷詞、問題標記、搜尋粒度對照）。
 
 用法: python -I wordcloud_q6_exp3_demo_tokens.py <dict.txt.big> <out_dir>
 """

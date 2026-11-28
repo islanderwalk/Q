@@ -1,23 +1,5 @@
 [
   {
-    "id": "ev_00_gcp_qsearch_stack",
-    "cat": "overview",
-    "url": "https://cloud.google.com/customers/qsearch",
-    "source": "Google Cloud 客戶案例：QSearch",
-    "claim": "QSearch 在 Google Cloud 上跑資料平台（案例列出 BigQuery、Cloud Storage、Pub/Sub 等），所以回朔讀原文走 BigQuery／GCS、串流沿用 Pub/Sub。",
-    "excerpts": [
-      {
-        "find": "43.2 billion records in 8 hours"
-      },
-      {
-        "find": "Founded in 2014"
-      },
-      {
-        "find": "Cloud Pub/Sub"
-      }
-    ]
-  },
-  {
     "id": "ev_a1_es_update_reindex",
     "cat": "a-backfill",
     "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html",

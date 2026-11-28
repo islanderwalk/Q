@@ -14,7 +14,7 @@ if str(SEG) not in sys.path:
 job = pytest.importorskip("qseg.job")
 rawsrc = pytest.importorskip("qseg.rawsrc")
 
-TABLE = "qsearch-prod.raw.posts"
+TABLE = "argus-prod.raw.posts"
 NOW = dt.datetime.now(dt.timezone.utc)
 
 
@@ -111,11 +111,11 @@ def test_config_checked_before_claiming(monkeypatch):
     with pytest.raises(SystemExit):
         rawsrc.check_config()
     monkeypatch.setattr(job.config, "RAW_SOURCE", "bigquery")
-    for bad in ("", "raw.posts", "proj.raw.posts`; DROP TABLE x; --", "qsearch-prod.raw-data.posts"):
+    for bad in ("", "raw.posts", "proj.raw.posts`; DROP TABLE x; --", "argus-prod.raw-data.posts"):
         monkeypatch.setattr(job.config, "RAW_BQ_TABLE", bad)
         with pytest.raises(SystemExit):
             rawsrc.check_config()
-    for good in (TABLE, "qsearch-prod.raw.posts-2026"):   # 表名可以有 -，資料集不行
+    for good in (TABLE, "argus-prod.raw.posts-2026"):   # 表名可以有 -，資料集不行
         monkeypatch.setattr(job.config, "RAW_BQ_TABLE", good)
         rawsrc.check_config()
     monkeypatch.setattr(job.config, "RAW_SOURCE", "file")
@@ -210,7 +210,7 @@ class RunES:
 
 def _run(monkeypatch, part, real_gates=False):
     class Dic:
-        version, pipeline, stopwords = "qsearch-q6-2026.11.01.1", "v2", {"的"}
+        version, pipeline, stopwords = "argus-q6-2026.11.01.1", "v2", {"的"}
 
     class HB:
         def __init__(self, *a, **k): pass
@@ -272,7 +272,7 @@ class ListBQ:
 
 
 class Dic:
-    version = "qsearch-q6-2026.10.30.3"
+    version = "argus-q6-2026.10.30.3"
 
 
 def test_list_partitions_file_scans_raw_root(tmp_path, monkeypatch):

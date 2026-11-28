@@ -1,17 +1,37 @@
-# QSearch 筆試第 6 題：文字雲斷詞 Pipeline 重建
+# ARGUS｜文字雲斷詞重建：六渠道、約 5 億筆
 
-> **題目：** 你加入一間社群輿情分析 SaaS 公司，主力產品是讓企業客戶輸入關鍵字後，即時查詢跨社群平台（Facebook、Instagram、YouTube、論壇、媒體、Threads）的聲量趨勢與文字雲。
-> 目前的文字雲功能使用一份維護多年的繁體中文字典檔進行斷詞，但產出品質有嚴重問題：短網址後綴出現在結果中、電話號碼被當成詞彙、中文助詞（的、了、在）未被過濾、地名變體被拆散（例如「高雄市」被拆成「高」「雄」「市」）、搜尋高頻詞反而沒出現在文字雲中。
-> 團隊決定重寫斷詞演算法，你被指派負責整個 Data Pipeline 的設計。以下是已知條件：
-> - 需處理 6 個渠道、覆蓋 2023 年 1 月至今的所有歷史資料
-> - 目前 Elasticsearch 中儲存的社群貼文總量約 5 億筆
-> - 新舊斷詞結果需並行提供，讓 PM 可 A/B 比對驗收
-> - 產品端的查詢回應時間目標：單次文字雲查詢不超過 3 分鐘（初期可放寬，但正式上線須達標）
-> - 新資料需透過 Streaming Pipeline 即時斷詞寫入
-> (a) 請設計這個「歷史資料回朔斷詞」的執行策略。你會怎麼拆分批次？以什麼為單位排程（年份？渠道？還是其他維度）？每個批次之間需要什麼樣的品質檢查點？請具體估算：如果團隊只有 1 位資料工程師負責，從 POC 驗證到 6 渠道全部完成上線，你估計需要多少個工作天？請列出你的假設。
-> (b) 字典檔品質直接影響斷詞結果。請問你會怎麼設計字典檔的維護流程？如何處理「斷詞用字典」和「搜尋用字典」是否共用的問題？如果走不同字典檔，對系統架構有什麼影響？（提示：原團隊估計走不同字典檔需額外 20+ 工作天，走相同字典檔約 10 天）
-> (c) Streaming Pipeline 上線後，如何確保新進資料的斷詞結果與歷史回朔資料的品質一致？如果字典檔日後更新了一個新詞，是否需要重新跑全部歷史資料？你會怎麼設計讓這件事可控？
-> *上限 600 字。*
+> 一句話：ARGUS 的文字雲要換掉舊字典斷詞。這個模組負責六個渠道、2023/01 起全部歷史的回補，以及新資料的串流斷詞，讓新舊結果並行給 PM 驗收，最後做出回補策略、字典維護與一致性機制，並用 Docker 把整套跑起來實測。
+
+## 情境與限制
+
+ARGUS 的文字雲原本用一份繁體中文字典斷詞，品質有幾個明顯問題：短網址後綴混進結果、電話號碼被當成詞、中文助詞（的、了、在）沒有過濾、地名被拆散（「高雄市」→「高／雄／市」），搜尋的高頻詞反而沒出現在文字雲裡。我決定重寫斷詞，給自己定的條件如下：
+
+- 六個渠道（Facebook、Instagram、Threads、YouTube、PTT 論壇、新聞媒體），覆蓋 2023 年 1 月至今的全部歷史資料。
+- Elasticsearch 裡目前約 5 億筆社群貼文。
+- 新舊斷詞結果並行保存，讓 PM 用 A/B 比對驗收。
+- 單次文字雲查詢不超過 3 分鐘（前期可放寬，正式上線必須達標）。
+- 新資料走 Streaming Pipeline，即時斷詞後寫入。
+- 只有我一位資料工程師，從 POC 到六渠道全部完成上線。
+
+## 遇到的瓶頸
+
+1. **5 億筆、六個渠道要怎麼切批與排程，才能失敗只重跑一批、又能一個人做完？**：批次太大，失敗的重跑代價高；太小，排程與品質閘門的負擔又會放大。工作天也得先估，才知道從 POC 到上線要多久。
+2. **斷詞字典和搜尋字典要不要共用？**：分開維護，同步、對帳與回歸都要做兩份，點文字雲的詞也未必搜得到同一批文；共用又要處理搜尋與文字雲需求互相拉扯的問題。
+3. **串流與歷史回補的結果怎麼保持一致？字典加一個新詞，要不要把歷史全部重跑？**：新舊路徑若用的程式或字典版本不同，同一篇文章會切出不同的詞；如果每次加詞都全量重跑，5 億筆根本跑不完。
+
+## 我怎麼解
+
+### (a) 回補批次、品質檢查點與工作天（對應瓶頸 1）
+
+我把「渠道×月」當一批，約 270 批、平均 185 萬篇：渠道定清洗規則、月份控批量，失敗只重跑一批，由新到舊。新結果寫 terms_v2、舊欄位不動，PM 以 seg 參數並排比對；文字雲以 ES terms 聚合數篇數。每批閘門：筆數守恆；網址、電話、停用詞洩漏為 0；金標詞召回不低於上版；文字雲查詢 ≤ 3 分鐘；PM 抽查。一人做，我的初估 45 工作天：先量現況 2、POC 5、字典整併 10、工程化 10、回朔驗收 12、壓測切換 3、緩衝 3。自爬均長 284 字，jieba 約 140 核心小時；ES 實測每秒寫 5,170 篇，約 27 小時。
+
+### (b) 字典維護與是否共用（對應瓶頸 2）
+
+字典當程式碼管：熱詞、監測詞、地名庫與新詞發現進候選，審核後發 PR，CI 跑回歸並估影響篇數，每週發版。我選共用核心詞庫，搜尋與文字雲各加用途層（同義詞／停用詞、變體合併）：搜尋細切、文字雲精確切。分開則多出同步、對帳與兩套回歸，點文字雲的詞未必搜到同一批文，我的初估多出 20 天。
+
+### (c) 串流一致性與字典更新（對應瓶頸 3）
+
+批次與串流用同一映像，每篇記 seg_ver（只能前進）與字典、停用詞、程式的雜湊指紋，原文另記 content_sha；每天抽樣重算須零差異。字典更新不全量重跑：停用詞查詢時處理；新詞用 ES 字元片語查含該字串的文章重跑。jieba 固定 total，不含新詞的文章才不變（未固定時 20 萬篇有 52 篇變）。換演算法才開新欄位全量重跑。
 
 ---
 
@@ -19,8 +39,8 @@
 
 | 項目 | 位置 | 說明 |
 |---|---|---|
-| 正式答案（600 字，連空白與換行；(a)(b)(c)） | [`q6/answer/answer_600.txt`](answer/answer_600.txt) | 2026-10-31 依審查四點改寫，字數由 `code/tests/test_answer_length.py` 檢查；研究頁 [`q6/answer/research-page.html`](answer/research-page.html)（下載後用瀏覽器開，答案分頁與本檔相同） |
-| 架構圖 11 張 | [`q6/architecture/`](architecture) | 依子題分資料夾，整套系統實跑的 2 張在 `architecture/stack/`；原始檔 `architecture/src/arch_*.html`，用 Playwright 渲染成 PNG |
+| 一頁摘要（(a)(b)(c)，≤ 600 字，連空白與換行；細節放本檔與 RESULTS） | [`q6/design/summary.txt`](design/summary.txt) | 2026-10-31 依自我複查四點改寫，字數由 `code/tests/test_q6_summary_length.py` 檢查；研究頁 [`q6/design/research-page.html`](design/research-page.html)（下載後用瀏覽器開，設計摘要分頁與本檔相同） |
+| 架構圖 11 張 | [`q6/architecture/`](architecture) | 依子問題分資料夾，整套系統實跑的 2 張在 `architecture/stack/`；原始檔 `architecture/src/arch_*.html`，用 Playwright 渲染成 PNG |
 | 佐證 21 張 | [`q6/evidence/`](evidence) | 官方文件／原始碼／論文用 Playwright 擷取後加黃框；VM 實測做成卡片；原始擷取在 `q6/evidence/src/crops/` |
 | PTT 雜訊截圖 6 張 | [`q6/evidence/playwright/`](evidence/playwright) | 01 短網址與地名、02 地名「鼓山區」、03 地名與電話、04 電話（已遮）、05 `tinyurl.com` 短網址與被推文換行切開的網址、06 `bit.ly` 短網址。沒有一張標助詞，也沒有一張證明「高雄市」被拆（jieba 預設字典本來就保留「高雄市」） |
 | 斷詞原型 | [`q6/code/`](code) | `segmenter.py`（新舊並行，`Segmenters.build(base_dict=…)` 可換主字典；`run_compare.py`、`kaohsiung_trace.py` 用 `--base-dict`）、`run_compare.py`、`kaohsiung_trace.py`（「高雄市」6→6 的證據：用 jieba 字典模擬的舊流程本來就沒拆）、`affected_demo.py`、`tests/`；結果 [`q6/code/RESULTS.md`](code/RESULTS.md)（jieba 內建字典與繁體 dict.txt.big 各一組對照）、估算 [`q6/code/PLAN.md`](code/PLAN.md) |
@@ -31,24 +51,23 @@
 | 規模試跑 | [`q6/code/scale-pilot/`](code/scale-pilot)、[`q6/evidence/scale-pilot/`](evidence/scale-pilot) | 單機 ES 灌入 28.3 萬篇、538.7 MB（約 1.99 KB／篇），5 億篇外推約 950 GB，單機磁碟放不下；查詢延遲這次沒量到 |
 | 整套系統實跑（Docker） | [`q6/stack/`](stack) | 官方 Elasticsearch 9.5.5（smartcn、ICU、IK）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OTel／Prometheus／Grafana 全部在 Docker，零成本；42.5 萬篇 PTT 回補三輪、六渠道串流、PM A/B 文字雲頁。數字在 [`RESULTS.md`](stack/RESULTS.md)，截圖在 [`q6/evidence/stack/`](evidence/stack) |
 
-## 2026-10-31 審查四點的處理
+## 2026-10-31 自我複查四點的處理
 
-細節與數字在 [`q6/code/RESULTS.md`](code/RESULTS.md) 最後一節「2026-10-31 審查四點的補驗」。
+細節與數字在 [`q6/code/RESULTS.md`](code/RESULTS.md) 最後一節「2026-10-31 自我複查四點的補驗」。
 
-| 審查點 | 做了什麼 | 結果 | 還沒證明的 |
+| 複查點 | 做了什麼 | 結果 | 還沒證明的 |
 |---|---|---|---|
-| 1. 重要詞召回 | 150 個標題的金標集，三組獨立的模型標註（不是人工），兩組以上同意算數（[`data/recall_eval/`](data/recall_eval)）；方括號改白名單、加單字保留名單、字典加「颱風假」 | 金標詞召回：舊流程 64.7%，10/30 版 74.4%，10/31 版 75.6%；審查舉的三個例子都留住 | 剩下的漏詞多是字典沒有的人名與新詞，以及 jieba 切成兩段的複合詞（例如改變世界、護樹團體），要靠新詞發現；樣本只有 150 題 |
+| 1. 重要詞召回 | 150 個標題的金標集，三組獨立的模型標註（不是人工），兩組以上同意算數（[`data/recall_eval/`](data/recall_eval)）；方括號改白名單、加單字保留名單、字典加「颱風假」 | 金標詞召回：舊流程 64.7%，10/30 版 74.4%，10/31 版 75.6%；自我複查舉的三個例子都留住 | 剩下的漏詞多是字典沒有的人名與新詞，以及 jieba 切成兩段的複合詞（例如改變世界、護樹團體），要靠新詞發現；樣本只有 150 筆 |
 | 2. 三分鐘查詢路徑 | 文字雲用 ES terms 聚合，`doc_count` 是篇數；100 萬、300 萬篇實測（[`data/es_terms_scale/`](data/es_terms_scale)） | 300 萬篇全命中精確聚合 317 ms；抽樣 1% 14 ms，前 50 詞重疊 49/50 | 5 億篇是單節點線性外推（約 50 秒），沒在正式叢集量 |
 | 3. 版本 | 指紋涵蓋 jieba 版本、主字典、使用者字典、停用詞、標籤與單字名單、固定的 total、程式碼；原文另記 `content_sha`；PLAN 不再用 `dict_version` 當 ES external version | 測試 `test_fingerprint_covers_stopwords_base_dict_and_code` 等 | |
 | 4. 增量重跑 | 5 億篇規模用 ES `content.bigram` 的 `match_phrase` 加 PIT（`stack/seg/qseg/rerun.py`）；「只影響含新詞的文件」改成以固定 total 為前提，預設固定 | 42.5 萬篇加「肥宅」定向重跑 22,271 篇 8.6 秒，不含字串的 0 篇變 | 全量寫入時間用單機不限速實測（每秒約 5,170 篇）推算，正式環境 POC 再量 |
 
-## 依子題分類的素材
+## 依子問題分類的素材
 
 ### 總覽
 | 圖 | 內容 |
 |---|---|
 | [`q6/architecture/overview/diagram-overall.png`](architecture/overview/diagram-overall.png) | 四條泳道：字典治理 → (b)、回朔 → (a)、串流 → (c)、儲存與查詢。斷詞是 parser 之後的獨立 Cloud Run 服務，與回補 Job 同一映像 |
-| [`q6/evidence/overview/evidence-qsearch-gcp-stack.png`](evidence/overview/evidence-qsearch-gcp-stack.png) | Google Cloud 客戶案例：QSearch 用 BigQuery、Cloud Storage、Pub/Sub |
 | [`q6/evidence/overview/evidence-research-page.png`](evidence/overview/evidence-research-page.png) | 研究頁本身的截圖 |
 
 ### (a) 回朔策略與工作天
@@ -84,7 +103,7 @@
 
 ## 整套系統實跑（Docker） — [`q6/stack/`](stack)
 
-把答案的設計整套跑起來：官方 ES 9.5.5＋3 個外掛、PostgreSQL 帳本、Pub/Sub 官方模擬器、斷詞服務與回補 Job（同一個映像）、文字雲 API 與 PM A/B 頁、Kibana、OTel／Prometheus／Grafana。GCP 元件與本機對應元件的對照、怎麼重跑在 [`stack/README.md`](stack/README.md)；全部數字與知識檔逐節對照在 [`stack/RESULTS.md`](stack/RESULTS.md)。
+把這份設計整套跑起來：官方 ES 9.5.5＋3 個外掛、PostgreSQL 帳本、Pub/Sub 官方模擬器、斷詞服務與回補 Job（同一個映像）、文字雲 API 與 PM A/B 頁、Kibana、OTel／Prometheus／Grafana。GCP 元件與本機對應元件的對照、怎麼重跑在 [`stack/README.md`](stack/README.md)；全部數字與知識檔逐節對照在 [`stack/RESULTS.md`](stack/RESULTS.md)。
 
 | 圖／截圖 | 內容 |
 |---|---|
@@ -97,16 +116,16 @@
 
 幾個關鍵數字：
 
-- 回補：42.5 萬篇不限速約每秒 5,170 篇。回補期間 3,727 次查詢最慢 396.9 ms，沒有一次超過 180 秒（題目目標 3 分鐘）。
+- 回補：42.5 萬篇不限速約每秒 5,170 篇。回補期間 3,727 次查詢最慢 396.9 ms，沒有一次超過 180 秒（目標 3 分鐘）。
 - 加詞「肥宅」：42.5 萬篇裡詞表會變 5,253 篇，不含這個字串的 0 篇；ES 定向重跑 22,271 篇 8.6 秒。
 - 六渠道 267 篇送出後 1.73 秒全部有新舊詞表；文字雲前 30 詞的雜訊從 21–29 個降到 0 個（FB 剩 1 個）。
 - 同樣的前 50 詞，ES 74 ms、PostgreSQL（GIN）1,579 ms，篇數完全一樣。
 
 ## 估算已對齊（2026-10-30）
 
-`q6/code/PLAN.md` 改成答案稿的展開版，數字以 `q6/answer/answer_600.txt` 為準：
+`q6/code/PLAN.md` 改成設計摘要的展開版，數字以 `q6/design/summary.txt` 為準：
 
-| | 舊版 PLAN.md | 現在（答案稿＝PLAN.md） |
+| | 舊版 PLAN.md | 現在（設計摘要＝PLAN.md） |
 |---|---|---|
 | 工作天 | 26–28 | 45（先量現況 2、POC 5、字典整併 10、工程化 10、六渠道回朔與驗收 12、壓測切換 3、緩衝 3） |
 | 批數 | 276（6 渠道 × 46 個月） | 270（Threads 2023/07 才有資料，只有 40 個月） |
@@ -119,7 +138,7 @@
 
 ## 斷詞資料與字典 — [`q6/data/`](data)、[`q6/code/dict/`](code/dict)
 
-`q6/data/` 根層的檔案都由斷詞原型產生，語料是 Q3 在 2026/10/26 實抓的八卦板 7 天列表（[`q3/data/ptt_q3_out/index_entries.csv`](../q3/data/ptt_q3_out/index_entries.csv)）裡的 6,685 列標題。Q3 的普查只有時間與計數、沒有內文，所以這裡用標題。
+`q6/data/` 根層的檔案都由斷詞原型產生，語料是 PTT 全文搜尋模組在 2026/10/26 實抓的八卦板 7 天列表（[`q3/data/ptt_q3_out/index_entries.csv`](../q3/data/ptt_q3_out/index_entries.csv)）裡的 6,685 列標題。PTT 全文搜尋模組的普查只有時間與計數、沒有內文，所以這裡用標題。
 
 | 檔案 | 由誰產生 | 內容 |
 |---|---|---|
@@ -133,7 +152,7 @@
 
 [`q6/code/dict/`](code/dict) 是新流程用的字典，舊流程不載入：
 
-- [`user_dict.txt`](code/dict/user_dict.txt)：17 個縣市名詞條（「台／臺」兩種寫法各算一條；jieba 使用者字典格式「詞 詞頻 詞性」），10/31 加「颱風假」。第一行 `# dict_version: qsearch-q6-2026.10.31.1` 是字典版本；每筆輸出另帶涵蓋所有輸入的 `seg_build` 指紋與原文的 `content_sha`。這份字典沒有收「高雄」，`高雄市 5` 也把主字典的詞頻 31 蓋成 5；兩個問題都只在 `RESULTS.md` 試算，沒有改這個檔。
+- [`user_dict.txt`](code/dict/user_dict.txt)：17 個縣市名詞條（「台／臺」兩種寫法各算一條；jieba 使用者字典格式「詞 詞頻 詞性」），10/31 加「颱風假」。第一行 `# dict_version: argus-q6-2026.10.31.1` 是字典版本；每筆輸出另帶涵蓋所有輸入的 `seg_build` 指紋與原文的 `content_sha`。這份字典沒有收「高雄」，`高雄市 5` 也把主字典的詞頻 31 蓋成 5；兩個問題都只在 `RESULTS.md` 試算，沒有改這個檔。
 - [`stopwords.txt`](code/dict/stopwords.txt)：42 個停用詞與助詞，新流程在斷詞後濾掉。
 - [`ptt_tags.txt`](code/dict/ptt_tags.txt)：PTT 分類標籤白名單，方括號裡是這些字才去掉，其他方括號文字（例如「[高雄市]」）保留。
 - [`keep_single.txt`](code/dict/keep_single.txt)：單字保留名單（癌、稅），其他單字照樣過濾。

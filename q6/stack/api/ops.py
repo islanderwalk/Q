@@ -130,7 +130,7 @@ def promo_pending_filter(lines, current=None):
         m = _PROMO_SINCE.match(since)
         # 每一行都驗（不只驗挑得出片語的那幾行）：載入字典時會擋的版本寫法，這裡也要擋
         if not m or not (1 <= int(m[2]) <= 12 and 1 <= int(m[3]) <= 31):
-            raise ValueError(f"{PROMO_FILE}：第三欄要是字典版本（例 qsearch-q6-2026.11.12.1）：{since[:60]!r}")
+            raise ValueError(f"{PROMO_FILE}：第三欄要是字典版本（例 argus-q6-2026.11.12.1）：{since[:60]!r}")
         n += 1
         p = promo_probe(cols[1])
         if p:

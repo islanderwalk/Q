@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Q6 Threads 渠道真實樣本（未登入、只讀 HTML 內嵌 JSON）。
+"""ARGUS｜文字雲斷詞：Threads 渠道真實樣本（未登入、只讀 HTML 內嵌 JSON）。
 
 做法和 q4/code/threads_q4_measure.py 相同：抓公開個人頁 https://www.threads.com/@<帳號>，
 讀 <script type="application/json" data-sjs> 裡同時有 code 與 taken_at 的物件＝一篇貼文。
@@ -13,7 +13,7 @@ https://www.threads.com/@<帳號>/post/<code>，貼文頁內嵌 JSON 會帶本�
 - 沒有文字的貼文（純圖／影片）不收
 
 只留抽出的欄位（code、帳號、taken_at、caption.text），不存整頁 HTML、不存 cookie／token／cursor。
-帶 Sec-Fetch-Mode/Sec-Fetch-Dest 兩個瀏覽器導覽標頭（Q4 實測：缺這兩個會拿到不含貼文的空殼頁）。
+帶 Sec-Fetch-Mode/Sec-Fetch-Dest 兩個瀏覽器導覽標頭（Threads 爬蟲模組實測：缺這兩個會拿到不含貼文的空殼頁）。
 
 用法：python3 collect_threads.py [--used-before N] [--post-pages 13]
 """

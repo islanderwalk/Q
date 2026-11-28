@@ -1,11 +1,11 @@
-// Alloy（GCP 上對應 Ops Agent／Cloud Logging agent）：讀 compose 專案 qsearch-q6 所有容器的 stdout，
+// Alloy（GCP 上對應 Ops Agent／Cloud Logging agent）：讀 compose 專案 argus-q6 所有容器的 stdout，
 // 把每行 JSON 的 event／severity／outcome／channel 解析成標籤（值都有限，不會爆量），送進 Loki；
 // 同時用 stage.metrics 在取樣前把採集器的 outcome 算成 counter（Prometheus 裡叫 loki_process_custom_crawl_log_lines_total），從 alloy:12345 抓。
 discovery.docker "q6" {
   host = "unix:///var/run/docker.sock"
   filter {
     name   = "label"
-    values = ["com.docker.compose.project=qsearch-q6"]
+    values = ["com.docker.compose.project=argus-q6"]
   }
 }
 

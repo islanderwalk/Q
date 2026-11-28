@@ -1,5 +1,5 @@
 -- P0 既有資料庫的遷移：pg/init.sql 只在第一次建立 volume 時由 initdb.d 執行，舊庫要手動套用這支。可重複執行。
--- 用法（未驗證：本次未啟動 docker）：docker compose exec -T pg psql -U qsearch -d qsearch -v ON_ERROR_STOP=1 < pg/migrate_p0.sql
+-- 用法（未驗證：本次未啟動 docker）：docker compose exec -T pg psql -U argus -d argus -v ON_ERROR_STOP=1 < pg/migrate_p0.sql
 -- 內容必須與 init.sql 的 P0 段落一致（測試 test_migrate_p0_sql_is_idempotent_and_matches_init_view 會檢查關鍵字）。
 BEGIN;
 ALTER TABLE backfill_ledger ADD COLUMN IF NOT EXISTS raw_lines integer;

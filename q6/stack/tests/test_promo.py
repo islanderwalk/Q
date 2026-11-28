@@ -17,7 +17,7 @@ import ops  # noqa: E402
 from qseg import promo  # noqa: E402
 from qseg.normalize import normalize  # noqa: E402
 
-V1, V2 = "qsearch-q6-2026.11.12.1", "qsearch-q6-2026.11.20.1"
+V1, V2 = "argus-q6-2026.11.12.1", "argus-q6-2026.11.20.1"
 LIST = [
     "# 渠道<TAB>句子<TAB>從哪一版開始收",
     "",
@@ -218,8 +218,8 @@ def test_pending_filter_never_looks_past_the_current_version():
 
 def test_rerun_scope_all_uses_current_version_for_every_line():
     rerun = pytest.importorskip("qseg.rerun")
-    target = ops.seg_ver("v2", "qsearch-q6-2026.12.01.1")
-    clauses, _, _ = rerun.promo_scope(_dic("qsearch-q6-2026.12.01.1"), target, everything=True)
+    target = ops.seg_ver("v2", "argus-q6-2026.12.01.1")
+    clauses, _, _ = rerun.promo_scope(_dic("argus-q6-2026.12.01.1"), target, everything=True)
     assert {c["bool"]["filter"][1]["range"]["seg_ver_v2"]["lt"] for c in clauses} == {target}
 
 
@@ -242,7 +242,7 @@ FILES = ops.DICT_FILES
 
 
 def _root(tmp_path, with_promo):
-    version = "qsearch-q6-2026.10.30.2"
+    version = "argus-q6-2026.10.30.2"
     d = tmp_path / "dictsrv" / "versions" / version
     d.mkdir(parents=True)
     content = {"base.dict": "高雄市 31 ns\n", "user.dict": "必不可拆 50 n\n", "stopwords.txt": "的\n", "soft_stopwords.txt": "問卦\n",
@@ -291,9 +291,9 @@ def test_loader_and_pm_page_agree_on_every_list():
     rnd = random.Random(20261112)
     channels = ["youtube", "ptt", "", " ", "threads"]
     texts = ["訂閱東森新聞頻道", "Subscribe to our channel", "完整版：", "https://bit.ly/abc", "看更多 https://x.co/1", "", "📣📣", "ab cd"]
-    sinces = [V1, "qsearch-q6-2026.11.12.1", "qsearch-q6-2026.13.12.1", "qsearch-q6-2026.00.12.1", "qsearch-q6-2026.11.32.1",
-              "qsearch-q6-2026.11.00.1", "2026.11.12.1", "qsearch-q6-2026.11.12.100", "qsearch-q6-2026.11.12", "qsearch-q6-2026.1.2.1",
-              "", "latest", "qsearch-q6-2026.11.12.0", "x-2026.11.12.99"]
+    sinces = [V1, "argus-q6-2026.11.12.1", "argus-q6-2026.13.12.1", "argus-q6-2026.00.12.1", "argus-q6-2026.11.32.1",
+              "argus-q6-2026.11.00.1", "2026.11.12.1", "argus-q6-2026.11.12.100", "argus-q6-2026.11.12", "argus-q6-2026.1.2.1",
+              "", "latest", "argus-q6-2026.11.12.0", "x-2026.11.12.99"]
     extra = ["", "# 註解", "youtube\t只有兩欄", "a\tb\tc\td"]
     both_ok = both_bad = 0
     for _ in range(4000):

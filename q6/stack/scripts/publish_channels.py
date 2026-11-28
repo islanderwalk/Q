@@ -15,7 +15,7 @@ import requests
 from google.cloud import pubsub_v1
 
 ES = "http://localhost:9200"
-PROJECT, TOPIC = "qsearch-local", "parsed-posts"
+PROJECT, TOPIC = "argus-local", "parsed-posts"
 CHANNELS = ["facebook", "instagram", "youtube", "ptt", "media", "threads"]
 BASE_KEYS = ("post_id", "channel", "sub_type", "source", "url", "published_at", "fetched_at", "author")
 

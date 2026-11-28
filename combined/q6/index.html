@@ -1,5 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Q6 回補整合圖</title>
+<!doctype html><html><head>
+<meta name="color-scheme" content="dark"><style id="force-dark">:root{color-scheme:dark}</style><script>(function(){var r=document.documentElement;function f(){if(r.getAttribute("data-theme")!=="dark")r.setAttribute("data-theme","dark")}f();new MutationObserver(f).observe(r,{attributes:true,attributeFilter:["data-theme"]})})();</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>文字雲斷詞 · 回補整合圖</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -488,7 +489,7 @@ code.ddsrc .cln{display:block;white-space:pre-wrap;overflow-wrap:anywhere;text-i
 .ddref{display:block;color:var(--muted);font-size:11.5px;font-family:var(--body);margin-top:4px}
 .ddref:first-child{margin-top:0}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-/* 整合版：一塊圖、題目／名詞面板、視圖路由 */
+/* 整合版：一塊圖、情境／名詞面板、視圖路由 */
 .figall{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:18px}
 .quiet{font-size:13.5px;color:var(--muted);margin:0 0 14px}
 .titlerow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
@@ -562,10 +563,10 @@ h2[tabindex="-1"]:focus{outline:none}
 <main>
 <section class="figall" id="fig" aria-labelledby="playh">
 <div class="exam qfull">
-  <h2>QSearch 筆試第 6 題：文字雲斷詞 Pipeline 重建</h2>
-  <p>你加入一間社群輿情分析 SaaS 公司，主力產品是讓企業客戶輸入關鍵字後，即時查詢跨社群平台（Facebook、Instagram、YouTube、論壇、媒體、Threads）的聲量趨勢與文字雲。</p>
-  <p>目前的文字雲功能使用一份維護多年的繁體中文字典檔進行斷詞，但產出品質有嚴重問題：短網址後綴出現在結果中、電話號碼被當成詞彙、中文助詞（的、了、在）未被過濾、地名變體被拆散（例如「高雄市」被拆成「高」「雄」「市」）、搜尋高頻詞反而沒出現在文字雲中。</p>
-  <p>團隊決定重寫斷詞演算法，你被指派負責整個 Data Pipeline 的設計。以下是已知條件：</p>
+  <h2>文字雲斷詞 Pipeline 重建</h2>
+  <p>情境：ARGUS 是我做的社群輿情情蒐平台。使用者輸入關鍵字後，可以即時查詢跨社群平台（Facebook、Instagram、YouTube、論壇、媒體、Threads）的聲量趨勢與文字雲。</p>
+  <p>目前的文字雲功能使用一份繁體中文字典檔進行斷詞，但產出品質有嚴重問題：短網址後綴出現在結果中、電話號碼被當成詞彙、中文助詞（的、了、在）未被過濾、地名變體被拆散（例如「高雄市」被拆成「高」「雄」「市」）、搜尋高頻詞反而沒出現在文字雲中。</p>
+  <p>我決定重寫斷詞，並重新設計整個 Data Pipeline。我給自己定的條件如下：</p>
   <ul class="qcond">
     <li>需處理 6 個渠道、覆蓋 2023 年 1 月至今的所有歷史資料</li>
     <li>目前 Elasticsearch 中儲存的社群貼文總量約 5 億筆</li>
@@ -574,12 +575,11 @@ h2[tabindex="-1"]:focus{outline:none}
     <li>新資料需透過 Streaming Pipeline 即時斷詞寫入</li>
   </ul>
   <ol>
-    <li><b>(a)</b><span>請設計這個「歷史資料回朔斷詞」的執行策略。你會怎麼拆分批次？以什麼為單位排程（年份？渠道？還是其他維度）？每個批次之間需要什麼樣的品質檢查點？請具體估算：如果團隊只有 1 位資料工程師負責，從 POC 驗證到 6 渠道全部完成上線，你<button type="button" class="q6img-trigger" data-alt="(a) 一位工程師 45 個工作天時程（互動）" aria-haspopup="dialog">估計需要多少個工作天？請列出你的假設。</button></span></li>
-    <li><b>(b)</b><span>字典檔品質直接影響斷詞結果。請問你會怎麼設計字典檔的維護流程？如何處理「斷詞用字典」和「搜尋用字典」是否共用的問題？如果走不同字典檔，對系統架構有什麼影響？（提示：原團隊估計走不同字典檔需額外 20+ 工作天，走相同字典檔約 10 天）</span></li>
-    <li><b>(c)</b><span><button type="button" class="q6img-trigger" data-widget="c" data-alt="(c) 一致性與加新詞（互動）" aria-haspopup="dialog">Streaming Pipeline 上線後，如何確保新進資料的斷詞結果與歷史回朔資料的品質一致？如果字典檔日後更新了一個新詞，是否需要重新跑全部歷史資料？你會怎麼設計讓這件事可控？</button></span></li>
+    <li><b>(a)</b><span>我卡在歷史資料回補的執行策略。批次怎麼拆？以什麼為單位排程（年份？渠道？還是其他維度）？每個批次之間要有什麼品質檢查點？只有 1 位工程師的話，從 POC 到 6 渠道全部上線，我<button type="button" class="q6img-trigger" data-alt="(a) 一位工程師 45 個工作天時程（互動）" aria-haspopup="dialog">估計需要多少個工作天？列出我的假設。</button></span></li>
+    <li><b>(b)</b><span>字典檔品質直接影響斷詞結果。我要怎麼設計字典檔的維護流程？「斷詞用字典」和「搜尋用字典」要不要共用？如果走不同字典檔，對系統架構有什麼影響？（我的初估：走不同字典檔需額外 20+ 工作天，走相同字典檔約 10 天）</span></li>
+    <li><b>(c)</b><span><button type="button" class="q6img-trigger" data-widget="c" data-alt="(c) 一致性與加新詞（互動）" aria-haspopup="dialog">Streaming Pipeline 上線後，怎麼確保新進資料的斷詞結果和歷史回朔資料的品質一致？字典檔日後更新一個新詞，要不要重新跑全部歷史資料？我會怎麼設計讓這件事可控？</button></span></li>
   </ol>
-  <p class="qlim">上限 600 字。</p>
-</div>
+  </div>
 <div class="strip" id="strip">
 <div class="zchips" id="zchips" role="group" aria-label="快速切換視圖"><button type="button" class="pill" data-go="home" data-seg="flow" aria-pressed="true">整張圖</button><button type="button" class="pill" data-go="dedup" aria-pressed="false">去重</button><button type="button" class="pill" data-go="gates" data-gate="g1" aria-pressed="false">G1</button><button type="button" class="pill" data-go="gates" data-gate="g2" aria-pressed="false">G2</button><button type="button" class="pill" data-go="gates" data-gate="g3" aria-pressed="false">G3</button><button type="button" class="pill" data-go="home" data-seg="est" aria-pressed="false">規模估算</button><button type="button" class="pill" data-go="home" data-seg="rounds" aria-pressed="false">沙盤回合</button></div>
 </div>
@@ -591,7 +591,7 @@ h2[tabindex="-1"]:focus{outline:none}
 <div class="view" id="v-home">
 <div class="hsub" id="hs-est" hidden>
   <div class="level"><span class="zoom">估算</span><h2 id="esth">1 位工程師，約 45 個工作天</h2>
-  <p>兩種分法加起來都是 45 天。交出去的作答用的是第一種。</p></div>
+  <p>兩種分法加起來都是 45 天。我採用第一種。</p></div>
   <div class="figure">
     <div class="row" role="group" aria-label="分法" id="estsw"></div>
     <div class="bars" id="bars"></div>
@@ -668,7 +668,7 @@ h2[tabindex="-1"]:focus{outline:none}
 <div class="gatecard" id="gatecard"></div>
   <div class="figure" style="margin-top:16px">
     <h3>G3 試算：p95 多少會觸發降速</h3>
-    <p class="muted" style="font-size:14.5px;margin-top:4px">上限 = min( max( 基準 × 1.5，基準 + 50 ms )，180 秒 )。180 秒只是公式的天花板，跟題目的 3 分鐘不是同一個檢查。這組參數出自沙盤實作（<code>job.py</code>），作答稿沒有列。</p>
+    <p class="muted" style="font-size:14.5px;margin-top:4px">上限 = min( max( 基準 × 1.5，基準 + 50 ms )，180 秒 )。180 秒只是公式的天花板，跟需求的 3 分鐘不是同一個檢查。這組參數出自沙盤實作（<code>job.py</code>），設計摘要沒有列。</p>
     <div class="calc">
       <div class="slider"><label for="g3base">沒有回補時的基準 p95：<span class="num" id="g3baseout"></span></label><input type="range" id="g3base" min="20" max="300" value="74"></div>
       <div class="slider"><label for="g3meas">回補中量到的 p95：<span class="num" id="g3measout"></span></label><input type="range" id="g3meas" min="20" max="500" value="127"></div>
@@ -676,7 +676,7 @@ h2[tabindex="-1"]:focus{outline:none}
     </div>
     <div class="chain" role="group" aria-label="降速階梯"><span>全域限速</span><span class="r">3,000 篇/秒</span><span>→</span><span class="r">1,500</span><span>→</span><span class="r">750</span></div>
   </div>
-  <p class="note">作答文字（<code>answer_600.txt</code>）另外列了兩個檢查：金標詞召回不低於上一版、文字雲查詢不超過 3 分鐘（每批寫完後，對熱門 30 個查詢的新版文字雲計時）。原圖的 G3 寫的是線上負載，跟沙盤實作一致，這裡照原圖。</p>
+  <p class="note">設計摘要（<code>summary.txt</code>）另外列了兩個檢查：金標詞召回不低於上一版、文字雲查詢不超過 3 分鐘（每批寫完後，對熱門 30 個查詢的新版文字雲計時）。初版圖的 G3 寫的是線上負載，跟沙盤實作一致，這裡照初版圖。</p>
 </div>
 </div>
 </section>
@@ -716,7 +716,7 @@ var NODES=[
  {id:'g1',k:'gate',x:208,y:284,w:120,h:68,t:'G1 筆數守恆',sub:['達標篇數 = 原文數'],
   info:'ES 裡版本已到目標（seg_ver_v2 不低於目標版）的文件數，要等於原文去重後的篇數，確保不漏、也不多。這個數字看的是 ES 最後的狀態，不是這次寫了幾篇：重送時已經是新版的文件會 noop，但照樣算數。'},
  {id:'g2',k:'gate',x:340,y:284,w:120,h:68,t:'G2 斷詞品質',sub:['雜訊、不可拆詞'],
-  info:'電話號碼、純數字／雜訊、網址殘片、硬停用詞漏進詞表，或必不可拆詞（如「新北」）被切開，都算洩漏。作答寫的是洩漏為 0；沙盤實作現在的預設是每一類洩漏數 ÷ 這一批的篇數超過 0.1% 才算沒過（提案值），第 2 輪當時是零容忍。'},
+  info:'電話號碼、純數字／雜訊、網址殘片、硬停用詞漏進詞表，或必不可拆詞（如「新北」）被切開，都算洩漏。設計摘要寫的是洩漏為 0；沙盤實作現在的預設是每一類洩漏數 ÷ 這一批的篇數超過 0.1% 才算沒過（提案值），第 2 輪當時是零容忍。'},
  {id:'g3',k:'gate',x:472,y:284,w:120,h:68,t:'G3 線上負載',sub:['p95、寫入拒絕'],
   info:'ES 寫入拒絕數要是 0，查詢探針 p95 不能超過上限（沙盤基準 74 ms，上限 124 ms）。超過就把全域限速砍半、等 15 秒再量：3,000 → 1,500 → 750 篇/秒，最多量 3 次、砍 2 次。現在的程式還會回升：之後有批次一次就過 G3，限速每次加 25%，最多回到設定的上限。'},
  {id:'g4',k:'pm',x:650,y:266,w:130,h:86,t:'④ G4 PM 簽核',sub:['各渠道首批','A/B 詞雲並排'],
@@ -813,7 +813,7 @@ var QMAP=[
  {k:'執行策略',ids:RUN,t:'(a) 執行策略：多個 task 並行，500 篇一段，邊跑邊記 checkpoint。'},
  {k:'品質檢查點',ids:['g1','g2','g3','g4'],t:'(a) 品質檢查點：G1 筆數、G2 品質、G3 線上負載、G4 PM 簽核。'},
  {k:'新舊並行供 PM A/B',ids:['bulk','g4'],t:'新結果寫 terms_v2、舊欄位不動，PM 在 A/B 頁並排比。'},
- {k:'查詢不超過 3 分鐘',ids:[],t:'題目的 3 分鐘：作答的做法是每批寫完後，對熱門 30 個查詢的新版文字雲計時。原圖沒有畫這一項，所以圖上沒有亮任何一塊；圖上的 G3 量的是線上查詢探針 p95，是另一道門檻。'},
+ {k:'查詢不超過 3 分鐘',ids:[],t:'需求的 3 分鐘：我的做法是每批寫完後，對熱門 30 個查詢的新版文字雲計時。初版圖沒有畫這一項，所以圖上沒有亮任何一塊；圖上的 G3 量的是線上查詢探針 p95，是另一道門檻。'},
  {k:'中途失敗怎麼辦',ids:['ckpt','fail','retry'],t:'task 死掉：別的 task 從 checkpoint 接續，最多領 3 次。閘門沒過或寫入出錯：標成 failed，不會自動重跑，人修好後指定只重跑那一批。'},
  {k:'串流與回朔一致',ids:['seg'],t:'(c) 回補和串流用同一個映像、同一份字典，每篇記 seg_ver。'}
 ];
@@ -1270,7 +1270,7 @@ $('sh-restart').addEventListener('click',function(){var k=activeKey();if(!k)retu
 });
 $('sh-play').hidden=reduce;$('sh-speed').hidden=reduce;
 
-/* ---------- 題目／重點 對到圖 ---------- */
+/* ---------- 情境／重點 對到圖 ---------- */
 function pick(ids,btn){
   stop();
   svg.classList.remove('stepping');
@@ -1490,9 +1490,9 @@ g3();
 
 /* ---------- 估算 ---------- */
 var EST=[
- {name:'作答版',note:'作答（answer_600.txt）的分法。「六渠道回朔與驗收」是 6 個渠道 × 2 天。',
+ {name:'設計摘要版',note:'設計摘要（summary.txt）的分法。「六渠道回朔與驗收」是 6 個渠道 × 2 天。',
   items:[['先量現況',2],['POC',5],['字典整併',10],['工程化',10],['六渠道回朔與驗收',12],['壓測與切換',3],['緩衝',3]]},
- {name:'原圖版',note:'原圖的分法。項目切得不一樣，合計一樣是 45 天。',
+ {name:'初版',note:'初版圖的分法。項目切得不一樣，合計一樣是 45 天。',
   items:[['字典整併與規則調整',10],['回補流程開發（切批、Job、閘門）',12],['驗收工具（A/B 頁、簽核流程）',6],['測試調參與沙盤驗證',10],['緩衝',7]]}
 ];
 var estBtns=[];
@@ -1966,7 +1966,7 @@ function ddGo(t,i,fh){showView('dedup',{focusHead:!!fh});ddSetTab(t,i);}
   var gl=$('ddgloss');
   for(var key in DDG){gl.append(h('dt',{text:key}),h('dd',{text:DDG[key]}));}
   DDMYTH.forEach(function(m){$('ddmyth').append(h('li',null,h('b',{text:'✗ 誤會：'}),m[0],h('br',null),h('b',{text:'✓ 其實：'}),m[1]));});
-  DDQUIZ.forEach(function(q,i){$('ddquiz').append(h('details',{'class':'ddquiz'},h('summary',{text:'第 '+(i+1)+' 題：'+q[0]}),h('p',{text:'答：'+q[1]})));});
+  DDQUIZ.forEach(function(q,i){$('ddquiz').append(h('details',{'class':'ddquiz'},h('summary',{text:'問 '+(i+1)+'：'+q[0]}),h('p',{text:'解：'+q[1]})));});
   ddSetTab(0,0);
 })();
 
@@ -2069,7 +2069,7 @@ var GATES={
   code:[['g59','探針：跑 5 次線上在用的文字雲聚合，取 p95（用 ES 回傳的 took）。'],['g65','上限＝基準 × 1.5 和基準 + 50 取大的。'],['g72','量一次；沒超過上限（或已經量滿 3 次）就停。'],['g79','超過：全域限速砍半，最低 250 篇/秒。'],['g83','等 15 秒再量。'],['s132','寫入拒絕：讀所有節點 write thread pool 的 rejected 累計，跑前跑後相減。'],['g147','拒絕數 0 而且 p95 不超過上限，才算過。']],
   es:function(c){var s='# 寫入拒絕：開跑前、跑完各讀一次，相減\nGET /_nodes/stats/thread_pool\n→ nodes.*.thread_pool.write.rejected 加總（這批相減 = '+c.rej+'）\n\n# 探針：連跑 5 次，取 p95（看每次回應的 "took" 毫秒）\nPOST /posts/_search?request_cache=false\n{"size": 0, "query": {"term": {"channel": "'+c.ch+'"}},\n "aggs": {"t": {"terms": {"field": "terms_v1", "size": 50}}}}\n';
    c.tries.forEach(function(t,i){s+='\n→ 第 '+(i+1)+' 次量：p95 '+t+' ms';});return s;},
-  esnote:function(c){return '探針查的是線上客戶正在用的舊欄位 terms_v1：要看的是回補有沒有拖慢它。';},
+  esnote:function(c){return '探針查的是線上使用者正在用的舊欄位 terms_v1：要看的是回補有沒有拖慢它。';},
   sql:'',
   row:null}
 };
@@ -2315,7 +2315,7 @@ window.addEventListener('scroll',function(){
 },true);
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape')ddPeekHide();});
 
-/* ---------- 題目／名詞面板、首頁內容切換、手機站點小標 ---------- */
+/* ---------- 情境／名詞面板、首頁內容切換、手機站點小標 ---------- */
 (function(){
   var TB=['tb-exam','tb-gloss'];
   function tpSet(bid,open){
@@ -2439,7 +2439,7 @@ var PH=[
  {n:'字典整併（共用字典）',d:10,k:'crit',alt:30,
   doing:'把「斷詞用」和「搜尋用」的字典整成同一份。字典一改，斷詞結果就跟著變，要反覆看結果、調整。',
   out:'一份兩邊共用的字典，之後回補和線上新資料都用它。',
-  why:'10 天：題目提示走相同字典約 10 天。這段最不確定，所以是關鍵路徑。改走兩份不同字典要再加 20 天以上（切到上方「不同字典」可以看）。'},
+  why:'10 天：我的初估走相同字典約 10 天。這段最不確定，所以是關鍵路徑。改走兩份不同字典要再加 20 天以上（切到上方「不同字典」可以看）。'},
  {n:'工程化：批次＋串流＋API',d:10,k:'',
   doing:'把 POC 的手動流程寫成能自動跑的程式：批次回補（一批 = 一個渠道的一個月）、新資料進來時的即時斷詞、給 PM 新舊對照的 API。',
   out:'按一個鍵就能一批一批跑、每批自動檢查、沒過的批次單獨重跑。',
@@ -2477,12 +2477,12 @@ function mount(root){
    '<li>5 億篇、平均 284 字（自爬 13.2 萬篇）→ 1.42 × 10<sup>11</sup> 字<span class="chip">實測</span></li>'+
    '<li>jieba 每核每秒 28.6 萬字<span class="chip">VM 實測</span></li>'+
    '<li>ES 部分更新會重新索引整篇<span class="chip doc">官方文件</span>；寫入本機實測每秒約 5,170 篇<span class="chip">實測</span></li>'+
-   '<li>共用字典，字典整併約 10 天<span class="chip q">題目提示</span>；PM 每渠道回饋 1–2 天</li></ol></div>'+
+   '<li>共用字典，字典整併約 10 天<span class="chip q">我的初估</span>；PM 每渠道回饋 1–2 天</li></ol></div>'+
    '<div class="card"><b class="h">機器時間（和人力同時進行）</b>斷詞：1.42e11 ÷ 2.86e5 字/秒 ≈ 138 核心小時 → 64 核約 2.2 小時<br>寫入：5e8 ÷ 5,170 篇/秒 ≈ 27 小時<br>改走不同字典：再加 20 天以上，約 65 天</div>'}));
   wrap.appendChild(tip);
   root.appendChild(wrap);
   var bars=[];
-  function why(p){return (alt&&p.alt)?'30 天：走兩份不同字典，題目提示要額外 20 天以上，總工期變成約 65 天。':p.why;}
+  function why(p){return (alt&&p.alt)?'30 天：走兩份不同字典，我的初估要額外 20 天以上，總工期變成約 65 天。':p.why;}
   function showTip(i,b,a,z,d){var p=PH[i];tip.className='tip '+p.k;
     tip.replaceChildren(el('b',{},[p.n+' ',el('small',{text:'第 '+a+'–'+z+' 天 · '+d+' 天'})]),el('p',{},[el('span',{text:'在做什麼'}),p.doing]),el('p',{},[el('span',{text:'做完拿到'}),p.out]),el('p',{},[el('span',{text:'為什麼這麼久'}),why(p)]));
     tip.hidden=false;var r=b.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
@@ -2595,7 +2595,7 @@ var CSS=`
 }`;
 var N={
  dict:{k:'same',tag:'同一份',t:'字典（同一個版本）',s:'每版一個版本號；total 固定',
-  doing:'每次發版產生一個新版本的字典，例如 qsearch-q6-2026.10.30.6，每個檔案附指紋。回補和串流都載入同一個版本。',
+  doing:'每次發版產生一個新版本的字典，例如 argus-q6-2026.10.30.6，每個檔案附指紋。回補和串流都載入同一個版本。',
   how:'換版時整份重新載入，不在執行中一個一個加詞、刪詞。jieba 的 total 固定成這一版的常數。',
   ev:'<span class="cc-chip cc-run">實測</span>執行中加詞，total 和整份重載差 129；加 1 個詞，total 不固定時 20 萬篇裡有 52 篇不含這個詞也變了，固定後 0 篇。'},
  img:{k:'same',tag:'同一支',t:'斷詞程式（同一個映像）',s:'清洗、過濾規則都寫在程式裡',

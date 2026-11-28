@@ -94,24 +94,24 @@ def test_bq_ingest_events_matches_avsc(tf_block):
 
 def test_topic_uses_this_avsc_with_json_encoding(tf_block):
     """main.py 把 data 當 JSON 解；主題若改成 BINARY 編碼，parser 會全部 422。"""
-    schema = tf_block("pubsub.tf", "google_pubsub_schema", "qsearch_event_v1")
+    schema = tf_block("pubsub.tf", "google_pubsub_schema", "argus_event_v1")
     assert 'type       = "AVRO"' in schema and AVSC_PATH.name in schema
-    topic = tf_block("pubsub.tf", "google_pubsub_topic", "qsearch_fetched")
+    topic = tf_block("pubsub.tf", "google_pubsub_topic", "argus_fetched")
     assert re.search(r'encoding\s*=\s*"JSON"', topic)
 
 
 def test_push_endpoint_is_a_post_route(parser_main, tf_block):
-    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "qsearch_parser_sub")
+    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "argus_parser_sub")
     endpoint = re.search(r'push_endpoint\s*=\s*"\$\{google_cloud_run_v2_service\.parser\.uri\}(/[^"]*)"', sub)
     assert endpoint, "push_endpoint 不是 parser 服務 URL 加路徑"
     routes = {(r.path, m) for r in parser_main.app.routes for m in getattr(r, "methods", ())}
     assert (endpoint.group(1), "POST") in routes
-    assert "topic                      = google_pubsub_topic.qsearch_fetched.id" in sub
+    assert "topic                      = google_pubsub_topic.argus_fetched.id" in sub
 
 
 def test_push_is_wrapped_and_authenticated(tf_block):
     """main.py 解析 wrapped envelope（message.data），所以訂閱不能開 no_wrapper；OIDC 用 push SA，invoker 只給它。"""
-    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "qsearch_parser_sub")
+    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "argus_parser_sub")
     assert "no_wrapper" not in sub
     assert re.search(r"oidc_token\s*\{\s*service_account_email\s*=\s*google_service_account\.push\.email", sub)
     invoker = tf_block("run.tf", "google_cloud_run_v2_service_iam_member", "parser_push_invoker")
@@ -123,7 +123,7 @@ def test_push_is_wrapped_and_authenticated(tf_block):
 
 def test_timeout_matches_ack_deadline_and_dlq(tf_block):
     service = tf_block("run.tf", "google_cloud_run_v2_service", "parser")
-    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "qsearch_parser_sub")
+    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "argus_parser_sub")
     timeout = int(re.search(r'timeout\s*=\s*"(\d+)s"', service).group(1))
     ack = int(re.search(r"ack_deadline_seconds\s*=\s*(\d+)", sub).group(1))
     attempts = int(re.search(r"max_delivery_attempts\s*=\s*(\d+)", sub).group(1))
@@ -149,7 +149,7 @@ def test_no_env_vars_needed(tf_block):
         env["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
     out = subprocess.run([sys.executable, "-B", "-c", code], env=env, capture_output=True, text=True, timeout=60)
     assert out.returncode == 0, out.stderr
-    assert out.stdout.strip() == "QSearch PubSub Parser Lab"
+    assert out.stdout.strip() == "ARGUS PubSub Parser Lab"
 
 
 def _dockerfile_cmd():

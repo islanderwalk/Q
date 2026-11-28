@@ -1,4 +1,4 @@
-"""Q6 的 ES 實驗（全部打官方 ES 9.5.5 單節點，結果寫 results/es/*.json）。
+"""ARGUS｜文字雲斷詞：的 ES 實驗（全部打官方 ES 9.5.5 單節點，結果寫 results/es/*.json）。
 
 analyzers  ：同幾句話，ES 內建／外掛分析器 vs jieba 舊流程 v1／新流程 v2 怎麼切
 aggs       ：terms 聚合的語意（doc_count 是篇數）、shard_size 與誤差上界、query 與 post_filter、_reindex 不必重算
@@ -50,7 +50,7 @@ TEXTS = [
 def analyzers():
     from qseg import dictionary
     from qseg.pipeline import segment
-    v1 = dictionary.load("qsearch-q6-2026.10.30.1", "v1")
+    v1 = dictionary.load("argus-q6-2026.10.30.1", "v1")
     cur = es("GET", "/posts/_mapping")  # 確認索引存在
     v2 = dictionary.load(requests.get("http://localhost:8081/current/manifest.json").json()["dict_version"], "v2")
     rows = []
@@ -197,7 +197,7 @@ def latency():
 
 def pg():
     import psycopg
-    conn = psycopg.connect("postgresql://qsearch:qsearch@localhost:55433/qsearch", autocommit=True)
+    conn = psycopg.connect("postgresql://argus:argus@localhost:55433/argus", autocommit=True)
     conn.execute("TRUNCATE posts_terms")
     t0 = time.time()
     pit = es("POST", "/posts/_pit?keep_alive=2m")["id"]

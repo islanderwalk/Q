@@ -12,19 +12,19 @@ mock_provider "google" {}
 mock_provider "google-beta" {}
 
 variables {
-  project_id     = "qsearch-test"
+  project_id     = "argus-test"
   project_number = "123456789012"
 
   # 不用預設的 hello 示範映像，否則 checks.tf 的 no_placeholder_images 會讓每個 run 失敗。
-  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
-  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
-  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
-  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
+  image_api           = "asia-east1-docker.pkg.dev/argus-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/argus-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/argus-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/argus-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/argus-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/argus-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-collector:test"
 }
 
 # legacy GCE 斷言會引用這些 computed 屬性；每個值都不同，指錯資源就會失敗。
@@ -32,8 +32,8 @@ override_resource {
   target          = google_compute_subnetwork.crawler
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/regions/asia-east1/subnetworks/crawler-subnet"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/subnetworks/crawler-subnet"
+    id        = "projects/argus-test/regions/asia-east1/subnetworks/crawler-subnet"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/regions/asia-east1/subnetworks/crawler-subnet"
   }
 }
 
@@ -41,8 +41,8 @@ override_resource {
   target          = google_service_account.legacy
   override_during = plan
   values = {
-    email = "crawler-legacy@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-legacy@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-legacy@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-legacy@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -50,8 +50,8 @@ override_resource {
   target          = google_compute_health_check.legacy
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/global/healthChecks/crawler-legacy-hc"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/global/healthChecks/crawler-legacy-hc"
+    id        = "projects/argus-test/global/healthChecks/crawler-legacy-hc"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/global/healthChecks/crawler-legacy-hc"
   }
 }
 
@@ -59,8 +59,8 @@ override_resource {
   target          = google_compute_instance_template.crawler_legacy
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/global/instanceTemplates/crawler-legacy-20261030000000000000000001"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/global/instanceTemplates/crawler-legacy-20261030000000000000000001"
+    id        = "projects/argus-test/global/instanceTemplates/crawler-legacy-20261030000000000000000001"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/global/instanceTemplates/crawler-legacy-20261030000000000000000001"
   }
 }
 
@@ -101,7 +101,7 @@ run "gcs_custom_coldline_days" {
 
   variables {
     raw_coldline_after_days = 45
-    raw_bucket_name         = "qsearch-custom-raw"
+    raw_bucket_name         = "argus-custom-raw"
   }
 
   assert {
@@ -118,7 +118,7 @@ run "gcs_custom_coldline_days" {
   }
 
   assert {
-    condition     = google_storage_bucket.raw_scraped.name == "qsearch-custom-raw"
+    condition     = google_storage_bucket.raw_scraped.name == "argus-custom-raw"
     error_message = "raw_bucket_name 有值時 bucket 名稱必須使用它。"
   }
 }
@@ -151,7 +151,7 @@ run "deletion_protection_follows_var" {
   }
 
   assert {
-    condition     = google_cloud_run_v2_job.qsearch_backfill.deletion_protection == false
+    condition     = google_cloud_run_v2_job.argus_backfill.deletion_protection == false
     error_message = "deletion_protection = false 時 backfill job 必須跟著是 false。"
   }
 

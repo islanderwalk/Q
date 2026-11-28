@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head>
+<meta name="color-scheme" content="dark"><style id="force-dark">:root{color-scheme:dark}</style><script>(function(){var r=document.documentElement;function f(){if(r.getAttribute("data-theme")!=="dark")r.setAttribute("data-theme","dark")}f();new MutationObserver(f).observe(r,{attributes:true,attributeFilter:["data-theme"]})})();</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Postgres 貼文表解剖</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -139,7 +140,7 @@ header { display: grid; gap: 18px; }
 .fx-k:disabled { cursor: default; border-bottom-color: transparent; }
 .fx-k:disabled::after { content: none; }
 .fx-k:not(:disabled):hover, .fx-k:focus-visible, .fx-k[aria-expanded="true"] { border-bottom-color: var(--idx); color: var(--idx); outline: none; }
-/* 3.80 B 展開視窗：先用題目估（上限／合理／下限），再用實測驗證；拖拉或點選，數字和方塊跟著動 */
+/* 3.80 B 展開視窗：先用情境估（上限／合理／下限），再用實測驗證；拖拉或點選，數字和方塊跟著動 */
 #bpa-pop, #fcw-pop { position: fixed; z-index: 60; width: min(640px, calc(100vw - 24px)); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); color: var(--fg);
            border: 1.5px solid var(--idx); border-radius: 8px; box-shadow: 0 12px 36px rgb(0 0 0 / .24); padding: 12px 16px 14px; display: grid; gap: 10px; font-size: 13px; line-height: 1.45; }
 #bpa-pop[hidden], #fcw-pop[hidden] { display: none; }
@@ -208,7 +209,7 @@ header { display: grid; gap: 18px; }
 .fc-tr i { display: block; height: 100%; transition: width .15s; }
 .fc-br b { font-family: var(--mono); text-align: right; }
 .fc-note { margin: 0; font-size: 13px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; }
-/* 頂端分頁：解答／字元換算台／PostgreSQL 底層長啥樣子 */
+/* 頂端分頁：設計摘要／字元換算台／PostgreSQL 底層長啥樣子 */
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: -28px; }
 .tabs button { font: 600 15px var(--body); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 8px 16px; cursor: pointer; }
 .tabs button:hover { color: var(--fg); }
@@ -619,32 +620,31 @@ footer { font-size: 13px; color: var(--muted); }
 
 <main>
   <nav class="tabs" role="tablist" aria-label="頁面分頁">
-    <button type="button" role="tab" data-tab="answer" aria-selected="true">解答</button>
+    <button type="button" role="tab" data-tab="answer" aria-selected="true">設計摘要</button>
     <button type="button" role="tab" data-tab="utf8" aria-selected="false">字元換算台</button>
     <button type="button" role="tab" data-tab="pg" aria-selected="false">PostgreSQL 底層長啥樣子</button>
   </nav>
-  <section class="exam" aria-label="題目">
-    <div class="src"><b>第二題　[估算與選型]</b><span>QSearch 資料工程師筆試題目 v2026.07</span></div>
-    <p>有 100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言，另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。</p>
-    <p>這是一個內部工具：約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。由你一個人維運，每月基礎設施預算 3,000 元。</p>
+  <section class="exam" aria-label="情境與瓶頸">
+    <div class="src"><b>FB 貼文搜尋　[估算與選型]</b><span>ARGUS · 情境與瓶頸</span></div>
+    <p>100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言，另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。</p>
+    <p>假設的使用情境：這是一個內部工具，約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。由我一個人維運，給自己定的基礎設施預算是每月 3,000 元。</p>
     <div class="facts">
       <span><b>100 萬</b> 則</span><span><b>250</b> 字／則</span><span><b>10</b> 位使用者</span>
       <span><b>500</b> 次查詢／天</span><span><b>+3,000</b> 則／天</span><span><b>1</b> 人維運</span><span><b>3,000</b> 元／月</span>
     </div>
     <ol>
-      <li>請估算：(a) 原始資料總量；(b) 粉絲頁 ID 索引；(c) 貼文中文全文索引。寫出算式與你假設的每一個參數，數量級對即可。
+      <li>瓶頸 1：100 萬則、每月 3,000 元，到底塞不塞得下？我把 (a)(b)(c) 分開算，每個參數都寫出來，要的是數量級。
         <ul class="sub">
           <li><span>(a) 原始資料總量</span></li>
           <li><span>(b) 粉絲頁 ID 索引</span></li>
           <li><span>(c) 貼文中文全文索引</span></li>
         </ul>
       </li>
-      <li>承上，你選哪一套方案？請說明是估算結果的哪一個數字決定了你的選擇。</li>
-      <li>你選的中文斷詞策略是什麼？它會漏掉哪一類查詢？</li>
-      <li>資料量或查詢量成長到多少，你會換掉現在的選擇？換成什麼？</li>
-      <li>題目中缺了哪一個數字，會讓你的估算差距最大？</li>
+      <li>瓶頸 2：選哪一套？決定性的是哪個數字？</li>
+      <li>瓶頸 3：中文斷詞會漏掉哪一類查詢？我選的斷詞策略會漏掉什麼？</li>
+      <li>瓶頸 4：資料量或查詢量成長到多少，我會換掉現在的選擇？換成什麼？</li>
+      <li>瓶頸 5：哪個參數最不確定、影響最大？</li>
     </ol>
-    <p class="limit">上限 600 字（不含算式）。</p>
   </section>
 
   <section id="derive">
@@ -713,7 +713,7 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <header>
-    <button type="button" class="q-toggle" id="q1-toggle" aria-expanded="true" aria-controls="q1-body" data-sum="q1-sum"><span class="q-no">第 1 題</span><span class="q-title">估算三個大小</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q1-toggle" aria-expanded="true" aria-controls="q1-body" data-sum="q1-sum"><span class="q-no">瓶頸 1</span><span class="q-title">估算三個大小</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum" id="q1-sum" hidden>
       <div><span>(a) 原始資料總量</span><b id="q1-sa" style="color:var(--heap)">977 MB</b></div>
       <div><span>(b) 粉絲頁 ID 索引</span><b id="q1-sb" style="color:var(--pid)">6.6 MB</b></div>
@@ -807,7 +807,7 @@ footer { font-size: 13px; color: var(--muted); }
           <span class="fx-op">＝</span>
           <b id="fx-out" class="fx-out">6.6 MB</b>
         </div>
-        <label class="fx-slide"><span>改貼文數（題目給 100 萬）：直接輸入，或拖拉</span><input type="range" id="fx-range" min="100000" max="10000000" step="100000" value="1000000"></label>
+        <label class="fx-slide"><span>改貼文數（情境給 100 萬）：直接輸入，或拖拉</span><input type="range" id="fx-range" min="100000" max="10000000" step="100000" value="1000000"></label>
         <div class="fx-bar" aria-hidden="true"><i id="fx-bar-tid"></i><i id="fx-bar-ovh"></i></div>
         <div class="fx-legend">
           <span><i class="tid"></i>6 B × 貼文數　<b id="fx-tid"></b>（<span id="fx-tid-share"></span>）</span>
@@ -877,7 +877,7 @@ footer { font-size: 13px; color: var(--muted); }
     <div class="figure">
       <div class="scroll"><svg id="row-svg" viewBox="0 0 1000 170" width="100%" style="min-width:640px" role="img" aria-label="一列 918 bytes 的欄位配置"></svg></div>
       <div class="legend" id="row-legend"></div>
-      <p class="note heap">內文前面剛好是 164 bytes。你一開始估「內文以外的欄位約 164 bytes」，和實際位置一模一樣，只是組成不同：實際上列標頭只有 24 bytes，另外多了 3 個長度標頭和 3 bytes 補齊。</p>
+      <p class="note heap">內文前面剛好是 164 bytes。我一開始估「內文以外的欄位約 164 bytes」，和實際位置一模一樣，只是組成不同：實際上列標頭只有 24 bytes，另外多了 3 個長度標頭和 3 bytes 補齊。</p>
     </div>
     <div class="toast">
       <h3>TOAST 是什麼：太長的貼文怎麼辦</h3>
@@ -890,7 +890,7 @@ footer { font-size: 13px; color: var(--muted); }
         <div class="tf-row"><span class="tf-k">頁裡的那一列</span><span class="tf-cell num">數字欄位</span><span class="tf-cell num">粉絲頁名稱</span><span class="tf-cell ptr">內文 → 18 B 指標</span></div>
         <div class="tf-row"><span class="tf-k">TOAST 副表</span><span class="tf-cell chunk">第 1 段 ~2 KB</span><span class="tf-cell chunk">第 2 段 ~2 KB</span><span class="tf-cell chunk">…</span></div>
       </div>
-      <p><b>對這題的影響：</b>中文 UTF-8 每字 3 bytes，大約 <b class="mono">680 字</b>以上才會觸發 TOAST。實測的每則貼文是 918 B，遠低於 2 KB，所以內文完整留在頁裡，量到的 977 MB 就是全部。正式資料裡的長文會被壓縮，實際佔的空間比「字數 × 3 B」小。全文索引記的位置仍然是頁裡那一列，所以 TOAST 不影響索引找得到哪則貼文。</p>
+      <p><b>對估算的影響：</b>中文 UTF-8 每字 3 bytes，大約 <b class="mono">680 字</b>以上才會觸發 TOAST。實測的每則貼文是 918 B，遠低於 2 KB，所以內文完整留在頁裡，量到的 977 MB 就是全部。正式資料裡的長文會被壓縮，實際佔的空間比「字數 × 3 B」小。全文索引記的位置仍然是頁裡那一列，所以 TOAST 不影響索引找得到哪則貼文。</p>
     </div>
   </section>
 
@@ -909,14 +909,14 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q2">
-    <button type="button" class="q-toggle" id="q2-toggle" aria-expanded="true" aria-controls="q2-body" data-sum="q2-sum"><span class="q-no">第 2 題</span><span class="q-title">選哪一套方案</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q2-toggle" aria-expanded="true" aria-controls="q2-body" data-sum="q2-sum"><span class="q-no">瓶頸 2</span><span class="q-title">選哪一套方案</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q2-sum" hidden>
       <div><span>方案</span><b>PostgreSQL＋pg_bigm</b></div>
       <div><span>決定的數字</span><b>(c) 903 MB</b></div>
       <div><span>月費</span><b>約 NT$2,000</b></div>
     </div>
     <div class="figure qa" id="q2-body">
-      <p class="ask">承上，你選哪一套方案？請說明是估算結果的哪一個數字決定了你的選擇。</p>
+      <p class="ask">選哪一套？是估算結果的哪一個數字決定了我的選擇？</p>
       <p class="lead">租 Google 的 Cloud SQL PostgreSQL（db-custom-1-3840，1 個 CPU、記憶體約 3.8 GB，是獨佔 CPU 的最小規格），再裝一個叫 pg_bigm 的外掛，專門用來搜中文。決定這個選擇的數字是 (c) 全文索引 <b style="color:var(--idx)">903 MB</b>。</p>
 
       <h3>Cloud SQL 有哪些機器</h3>
@@ -1035,14 +1035,14 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q3">
-    <button type="button" class="q-toggle" id="q3-toggle" aria-expanded="true" aria-controls="q3-body" data-sum="q3-sum"><span class="q-no">第 3 題</span><span class="q-title">中文斷詞策略</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q3-toggle" aria-expanded="true" aria-controls="q3-body" data-sum="q3-sum"><span class="q-no">瓶頸 3</span><span class="q-title">中文斷詞策略</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q3-sum" hidden>
       <div><span>策略</span><b>每兩字切一詞</b></div>
       <div><span>詞典</span><b>不用</b></div>
       <div><span>會漏掉</span><b>字面不同的查詢</b></div>
     </div>
     <div class="figure qa" id="q3-body">
-      <p class="ask">你選的中文斷詞策略是什麼？它會漏掉哪一類查詢？</p>
+      <p class="ask">我選的中文斷詞策略是什麼？它會漏掉哪一類查詢？</p>
       <p class="lead">不用詞典，每兩個字切成一個詞（「台北美食」→ 台北、北美、美食），查詢時用 LIKE 比對原文。</p>
       <h3>好處</h3>
       <ul>
@@ -1061,14 +1061,14 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q4">
-    <button type="button" class="q-toggle" id="q4-toggle" aria-expanded="true" aria-controls="q4-body" data-sum="q4-sum"><span class="q-no">第 4 題</span><span class="q-title">什麼時候換掉</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q4-toggle" aria-expanded="true" aria-controls="q4-body" data-sum="q4-sum"><span class="q-no">瓶頸 4</span><span class="q-title">什麼時候換掉</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q4-sum" hidden>
       <div><span>記憶體放不下</span><b>約 204 萬則（約 1 年）</b></div>
       <div><span>換 Elasticsearch</span><b>約 1,000 萬則</b></div>
       <div><span>或查詢量</span><b>尖峰每秒超過 1 次</b></div>
     </div>
     <div class="figure qa" id="q4-body">
-      <p class="ask">資料量或查詢量成長到多少，你會換掉現在的選擇？換成什麼？</p>
+      <p class="ask">資料量或查詢量成長到多少，我會換掉現在的選擇？換成什麼？</p>
       <p class="lead">約 1 年後記憶體放不下，先只留近期資料；到約 1,000 萬則、尖峰每秒超過 1 次，或需要相關度排序時，換成 Elasticsearch。</p>
       <h3>第一個門檻：記憶體放不下（約 1 年）</h3>
       <ul>
@@ -1088,21 +1088,21 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q5">
-    <button type="button" class="q-toggle" id="q5-toggle" aria-expanded="true" aria-controls="q5-body" data-sum="q5-sum"><span class="q-no">第 5 題</span><span class="q-title">缺的那個數字</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q5-toggle" aria-expanded="true" aria-controls="q5-body" data-sum="q5-sum"><span class="q-no">瓶頸 5</span><span class="q-title">最不確定的那個數字</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q5-sum" hidden>
       <div><span>缺了</span><b>平均 250 字</b></div>
       <div><span>現估 (a)＋(c)</span><b>約 2.0 GB</b></div>
       <div><span>減半／加倍</span><b>約 1.1 GB／3.9 GB</b></div>
     </div>
     <div class="figure qa" id="q5-body">
-      <p class="ask">題目中缺了哪一個數字，會讓你的估算差距最大？</p>
-      <p class="lead">題目給的數字裡，缺了「平均 250 字」差最多：10 人、500 次、3,000 則、3,000 元都不進 (a)(b)(c)，只有字數同時決定表 (a) 與全文索引 (c)。</p>
+      <p class="ask">哪個參數最不確定、影響最大？</p>
+      <p class="lead">情境裡的數字中，「平均 250 字」最不確定、差距最大：10 人、500 次、3,000 則、3,000 元都不進 (a)(b)(c)，只有字數同時決定表 (a) 與全文索引 (c)。</p>
       <h3>同樣 100 萬則，只改平均字數</h3>
       <table>
         <thead><tr><th>平均字數</th><th class="r">(a) 表</th><th class="r">(c) 全文索引</th><th class="r">(a)＋(c)</th></tr></thead>
         <tbody>
           <tr><td>125 字（減半）</td><td class="r">0.59 GB</td><td class="r">0.47 GB</td><td class="r"><b>1.06 GB</b></td></tr>
-          <tr><td>250 字（題目）</td><td class="r">1.02 GB</td><td class="r">0.95 GB</td><td class="r"><b>1.97 GB</b></td></tr>
+          <tr><td>250 字（情境）</td><td class="r">1.02 GB</td><td class="r">0.95 GB</td><td class="r"><b>1.97 GB</b></td></tr>
           <tr><td>500 字（加倍）</td><td class="r">2.05 GB</td><td class="r">1.90 GB</td><td class="r"><b>3.94 GB</b></td></tr>
         </tbody>
       </table>
@@ -1152,13 +1152,13 @@ footer { font-size: 13px; color: var(--muted); }
 </div>
 <div id="ev-tip" hidden></div>
 <div id="bpa-pop" role="dialog" aria-label="每個位址幾 B" hidden>
-  <div class="bpa-hd"><b>每個位址幾 B？</b><span>先用題目給的條件估一個範圍，再用實測對答案。點一列或拖拉看看。</span><button type="button" class="bpa-x" id="bpa-x" aria-label="關閉">✕</button></div>
+  <div class="bpa-hd"><b>每個位址幾 B？</b><span>先用情境給的條件估一個範圍，再用實測對答案。點一列或拖拉看看。</span><button type="button" class="bpa-x" id="bpa-x" aria-label="關閉">✕</button></div>
   <div class="bpa-rows">
     <div class="bpa-th" aria-hidden="true"><span>情況</span><span>每個位址</span><span>全文索引大小</span><span>依據</span></div>
     <button type="button" class="bpa-r" data-b="6"><span class="c">完全不壓縮（上限）</span><span class="b">6 B</span><span class="s"></span><span class="w">位址就是「第幾頁 4 B＋頁內第幾格 2 B」</span></button>
     <button type="button" class="bpa-r" data-b="2.5" data-lo="2" data-hi="3"><span class="c">合理估計</span><span class="b">約 2～3 B</span><span class="s"></span><span class="w">常見詞位址很密，差距小，約 1～2 B；罕見詞差距大，約 3 B；再加一點詞典的開銷</span></button>
     <button type="button" class="bpa-r" data-b="1"><span class="c">壓到最小（下限）</span><span class="b">1 B</span><span class="s"></span><span class="w">只記和上一筆差多少，差得少的時候 1 B 就放得下</span></button>
-    <button type="button" class="bpa-r real" data-b="real"><span class="c">實測驗證</span><span class="b" id="bpa-real-b"></span><span class="s"></span><span class="w">PTT 100 萬則實際建好索引，量檔案大小再除回去（SQL 在最下面）</span></button>
+    <button type="button" class="bpa-r real" data-b="real"><span class="c">實測驗證</span><span class="b" id="bpa-real-b"></span><span class="s"></span><span class="w">PTT 100 萬則建好索引，量檔案大小再除回去（SQL 在最下面）</span></button>
   </div>
   <div class="bpa-live">
     <label class="bpa-sl"><span class="bpa-lb">每個位址</span><span><output id="bpa-v"></output> B</span><input type="range" id="bpa-range" min="1" max="6" step="0.01" aria-label="每個位址幾 B"></label>
@@ -1187,7 +1187,7 @@ footer { font-size: 13px; color: var(--muted); }
 ------------------
         946946048</pre>
     <span class="bpa-lb" id="bpa-sql-st" style="grid-column:1/-1"></span>
-    <span class="bpa-lb" style="grid-column:1/-1">為什麼是 3.80 B：GIN 記位址只記「跟上一個差多少」。實際貼文裡同一個詞散在整張表（新竹從 (0,1) 跳到 (210,6)），差距大就要多幾個位元組。重複造的測試資料位址一格接一格，每個只要 1.63 B（388 MB），那是下限。</span>
+    <span class="bpa-lb" style="grid-column:1/-1">為什麼是 3.80 B：GIN 記位址只記「跟上一個差多少」。線上貼文裡同一個詞散在整張表（新竹從 (0,1) 跳到 (210,6)），差距大就要多幾個位元組。重複造的測試資料位址一格接一格，每個只要 1.63 B（388 MB），那是下限。</span>
   </div>
 </div>
 <div id="fcw-pop" role="dialog" aria-label="每則幾個詞" hidden>
@@ -1242,7 +1242,7 @@ footer { font-size: 13px; color: var(--muted); }
       <div class="knob">
         <span class="knob-l">每粉專則數</span>
         <input type="range" id="d-r" min="1" max="1000" step="1" value="200" aria-label="每粉專則數">
-        <div class="presets" id="d-pre"><button type="button" data-per="50">50</button><button type="button" data-per="132">132（剛好 1 組）</button><button type="button" data-per="133">133（分 2 組）</button><button type="button" data-per="200">200（題目）</button><button type="button" data-per="1000">1,000</button></div>
+        <div class="presets" id="d-pre"><button type="button" data-per="50">50</button><button type="button" data-per="132">132（剛好 1 組）</button><button type="button" data-per="133">133（分 2 組）</button><button type="button" data-per="200">200（情境）</button><button type="button" data-per="1000">1,000</button></div>
       </div>
       <div class="lf">
         <div class="fig-h"><b>fb_posts_page_id_btree 的一個葉頁（leaf page）</b><small>8,192 B，放 <em id="lf-n"></em></small></div>
@@ -1274,7 +1274,7 @@ const D = {
       { lp: 8, lp_off: 832, lp_len: 918, post_id: "278674452292008_947371017107743" },
     ].map(l => ({ ...l, head: "栢潎难颢靼崿鯸鏖" })),
   },
-  /* 以下 idx／sample 是原頁（WSL Ubuntu）那次量的數字；Linux／Windows 重跑的差異（兩字詞 GIN −0.03%、pg_trgm +0.13%）見 q2/code/RESULTS.md 第三節 */
+  /* 以下 idx／sample 是 WSL Ubuntu 那次實測的數字；Linux／Windows 重跑的差異（兩字詞 GIN −0.03%、pg_trgm +0.13%）見 q2/code/RESULTS.md 第三節 */
   idx: {
     bigram: { bytes: 406396928, pages: 49609, meta: { n_entries: 248925, n_total_pages: 49609, n_entry_pages: 49608, n_data_pages: 0 } },
     trgm: { bytes: 409247744, pages: 49957 },
@@ -1283,7 +1283,7 @@ const D = {
   tpp: 249,
   postings1m: 249000000,
   bpp: 406396928 / 249000000,
-  /* (c) 的答案改用實際中文：PTT 100 萬則、每則 250 字的兩字詞 GIN 實測 946,946,048 B（q2/code/RESULTS.md、answer_600.txt 第 46 行），÷ 2.49 億筆 ≈ 3.80 B */
+  /* (c) 改用中文語料量：PTT 100 萬則、每則 250 字的兩字詞 GIN 實測 946,946,048 B（q2/code/RESULTS.md、summary.txt 第 40 行），÷ 2.49 億筆 ≈ 3.80 B */
   idxReal: 946946048,
   bppReal: 946946048 / 249000000,
   /* (c) 換索引方法：同一份 PTT 100 萬則、每則 250 字的三種 GIN 實測大小與詞數（q2_run_1000000_corpus-ptt_recombine_250.json）。
@@ -1296,9 +1296,9 @@ const D = {
     trgm: { bytes: 1371783168, entries: 3189347, hits: 587, meas: 233.121808 },
     simple: { bytes: 340230144, perRow: 25.602421, entries: 1603063, hits: 3 },
   },
-  /* ④ 全文索引用實際中文：
+  /* ④ 全文索引用中文語料：
      meta 是 PTT 100 萬則兩字詞 GIN 的 gin_metapage_info（q2/data/q2_run_1000000_corpus-ptt_recombine_250.json）；
-     sample 是 PTT 樣本庫 q2_ptt（2,307 則貼文，WSL PostgreSQL 16）實際查「新竹」的結果，
+     sample 是 PTT 樣本庫 q2_ptt（2,307 則線上貼文，WSL PostgreSQL 16）實際查「新竹」的結果，
      EXPLAIN (ANALYZE, BUFFERS)：索引讀 4 頁、表讀 42 頁、0.052 ms */
   real: {
     meta: { n_entries: 848556, n_total_pages: 115594, n_entry_pages: 43818, n_data_pages: 71775 },
@@ -1346,7 +1346,7 @@ function tipOn(hdrTip, node) {
 
 /* 欄位證據：滑過 ③ 的 page_id、creation_time、7 種心情、page_name，或 ⑤ 的 NASA page_id，
    顯示 NASA〈Welcome to the Artemis Accords, Vietnam〉這則貼文的畫面與 F12 截圖。
-   截圖裁自 q2/evidence/，由 q2/answer/build_tip_images.py 寫進 TIP_IMG */
+   截圖裁自 q2/evidence/，由 q2/design/build_tip_images.py 寫進 TIP_IMG */
 const evImg = (k, w, alt) => { const m = TIP_IMG[k]; return `<img src="${m.src}" width="${w}" height="${Math.round(m.h * w / m.w)}" alt="${alt}">`; };
 const EV = {
   pid: ["pid", `<div class="h">page_id 8 B 存什麼</div>
@@ -1395,7 +1395,7 @@ ${evImg("react_f12", 560, "F12 搜尋 7 種心情的 reaction_count")}
   pname: ["heap", `<div class="h">page_name 61 B 存什麼</div>
 <table>
 <tr><th>這則的值</th><td class="v">NASA - National Aeronautics and Space Administration</td></tr>
-<tr><th>大小</th><td>52 個半形字元，每個 1 B，加 1 B 長度 ＝ 53 B<br>圖上的 61 B 是題目假設的 20 個中文字：20 × 3 B ＋ 1 B</td></tr>
+<tr><th>大小</th><td>52 個半形字元，每個 1 B，加 1 B 長度 ＝ 53 B<br>圖上的 61 B 是假設的 20 個中文字：20 × 3 B ＋ 1 B</td></tr>
 <tr><th>頁面資料位置</th><td><code>node_v2.feedback.owning_profile.name</code></td></tr>
 </table>
 <div class="st"><b>① 畫面</b>貼文標頭的粉專名稱（2026-11-04 23:52）</div>
@@ -1504,7 +1504,7 @@ const big = D.idx.bigram;
   const xx = 790, xw = 190;
   const a4 = link("lv4");
   T(xx, 24, "④ 全文索引", { p: a4, fs: 14, st: "font-weight:600;fill:var(--idx)" });
-  // 實際中文：第 1 則切出的兩字詞，和 PTT 樣本庫實際查到的位址；大小與詞數用 PTT 100 萬則實測
+  // 中文語料：第 1 則切出的兩字詞，和 PTT 樣本庫實際查到的位址；大小與詞數用 PTT 100 萬則實測
   const rs = D.real.sample, wan = n => +(n / 1e4).toFixed(1) + " 萬";
   T(xx, 44, `${mb(D.idxReal)}，${wan(D.real.meta.n_entries)}個詞`, { p: a4, cls: "t-muted", fs: 12 });
   R(xx, top, xw, H, "panel", { stroke: "idx", p: a4, rx: 4 });
@@ -1687,7 +1687,7 @@ const big = D.idx.bigram;
     return { kt, vt };
   };
   defLine("6 B：", "PostgreSQL TID，儲存位置，這是結構事實。");
-  defLine("100 萬：", "題目給的貼文數。");
+  defLine("100 萬：", "情境給的貼文數。");
   const defP = defLine("5,000：", "自行假設的不同粉專數。");
   const defOver = defLine("", "");
   defLine("0.9：", "B-tree 預設建索引填充率。");
@@ -2230,7 +2230,7 @@ const big = D.idx.bigram;
   render();
 })();
 
-/* 頂端分頁：解答／字元換算台／PostgreSQL 底層長啥樣子（網址 #utf8、#pg 直接開那一頁） */
+/* 頂端分頁：設計摘要／字元換算台／PostgreSQL 底層長啥樣子（網址 #utf8、#pg 直接開那一頁） */
 (function () {
   const main = document.querySelector("main"), btns = [...document.querySelectorAll(".tabs [data-tab]")];
   const show = (t, jump) => {
@@ -2245,7 +2245,7 @@ const big = D.idx.bigram;
   show(location.hash === "#utf8" ? "utf8" : location.hash === "#pg" ? "pg" : "answer", false);
 })();
 
-/* 第 1–5 題 展開／收起 */
+/* 瓶頸 1–5 展開／收起 */
 (function () {
   document.querySelectorAll(".q-toggle").forEach(btn => {
     const body = $(btn.getAttribute("aria-controls")), sum = $(btn.dataset.sum);
@@ -2443,11 +2443,11 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
   });
   el("text", { x: 704, y: 252, "font-size": 12, class: "t-muted" }, svg, "照位址直接跳到那一頁那一格");
 
-  $("term-p").innerHTML = `PTT 樣本庫（${fmt(rs.posts)} 則貼文）的第 1 則 <code>(0,1)</code> 內文開頭是「${rs.head}…」，取前兩個字「<b>${rs.term}</b>」去查，索引回傳 <b class="mono">${fmt(rs.count)}</b> 個位址（實際查詢只花 <span class="mono">${rs.ms} ms</span>）。前幾個：`;
+  $("term-p").innerHTML = `PTT 樣本庫（${fmt(rs.posts)} 則線上貼文）的第 1 則 <code>(0,1)</code> 內文開頭是「${rs.head}…」，取前兩個字「<b>${rs.term}</b>」去查，索引回傳 <b class="mono">${fmt(rs.count)}</b> 個位址（實際查詢只花 <span class="mono">${rs.ms} ms</span>）。前幾個：`;
   const tids = $("tids");
   rs.tids.forEach(t => { const s = document.createElement("span"); s.textContent = t; tids.appendChild(s); });
   const more = document.createElement("span"); more.className = "more"; more.textContent = `… 共 ${fmt(rs.count)} 個`; tids.appendChild(more);
-  $("gin-note").textContent = `這 ${fmt(rs.count)} 個位址從 ${rs.tids[0]} 散到 ${rs.last}，分在 ${rs.heapPages} 頁：實際貼文裡同一個詞散在整張表，位址常常一跳好幾頁。GIN 存位址時只記「和上一個差多少」，差得越多越佔空間，所以 PTT 100 萬則平均每個位址（連同詞的目錄）要 ${D.bppReal.toFixed(2)} B，整個索引 ${mb(D.idxReal)}。重複造的測試資料位址一格接一格，每個只要 ${D.bpp.toFixed(2)} B（${mb(big.bytes)}），那是下限。這次查詢讀了索引 ${rs.idxPages} 頁、表 ${rs.heapPages} 頁。上圖的詞數與頁數是 PTT 100 萬則實測。`;
+  $("gin-note").textContent = `這 ${fmt(rs.count)} 個位址從 ${rs.tids[0]} 散到 ${rs.last}，分在 ${rs.heapPages} 頁：線上貼文裡同一個詞散在整張表，位址常常一跳好幾頁。GIN 存位址時只記「和上一個差多少」，差得越多越佔空間，所以 PTT 100 萬則平均每個位址（連同詞的目錄）要 ${D.bppReal.toFixed(2)} B，整個索引 ${mb(D.idxReal)}。重複造的測試資料位址一格接一格，每個只要 ${D.bpp.toFixed(2)} B（${mb(big.bytes)}），那是下限。這次查詢讀了索引 ${rs.idxPages} 頁、表 ${rs.heapPages} 頁。上圖的詞數與頁數是 PTT 100 萬則實測。`;
 })();
 
 /* 字元換算台 */
@@ -2791,7 +2791,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
     h("div", { class: "eq" }, box, `${fmt(w)} 字 × ${r} B × ${fmt(rows)} 則 =`);
     const b = h("div", { class: "big" }, box, fmt(Math.round(tot)) + " B");
     h("small", { class: "muted", style: "font:400 13px var(--body);margin-left:8px" }, b, "≈ " + size(tot));
-    h("div", { class: "sub" }, box, "題目假設全中文、每字 3 B：250 字 × 3 B × 1,000,000 則 = 750,000,000 B（≈ 715 MB）。這只是內文一欄，整列還有其他欄位：");
+    h("div", { class: "sub" }, box, "情境假設全中文、每字 3 B：250 字 × 3 B × 1,000,000 則 = 750,000,000 B（≈ 715 MB）。這只是內文一欄，整列還有其他欄位：");
     const wrap = h("div", { class: "scroll" }, box), t = h("table", { class: "rowsz" }, wrap);
     const hr = h("tr", null, t); ["一則貼文存了什麼", "怎麼算", "B"].forEach((x, i) => h("th", i === 2 ? { class: "r" } : null, hr, x));
     ROW.forEach(([k, how, n], i) => {
@@ -2889,7 +2889,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
   sym.addEventListener("change", () => { const c = [...sym.value][0]; sym.value = c || ""; });
 })();
 
-$("foot").textContent =`量測環境：PostgreSQL ${D.version}（WSL Ubuntu，原頁那次；Linux 重跑兩字詞 GIN −0.03%、pg_trgm +0.13%，見 q2/code/RESULTS.md），合成資料：1,000 段隨機中文輪流使用，每段 250 字。建索引時間：兩字詞 ${D.build.bigram}、pg_trgm ${D.build.trgm}、simple ${D.build.simple}。`;
+$("foot").textContent =`量測環境：PostgreSQL ${D.version}（WSL Ubuntu，首次實測；Linux 重跑兩字詞 GIN −0.03%、pg_trgm +0.13%，見 q2/code/RESULTS.md），合成資料：1,000 段隨機中文輪流使用，每段 250 字。建索引時間：兩字詞 ${D.build.bigram}、pg_trgm ${D.build.trgm}、simple ${D.build.simple}。`;
 </script>
 
 </body></html>

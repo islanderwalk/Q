@@ -1,10 +1,13 @@
 """品質關卡、整輪回歸檢查、不變量、排程的規則（不需要模擬器）。"""
+import importlib.util
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from q3pipe import bq, job, scheduler, search, verify
 from q3pipe.config import Config
 from q3pipe.ptt import TW, nrec_of, parse_nrec
+
+import pytest
 
 CFG = Config()
 
@@ -100,6 +103,8 @@ def test_schedule_and_daily_verify():
     assert scheduler.verify_due(cfg, last, datetime(2026, 11, 4, 4, 5, tzinfo=TW))
 
 
+# scheduler.single_worker 靠 fcntl 鎖檔；沒有 fcntl 的平台（Windows）不鎖，這個測試在那裡無法成立。
+@pytest.mark.skipif(importlib.util.find_spec("fcntl") is None, reason="沒有 fcntl（Windows）：single_worker 不鎖")
 def test_single_worker_waits_for_running_round(tmp_path):
     import threading
     lock, order = tmp_path / "run.lock", []

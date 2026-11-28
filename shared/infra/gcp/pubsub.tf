@@ -1,5 +1,5 @@
 # Pub/Sub：任務主題、事件主題（綁 AVRO schema）、DLQ、訂閱。
-# 保留期：預設 7 天，上限 31 天（已由 provider 文件確認；原題「上限 7 天」不正確）。
+# 保留期：預設 7 天，上限 31 天（已由 provider 文件確認；先前寫的「上限 7 天」不正確）。
 
 # --- 派工 ---
 resource "google_pubsub_topic" "crawler_tasks" {
@@ -27,28 +27,28 @@ resource "google_pubsub_subscription" "crawler_tasks_dlq_inspect" {
 }
 
 # --- 事件（crawl.fetched）---
-resource "google_pubsub_schema" "qsearch_event_v1" {
-  name       = "qsearch-crawl-event-v1"
+resource "google_pubsub_schema" "argus_event_v1" {
+  name       = "argus-crawl-event-v1"
   type       = "AVRO"
-  definition = file("${path.module}/schemas/qsearch-crawl-event-v1.avsc")
+  definition = file("${path.module}/schemas/argus-crawl-event-v1.avsc")
 }
 
-resource "google_pubsub_topic" "qsearch_fetched" {
-  name = "qsearch-crawl-fetched"
+resource "google_pubsub_topic" "argus_fetched" {
+  name = "argus-crawl-fetched"
   schema_settings {
-    schema   = google_pubsub_schema.qsearch_event_v1.id
+    schema   = google_pubsub_schema.argus_event_v1.id
     encoding = "JSON" # 文件確認：預設 ENCODING_UNSPECIFIED，必須明確指定。
   }
   depends_on = [google_project_service.required]
 }
 
 resource "google_pubsub_topic" "parser_dlq" {
-  name       = "qsearch-parser-dlq"
+  name       = "argus-parser-dlq"
   depends_on = [google_project_service.required]
 }
 
 resource "google_pubsub_subscription" "parser_dlq_inspect" {
-  name                       = "qsearch-parser-dlq-inspect"
+  name                       = "argus-parser-dlq-inspect"
   topic                      = google_pubsub_topic.parser_dlq.id
   ack_deadline_seconds       = 30
   message_retention_duration = "2678400s" # 31 天上限，留時間人工查死信
@@ -84,7 +84,7 @@ resource "google_pubsub_subscription_iam_member" "crawl_sub_dlq_ack" {
 
 resource "google_pubsub_subscription_iam_member" "parser_sub_dlq_ack" {
   project      = var.project_id
-  subscription = google_pubsub_subscription.qsearch_parser_sub.name
+  subscription = google_pubsub_subscription.argus_parser_sub.name
   role         = "roles/pubsub.subscriber"
   member       = local.pubsub_agent_member
 }
@@ -133,10 +133,10 @@ resource "google_pubsub_subscription" "audit_sub" {
   }
 }
 
-# qsearch-parser-sub：push 到 parser。路徑 /events/crawl-fetched 取自 services/parser/main.py（不是 snippet 的 /push）。
-resource "google_pubsub_subscription" "qsearch_parser_sub" {
-  name                       = "qsearch-parser-sub"
-  topic                      = google_pubsub_topic.qsearch_fetched.id
+# argus-parser-sub：push 到 parser。路徑 /events/crawl-fetched 取自 services/parser/main.py（不是 snippet 的 /push）。
+resource "google_pubsub_subscription" "argus_parser_sub" {
+  name                       = "argus-parser-sub"
+  topic                      = google_pubsub_topic.argus_fetched.id
   ack_deadline_seconds       = 60
   retain_acked_messages      = true
   message_retention_duration = "604800s" # 保留已確認訊息 7 天，供 Seek 回放
@@ -169,9 +169,9 @@ resource "google_pubsub_subscription" "qsearch_parser_sub" {
 
 # fetched-to-bq：Pub/Sub BigQuery 訂閱，直接寫入 ingest_events（替代 consumer 的選項）。
 # use_topic_schema = true 時，BQ 表欄位須與 Avro schema 相符（見 bq.tf）；write_metadata 改為 false，避免額外的 metadata 欄位。
-resource "google_pubsub_subscription" "qsearch_to_bq" {
-  name  = "qsearch-fetched-to-bq"
-  topic = google_pubsub_topic.qsearch_fetched.id
+resource "google_pubsub_subscription" "argus_to_bq" {
+  name  = "argus-fetched-to-bq"
+  topic = google_pubsub_topic.argus_fetched.id
 
   bigquery_config {
     table            = "${var.project_id}.${google_bigquery_dataset.sentiment.dataset_id}.${google_bigquery_table.ingest_events.table_id}"

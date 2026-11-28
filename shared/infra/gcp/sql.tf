@@ -12,7 +12,7 @@ resource "google_sql_database_instance" "crawler_db" {
     tier    = var.sql_tier
     edition = "ENTERPRISE"
 
-    # Q2 選 pg_bigm：Cloud SQL 需先開這個旗標（預設 off、要重啟）才能 CREATE EXTENSION pg_bigm（文件確認）。
+    # FB 貼文搜尋 選 pg_bigm：Cloud SQL 需先開這個旗標（預設 off、要重啟）才能 CREATE EXTENSION pg_bigm（文件確認）。
     database_flags {
       name  = "cloudsql.enable_pg_bigm"
       value = "on"
@@ -68,7 +68,7 @@ locals {
     parser        = google_service_account.parser.email
     scheduler_app = google_service_account.scheduler_app.email
     backfill      = google_service_account.backfill.email
-    # Q6：斷詞服務（service_state 心跳、rerun_runs）、文字雲 API（回補帳本簽核、發版、採集控制）、採集器（collector_state）
+    # 文字雲斷詞：斷詞服務（service_state 心跳、rerun_runs）、文字雲 API（回補帳本簽核、發版、採集控制）、採集器（collector_state）
     seg           = google_service_account.seg.email
     wordcloud_api = google_service_account.wordcloud_api.email
     collector     = google_service_account.collector.email

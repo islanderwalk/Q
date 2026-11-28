@@ -1,6 +1,6 @@
--- QSearch Q2：粉絲頁貼文表（Postgres 16）
--- 欄位依題目：粉絲頁 ID、粉絲頁名稱、發文時間、內文（平均 250 字中文）、心情互動統計。
--- 欄位型別選 bigint 讓每列約 920 B，與 q2/answer/fb_q2_posts_table.html 的 lp_len 918 B 同級，
+-- ARGUS｜FB 貼文搜尋：粉絲頁貼文表（Postgres 16）
+-- 欄位依需求：粉絲頁 ID、粉絲頁名稱、發文時間、內文（平均 250 字中文）、心情互動統計。
+-- 欄位型別選 bigint 讓每列約 920 B，與 q2/design/fb_q2_posts_table.html 的 lp_len 918 B 同級，
 -- 每頁 8 列（8 KB page），和頁面的 125,000 頁一致。
 
 DROP TABLE IF EXISTS fb_posts;

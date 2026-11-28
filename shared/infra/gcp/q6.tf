@@ -1,4 +1,4 @@
-# Q6 文字雲：串流斷詞服務 v0／v1／v2、文字雲 API（PM A/B 頁）、公開 feed 採集器；Pub/Sub parsed-posts（含 DLQ）與 dict-releases；
+# 文字雲斷詞 文字雲：串流斷詞服務 v0／v1／v2、文字雲 API（PM A/B 頁）、公開 feed 採集器；Pub/Sub parsed-posts（含 DLQ）與 dict-releases；
 # 字典 artifact bucket。每一項都對應 q6/stack/docker-compose.yml 與 scripts/setup.py 裡本機模擬器的同名主題／訂閱。
 # 只補 Terraform、離線 plan 與 terraform test；沒有 apply（零成本原則）。
 # Elasticsearch 在 Compute Engine VM（crawler-subnet 內的私有 IP，上面裝 Ops Agent），不在這個模組裡建：var.elasticsearch_url。
@@ -9,7 +9,7 @@ locals {
 
 # --- 字典 artifact：本機 dictsrv（nginx）的對應元件；斷詞服務每 15 秒輪詢 current/manifest.json，發版只增版本、再切 current ---
 resource "google_storage_bucket" "dict_artifacts" {
-  name                        = "${var.project_id}-qsearch-dict"
+  name                        = "${var.project_id}-argus-dict"
   location                    = upper(var.region)
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
@@ -22,25 +22,25 @@ resource "google_storage_bucket" "dict_artifacts" {
 
 # --- Pub/Sub ---
 resource "google_pubsub_topic" "parsed_posts" {
-  name                       = "qsearch-parsed-posts"
+  name                       = "argus-parsed-posts"
   message_retention_duration = "604800s" # 7 天：斷詞服務全部停掉也不掉訊息（上限 31 天）
   depends_on                 = [google_project_service.required]
 }
 
 resource "google_pubsub_topic" "parsed_posts_dlq" {
-  name       = "qsearch-parsed-posts-dlq"
+  name       = "argus-parsed-posts-dlq"
   depends_on = [google_project_service.required]
 }
 
 # PM 頁發版後的控制訊息（qseg/control.py）：只是提示，每台服務以輪詢 manifest 為準，所以不需要 DLQ
 resource "google_pubsub_topic" "dict_releases" {
-  name       = "qsearch-dict-releases"
+  name       = "argus-dict-releases"
   depends_on = [google_project_service.required]
 }
 
 # DLQ topic 一定要有訂閱（沒有訂閱的 topic 訊息會遺失），同時是人工查死信的入口；永不過期、保留 31 天
 resource "google_pubsub_subscription" "parsed_posts_dlq_inspect" {
-  name                       = "qsearch-parsed-posts-dlq-inspect"
+  name                       = "argus-parsed-posts-dlq-inspect"
   topic                      = google_pubsub_topic.parsed_posts_dlq.id
   ack_deadline_seconds       = 30
   message_retention_duration = "2678400s"
@@ -53,7 +53,7 @@ resource "google_pubsub_subscription" "parsed_posts_dlq_inspect" {
 # 5 次沒 ack 進 DLQ（本機 setup.py 同值）；重送退避 10 秒～10 分鐘，ES 429／PG 短暫不通時不會把自己打爆。
 resource "google_pubsub_subscription" "parsed_posts_seg" {
   for_each             = local.seg_pipelines
-  name                 = "qsearch-parsed-posts-seg-${each.key}"
+  name                 = "argus-parsed-posts-seg-${each.key}"
   topic                = google_pubsub_topic.parsed_posts.id
   ack_deadline_seconds = 60
   expiration_policy {
@@ -72,7 +72,7 @@ resource "google_pubsub_subscription" "parsed_posts_seg" {
 
 # 發版控制訊息：ack 600 秒給定向重跑時間（與本機 setup.py 同值）
 resource "google_pubsub_subscription" "dict_releases_seg_v2" {
-  name                 = "qsearch-dict-releases-seg-v2"
+  name                 = "argus-dict-releases-seg-v2"
   topic                = google_pubsub_topic.dict_releases.id
   ack_deadline_seconds = 600
   expiration_policy {
@@ -102,20 +102,20 @@ resource "google_pubsub_subscription_iam_member" "parsed_posts_seg_dlq_ack" {
 
 # --- Service accounts（每個服務一個 runtime SA，最小權限）---
 resource "google_service_account" "seg" {
-  account_id   = "qsearch-seg"
-  display_name = "qsearch seg v0/v1/v2 Cloud Run runtime"
+  account_id   = "argus-seg"
+  display_name = "argus seg v0/v1/v2 Cloud Run runtime"
   depends_on   = [google_project_service.required]
 }
 
 resource "google_service_account" "wordcloud_api" {
-  account_id   = "qsearch-wordcloud-api"
-  display_name = "qsearch wordcloud API + PM page Cloud Run runtime"
+  account_id   = "argus-wordcloud-api"
+  display_name = "argus wordcloud API + PM page Cloud Run runtime"
   depends_on   = [google_project_service.required]
 }
 
 resource "google_service_account" "collector" {
-  account_id   = "qsearch-collector"
-  display_name = "qsearch real-source collector Cloud Run runtime"
+  account_id   = "argus-collector"
+  display_name = "argus real-source collector Cloud Run runtime"
   depends_on   = [google_project_service.required]
 }
 
@@ -224,7 +224,7 @@ resource "google_project_iam_member" "backfill_bq_job_user" {
 # Direct VPC（PRIVATE_RANGES_ONLY）連 ES VM 與 Cloud SQL 私有 IP。max_instance_request_concurrency 無 HTTP 流量所以 1。
 resource "google_cloud_run_v2_service" "seg" {
   for_each            = local.seg_pipelines
-  name                = "qsearch-seg-${each.key}"
+  name                = "argus-seg-${each.key}"
   location            = var.region
   ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
   deletion_protection = var.deletion_protection
@@ -269,10 +269,10 @@ resource "google_cloud_run_v2_service" "seg" {
   depends_on = [google_project_service.required]
 }
 
-# 文字雲 API ＋ PM A/B 頁：timeout 190 秒 = 題目 SLA 180 秒 ＋ 回應餘裕（ES 查詢本身在 api/app.py 以 170 秒逾時）；
+# 文字雲 API ＋ PM A/B 頁：timeout 190 秒 = 需求 SLA 180 秒 ＋ 回應餘裕（ES 查詢本身在 api/app.py 以 170 秒逾時）；
 # min 1 實例：查詢快取與單飛在記憶體，冷啟動不能吃掉 3 分鐘。不綁 allUsers invoker，誰能開 PM 頁由 IAP／run.invoker 另外決定。
 resource "google_cloud_run_v2_service" "wordcloud_api" {
-  name                = "qsearch-wordcloud-api"
+  name                = "argus-wordcloud-api"
   location            = var.region
   ingress             = "INGRESS_TRAFFIC_ALL"
   deletion_protection = var.deletion_protection
@@ -321,7 +321,7 @@ resource "google_cloud_run_v2_service" "wordcloud_api" {
 # 公開 feed 採集器：單實例（同一個 feed 不能兩台同時抓：禮貌速率、ETag 與退避狀態在 collector_state）；
 # 出站走 Direct VPC egress ALL_TRAFFIC → Cloud NAT 固定 IP（目標站看到的永遠是同幾個 IP）。
 resource "google_cloud_run_v2_service" "collector" {
-  name                = "qsearch-collector"
+  name                = "argus-collector"
   location            = var.region
   ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
   deletion_protection = var.deletion_protection

@@ -20,19 +20,19 @@ mock_provider "google" {}
 mock_provider "google-beta" {}
 
 variables {
-  project_id     = "qsearch-test"
+  project_id     = "argus-test"
   project_number = "123456789012"
 
   # 不用預設的 hello 示範映像，否則 checks.tf 的 no_placeholder_images 會讓每個 run 失敗。
-  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
-  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
-  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
-  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
+  image_api           = "asia-east1-docker.pkg.dev/argus-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/argus-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/argus-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/argus-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/argus-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/argus-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-collector:test"
 }
 
 # --- 網路 ---
@@ -40,8 +40,8 @@ override_resource {
   target          = google_compute_network.crawler
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/global/networks/crawler-vpc"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/global/networks/crawler-vpc"
+    id        = "projects/argus-test/global/networks/crawler-vpc"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/global/networks/crawler-vpc"
   }
 }
 
@@ -49,8 +49,8 @@ override_resource {
   target          = google_compute_subnetwork.crawler
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/regions/asia-east1/subnetworks/crawler-subnet"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/subnetworks/crawler-subnet"
+    id        = "projects/argus-test/regions/asia-east1/subnetworks/crawler-subnet"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/regions/asia-east1/subnetworks/crawler-subnet"
   }
 }
 
@@ -58,8 +58,8 @@ override_resource {
   target          = google_compute_address.egress
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip"
+    id        = "projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip"
     address   = "203.0.113.10"
   }
 }
@@ -69,8 +69,8 @@ override_resource {
   target          = google_compute_address.egress_2
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip-2"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip-2"
+    id        = "projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip-2"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip-2"
     address   = "203.0.113.11"
   }
 }
@@ -113,8 +113,8 @@ override_resource {
   target          = google_service_account.api
   override_during = plan
   values = {
-    email = "crawler-api@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-api@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-api@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-api@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -122,8 +122,8 @@ override_resource {
   target          = google_service_account.worker
   override_during = plan
   values = {
-    email = "crawler-worker@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-worker@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-worker@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-worker@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -131,8 +131,8 @@ override_resource {
   target          = google_service_account.push
   override_during = plan
   values = {
-    email = "crawler-pubsub-push@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-pubsub-push@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-pubsub-push@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-pubsub-push@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -140,8 +140,8 @@ override_resource {
   target          = google_service_account.scheduler
   override_during = plan
   values = {
-    email = "crawler-scheduler-invoker@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-scheduler-invoker@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-scheduler-invoker@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-scheduler-invoker@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -149,8 +149,8 @@ override_resource {
   target          = google_service_account.scheduler_app
   override_during = plan
   values = {
-    email = "crawler-scheduler-app@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-scheduler-app@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-scheduler-app@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-scheduler-app@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -158,8 +158,8 @@ override_resource {
   target          = google_service_account.parser
   override_during = plan
   values = {
-    email = "qsearch-parser@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-parser@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-parser@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-parser@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -168,7 +168,7 @@ override_resource {
   target          = google_pubsub_topic.crawler_tasks
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/crawler-tasks"
+    id = "projects/argus-test/topics/crawler-tasks"
   }
 }
 
@@ -176,15 +176,15 @@ override_resource {
   target          = google_pubsub_topic.crawler_tasks_dlq
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/crawler-tasks-dlq"
+    id = "projects/argus-test/topics/crawler-tasks-dlq"
   }
 }
 
 override_resource {
-  target          = google_pubsub_topic.qsearch_fetched
+  target          = google_pubsub_topic.argus_fetched
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/qsearch-crawl-fetched"
+    id = "projects/argus-test/topics/argus-crawl-fetched"
   }
 }
 
@@ -192,15 +192,15 @@ override_resource {
   target          = google_pubsub_topic.parser_dlq
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/qsearch-parser-dlq"
+    id = "projects/argus-test/topics/argus-parser-dlq"
   }
 }
 
 override_resource {
-  target          = google_pubsub_schema.qsearch_event_v1
+  target          = google_pubsub_schema.argus_event_v1
   override_during = plan
   values = {
-    id = "projects/qsearch-test/schemas/qsearch-crawl-event-v1"
+    id = "projects/argus-test/schemas/argus-crawl-event-v1"
   }
 }
 
@@ -268,7 +268,7 @@ run "gcs_raw_bucket_defaults" {
   command = plan
 
   assert {
-    condition     = google_storage_bucket.raw_scraped.name == "qsearch-test-raw-scraped"
+    condition     = google_storage_bucket.raw_scraped.name == "argus-test-raw-scraped"
     error_message = "raw bucket 預設名稱應為 <project_id>-raw-scraped。"
   }
 
@@ -342,23 +342,23 @@ run "pubsub_fetched_topic_schema_binding" {
   command = plan
 
   assert {
-    condition     = google_pubsub_schema.qsearch_event_v1.type == "AVRO"
-    error_message = "qsearch-crawl-event-v1 schema 必須是 AVRO。"
+    condition     = google_pubsub_schema.argus_event_v1.type == "AVRO"
+    error_message = "argus-crawl-event-v1 schema 必須是 AVRO。"
   }
 
   assert {
-    condition     = google_pubsub_schema.qsearch_event_v1.definition == file("${path.module}/schemas/qsearch-crawl-event-v1.avsc")
-    error_message = "schema definition 必須來自 schemas/qsearch-crawl-event-v1.avsc。"
+    condition     = google_pubsub_schema.argus_event_v1.definition == file("${path.module}/schemas/argus-crawl-event-v1.avsc")
+    error_message = "schema definition 必須來自 schemas/argus-crawl-event-v1.avsc。"
   }
 
   assert {
-    condition     = google_pubsub_topic.qsearch_fetched.schema_settings[0].schema == google_pubsub_schema.qsearch_event_v1.id
-    error_message = "qsearch-crawl-fetched 必須綁定 qsearch-crawl-event-v1 schema。"
+    condition     = google_pubsub_topic.argus_fetched.schema_settings[0].schema == google_pubsub_schema.argus_event_v1.id
+    error_message = "argus-crawl-fetched 必須綁定 argus-crawl-event-v1 schema。"
   }
 
   assert {
-    condition     = google_pubsub_topic.qsearch_fetched.schema_settings[0].encoding == "JSON"
-    error_message = "qsearch-crawl-fetched 的 schema encoding 必須明寫 JSON。"
+    condition     = google_pubsub_topic.argus_fetched.schema_settings[0].encoding == "JSON"
+    error_message = "argus-crawl-fetched 的 schema encoding 必須明寫 JSON。"
   }
 
   assert {
@@ -371,70 +371,70 @@ run "pubsub_parser_subscription_seek_and_dlq" {
   command = plan
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.topic == google_pubsub_topic.qsearch_fetched.id
-    error_message = "qsearch-parser-sub 必須訂閱 qsearch-crawl-fetched。"
+    condition     = google_pubsub_subscription.argus_parser_sub.topic == google_pubsub_topic.argus_fetched.id
+    error_message = "argus-parser-sub 必須訂閱 argus-crawl-fetched。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.retain_acked_messages == true
-    error_message = "qsearch-parser-sub 必須 retain_acked_messages = true（Q5/Q6 回放靠 Seek）。"
+    condition     = google_pubsub_subscription.argus_parser_sub.retain_acked_messages == true
+    error_message = "argus-parser-sub 必須 retain_acked_messages = true（Q5/Q6 回放靠 Seek）。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.message_retention_duration == "604800s"
-    error_message = "qsearch-parser-sub 保留期必須是 604800s（7 天）。"
+    condition     = google_pubsub_subscription.argus_parser_sub.message_retention_duration == "604800s"
+    error_message = "argus-parser-sub 保留期必須是 604800s（7 天）。"
   }
 
   # 文件確認：保留期下限 10 分鐘、上限 31 天（2678400s）。
   assert {
     condition = alltrue([
-      for s in [google_pubsub_subscription.qsearch_parser_sub, google_pubsub_subscription.audit_sub] :
+      for s in [google_pubsub_subscription.argus_parser_sub, google_pubsub_subscription.audit_sub] :
       tonumber(trimsuffix(s.message_retention_duration, "s")) >= 600 && tonumber(trimsuffix(s.message_retention_duration, "s")) <= 2678400
     ])
     error_message = "訂閱保留期必須介於 600s 與 2678400s（31 天）之間。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.push_config[0].push_endpoint == "${google_cloud_run_v2_service.parser.uri}/events/crawl-fetched"
-    error_message = "qsearch-parser-sub 必須 push 到 parser 的 /events/crawl-fetched（不是 /push）。"
+    condition     = google_pubsub_subscription.argus_parser_sub.push_config[0].push_endpoint == "${google_cloud_run_v2_service.parser.uri}/events/crawl-fetched"
+    error_message = "argus-parser-sub 必須 push 到 parser 的 /events/crawl-fetched（不是 /push）。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.push_config[0].push_endpoint == "https://parser-mock-de.a.run.app/events/crawl-fetched"
-    error_message = "qsearch-parser-sub push endpoint 字串不符預期。"
+    condition     = google_pubsub_subscription.argus_parser_sub.push_config[0].push_endpoint == "https://parser-mock-de.a.run.app/events/crawl-fetched"
+    error_message = "argus-parser-sub push endpoint 字串不符預期。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.push_config[0].oidc_token[0].audience == "https://parser-mock-de.a.run.app"
-    error_message = "qsearch-parser-sub 的 OIDC audience 必須是服務 URL（不帶路徑）。"
+    condition     = google_pubsub_subscription.argus_parser_sub.push_config[0].oidc_token[0].audience == "https://parser-mock-de.a.run.app"
+    error_message = "argus-parser-sub 的 OIDC audience 必須是服務 URL（不帶路徑）。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.push_config[0].oidc_token[0].service_account_email == google_service_account.push.email
-    error_message = "qsearch-parser-sub 必須用 push SA 簽 OIDC token。"
+    condition     = google_pubsub_subscription.argus_parser_sub.push_config[0].oidc_token[0].service_account_email == google_service_account.push.email
+    error_message = "argus-parser-sub 必須用 push SA 簽 OIDC token。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.dead_letter_policy[0].dead_letter_topic == google_pubsub_topic.parser_dlq.id
-    error_message = "qsearch-parser-sub 的死信主題必須是 qsearch-parser-dlq。"
+    condition     = google_pubsub_subscription.argus_parser_sub.dead_letter_policy[0].dead_letter_topic == google_pubsub_topic.parser_dlq.id
+    error_message = "argus-parser-sub 的死信主題必須是 argus-parser-dlq。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.dead_letter_policy[0].max_delivery_attempts == 5
-    error_message = "qsearch-parser-sub max_delivery_attempts 應為 5。"
+    condition     = google_pubsub_subscription.argus_parser_sub.dead_letter_policy[0].max_delivery_attempts == 5
+    error_message = "argus-parser-sub max_delivery_attempts 應為 5。"
   }
 
   assert {
-    condition     = google_pubsub_subscription.qsearch_parser_sub.ack_deadline_seconds == 60
-    error_message = "qsearch-parser-sub ack_deadline_seconds 應為 60。"
+    condition     = google_pubsub_subscription.argus_parser_sub.ack_deadline_seconds == 60
+    error_message = "argus-parser-sub ack_deadline_seconds 應為 60。"
   }
 
   assert {
     condition = (
-      google_pubsub_subscription.qsearch_parser_sub.retry_policy[0].minimum_backoff == "10s" &&
-      google_pubsub_subscription.qsearch_parser_sub.retry_policy[0].maximum_backoff == "600s"
+      google_pubsub_subscription.argus_parser_sub.retry_policy[0].minimum_backoff == "10s" &&
+      google_pubsub_subscription.argus_parser_sub.retry_policy[0].maximum_backoff == "600s"
     )
-    error_message = "qsearch-parser-sub retry_policy 應為 10s–600s。"
+    error_message = "argus-parser-sub retry_policy 應為 10s–600s。"
   }
 }
 
@@ -479,7 +479,7 @@ run "pubsub_crawl_sub_push_and_dlq" {
   # 文件確認：max_delivery_attempts 合法範圍 5–100。
   assert {
     condition = alltrue([
-      for s in [google_pubsub_subscription.crawl_sub, google_pubsub_subscription.qsearch_parser_sub] :
+      for s in [google_pubsub_subscription.crawl_sub, google_pubsub_subscription.argus_parser_sub] :
       s.dead_letter_policy[0].max_delivery_attempts >= 5 && s.dead_letter_policy[0].max_delivery_attempts <= 100
     ])
     error_message = "push 訂閱的 max_delivery_attempts 必須在 5–100 之間。"
@@ -544,9 +544,9 @@ run "pubsub_dead_letter_and_push_iam" {
   assert {
     condition = (
       google_pubsub_subscription_iam_member.crawl_sub_dlq_ack.subscription == google_pubsub_subscription.crawl_sub.name &&
-      google_pubsub_subscription_iam_member.parser_sub_dlq_ack.subscription == google_pubsub_subscription.qsearch_parser_sub.name
+      google_pubsub_subscription_iam_member.parser_sub_dlq_ack.subscription == google_pubsub_subscription.argus_parser_sub.name
     )
-    error_message = "subscriber 綁定必須在 crawl-sub 與 qsearch-parser-sub 上。"
+    error_message = "subscriber 綁定必須在 crawl-sub 與 argus-parser-sub 上。"
   }
 
   # 文件確認：Pub/Sub 服務代理需要 iam.serviceAccountTokenCreator 才能替 push SA 簽 OIDC。
@@ -573,9 +573,9 @@ run "pubsub_dead_letter_and_push_iam" {
     condition = (
       google_cloud_run_v2_service_iam_member.parser_push_invoker.name == google_cloud_run_v2_service.parser.name &&
       google_cloud_run_v2_service_iam_member.parser_push_invoker.role == "roles/run.invoker" &&
-      google_cloud_run_v2_service_iam_member.parser_push_invoker.member == "serviceAccount:${google_pubsub_subscription.qsearch_parser_sub.push_config[0].oidc_token[0].service_account_email}"
+      google_cloud_run_v2_service_iam_member.parser_push_invoker.member == "serviceAccount:${google_pubsub_subscription.argus_parser_sub.push_config[0].oidc_token[0].service_account_email}"
     )
-    error_message = "qsearch-parser-sub 的 OIDC SA 必須是 parser 的 run.invoker。"
+    error_message = "argus-parser-sub 的 OIDC SA 必須是 parser 的 run.invoker。"
   }
 
   # 不開 allUsers / allAuthenticatedUsers。
@@ -593,12 +593,12 @@ run "pubsub_dead_letter_and_push_iam" {
   # worker 發佈 crawl.fetched；api 發佈 crawler-tasks。
   assert {
     condition = (
-      google_pubsub_topic_iam_member.worker_publish_fetched.topic == google_pubsub_topic.qsearch_fetched.name &&
+      google_pubsub_topic_iam_member.worker_publish_fetched.topic == google_pubsub_topic.argus_fetched.name &&
       google_pubsub_topic_iam_member.worker_publish_fetched.member == "serviceAccount:${google_service_account.worker.email}" &&
       google_pubsub_topic_iam_member.api_publish_tasks.topic == google_pubsub_topic.crawler_tasks.name &&
       google_pubsub_topic_iam_member.api_publish_tasks.member == "serviceAccount:${google_service_account.api.email}"
     )
-    error_message = "api → crawler-tasks、worker → qsearch-crawl-fetched 的 publisher 綁定不符。"
+    error_message = "api → crawler-tasks、worker → argus-crawl-fetched 的 publisher 綁定不符。"
   }
 }
 
@@ -737,9 +737,9 @@ run "cloud_run_services_and_job" {
   assert {
     condition = (
       google_cloud_run_v2_service.parser.template[0].timeout == "60s" &&
-      google_cloud_run_v2_service.parser.template[0].timeout == "${google_pubsub_subscription.qsearch_parser_sub.ack_deadline_seconds}s"
+      google_cloud_run_v2_service.parser.template[0].timeout == "${google_pubsub_subscription.argus_parser_sub.ack_deadline_seconds}s"
     )
-    error_message = "parser timeout 必須是 60s 並與 qsearch-parser-sub ack_deadline 對齊。"
+    error_message = "parser timeout 必須是 60s 並與 argus-parser-sub ack_deadline 對齊。"
   }
 
   assert {
@@ -753,10 +753,10 @@ run "cloud_run_services_and_job" {
 
   assert {
     condition = (
-      google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].timeout == "3600s" &&
-      google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].max_retries == 2
+      google_cloud_run_v2_job.argus_backfill.template[0].template[0].timeout == "3600s" &&
+      google_cloud_run_v2_job.argus_backfill.template[0].template[0].max_retries == 2
     )
-    error_message = "qsearch-backfill job 應為 timeout 3600s、max_retries 2。"
+    error_message = "argus-backfill job 應為 timeout 3600s、max_retries 2。"
   }
 
   assert {
@@ -767,7 +767,7 @@ run "cloud_run_services_and_job" {
         google_cloud_run_v2_service.scheduler,
         google_cloud_run_v2_service.parser,
       ] : s.deletion_protection == var.deletion_protection && s.location == "asia-east1" && s.template[0].containers[0].ports[0].container_port == 8080
-    ]) && google_cloud_run_v2_job.qsearch_backfill.deletion_protection == var.deletion_protection
+    ]) && google_cloud_run_v2_job.argus_backfill.deletion_protection == var.deletion_protection
     error_message = "所有 Cloud Run 服務／job 的 deletion_protection 必須跟隨變數、位於 var.region、容器 port 8080。"
   }
 
@@ -781,7 +781,7 @@ run "cloud_run_services_and_job" {
       for v in [
         google_cloud_run_v2_service.scheduler.template[0].vpc_access[0],
         google_cloud_run_v2_service.parser.template[0].vpc_access[0],
-        google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].vpc_access[0],
+        google_cloud_run_v2_job.argus_backfill.template[0].template[0].vpc_access[0],
       ] : v.egress == "PRIVATE_RANGES_ONLY" && v.network_interfaces[0].subnetwork == "crawler-subnet"
     ])
     error_message = "要連私有 IP Cloud SQL 的 scheduler／parser／backfill 必須經 VPC，且只導私有網段（PRIVATE_RANGES_ONLY），不走 NAT。"
@@ -866,15 +866,15 @@ run "bigquery_ingest_events" {
   assert {
     condition = (
       [for f in jsondecode(google_bigquery_table.ingest_events.schema) : f.name] ==
-      [for f in jsondecode(file("${path.module}/schemas/qsearch-crawl-event-v1.avsc")).fields : f.name]
+      [for f in jsondecode(file("${path.module}/schemas/argus-crawl-event-v1.avsc")).fields : f.name]
     )
-    error_message = "ingest_events 欄位名稱（含順序）必須與 schemas/qsearch-crawl-event-v1.avsc 完全一致。"
+    error_message = "ingest_events 欄位名稱（含順序）必須與 schemas/argus-crawl-event-v1.avsc 完全一致。"
   }
 
   # Avro → BigQuery 型別對應（Pub/Sub BigQuery 訂閱 use_topic_schema 需要相容）。
   assert {
     condition = alltrue([
-      for i, f in jsondecode(file("${path.module}/schemas/qsearch-crawl-event-v1.avsc")).fields :
+      for i, f in jsondecode(file("${path.module}/schemas/argus-crawl-event-v1.avsc")).fields :
       # 先檢查索引存在（條件運算式只會求值選到的分支），欄位數不同時乾淨地 fail 而不是 Invalid index。
       i < length(jsondecode(google_bigquery_table.ingest_events.schema)) ? jsondecode(google_bigquery_table.ingest_events.schema)[i].type == lookup({
         string  = "STRING"
@@ -891,12 +891,12 @@ run "bigquery_ingest_events" {
 
   assert {
     condition = (
-      google_pubsub_subscription.qsearch_to_bq.topic == google_pubsub_topic.qsearch_fetched.id &&
-      google_pubsub_subscription.qsearch_to_bq.bigquery_config[0].table == "qsearch-test.sentiment_analytics.ingest_events" &&
-      google_pubsub_subscription.qsearch_to_bq.bigquery_config[0].use_topic_schema == true &&
-      google_pubsub_subscription.qsearch_to_bq.bigquery_config[0].write_metadata == false
+      google_pubsub_subscription.argus_to_bq.topic == google_pubsub_topic.argus_fetched.id &&
+      google_pubsub_subscription.argus_to_bq.bigquery_config[0].table == "argus-test.sentiment_analytics.ingest_events" &&
+      google_pubsub_subscription.argus_to_bq.bigquery_config[0].use_topic_schema == true &&
+      google_pubsub_subscription.argus_to_bq.bigquery_config[0].write_metadata == false
     )
-    error_message = "qsearch-fetched-to-bq 必須寫入 sentiment_analytics.ingest_events，use_topic_schema = true、write_metadata = false。"
+    error_message = "argus-fetched-to-bq 必須寫入 sentiment_analytics.ingest_events，use_topic_schema = true、write_metadata = false。"
   }
 
   assert {
@@ -911,7 +911,7 @@ run "bigquery_ingest_events" {
   }
 
   assert {
-    condition     = output.bigquery_table == "qsearch-test.sentiment_analytics.ingest_events"
+    condition     = output.bigquery_table == "argus-test.sentiment_analytics.ingest_events"
     error_message = "output bigquery_table 不符。"
   }
 }

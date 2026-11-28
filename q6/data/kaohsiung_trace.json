@@ -1,7 +1,7 @@
 {
  "base_dict": "jieba-builtin",
  "base_dict_hash": "",
- "dict_version": "qsearch-q6-2026.10.30.1",
+ "dict_version": "argus-q6-2026.10.30.1",
  "dict_hash": "b42e821556616362",
  "docs": 6685,
  "occurrences": {

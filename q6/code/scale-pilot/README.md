@@ -1,6 +1,6 @@
-# Q6 規模試跑程式
+# ARGUS｜文字雲斷詞：規模試跑程式
 
-量測單機 Elasticsearch 在 Q6 詞頻聚合情境下的灌入速度、每篇磁碟用量與查詢延遲，用來推算 5 億篇的容量。結果與判讀見 [../../evidence/scale-pilot/](../../evidence/scale-pilot/)。
+量測單機 Elasticsearch 在文字雲詞頻聚合情境下的灌入速度、每篇磁碟用量與查詢延遲，用來推算 5 億篇的容量。結果與判讀見 [../../evidence/scale-pilot/](../../evidence/scale-pilot/)。
 
 ## 兩個步驟
 
@@ -12,8 +12,8 @@
 斷詞直接用 repo 的 qseg（[../../stack/seg/qseg/](../../stack/seg/qseg/)），先複製到 `$SCALE_ROOT/code/qseg`；字典從 dictsrv（`DICT_BASE_URL`）下載並快取在 `$SCALE_ROOT/dictcache`。三組詞：
 
 - v0：近似 ES standard analyzer（CJK 逐字），用 Python 重現。
-- v1：舊字典 `qsearch-q6-2026.10.30.1`（純字典、HMM 關）。
-- v2：新字典 `qsearch-q6-2026.10.30.2`（目前的 current）。
+- v1：舊字典 `argus-q6-2026.10.30.1`（純字典、HMM 關）。
+- v2：新字典 `argus-q6-2026.10.30.2`（目前的 current）。
 
 ## load_pilot.py 每一段做什麼
 

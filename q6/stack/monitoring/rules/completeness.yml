@@ -1,4 +1,4 @@
-# 完整性：ES 覆蓋、未斷詞、缺 published_at（seg-coverage 服務）＋ 四層對帳（seg-recon 服務；計畫書 P0 第 2 項）。門檻都是提案值。
+# 完整性：ES 覆蓋、未斷詞、缺 published_at（seg-coverage 服務）＋ 四層對帳（seg-recon 服務；規劃書 P0 第 2 項）。門檻都是提案值。
 groups:
   - name: q6-completeness
     rules:
@@ -7,7 +7,7 @@ groups:
         for: 5m
         labels: { severity: warn }
         annotations: { summary: "覆蓋檢查服務抓不到 /metrics（seg-coverage）" }
-      # 15 分鐘仍無 seg_ver_v2 的篇數 > 0 持續 15 分鐘 → 呼叫（計畫書 P0 第 2 項；初版為 10 分鐘）
+      # 15 分鐘仍無 seg_ver_v2 的篇數 > 0 持續 15 分鐘 → 呼叫（規劃書 P0 第 2 項；初版為 10 分鐘）
       - alert: SegUnsegmentedDocs
         expr: sum(qseg_coverage_unsegmented_docs) > 0
         for: 15m
@@ -34,7 +34,7 @@ groups:
         for: 30m
         labels: { severity: warn }
         annotations: { summary: "有文章缺 published_at（{{ $labels.channel }}）" }
-      # 四層對帳：已 passed 的分區，原文有、ES 沒有的比例 > 0.1% → warn（計畫書：「未歸因差額 > 0.1% 警告」）
+      # 四層對帳：已 passed 的分區，原文有、ES 沒有的比例 > 0.1% → warn（規劃書：「未歸因差額 > 0.1% 警告」）
       - alert: ReconMissingDocs
         expr: qseg_recon_missing_ratio > 0.001 and on (channel, month) qseg_recon_partition_passed == 1
         for: 1h
@@ -48,7 +48,7 @@ groups:
         for: 1h
         labels: { severity: warn }
         annotations: { summary: "{{ $labels.channel }}/{{ $labels.month }} 有 {{ $value }} 篇沒有 terms_v2 但分區已 passed" }
-      # 對帳 26 小時沒成功（每小時跑；計畫書對影子比對的 26 小時規則同樣適用）
+      # 對帳 26 小時沒成功（每小時跑；規劃書對影子比對的 26 小時規則同樣適用）
       - alert: ReconStale
         expr: (time() - (max(qseg_recon_last_success_timestamp_seconds) or vector(0))) > 26 * 3600
         for: 10m

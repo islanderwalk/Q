@@ -14,7 +14,7 @@ async function es(method, p, body) {
 function psql(sql) {
   fs.writeFileSync(path.join(__dirname, 'ev.sql'), sql);
   const p = path.join(__dirname, 'ev.sql').replace(/^([A-Za-z]):/, (_, d) => '/mnt/' + d.toLowerCase()).replace(/\\/g, '/');   // WSL 看得到的路徑
-  return execSync(`wsl.exe -e sh -lc "PGPASSWORD=qsearch PGCONNECT_TIMEOUT=8 psql -h 127.0.0.1 -p 55433 -U qsearch -d qsearch -P pager=off -f ${p}"`).toString();
+  return execSync(`wsl.exe -e sh -lc "PGPASSWORD=argus PGCONNECT_TIMEOUT=8 psql -h 127.0.0.1 -p 55433 -U argus -d argus -P pager=off -f ${p}"`).toString();
 }
 const pretty = t => { try { return JSON.stringify(JSON.parse(t), null, 2); } catch { return t; } };
 const CSS = `body{margin:0;background:#fff;font:14px/1.5 "Microsoft JhengHei","Segoe UI",sans-serif;color:#1f2328}
@@ -37,7 +37,7 @@ function codeBlock(file, from, to, hl, sha) {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1240, height: 900 }, deviceScaleFactor: 1.5 });
   const shot = async (name, html) => { const p = await ctx.newPage(); await p.setContent(html); await p.locator('.canvas').screenshot({ path: `${OUT}/${name}.png` }); await p.close(); console.log(name); };
-  const t = () => `擷取時間 ${now()}（台北）· WSL Ubuntu 上 docker compose 專案 qsearch-q6 的 Elasticsearch ${ES}／PostgreSQL 帳本 127.0.0.1:55433`;
+  const t = () => `擷取時間 ${now()}（台北）· WSL Ubuntu 上 docker compose 專案 argus-q6 的 Elasticsearch ${ES}／PostgreSQL 帳本 127.0.0.1:55433`;
 
   // 01 叢集與索引
   const r1a = await es('GET', '/'), r1b = await es('GET', '/_cat/indices?v&s=docs.count:desc&h=index,health,pri,rep,docs.count,store.size');
@@ -63,7 +63,7 @@ function codeBlock(file, from, to, hl, sha) {
   const s4 = `SELECT channel, count(*) AS partitions, min(month), max(month) FROM backfill_ledger GROUP BY 1 ORDER BY 2 DESC, 1;
 SELECT count(*) AS total_partitions, count(DISTINCT partition_id) AS distinct_ids FROM backfill_ledger;
 SELECT partition_id, channel, month, status FROM backfill_ledger ORDER BY month DESC, channel LIMIT 12;`;
-  await shot('04-ledger-177-partitions', page0('④ PostgreSQL 回補帳本：一列 = 一個「渠道/月」分區，共 177 列', t(), block('psql -h 127.0.0.1 -p 55433 -U qsearch -d qsearch\n' + s4, psql(s4))));
+  await shot('04-ledger-177-partitions', page0('④ PostgreSQL 回補帳本：一列 = 一個「渠道/月」分區，共 177 列', t(), block('psql -h 127.0.0.1 -p 55433 -U argus -d argus\n' + s4, psql(s4))));
 
   // 05 帳本完成的 5 批 vs ES 實數
   const s5 = `SELECT partition_id, status, raw_count, written, noop, checkpoint_line, target_seg_ver, gates->'G1' AS g1, finished_at FROM backfill_ledger WHERE status <> 'pending' ORDER BY finished_at;`;

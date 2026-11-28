@@ -30,19 +30,19 @@
                    "terraform": ["google_cloud_run_v2_service.crawler_worker"] },
     "gcs":       { "label": "Cloud Storage raw-scraped", "status": "planned",
                    "terraform": ["google_storage_bucket.raw_scraped"] },
-    "fetched":   { "label": "Pub/Sub qsearch-crawl-fetched（Avro，JSON）", "status": "planned",
-                   "terraform": ["google_pubsub_topic.qsearch_fetched", "google_pubsub_schema.qsearch_event_v1"] },
+    "fetched":   { "label": "Pub/Sub argus-crawl-fetched（Avro，JSON）", "status": "planned",
+                   "terraform": ["google_pubsub_topic.argus_fetched", "google_pubsub_schema.argus_event_v1"] },
     "platforms": { "label": "目標平台 API（HTTP 出口）", "status": "external",
                    "terraform": ["google_compute_router_nat.crawler", "google_compute_address.egress"],
                    "note": "節點本身不是資源；出口靠 Cloud NAT 固定 IP" },
     "parser":    { "label": "Cloud Run parser", "status": "planned",
-                   "terraform": ["google_cloud_run_v2_service.parser", "google_pubsub_subscription.qsearch_parser_sub"] },
+                   "terraform": ["google_cloud_run_v2_service.parser", "google_pubsub_subscription.argus_parser_sub"] },
     "ops":       { "label": "Cloud Build（發版）", "status": "planned (count=0 預設)",
                    "terraform": ["google_cloudbuild_trigger.crawler_api"] },
     "db":        { "label": "Cloud SQL crawler-db（PG15，私有 IP）", "status": "planned",
                    "terraform": ["google_sql_database_instance.crawler_db", "google_sql_database.crawler"] },
     "bq":        { "label": "BigQuery sentiment_analytics", "status": "planned",
-                   "terraform": ["google_bigquery_dataset.sentiment", "google_bigquery_table.ingest_events", "google_pubsub_subscription.qsearch_to_bq"] }
+                   "terraform": ["google_bigquery_dataset.sentiment", "google_bigquery_table.ingest_events", "google_pubsub_subscription.argus_to_bq"] }
   },
   "a": {
     "trigger":   { "label": "Cloud Scheduler crawl-tick", "status": "planned",
@@ -54,12 +54,12 @@
     "dispatch":  { "label": "Cloud Tasks crawl-fb/yt/news", "status": "planned",
                    "terraform": ["google_cloud_tasks_queue.crawl[\"crawl-fb\"]", "google_cloud_tasks_queue.crawl[\"crawl-yt\"]", "google_cloud_tasks_queue.crawl[\"crawl-news\"]"] },
     "backfill":  { "label": "Cloud Run Job 回補", "status": "planned",
-                   "terraform": ["google_cloud_run_v2_job.qsearch_backfill"] },
+                   "terraform": ["google_cloud_run_v2_job.argus_backfill"] },
     "crawl":     { "label": "Cloud Run crawler（抓取）", "status": "planned",
                    "terraform": ["google_cloud_run_v2_service.crawler_worker"] },
     "gcs":       { "label": "GCS raw-scraped", "status": "planned", "terraform": ["google_storage_bucket.raw_scraped"] },
     "fetched":   { "label": "Pub/Sub fetched（事件）", "status": "planned",
-                   "terraform": ["google_pubsub_topic.qsearch_fetched"] },
+                   "terraform": ["google_pubsub_topic.argus_fetched"] },
     "platforms": { "label": "目標平台 API", "status": "external", "terraform": [] },
     "parser":    { "label": "Cloud Run parser", "status": "planned", "terraform": ["google_cloud_run_v2_service.parser"] },
     "bq":        { "label": "BigQuery", "status": "planned", "terraform": ["google_bigquery_table.ingest_events"] },
@@ -92,7 +92,7 @@
 |---|---|---|---|
 | Cloud Scheduler crawl-tick、Cloud Tasks ×3 | 通過 | planned | 補上 scheduler run.invoker 與 enqueuer |
 | Cloud Run api／worker／scheduler／parser | 通過 | planned | 映像為 hello 佔位；deletion_protection 預設 true |
-| Cloud Run Job qsearch-backfill | 通過 | planned | 雙層 `template { template {} }` |
+| Cloud Run Job argus-backfill | 通過 | planned | 雙層 `template { template {} }` |
 | Pub/Sub 主題、schema、5 個訂閱、DLQ | 通過 | planned | 保留期上限 31 天（已確認） |
 | GCS raw-scraped | 通過 | planned | 30 天轉 COLDLINE；刪除待決定 |
 | Artifact Registry crawler | 通過 | planned | — |
@@ -113,14 +113,14 @@
 | 解 | Cloud Run parser＋Cloud SQL | FastAPI consumer＋PostgreSQL＋pg_bigm |
 | 用 | BigQuery／Elasticsearch／Firestore | ClickHouse／OpenSearch／Redis |
 
-切換時最大的功能損失是 **重播（Seek）**，需要用「原始檔在 MinIO ＋ job 表」或 Kafka 補上，否則 Q5、Q6 的回補策略會變弱。
+切換時最大的功能損失是 **重播（Seek）**，需要用「原始檔在 MinIO ＋ job 表」或 Kafka 補上，否則 新指標上線、文字雲斷詞的回補策略會變弱。
 
 ## 4. 要放進總架構圖的重點（5–8 條）
 
 1. 排→派：Cloud Scheduler 每 15 分鐘敲 scheduler 服務，派工到 Cloud Tasks 三條佇列（fb／yt／news），速率與重試都在佇列層設定。
 2. 派→抓：Pub/Sub crawl-sub 以 push（OIDC）觸發 crawler-worker，10 次投遞失敗後進 DLQ（`crawler-tasks-dlq`）。
 3. 抓取出口：worker 走 Direct VPC egress 經 Cloud NAT，使用單一保留 IP，目標站白名單只需一個 IP。
-4. 事件：`qsearch-crawl-fetched` 綁 AVRO schema（JSON 編碼）；parser 訂閱保留已確認訊息 7 天，可 Seek 回放（保留期上限 31 天）。
+4. 事件：`argus-crawl-fetched` 綁 AVRO schema（JSON 編碼）；parser 訂閱保留已確認訊息 7 天，可 Seek 回放（保留期上限 31 天）。
 5. 解析與分析：parser 以 push 消費事件，同時 Pub/Sub BigQuery 訂閱直寫 `ingest_events`（依天分區，90 天到期，要求分區條件）。
 6. 原始檔：GCS raw-scraped 統一權限、public access 強制擋、30 天轉 COLDLINE（與舊 snippet 的 30 天刪除衝突，待決定）。
 7. 狀態：Cloud SQL PG15 私有 IP（需 Private Services Access），ENTERPRISE edition。
@@ -134,6 +134,6 @@
 
 ## 6. 附註
 
-- 這份 TF 不是 QSearch 正式基礎設施；`services/parser` 只 log 並 ACK，不是正式解析器。
+- 這份 TF 不是正式環境的基礎設施；`services/parser` 只 log 並 ACK，不是正式解析器。
 - Terraform state 含敏感資訊，不要進公開 repo；目前使用 local backend。
 - repo 內沒有留下 `.terraform/`、`*.tfstate`、tfplan；`.terraform.lock.hcl` 有留（建議版控）。

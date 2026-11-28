@@ -1,5 +1,5 @@
-# Q3 PTT 八卦板全文搜尋 ETL pipeline：本機零成本版本。
-# 架構和答案一致，只是雲端服務換成本機對應的東西：
+# PTT 全文搜尋：八卦板 7 天全文搜尋 ETL pipeline：本機零成本版本。
+# 架構和設計一致，只是雲端服務換成本機對應的東西：
 #   Cloud Scheduler + Cloud Run Job → crawler（常駐，每小時第 5 分跑一輪）
 #   GCS（原始 HTML）                 → gcs（fake-gcs-server）
 #   BigQuery                         → bigquery（goccy/bigquery-emulator，同一套 SQL）
@@ -10,7 +10,7 @@ name: q3pipe
 
 x-app-env: &app-env
   Q3_BQ_ENDPOINT: http://bigquery:9050
-  Q3_PROJECT: qsearch-q3
+  Q3_PROJECT: argus-q3
   Q3_DATASET: ptt
   Q3_RAW_BACKEND: gcs
   STORAGE_EMULATOR_HOST: http://gcs:4443
@@ -19,7 +19,7 @@ x-app-env: &app-env
 services:
   bigquery:
     image: ghcr.io/goccy/bigquery-emulator:0.8.1
-    command: ["--project=qsearch-q3", "--dataset=ptt", "--database=/data/bigquery.db", "--port=9050", "--grpc-port=9060"]
+    command: ["--project=argus-q3", "--dataset=ptt", "--database=/data/bigquery.db", "--port=9050", "--grpc-port=9060"]
     environment:
       # 模擬器的 SQL 解析器跑在 WASM 裡，記憶體要等 Go 的 GC 才釋放；預設門檻下實測幾分鐘就長到 2 GB 然後當掉，
       # 調低 GC 門檻後不會一路長到當掉；7 天全量寫完約 0.9 GB，重啟後降回 0.1 GB（資料在 volume 裡）。

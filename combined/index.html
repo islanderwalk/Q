@@ -1,11 +1,15 @@
+<!doctype html>
+<html lang="zh-Hant">
 <meta charset="utf-8">
-<title>QSearch Q1–Q6 互動版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark"><style id="force-dark">:root{color-scheme:dark}</style><script>(function(){var r=document.documentElement;function f(){if(r.getAttribute("data-theme")!=="dark")r.setAttribute("data-theme","dark")}f();new MutationObserver(f).observe(r,{attributes:true,attributeFilter:["data-theme"]})})();</script>
+<title>ARGUS 六個模組互動版</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
-/* 版面：頂部一條固定 tab 列，下方整塊 iframe 顯示該題的原始互動頁（各頁獨立，不互相干擾樣式） */
+/* 版面：頂部一條固定 tab 列，下方整塊 iframe 顯示該模組的互動頁（各頁獨立，不互相干擾樣式） */
 :root {
   --bg: #f6f7f9;
   --bar: #ffffff;
@@ -52,7 +56,7 @@ header {
   border: 1px solid transparent; background: transparent; color: var(--ink);
   font: inherit; padding: 6px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap;
 }
-[role="tab"] b { font-family: var(--font-mono); font-weight: 700; font-size: 13px; }
+[role="tab"] b { font-family: var(--font-body); font-weight: 500; font-size: 13px; }
 [role="tab"] span { color: var(--muted); font-size: 13px; }
 [role="tab"]:hover { background: var(--hover); }
 [role="tab"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -76,20 +80,20 @@ main iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0
 </style>
 
 <header>
-  <div class="brand">QSearch<small>Q1–Q6</small></div>
-  <div role="tablist" aria-label="題目" id="tabs"></div>
+  <div class="brand">ARGUS<small>社群輿情情蒐</small></div>
+  <div role="tablist" aria-label="分頁" id="tabs"></div>
   <a class="open" id="open" href="q1/index.html" target="_blank" rel="noopener">單獨開啟 ↗</a>
 </header>
 <main id="panes"></main>
 
 <script>
 const PAGES = [
-  { id: "q1", label: "Q1", name: "顧客反饋整理", src: "q1/index.html" },
-  { id: "q2", label: "Q2", name: "Postgres 貼文表解剖", src: "q2/index.html" },
-  { id: "q3", label: "Q3", name: "PTT 全文搜尋 ETL 架構", src: "q3/architecture/src/index.html" },
-  { id: "q4", label: "Q4", name: "Threads 爬蟲", src: "q4/index.html" },
-  { id: "q5", label: "Q5", name: "新指標上線", src: "q5/index.html" },
-  { id: "q6", label: "Q6", name: "回補整合圖", src: "q6/index.html" },
+  { id: "q1", name: "反饋分診", src: "q1/index.html" },
+  { id: "q2", name: "FB 貼文搜尋", src: "q2/index.html" },
+  { id: "q3", name: "PTT 全文搜尋", src: "q3/architecture/src/index.html" },
+  { id: "q4", name: "Threads 爬蟲", src: "q4/index.html" },
+  { id: "q5", name: "新指標上線", src: "q5/index.html" },
+  { id: "q6", name: "文字雲斷詞", src: "q6/index.html" },
 ];
 const tabs = document.getElementById("tabs");
 const panes = document.getElementById("panes");
@@ -104,8 +108,8 @@ PAGES.forEach((p) => {
   t.setAttribute("aria-controls", "pane-" + p.id);
   t.setAttribute("aria-selected", "false");
   t.tabIndex = -1;
-  t.innerHTML = `<b>${p.label}</b><span>${p.name}</span>`;
-  t.title = `${p.label} ${p.name}`;
+  t.innerHTML = `<b>${p.name}</b>`;
+  t.title = p.name;
   t.addEventListener("click", () => { location.hash = p.id; });
   tabs.appendChild(t);
 });
@@ -117,7 +121,7 @@ function show(id) {
     f.id = "pane-" + p.id;
     f.setAttribute("role", "tabpanel");
     f.setAttribute("aria-labelledby", "tab-" + p.id);
-    f.title = `${p.label} ${p.name}`;
+    f.title = p.name;
     f.src = p.src;
     panes.appendChild(f);
     frames[p.id] = f;
@@ -131,7 +135,7 @@ function show(id) {
     if (frames[x.id]) frames[x.id].hidden = !on;
   });
   openLink.href = p.src;
-  document.title = `${p.label} ${p.name}｜QSearch Q1–Q6 互動版`;
+  document.title = `${p.name}｜ARGUS 六個模組互動版`;
 }
 
 tabs.addEventListener("keydown", (e) => {

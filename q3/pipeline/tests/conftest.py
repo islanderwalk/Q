@@ -17,11 +17,12 @@ BQ = os.environ.get("Q3_TEST_BQ_ENDPOINT", "http://127.0.0.1:9050")
 
 
 def _bq_up():
+    # 只有 200 才算可用：模擬器在線但沒有 argus-q3 專案時會回 404，這時要跳過而不是失敗
     try:
-        requests.get(f"{BQ}/bigquery/v2/projects/qsearch-q3/datasets", timeout=3)
-        return True
+        r = requests.get(f"{BQ}/bigquery/v2/projects/argus-q3/datasets", timeout=3)
     except requests.RequestException:
         return False
+    return r.status_code == 200
 
 
 def _dataset_name():
@@ -33,7 +34,7 @@ def _dataset_name():
 def pipe(tmp_path):
     """一個獨立的 dataset＋模擬的 PTT 八卦板＋可以撥快的時鐘。沒有 BigQuery 模擬器就跳過。"""
     if not _bq_up():
-        pytest.skip(f"BigQuery 模擬器沒開（{BQ}）：docker compose up -d bigquery")
+        pytest.skip(f"BigQuery 模擬器沒開或沒有 argus-q3 專案（{BQ}）：docker compose up -d bigquery")
     from q3pipe import job
     from q3pipe.bq import Warehouse
     from q3pipe.config import Config

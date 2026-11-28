@@ -1,4 +1,4 @@
-// Q6 整套系統截圖：PM A/B 文字雲、Kibana、Grafana、Prometheus（全部是本機容器，畫面上的數字來自官方 ES／PG）
+// ARGUS｜文字雲斷詞：整套系統截圖：PM A/B 文字雲、Kibana、Grafana、Prometheus（全部是本機容器，畫面上的數字來自官方 ES／PG）
 // 用法：node screenshots.js <輸出目錄> <grafana 起點 epoch ms> <grafana 終點 epoch ms>
 const { chromium } = require('playwright');
 const path = require('path');
@@ -52,9 +52,9 @@ async function shot(page, url, file, { wait = 'networkidle', settle = 1500, full
   if (want('grafana')) {
   const tall = await ctx.newPage();
   await tall.setViewportSize({ width: 1600, height: 7200 });
-  await shot(tall, `http://localhost:3600/d/qsearch-q6/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/01_dashboard_main.png', { wait: 'load', settle: 15000 });
+  await shot(tall, `http://localhost:3600/d/argus-q6/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/01_dashboard_main.png', { wait: 'load', settle: 15000 });
   await tall.setViewportSize({ width: 1600, height: 3200 });
-  await shot(tall, `http://localhost:3600/d/qsearch-q6-collect/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/02_dashboard_collect.png', { wait: 'load', settle: 15000 });
+  await shot(tall, `http://localhost:3600/d/argus-q6-collect/?orgId=1&from=${gFrom}&to=${gTo}&kiosk`, 'grafana/02_dashboard_collect.png', { wait: 'load', settle: 15000 });
   await tall.setViewportSize({ width: 1440, height: 900 });
   await shot(tall, 'http://localhost:3600/alerting/list?view=state&search=', 'grafana/03_alert_rules_from_prometheus.png', { wait: 'load', settle: 6000 });
   await tall.close();

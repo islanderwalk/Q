@@ -12,8 +12,8 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="${1:-${TMPDIR:-/tmp}/qsearch-onprem-verify-$(date +%Y%m%d-%H%M%S)}"
-PROJECT=qsearch-onprem
+OUT="${1:-${TMPDIR:-/tmp}/argus-onprem-verify-$(date +%Y%m%d-%H%M%S)}"
+PROJECT=argus-onprem
 ENV_FILE="${ENV_FILE:-$HERE/.env.example}"
 mkdir -p "$OUT"
 chmod 777 "$OUT"   # smoke 容器以 uid 10001 寫 smoke_summary.json

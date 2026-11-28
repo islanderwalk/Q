@@ -32,7 +32,7 @@ RUN --mount=type=secret,id=build_ca,mode=0444,required=false \
 
 FROM ${PG_BASE}
 ARG PG_BIGM_VERSION=1.2-20250903
-LABEL org.opencontainers.image.title="qsearch-onprem postgres+pg_bigm" \
-      qsearch.pg_bigm.version="${PG_BIGM_VERSION}"
+LABEL org.opencontainers.image.title="argus-onprem postgres+pg_bigm" \
+      argus.pg_bigm.version="${PG_BIGM_VERSION}"
 COPY --from=builder /out/usr/ /usr/
 # pg_bigm 不需要 shared_preload_libraries；CREATE EXTENSION 即可。

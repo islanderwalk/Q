@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PTT 文章內文爬蟲（Q2）：把 q6 歷史爬蟲留下的文章清單裡的內文抓下來，寫進 PostgreSQL q2_ptt.ptt_articles。
+"""PTT 文章內文爬蟲（FB 貼文搜尋模組用）：把 q6 歷史爬蟲留下的文章清單裡的內文抓下來，寫進 PostgreSQL q2_ptt.ptt_articles。
 
 用法（WSL，以 root 身分執行；DB 走 unix socket peer 認證，不需密碼）：
   /root/q2ptt-venv/bin/python ptt_q2_crawl.py --shard 0 --shards 3
@@ -346,7 +346,7 @@ def run(args):
 
 def main():
     global GAP_BASE, GAP_JITTER
-    ap = argparse.ArgumentParser(description="PTT 文章內文爬蟲（Q2），寫入 q2_ptt.ptt_articles")
+    ap = argparse.ArgumentParser(description="PTT 文章內文爬蟲（FB 貼文搜尋模組用），寫入 q2_ptt.ptt_articles")
     ap.add_argument("--shard", type=int, required=True, help="第幾個 shard（從 0 開始）")
     ap.add_argument("--shards", type=int, default=3, help="shard 總數（預設 3）")
     ap.add_argument("--limit", type=int, default=0, help="本次最多寫入幾篇（0 = 不限，測試用）")

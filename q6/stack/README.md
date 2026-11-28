@@ -1,16 +1,16 @@
-# Q6 整套系統實跑：從字典、回補、串流到 PM 文字雲，每一層都在 Docker 跑起來
+# ARGUS｜文字雲斷詞：整套系統實跑，從字典、回補、串流到 PM 文字雲，每一層都在 Docker 跑起來
 
-這個資料夾把 Q6 答案裡的設計整套跑起來：官方 Elasticsearch 9.5.5（smartcn、ICU、IK 外掛）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OpenTelemetry、Prometheus、Grafana，加上本 repo 的斷詞映像、文字雲 API 與 PM A/B 頁面。全部在 Docker 裡，**不開任何 GCP 計費資源**。
+這個資料夾把設計摘要裡的設計整套跑起來：官方 Elasticsearch 9.5.5（smartcn、ICU、IK 外掛）、PostgreSQL 16、Pub/Sub 官方模擬器、Kibana、OpenTelemetry、Prometheus、Grafana，加上本 repo 的斷詞映像、文字雲 API 與 PM A/B 頁面。全部在 Docker 裡，**不開任何 GCP 計費資源**。
 
 - 實測結果與數字：[`RESULTS.md`](RESULTS.md)
-- 監控：[`MONITORING.md`](MONITORING.md)（計畫書十項 P0 對照：指標、告警、看板、怎麼重算）
+- 監控：[`MONITORING.md`](MONITORING.md)（規劃書十項 P0 對照：指標、告警、看板、怎麼重算）
 - 架構圖：[`../architecture/stack/diagram-stack.png`](../architecture/stack/diagram-stack.png)（每一層用什麼、跑出什麼數字）
 - 沙盤推演圖：[`../architecture/stack/diagram-sandbox-scenarios.png`](../architecture/stack/diagram-sandbox-scenarios.png)（10 種情境：怎麼觸發、系統怎麼反應、實測）
 - 截圖：[`../evidence/stack/`](../evidence/stack)（PM 前端、Kibana、Grafana、Prometheus、五個渠道的原始公開頁；PTT 的在 [`../evidence/playwright/`](../evidence/playwright)）
 
 ## GCP 元件與本機對應
 
-| 答案裡的 GCP 元件 | 這裡用什麼 | 一樣的地方 | 不一樣的地方 |
+| 設計摘要裡的 GCP 元件 | 這裡用什麼 | 一樣的地方 | 不一樣的地方 |
 |---|---|---|---|
 | Cloud Storage（字典 artifact） | `dictsrv`：nginx 1.27 服務 `runtime/dictsrv/versions/<版本>/` 與 `current` | 依版本取檔、逐檔 sha256、`current` 原子切換、`Last-Modified`／`ETag`（IK 靠這兩個判斷重載） | 沒有 IAM、物件版本控制 |
 | BigQuery（回補讀原文） | `runtime/raw/<渠道>/<yyyy-mm>.jsonl`（`scripts/prepare_raw.py`，只收有原始發文時間的文章），`RAW_SOURCE=file` | 回補從原文讀，不從 ES scroll；分區 = 渠道 × 發文月份；同一個 post_id 只留第一筆 | 只有 PTT 一個渠道。正式環境的 `RAW_SOURCE=bigquery`（`seg/qseg/rawsrc.py`：固定讀帳本 `started_at` 那個時間點、依 post_id 排序續跑、超過 7 天從頭重跑）2026-11-14 對BigQuery 實測表 `q6_raw.posts` 跑過列分區與讀分區，結果和本機檔案一致；也用PostgreSQL 帳本把整個分區跑完斷詞寫進 ES、在 Cloud Run 用回補服務帳號讀過 BigQuery（`RUNBOOK-backfill.md` 第 8 節第 5 點） |
@@ -23,7 +23,7 @@
 | Cloud Logging | 各服務印到 stdout 的 JSON（`severity`、`event`、`duration_ms`、`seg_ver`…） | 欄位照 Cloud Logging 結構化日誌的慣例，日誌型指標可直接用 | 沒有集中收集 |
 | Cloud SQL（帳本） | 官方 `postgres:16` | 回補帳本、checkpoint、限速、發版紀錄、影子比對都在這裡 | 沒有 HA |
 
-共用的 GCP 模組 `shared/infra/gcp` 先做過 `terraform plan`（102 個資源）與 `terraform test`（30 項通過），涵蓋回補 Job（`qsearch-backfill`）、GCS、Pub/Sub 與 Cloud SQL。2026-11-02 再補 `q6.tf`：斷詞服務 v0／v1／v2、文字雲 API、採集器的 Cloud Run 與 SA、`qsearch-parsed-posts`／`qsearch-dict-releases` 主題與訂閱、字典 bucket、YouTube 金鑰 secret，加上第二個 NAT 固定 IP 與 Cloud SQL 逾時旗標（離線 plan 147 個資源、`terraform test` 37 項通過；見該目錄 README「第三輪驗證」）。上表 Compute Engine 上的 Elasticsearch VM 與 Ops Agent、Cloud Monitoring 告警政策還沒有 Terraform。這裡沒有 apply。
+共用的 GCP 模組 `shared/infra/gcp` 先做過 `terraform plan`（102 個資源）與 `terraform test`（30 項通過），涵蓋回補 Job（`argus-backfill`）、GCS、Pub/Sub 與 Cloud SQL。2026-11-02 再補 `q6.tf`：斷詞服務 v0／v1／v2、文字雲 API、採集器的 Cloud Run 與 SA、`argus-parsed-posts`／`argus-dict-releases` 主題與訂閱、字典 bucket、YouTube 金鑰 secret，加上第二個 NAT 固定 IP 與 Cloud SQL 逾時旗標（離線 plan 147 個資源、`terraform test` 37 項通過；見該目錄 README「第三輪驗證」）。上表 Compute Engine 上的 Elasticsearch VM 與 Ops Agent、Cloud Monitoring 告警政策還沒有 Terraform。這裡沒有 apply。
 
 ## 資料夾
 
@@ -32,7 +32,7 @@
 | `docker-compose.yml` | 全部服務；`seg-job` 在 `job` profile 裡，用 `docker compose run` 起 |
 | `run.sh` | 一步一步重跑：`build`、`up`、`seed`、`backfill`（＋`backfill-tasks`）、`live`、`stream`、`exp`、`ik`、`probe`、`shots` |
 | `es/` | ES 映像（外掛下載與驗證 `fetch_plugins.sh`、IK 遠端字典設定）、索引定義 `index/posts.json` |
-| `dict/` | 字典發版檔 `releases/qsearch-q6-2026.10.30.{1..6}.json` 與 `build_artifact.py`；v0 舊流程重現版 `releases/qsearch-q6-legacy-2019.12.31.1.json`＋`build_legacy.py`＋`legacy/`（教育部抽詞、凍結 2019 的公司詞表、舊行政區名） |
+| `dict/` | 字典發版檔 `releases/argus-q6-2026.10.30.{1..6}.json` 與 `build_artifact.py`；v0 舊流程重現版 `releases/argus-q6-legacy-2019.12.31.1.json`＋`build_legacy.py`＋`legacy/`（教育部抽詞、凍結 2019 的舊系統詞表、舊行政區名） |
 | `seg/qseg/` | 斷詞映像：`service`（串流；v2 另訂閱發版控制訊息 `control.py`，每台輪詢 manifest 收斂）、`job`（回補）、`rerun`（定向重跑）、`impact`（影響範圍地面真值）、`shadow`（影子比對）、`coverage`（覆蓋與缺值）、`recon`（四層對帳＋回補燃盡＋發版收斂）、`quality`（品質日報；金標在 `seg/quality/gold_150.json`）、`approve`／`baseline`、`seed` |
 | `api/`、`web/` | 文字雲 API（FastAPI；`/api/ops/alert` 收 Alertmanager、`/api/rum` 收 PM 頁 RUM）、PM A/B 頁面（無外部套件；`rum.js` 自寫 RUM）、資料工程端操作（`ops.py`：發版（outbox）、簽核、重播、限速）、來源採集器（`collector.py`＋`feeds.json`：每次請求記 outcome，YouTube 走 Data API） |
 | `pg/init.sql`、`pg/live.sql`、`pg/migrate_p0.sql` | 帳本、控制表、批次紀錄、發版紀錄、影子比對、對帳 `recon_daily`、品質 `quality_daily`、`posts_terms`；即時操作用的 `rerun_runs`、`service_state`、`live_events`（含告警）、`collector_state`、`release_outbox`；既有 volume 用 `migrate_p0.sql` 補表 |
@@ -57,7 +57,7 @@
 
 ```bash
 cd q6/stack
-DL=/path/to/downloads ./run.sh build   # 公司代理攔 TLS 時加 CA=/path/to/ca.crt
+DL=/path/to/downloads ./run.sh build   # 企業網路代理攔 TLS 時加 CA=/path/to/ca.crt
 ES_HEAP=2g ./run.sh up                  # 記憶體小的機器（例如 7 GB 的 WSL）用 2g
 DL=/path/to/downloads ./run.sh seed     # 小機器可加 SINCE=2020-01 MAX_PER_SOURCE=50000（來源不變，只是少收）
 AUTO_APPROVE=0 ./run.sh backfill        # 首月分區跑完 → 到 PM 頁簽核 → ./run.sh backfill-tasks（AUTO_APPROVE=1 則用指令簽核）
@@ -70,7 +70,7 @@ AUTO_APPROVE=0 ./run.sh backfill        # 首月分區跑完 → 到 PM 頁簽�
 ./run.sh slo           # 改 SLO 目標後重產 monitoring/rules/slo.yml（Sloth）
 ```
 
-打開：PM 頁 http://127.0.0.1:8080、Kibana http://127.0.0.1:5601、Grafana http://127.0.0.1:3000（看板「QSearch Q6 文字雲」「QSearch Q6 採集」）、Prometheus http://127.0.0.1:9090、Alertmanager http://127.0.0.1:9093（WSL mirrored 網路模式請用 127.0.0.1，`localhost` 會先走 IPv6）。
+打開：PM 頁 http://127.0.0.1:8080、Kibana http://127.0.0.1:5601、Grafana http://127.0.0.1:3000（看板「ARGUS 文字雲斷詞」「ARGUS 文字雲採集」）、Prometheus http://127.0.0.1:9090、Alertmanager http://127.0.0.1:9093（WSL mirrored 網路模式請用 127.0.0.1，`localhost` 會先走 IPv6）。
 
 ## PM 頁上的資料工程端（即時）
 
@@ -84,6 +84,6 @@ PM 頁下半部是「資料工程端」：每一個按鈕都打同一套 ES／Po
 | 重播六渠道樣本 | 267 篇（`data/channels/`）由 parser 寫本體 → `parsed-posts` → seg-v1／seg-v2 各自斷詞；同版本重送是 noop | 「剛進來的文章」每篇兩版詞表與延遲 |
 | 來源採集器 | `collector.py` 輪詢 PTT 看板 Atom、YouTube 頻道 RSS、中央社／公視 RSS（`api/feeds.json`）：只抓站方公開給閱讀器的 feed，不登入、帶 ETag／If-Modified-Since、同一主機間隔 ≥ 2.5 秒、429／5xx 退避；新文章走同一條串流路 | 每個 feed 的上次抓取、HTTP 狀態、新進篇數；「立刻抓一次」3 秒內開始 |
 
-哪些是對應做法，頁面上也寫明：**舊流程 v1 是用 jieba 預設主字典（HMM 關、不清洗、不過濾）算的**，公司現行的字典拿不到，所以 v1 的詞表是實際算出來的，但不是公司現在線上的詞表；Pub/Sub 是官方模擬器（client 程式碼與 GCP 上相同）；Facebook／Instagram／Threads 沒有公開 feed，只有抓過的公開頁樣本可重播。
+哪些是對應做法，頁面上也寫明：**舊流程 v1 是用 jieba 預設主字典（HMM 關、不清洗、不過濾）算的**，舊系統現行的字典拿不到，所以 v1 的詞表是實際算出來的，但不是舊系統現在線上的詞表；Pub/Sub 是官方模擬器（client 程式碼與 GCP 上相同）；Facebook／Instagram／Threads 沒有公開 feed，只有抓過的公開頁樣本可重播。
 
 這次在 Linux 容器裡跑：4 核心、15 GB RAM；ES heap 4 GB。容器的磁碟是固定配額，ES 依「總容量百分比」算的磁碟水位會誤判已滿，所以 compose 裡改用絕對剩餘空間（4 GB／2 GB／1 GB）。

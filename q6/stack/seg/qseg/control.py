@@ -7,7 +7,7 @@
 GCP 上這就是 Cloud Run 服務多一個訂閱；本機是官方 Pub/Sub 模擬器，client 程式碼相同。
 同一時間只處理一則發版訊息（HANDLE_LOCK），重複投遞的舊版本直接略過（seg_ver 只能前進）。
 
-計畫書修正：所有 v2 執行個體共用一個發版訂閱，Pub/Sub 每則訊息只交給其中一台，其他台會停在舊字典直到重啟。
+規劃書修正：所有 v2 執行個體共用一個發版訂閱，Pub/Sub 每則訊息只交給其中一台，其他台會停在舊字典直到重啟。
 所以每台另外每 MANIFEST_POLL_SEC 秒輪詢 current/manifest.json 當真相：版本比自己新就載入並熱換（不重跑）；
 控制訊息只當提示，收到的那台負責定向重跑。熱換時移除 qseg_dict_info 的舊版 label（原本舊版會一直是 1）。
 """
@@ -115,7 +115,7 @@ def set_run(run_id, only_if_status=None, **fields) -> None:
 
 
 def parse_message(data: bytes):
-    """發版訊息：{"action":"release","dict_version":"qsearch-q6-2026.10.31.1","words":["颱風假"],"run_id":12}。不合格回 None。"""
+    """發版訊息：{"action":"release","dict_version":"argus-q6-2026.10.31.1","words":["颱風假"],"run_id":12}。不合格回 None。"""
     try:
         msg = json.loads(data.decode("utf-8"))
     except Exception:

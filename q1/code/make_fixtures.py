@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Q1 合成資料產生器（固定 seed，只用標準函式庫）。
+"""ARGUS｜反饋分診：合成資料產生器（固定 seed，只用標準函式庫）。
 
 ※ 這是合成資料，不是顧客資料。repo 裡沒有任何客服信件或問卷原文；公司「範例雲」、姓名、信箱（example.com）
   都是虛構的。電話不產生看起來像實際門號的號碼：顧客手機全部寫同一個佔位號碼 0900-000-000；
@@ -14,7 +14,7 @@
   no_signature    客服個別回覆沒有簽名檔，會被當成顧客信
 
 產出（--out 目錄）：
-  emails.jsonl          {"email_id", "text"}：純文字信件，沒有任何結構化欄位（題目設定）
+  emails.jsonl          {"email_id", "text"}：純文字信件，沒有任何結構化欄位（需求設定）
   emails_truth.jsonl    {"email_id", "kind", "issues", "body_lines", "issue_lines", "noise_pasted", "hard_case", ...}：只給評估用
   emails_preview.jsonl  前 --preview 封（原文＋答案），小檔，可以 commit 供檢視
   survey.csv            resp_id, tenure_months（可空白）, satisfaction, issues（| 分隔）
@@ -32,7 +32,7 @@ from pathlib import Path
 ISSUES = ("閃退與當機", "同步與資料遺失", "付款與扣款", "登入與帳號",
           "速度與效能", "介面與操作", "通知與提醒", "匯出與報表")
 
-# ---------- 信件組成比例（題目只說「夾雜大量罐頭回覆」，比例是假設） ----------
+# ---------- 信件組成比例（需求只說「夾雜大量罐頭回覆」，比例是假設） ----------
 KIND_WEIGHTS = {"customer": 0.50, "customer_resend": 0.03, "customer_forward_only": 0.02,
                 "canned": 0.35, "agent_reply": 0.10}
 # 顧客信的主要問題分布（合成資料的「真相」，用來檢查估計值有沒有被清理步驟扭曲）
@@ -119,14 +119,14 @@ CANNED_WEIGHTS = {"T1 收件確認": 0.30, "T2 登入說明": 0.15, "T3 閃退�
 AGENT_LINES = ["關於您反映的「{phrase}」，工程團隊已確認原因。", "我們會在 {ver} 版修正這個問題，請更新後再試。",
                "造成您的不便，深感抱歉。", "若還有{issue}的情況，請直接回覆本信。", "已幫您把案件升級給主管處理。"]
 
-# ---------- 問卷：各層勾選「最想優先改善的問題」的機率（最多勾 3 項，題目沒給，是假設） ----------
+# ---------- 問卷：各層勾選「最想優先改善的問題」的機率（最多勾 3 項，需求裡沒有這個數字，是假設） ----------
 SURVEY_P = {
     "old": {"同步與資料遺失": 0.40, "匯出與報表": 0.30, "速度與效能": 0.28, "閃退與當機": 0.25,
             "付款與扣款": 0.15, "介面與操作": 0.12, "登入與帳號": 0.10, "通知與提醒": 0.10},
     "new": {"登入與帳號": 0.40, "介面與操作": 0.38, "付款與扣款": 0.30, "閃退與當機": 0.25,
             "同步與資料遺失": 0.15, "速度與效能": 0.15, "通知與提醒": 0.12, "匯出與報表": 0.05},
 }
-SURVEY_OLD_SHARE = 0.80   # 題目：8 成是購買滿 6 個月以上
+SURVEY_OLD_SHARE = 0.80   # 需求：8 成是購買滿 6 個月以上
 SURVEY_UNKNOWN_SHARE = 0.02
 SATISFACTION_P = {"old": (0.05, 0.10, 0.25, 0.40, 0.20), "new": (0.12, 0.20, 0.33, 0.25, 0.10)}
 
@@ -380,7 +380,7 @@ def write_fixtures(out, n_emails=40000, n_surveys=2000, seed=20261030, preview=3
 
 
 def main():
-    ap = argparse.ArgumentParser(description="產生 Q1 合成資料（非顧客資料）")
+    ap = argparse.ArgumentParser(description="ARGUS｜反饋分診：產生合成資料（非顧客資料）")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--emails", type=int, default=40000)
     ap.add_argument("--surveys", type=int, default=2000)

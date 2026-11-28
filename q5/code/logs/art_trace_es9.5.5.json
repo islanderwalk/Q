@@ -286,7 +286,7 @@
     {
      "id": "b3",
      "title": "對照：只有整篇一個時間戳的寫法",
-     "note": "這不是交卷的設計。T-0003 先由爬蟲寫 repost=20（T2），再用整篇 T3 回補。",
+     "note": "這不是正式採用的設計。T-0003 先由爬蟲寫 repost=20（T2），再用整篇 T3 回補。",
      "code": "requests.put(f\"{ES}/{IDX}-naive/_doc/T-0003?refresh=true\", json={\n    \"post_id\": \"T-0003\", \"crawled_at\": T2,\n    \"text_post_app_info\": {\"repost_count\": 20}})\nr = requests.post(f\"{ES}/{IDX}-naive/_update/T-0003?refresh=true\", json={\"script\": {\n    \"lang\": \"painless\", \"source\": NAIVE,\n    \"params\": {\"values\": {\"repost_count\": 10, \"quote_count\": 3, \"reshare_count\": 3}, \"at\": T3}}})",
      "status": 200,
      "ms": 2970,

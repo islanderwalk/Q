@@ -11,7 +11,7 @@ Every LOOP_S seconds:
   3. Every new crawler event that means trouble becomes a pitfall: pitfalls.jsonl + a dashboard screenshot (at most one per
      crawler and kind every SHOT_EVERY_S).
   4. Every BACKFILL_EVERY_S: backfill the last 3 h, so short sink blips heal without a stack restart.
-Q3's containers (Grafana 3300, Prometheus 9390, Pushgateway 9391, ...) are a different compose project and are never touched.
+The q3/ containers (Grafana 3300, Prometheus 9390, Pushgateway 9391, ...) are a different compose project and are never touched.
 """
 import json, os, pathlib, subprocess, sys, time, traceback
 from datetime import datetime, timedelta, timezone

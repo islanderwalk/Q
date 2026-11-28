@@ -1,4 +1,4 @@
-"""互動計數欄位的正規化（Q5 (c) 回補用）：Threads 轉發／引用／分享數、IG Reels 觀看數。
+"""互動計數欄位的正規化（新指標上線的回補用）：Threads 轉發／引用／分享數、IG Reels 觀看數。
 
 規則（依 q5/README.md 與 q5/evidence 的實測）：
 - 計數一律取 JSON 整數，不讀畫面文字（Threads 畫面「1.2 萬」是 JSON 12,716 無條件捨去；
@@ -17,7 +17,7 @@
   （q5/evidence/a-dataflow/threads-evidence-panel.png 的 JSON 片段，@threads 16 篇＋Use media 2 篇；
   讀取程式 q5/evidence/src/threads_verify.js）；IG Reels 分頁 node.play_count
   （q5/evidence/playwright/ig_reel_fields.json，12 筆）。
-- 實抓沒看到：IG 的 video_view_count（題目用的名稱）。capture_gaps.py 在 Reels 分頁與單支 Reel 頁
+- 實抓沒看到：IG 的 video_view_count（需求用的名稱）。capture_gaps.py 在 Reels 分頁與單支 Reel 頁
   搜尋 video_view_count、play_count、view_count、ig_play_count、video_play_count 五個 key，
   只記錄「值是數字」的；結果只有 play_count。值為 null 的同名 key 有沒有出現，這份證據看不出來。
 - 假設（任何證據都沒出現，要用 GCS 原始檔逐一核對後才能定案）：
@@ -36,8 +36,8 @@ ALIASES = {
     "reshare_count": ("reshare_count", "reshareCount", "reshare_cnt"),
 }
 
-# IG 觀看數：ES 欄位沿用題目名稱 video_view_count，來源 key 以實抓的 play_count 為準。
-# play_count 與題目說的 video_view_count 定義是否相同沒有查證，上線前要跟 PM 確認；
+# IG 觀看數：ES 欄位沿用需求的名稱 video_view_count，來源 key 以實抓的 play_count 為準。
+# play_count 與需求寫的 video_view_count 定義是否相同沒有查證，上線前要跟 PM 確認；
 # 在那之前，兩個 key 同時出現且值不同的那一筆當成不知道（見 normalize_ig_views）。
 IG_VIEW_ALIASES = ("play_count", "video_view_count")
 

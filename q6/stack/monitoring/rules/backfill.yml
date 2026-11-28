@@ -1,4 +1,4 @@
-# 回補燃盡與卡住分區（計畫書 P0 第 8 項；指標由 seg/qseg/recon.py 從 PostgreSQL 帳本算出）。門檻都是提案值。
+# 回補燃盡與卡住分區（規劃書 P0 第 8 項；指標由 seg/qseg/recon.py 從 PostgreSQL 帳本算出）。門檻都是提案值。
 groups:
   - name: q6-backfill
     rules:
@@ -13,7 +13,7 @@ groups:
         for: 5m
         labels: { severity: warn }
         annotations: { summary: "有分區被領超過 3 次仍沒做完（{{ $value }} 個）：看 gates.attempts_exhausted 與該分區的日誌" }
-      # 最老的 awaiting_pm 等超過 4 小時 → 提醒 PM 簽核（計畫書：「awaiting_pm > 4 個工作小時提醒」；這裡用牆上時間，提案值）
+      # 最老的 awaiting_pm 等超過 4 小時 → 提醒 PM 簽核（規劃書：「awaiting_pm > 4 個工作小時提醒」；這裡用牆上時間，提案值）
       - alert: BackfillAwaitingPmTooLong
         expr: qseg_ledger_oldest_awaiting_pm_age_seconds > 4 * 3600
         for: 10m

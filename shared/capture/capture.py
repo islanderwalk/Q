@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""QSearch 筆試 Q2–Q5 公開網頁證據截圖（Playwright）。
+"""ARGUS 公開網頁證據截圖（Playwright）。
 
 只抓未登入看得到的公開頁面；每個網站兩次導覽至少間隔 1.5 秒，總量很小；
 不存 cookie／token 的值；不用代理輪替、不偽裝指紋。
@@ -24,7 +24,7 @@ except Exception:
 
 TW = timezone(timedelta(hours=8))
 ROOT = Path(__file__).resolve().parent
-REPO = ROOT.parents[1]  # 截圖直接寫到各題 q{N}/evidence/playwright/
+REPO = ROOT.parents[1]  # 截圖直接寫到各模組 q{N}/evidence/playwright/
 OUT = ROOT / "out"
 for sub in ("html", "fixtures"):
     (OUT / sub).mkdir(parents=True, exist_ok=True)
@@ -129,7 +129,7 @@ def pending(q, id_, title, why, node="platforms"):
     log("  ! pending", id_, why)
 
 
-# ----------------------------------------------------------------- PTT（Q3）
+# ----------------------------------------------------------------- PTT（PTT 全文搜尋）
 AID = re.compile(r"/bbs/Gossiping/M\.(\d+)\.A\.([0-9A-F]+)\.html")
 
 PTT_LIST_JS = r"""() => {
@@ -313,7 +313,7 @@ def run_ptt(browser):
     ctx.close()
 
 
-# ----------------------------------------------------------------- Threads（Q4、Q5）
+# ----------------------------------------------------------------- Threads（Threads 爬蟲、新指標上線）
 def sjs_blobs(html):
     for blob in re.findall(r'<script type="application/json"[^>]*data-sjs[^>]*>(.*?)</script>', html, re.S):
         try:
@@ -441,7 +441,7 @@ def run_threads(browser):
         pending("4", "q4-threads-graphql-observed", "捲動時網頁用 GraphQL 分頁", "這次捲動沒觀察到帶貼文的 GraphQL 回應", node="crawl")
     mctx.close()
 
-    # 貼文頁：Q4 看網址格式，Q5 看轉發數
+    # 貼文頁：Threads 爬蟲 看網址格式，新指標上線 看轉發數
     if nasa_posts:
         code = nasa_posts[0]["code"]
         url = f"https://www.threads.com/@nasa/post/{code}"
@@ -461,10 +461,10 @@ def run_threads(browser):
                 card={"title": "貼文頁網址就是 URL 欄位", "lines": [url, "格式：/@帳號/post/{code}，code 來自 GraphQL 回應"]})
         rel = shot(page, 4, "threads_post_url")
         add(q="4", id="q4-threads-post-url", node="parser", title="貼文網址＝/@帳號/post/{code}",
-            claim="題目要的 URL 欄位可以直接用回應裡的 code 組出來，不必再抓一次貼文頁",
+            claim="需求要的 URL 欄位可以直接用回應裡的 code 組出來，不必再抓一次貼文頁",
             result=url, image=rel, source=f"Playwright 實抓（未登入）{url}；標註為截圖時加上")
         overlay(page, [
-            {"sel": "svg[aria-label='Repost']", "closest": "[role=button]", "label": "轉發數（Q5 的 repost_count）"},
+            {"sel": "svg[aria-label='Repost']", "closest": "[role=button]", "label": "轉發數（新指標上線的 repost_count）"},
             {"sel": "svg[aria-label='Like']", "closest": "[role=button]", "label": "讚"},
             {"sel": "svg[aria-label='Reply']", "closest": "[role=button]", "label": "回覆"},
             {"sel": "svg[aria-label='Share']", "closest": "[role=button]", "label": "分享"},
@@ -472,7 +472,7 @@ def run_threads(browser):
                  "lines": [f"讚 {counts.get('Like') or '—'}｜回覆 {counts.get('Reply') or '—'}｜轉發 {counts.get('Repost') or '—'}｜分享 {counts.get('Share') or '—'}"]})
         rel = shot(page, 5, "threads_post_repost")
         add(q="5", id="q5-threads-repost-visible", node="platforms", title="Threads 貼文頁看得到轉發數",
-            claim="repost_count 是公開頁面就有的欄位，爬蟲端拿得到，Q5 缺的是寫進 ES 這一段",
+            claim="repost_count 是公開頁面就有的欄位，爬蟲端拿得到，新指標上線 缺的是寫進 ES 這一段",
             result=f"讚 {counts.get('Like') or '—'}、回覆 {counts.get('Reply') or '—'}、轉發 {counts.get('Repost') or '—'}、分享 {counts.get('Share') or '—'}",
             image=rel, source=f"Playwright 實抓（未登入）{url}；標註為截圖時加上")
     else:
@@ -481,7 +481,7 @@ def run_threads(browser):
     ctx.close()
 
 
-# ----------------------------------------------------------------- Instagram（Q5）
+# ----------------------------------------------------------------- Instagram（新指標上線）
 def run_ig(browser):
     site = "ig"
     ctx = browser.new_context(viewport={"width": 1440, "height": 900}, locale="en-US", timezone_id="Asia/Taipei")
@@ -526,7 +526,7 @@ def run_ig(browser):
     ctx.close()
 
 
-# ----------------------------------------------------------------- Facebook（Q2）
+# ----------------------------------------------------------------- Facebook（FB 貼文搜尋）
 def run_fb(browser):
     site = "fb"
     ctx = browser.new_context(viewport={"width": 1440, "height": 900}, locale="en-US", timezone_id="Asia/Taipei")
@@ -552,7 +552,7 @@ def run_fb(browser):
                        "正式做法走 Graph API（需 Page Public Content Access 審核）"]})
     rel = shot(page, 2, "fb_page_nasa")
     add(q="2", id="q2-fb-page", node="platforms", title="FB 粉專頁的欄位（未登入）",
-        claim="Q2 的欄位（粉專名稱、發文時間、心情數）在粉專頁上看得到；量大時走 Graph API，不靠網頁",
+        claim="FB 貼文搜尋的欄位（粉專名稱、發文時間、心情數）在粉專頁上看得到；量大時走 Graph API，不靠網頁",
         result=f"粉專名稱：{info['h1'] or '—'}；心情數 {'有' if info['reactions'] else '沒讀到'}；{'有' if (info['dialog'] or info['login']) else '沒有'}登入視窗",
         image=rel, source=f"Playwright 實抓（未登入）{url}；標註為截圖時加上")
     ctx.close()

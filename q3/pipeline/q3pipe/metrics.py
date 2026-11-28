@@ -1,4 +1,4 @@
-"""監控指標（答案：Cloud Monitoring；本機用 Pushgateway＋Prometheus＋Grafana）。
+"""監控指標（設計：Cloud Monitoring；本機用 Pushgateway＋Prometheus＋Grafana）。
 
 排程器是常駐程序，計數器跨輪累加，每 15 秒推一次到 Pushgateway；推不上去會印警告，不中斷抓取。
 """

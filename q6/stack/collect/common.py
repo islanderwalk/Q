@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Q6 渠道樣本收集：共用工具。
+"""ARGUS｜文字雲斷詞：渠道樣本收集：共用工具。
 
 規則（每支 collect_*.py 都遵守）：
 - 只抓未登入看得到的公開頁面／公開 RSS；不登入、不存 cookie／token／cursor。
 - 同一個網站兩次載入至少間隔 2 秒（polite），每個網站最多 30 次載入（Budget 會擋）。
 - 正常桌面 Chrome UA。
-- 文字保持原樣（網址、電話、表情符號、簽名檔都留著），清理交給 Q6 pipeline。
+- 文字保持原樣（網址、電話、表情符號、簽名檔都留著），清理交給 文字雲斷詞 pipeline。
 - 每次請求記一行到 data/channels/_meta/fetch_log.jsonl（網址、狀態碼、位元組、時間；不記標頭與 cookie）。
 """
 import hashlib

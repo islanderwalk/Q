@@ -1,4 +1,4 @@
-"""Q3 pipeline 的設定。全部從環境變數 Q3_<欄位名大寫> 讀，預設值就是答案裡的規格。"""
+"""PTT 全文搜尋 pipeline 的設定。全部從環境變數 Q3_<欄位名大寫> 讀，預設值就是設計裡的規格。"""
 from __future__ import annotations
 
 import os
@@ -13,12 +13,12 @@ def _cast(raw: str, default):
 
 @dataclass(frozen=True)
 class Config:
-    # 抓取規格（答案第 1、2 題）
+    # 抓取規格（瓶頸 1、2）
     board: str = "Gossiping"
     base_url: str = "https://www.ptt.cc"
     window_days: int = 7               # 搜尋範圍：過去 7 天
     refresh_after_hours: float = 23.0  # 重抓：7 天內超過 23 小時沒抓的文章（每天至少更新一次）
-    refresh_policy: str = "daily"      # daily＝原規格；once24h＝第 6 題的修改建議（發文滿 24 小時再抓一次）
+    refresh_policy: str = "daily"      # daily＝原規格；once24h＝瓶頸 6 的修改建議（發文滿 24 小時再抓一次）
     min_interval_s: float = 1.0        # 單 worker，每秒最多 1 次請求
     request_timeout_s: float = 20.0
     max_attempts: int = 3              # 單一網址最多試 3 次，間隔 5、10 秒
@@ -27,7 +27,7 @@ class Config:
     pause_s: float = 300.0
     abort_after_failed_urls: int = 3   # 連續幾個網址試完仍失敗就停下這一輪（多半被擋，再抓只是一直撞牆）
     reuse_idle_s: float = 60.0         # 閒置超過 60 秒的連線不再沿用，下一個請求重新連線
-    user_agent: str = "Mozilla/5.0 (compatible; qsearch-q3-pipeline/1.0)"
+    user_agent: str = "Mozilla/5.0 (compatible; argus-q3-pipeline/1.0)"
     max_list_pages: int = 2000         # 安全上限：一輪最多往回翻幾頁列表
     batch_size: int = 50               # 每批幾篇文章寫一次 BigQuery
 
@@ -45,12 +45,12 @@ class Config:
     run_max_comment_drop: float = 0.05     # 7 天內留言總數少超過 5%
 
     # BigQuery／GCS
-    project: str = "qsearch-q3"
+    project: str = "argus-q3"
     dataset: str = "ptt"
     bq_endpoint: str = ""              # 有值＝本機 BigQuery 模擬器
     partition_expire_days: int = 30
     raw_backend: str = "gcs"           # gcs｜local｜none
-    raw_bucket: str = "qsearch-q3-raw"
+    raw_bucket: str = "argus-q3-raw"
     raw_dir: str = "/data/raw"
 
     # 排程與監控

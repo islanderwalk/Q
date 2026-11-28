@@ -1,6 +1,6 @@
-# Q6 監控：十項 P0 的實作對照
+# ARGUS｜文字雲斷詞：監控十項 P0 的實作對照
 
-2026-11-02 的監控計畫書列了十項 P0（頭：平台與採集；中：斷詞、回補、發版；尾：PM 頁與客戶；交界：原文湖對 ES 的完整性）。這份文件記每一項做在哪裡、哪條告警、看板哪一列、怎麼重算。**所有門檻都是提案值**，寫在規則檔與面板說明裡，要用第一週的實測校正。嚴重度：`page`＝要人馬上處理、`warn`＝上班時間處理、`ticket`＝排進待辦。
+2026-11-02 的監控規劃書列了十項 P0（頭：平台與採集；中：斷詞、回補、發版；尾：PM 頁與客戶；交界：原文湖對 ES 的完整性）。這份文件記每一項做在哪裡、哪條告警、看板哪一列、怎麼重算。**所有門檻都是提案值**，寫在規則檔與面板說明裡，要用第一週的實測校正。嚴重度：`page`＝要人馬上處理、`warn`＝上班時間處理、`ticket`＝排進待辦。
 
 ## 元件（全部本機 Docker、零成本；GCP 對應見 README）
 
@@ -26,7 +26,7 @@
 | 6 | 影子比對與版本覆蓋 | `shadow_checks` 表（`shadow.py`）；覆蓋率 `qseg_coverage_terms_v2_ratio`、`qseg_recon_docs{layer=es_at_latest_v2}` | `ReconV2CoverageGap`；影子比對目前只有表、沒有排程（未做） | 主看板 ③ |
 | 7 | 字典發版收斂 | `recon.py` 從 `service_state`／`rerun_runs`／`release_outbox` 算 `qseg_service_dict_versions`、`qseg_service_instances_alive`、`qseg_rerun_running_age_seconds`、`qseg_rerun_runs`、`qseg_release_outbox_pending`；`control.py` 每台每 15 秒輪詢 `current/manifest.json` 熱換（`qseg_dict_swaps_total{source}`）；`app.py` 先寫 outbox 再切 current，背景每 10 秒重送；`es.py` seg_guard 看 `content_sha`、429 重送 1/2/4 秒 | `release.yml` `DictVersionDivergence`（> 1 版持續 10 分）、`RerunStuck`、`RerunFailed`、`ReleaseOutboxStuck`、`SegNoAliveInstances`（page） | 主看板 ⑤ |
 | 8 | 回補燃盡與卡住分區 | `recon.py`：`qseg_backfill_remaining_docs`、`qseg_backfill_docs_per_sec_15m`、`qseg_ledger_partitions{status}`、`qseg_ledger_attempts_exhausted`、`qseg_ledger_oldest_awaiting_pm_age_seconds`、`qseg_backfill_max_docs_per_sec`、`qseg_backfill_paused`；`job.py` G1 比不重複 post_id、認領 `attempts < 3`、心跳背景執行緒 20 秒、G2 比例門檻 0.1%、G3 看線上欄位並允許回升 | `backfill.yml` `BackfillEtaBeyondWindow`（> 8 小時）、`BackfillThroughputLow`（< 1,450 篇/秒一晚）、`BackfillAttemptsExhausted`、`BackfillAwaitingPmTooLong`（4 小時）、`BackfillPausedLong` | 主看板 ⑥ |
-| 9 | 文字雲品質日報 | `seg/qseg/quality.py`（seg-quality，每天）：`qseg_quality_leak_ratio{channel,kind}`、`qseg_quality_place_split_ratio`、`qseg_quality_whole_word_recall`、`qseg_quality_gold_recall{pipeline}`（150 題金標 `seg/quality/gold_150.json`）、`qseg_quality_mcnemar_p{pair}`、`qseg_quality_new_word_surges{kind}`、`qseg_quality_rbo{pair}`、`qseg_quality_js_divergence`；表 `quality_daily` | `quality.yml` `QualityLeak`（> 0）、`QualityPlaceSplit`、`QualityWholeWordRecallLow`（< 99%）、`QualityGoldRecallDrop`（< 71%）、`QualityNewWordFragment`、`QualityTopShift`（RBO < 0.5）、`QualityStale` | 主看板 ⑦ |
+| 9 | 文字雲品質日報 | `seg/qseg/quality.py`（seg-quality，每天）：`qseg_quality_leak_ratio{channel,kind}`、`qseg_quality_place_split_ratio`、`qseg_quality_whole_word_recall`、`qseg_quality_gold_recall{pipeline}`（150 筆金標 `seg/quality/gold_150.json`）、`qseg_quality_mcnemar_p{pair}`、`qseg_quality_new_word_surges{kind}`、`qseg_quality_rbo{pair}`、`qseg_quality_js_divergence`；表 `quality_daily` | `quality.yml` `QualityLeak`（> 0）、`QualityPlaceSplit`、`QualityWholeWordRecallLow`（< 99%）、`QualityGoldRecallDrop`（< 71%）、`QualityNewWordFragment`、`QualityTopShift`（RBO < 0.5）、`QualityStale` | 主看板 ⑦ |
 | 10 | ES 叢集健康 | elasticsearch_exporter；`scripts/setup.py` 另建 fs 快照倉庫 + SLM `daily-posts`、索引 slowlog（查詢 > 60 秒 warn 進 Loki） | `es.yml` `ElasticsearchClusterRed`（page）、`Yellow`（10 分）、`DiskHigh`（80%）、`DiskCritical`（88% 或 `predict_linear` 4 小時內滿，page）、`BreakerTripped`、`Write\|SearchRejections`、`HeapHigh`、`GcTimeHigh`、`UnassignedShards`、`SnapshotFailed\|Stale` | 主看板 ⑧ |
 
 P1 裡已順手做的：PM 頁 RUM（`web.yml` 7 條；主看板 ②）、ES slowlog、robots 雜湊、YouTube 配額、刪文 tombstone 與改文、Loki 日誌面板。
@@ -40,11 +40,11 @@ cd q6/stack
 ./run.sh slo                              # 改 monitoring/slo/wordcloud-api.yml 後重產 rules/slo.yml（Sloth）
 python monitoring/grafana/build_dashboard.py   # 改面板後重產 dashboards/*.json（Grafana 由 provisioning 讀檔）
 docker run --rm -v "$PWD/monitoring:/w:ro" --entrypoint sh quay.io/prometheus/prometheus:v3.5.0 -c "promtool check rules /w/rules/*.yml && promtool check config /w/prometheus.yml"
-docker compose exec -T pg psql -U qsearch -d qsearch -v ON_ERROR_STOP=1 < pg/migrate_p0.sql   # 既有 volume 補新表（recon_daily、quality_daily、release_outbox 等；可重複執行）
+docker compose exec -T pg psql -U argus -d argus -v ON_ERROR_STOP=1 < pg/migrate_p0.sql   # 既有 volume 補新表（recon_daily、quality_daily、release_outbox 等；可重複執行）
 python -m pytest -q -p no:cacheprovider q6/stack/tests q6/code/tests     # 從 repo 根跑
 ```
 
-打開：Grafana http://127.0.0.1:3000（`QSearch Q6 文字雲`、`QSearch Q6 採集`）、Prometheus http://127.0.0.1:9090/alerts、Alertmanager http://127.0.0.1:9093、Loki 由 Grafana 的 Explore 查、PM 頁 http://127.0.0.1:8080（頂部橫幅＝正在響的告警）。
+打開：Grafana http://127.0.0.1:3000（`ARGUS 文字雲斷詞`、`ARGUS 文字雲採集`）、Prometheus http://127.0.0.1:9090/alerts、Alertmanager http://127.0.0.1:9093、Loki 由 Grafana 的 Explore 查、PM 頁 http://127.0.0.1:8080（頂部橫幅＝正在響的告警）。
 
 ## 測試在哪裡
 
@@ -92,7 +92,7 @@ python -m pytest -q -p no:cacheprovider q6/stack/tests q6/code/tests     # 從 r
 ### 這輪新增的設定
 
 - `docker-compose.ca.yml`：宿主機的 CA 檔掛到採集器 `/run/ca/ca-bundle.crt` 並設 `REQUESTS_CA_BUNDLE`／`SSL_CERT_FILE`；只有對外要經代理時才疊上。
-- `promdata` 具名 volume：Prometheus 的 TSDB 不再隨容器消失；要清空就 `docker volume rm qsearch-q6_promdata`。
+- `promdata` 具名 volume：Prometheus 的 TSDB 不再隨容器消失；要清空就 `docker volume rm argus-q6_promdata`。
 - `ALERT_STALE_SECONDS`（API）：橫幅過期秒數，預設 7,800。
 - `collector_feed_enabled{feed,channel}`：沒金鑰的 YouTube feed 為 0，告警不把它當死。
 - `loki_process_custom_crawl_log_lines_total`：Alloy 由採集日誌算出的行數，Loki ruler 的 `crawl:requests:rate5m` 用它。
@@ -103,4 +103,4 @@ python -m pytest -q -p no:cacheprovider q6/stack/tests q6/code/tests     # 從 r
 - 影子比對（P0 第 6 項）只有表與程式，沒有排程與面板。新詞暴增要「今天」有文章才有東西（本機語料到採集時間為止）。
 - `rules/slo.yml` 是 Sloth 產生檔；`alerts.yml` 已拆成依關注面的 `rules/*.yml`。
 - 每月一個 ES 索引＋別名（回補與查詢分開）只評估沒做：單節點單索引 3 分片在 50 萬篇下夠用，5 億篇才需要。
-- 舊的 `P0_NOTES.md`（23 項審查判定）已併進這裡與程式註解；全文在 git 歷史。
+- 舊的 `P0_NOTES.md`（23 項自我檢查判定）已併進這裡與程式註解；全文在 git 歷史。

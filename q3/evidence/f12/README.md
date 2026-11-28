@@ -1,4 +1,4 @@
-# Q3 爬蟲設計依據：瀏覽器 F12 Network 截圖
+# PTT 全文搜尋爬蟲設計依據：瀏覽器 F12 Network 截圖
 
 PTT 八卦板（Gossiping）爬蟲的每個設計決定，都先在瀏覽器開發者工具（F12 → Network，勾選 Preserve log）實際觀察過才寫進程式。
 截圖條件如下：

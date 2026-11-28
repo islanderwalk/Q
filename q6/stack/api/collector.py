@@ -6,7 +6,7 @@
 同一主機兩次請求至少隔 GAP 秒；帶 ETag／If-Modified-Since（304 就什麼都不做）；429／403／5xx 退避（間隔加倍，最多 6 小時）；
 透明 UA（寫明是哪個 repo 的採集器）。PM 頁「立刻抓一次」→ collector_control.run_now；「暫停」→ paused。
 
-每次請求（計畫書 P0 第 3、4 項）：
+每次請求（規劃書 P0 第 3、4 項）：
 - 一行結構化 JSON（event=collect）：outcome（ok／empty／not_modified／login_wall／content_unavailable／rate_limited／forbidden／
   quota_exceeded／server_error／network_error／parse_error／skipped）、posts_parsed、posts_new、posts_updated、final_url（有轉址才有）、
   ttfb_ms（送出到收到標頭）、total_ms（含下載內文）、robots（allow／disallow／unknown）、since_last_ok_s（有新文章時：離上一次成功檢查幾秒）。本機由 Alloy 收進 Loki，GCP 上進 Cloud Logging。
@@ -47,15 +47,15 @@ import ops
 
 ES_URL = os.environ.get("ES_URL", "http://es:9200").rstrip("/")
 INDEX = os.environ.get("ES_INDEX", "posts")
-PG_DSN = os.environ.get("PG_DSN", "postgresql://qsearch:qsearch@pg:5432/qsearch")
-PROJECT = os.environ.get("PUBSUB_PROJECT", "qsearch-local")
+PG_DSN = os.environ.get("PG_DSN", "postgresql://argus:argus@pg:5432/argus")
+PROJECT = os.environ.get("PUBSUB_PROJECT", "argus-local")
 EMULATOR = os.environ.get("PUBSUB_EMULATOR_HOST", "")
 TOPIC = os.environ.get("PARSED_TOPIC", "parsed-posts")
 FEEDS_PATH = Path(os.environ.get("FEEDS", str(Path(__file__).resolve().parent / "feeds.json")))
 LIVE_SQL = Path(os.environ.get("LIVE_SQL", str(Path(__file__).resolve().parent / "live.sql")))
 SKIP = [s.strip() for s in os.environ.get("COLLECT_SKIP", "").split(",") if s.strip()]
 GAP = float(os.environ.get("COLLECT_GAP_SEC", "2.5"))
-UA = os.environ.get("COLLECT_UA", "qsearch-q6-collector/1.0 (+https://github.com/islanderwalk/Q; feed reader; polite)")
+UA = os.environ.get("COLLECT_UA", "argus-q6-collector/1.0 (+https://github.com/islanderwalk/Q; feed reader; polite)")
 METRICS_PORT = int(os.environ.get("COLLECTOR_METRICS_PORT", "9111"))
 YT_FEED_POC = os.environ.get("YOUTUBE_FEED_POC", "") == "1"
 YT_API = "https://www.googleapis.com/youtube/v3/playlistItems"

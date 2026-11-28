@@ -26,7 +26,6 @@ CAT_LABEL = {
 }
 # card id -> file under q6/
 TARGET = {
-    "ev_00_gcp_qsearch_stack": "evidence/overview/evidence-qsearch-gcp-stack.png",
     "ev_00_research_page": "evidence/overview/evidence-research-page.png",
     "ev_a1_es_update_reindex": "evidence/a-backfill/evidence-es-update-reindex.png",
     "ev_a2_es_source_excludes": "evidence/a-backfill/evidence-es-source-excludes.png",
@@ -92,7 +91,7 @@ def page(cid, kind, kind_cls, claim, src_rows, body, foot_left):
     rows = "".join(f"<dt>{esc(k)}</dt><dd>{v}</dd>" for k, v in src_rows)
     doc = f"""<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">{CSS}</head><body>
 <div class="ev">
-  <div class="ev-top"><span class="ev-cat">{CAT_LABEL[cat]} · QSearch 筆試第 6 題</span><span class="ev-kind {kind_cls}">{esc(kind)}</span></div>
+  <div class="ev-top"><span class="ev-cat">{CAT_LABEL[cat]} · ARGUS 文字雲斷詞</span><span class="ev-kind {kind_cls}">{esc(kind)}</span></div>
   <h1 class="ev-claim">{esc(claim)}</h1>
   <dl class="ev-src">{rows}</dl>
   {body}
@@ -263,11 +262,11 @@ w2, _ = natural_css("ev_00_research_page_2.png", 1.5)
 page(
     "ev_00_research_page", "研究頁", "k-page",
     "研究頁：五個症狀對應到修法與閘門；斷詞實驗台的 v1／v2 是 jieba 的實際輸出（示意貼文為自寫）。",
-    [("來源", '研究頁 QSearch Q6 文字雲斷詞（線上版）<br><span class="url">https://claude.ai/artifact/BFHkeqUYvKUwzkkWDkMYUU</span>'),
-     ("擷取", "同一份頁面原始檔（q6/answer/research-page.html）在沙盒 VM 以 Playwright 渲染後截圖，淺色主題、1280 寬")],
+    [("來源", '研究頁 ARGUS 文字雲斷詞（線上版）<br><span class="url">https://claude.ai/artifact/BFHkeqUYvKUwzkkWDkMYUU</span>'),
+     ("擷取", "同一份頁面原始檔（q6/design/research-page.html）在沙盒 VM 以 Playwright 渲染後截圖，淺色主題、1280 寬")],
     f'<figure>{img_tag("ev_00_research_page_1.png", w1)}<figcaption>總覽：策略、四個關鍵數字、五個症狀對照表</figcaption></figure>'
     f'<figure>{img_tag("ev_00_research_page_2.png", w2)}<figcaption>實測：斷詞實驗台（第一則示意貼文）</figcaption></figure>',
-    "頁面原始檔 q6/answer/research-page.html",
+    "頁面原始檔 q6/design/research-page.html",
 )
 
 (CARDS / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")

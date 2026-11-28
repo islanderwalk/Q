@@ -1,5 +1,5 @@
 {
-  "description": "Q6 規模試跑：公開語料文字重抽樣灌入 Elasticsearch scale_pilot_main，量測灌入速度與每篇磁碟用量，推算 5 億篇的容量需求。",
+  "description": "文字雲斷詞規模試跑：公開語料文字重抽樣灌入 Elasticsearch scale_pilot_main，量測灌入速度與每篇磁碟用量，推算 5 億篇的容量需求。",
   "run_window_utc": "斷詞完成 2026-10-31T21:29Z；灌入首筆進度 21:46:20Z；STOP 停止 21:59:50Z；索引量測 22:01:37Z",
   "environment": {
     "es": "單節點 Elasticsearch（WSL2 Docker），index scale_pilot_main，3 primary shards、0 replicas、refresh_interval=-1",
@@ -27,8 +27,8 @@
     "avg_terms": {"v0_standard_like": 20.97, "v1_dict_2026.10.30.1": 16.91, "v2_dict_2026.10.30.2": 8.41},
     "avg_chars": 29.3,
     "vocab_size": 340650,
-    "dict_v1": "qsearch-q6-2026.10.30.1",
-    "dict_v2": "qsearch-q6-2026.10.30.2",
+    "dict_v1": "argus-q6-2026.10.30.1",
+    "dict_v2": "argus-q6-2026.10.30.2",
     "seg_seconds": 257.1,
     "seg_src_per_sec": 1653.4,
     "seg_rate_curve_src_per_sec": {"50000": 3189, "100000": 2987, "150000": 2130, "200000": 1849, "250000": 1633, "300000": 1601, "350000": 1677, "400000": 1620},

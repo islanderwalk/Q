@@ -1,6 +1,6 @@
 # 六渠道歷史爬取：欄位與痛點
 
-目的：把 Q6「2023-01 起的歷史資料」實際抓下來時，每個渠道拿得到哪些欄位、卡在哪裡、對分群有什麼影響，整理成一份可以直接拿來討論的清單。
+目的：把文字雲斷詞要用的「2023-01 起的歷史資料」實際抓下來時，每個渠道拿得到哪些欄位、卡在哪裡、對分群有什麼影響，整理成一份可以直接拿來討論的清單。
 
 - 標示規則：**[實測]** 是本次執行的數字或截圖，**[推測]** 是依數字的解讀、尚未直接驗證。
 - 數字來源：[telemetry_summary.json](telemetry_summary.json)（2026-11-02 18:58 ~ 2026-11-03 05:29 +08，約 10.5 小時）與各渠道的 progress 快照。
@@ -31,7 +31,7 @@
 
 ## 2. 欄位
 
-共同欄位（與 Q6 的 posts 表對齊）：`post_id`、`channel`、`sub_type`、`source`、`url`、`published_at`（+08:00）、`fetched_at`、`text`、`collect_method`。
+共同欄位（與文字雲斷詞的 posts 表對齊）：`post_id`、`channel`、`sub_type`、`source`、`url`、`published_at`（+08:00）、`fetched_at`、`text`、`collect_method`。
 
 ### 2.1 PTT [實測]
 
@@ -41,7 +41,7 @@
 | 內文 | url、status、board、title、author、time_text、published_at、text、push_count、push_up、push_down、pushes[]、fetched_at | `text` 已移除 meta 列與推文；推文保留 tag／user／content／time。刪文以 `status: 404, deleted: true` 記錄，不重試。 |
 
 - Gossiping 需要 `over18=1`；回應若是年齡確認頁（有 over18、沒有 r-ent）判為異常並退避。
-- `author`、推文 `user` 是公開 PTT ID，進 Q6 前要雜湊。
+- `author`、推文 `user` 是公開 PTT ID，進文字雲斷詞前要雜湊。
 
 ### 2.2 YouTube（Data API v3 playlistItems）[實測]
 
@@ -121,7 +121,7 @@
 - 先把 9 板列表翻到 2023-01，再依新到舊輪流抓內文；目前仍在列表階段，內文是 0。
 - 525 狀態 3 筆、斷線 22 筆，都在退避後重抓同一頁成功。
 
-## 4. 對 Q6 分群的影響
+## 4. 對文字雲斷詞分群的影響
 
 | 編號 | 影響 | 依據 |
 |---|---|---|
@@ -132,5 +132,5 @@
 | C-5 | 詞雲雜訊：雜湊後的 @ 提及、純 emoji、空字串、重複留言（191 則只有 177 種文字）要先清掉。 | 2.4 |
 | C-6 | 目標帳號都是官方媒體，使用者生成內容只來自留言與 PTT，分群時要分開看「官方發文」和「使用者回應」。 | 2.3、2.4 |
 | C-7 | 高雄相關的 IG 覆蓋目前是 0（429 後停止），地區分群要靠 PTT Kaohsiung 板與其他渠道補。 | P-8 |
-| C-8 | 文字含人名與家庭細節，PTT ID、留言作者需雜湊，內文需在 Q6 端再遮罩。 | 2.1、2.4 |
+| C-8 | 文字含人名與家庭細節，PTT ID、留言作者需雜湊，內文需在文字雲斷詞端再遮罩。 | 2.1、2.4 |
 | C-9 | YouTube 資料 30 天保存期限，分群結果可以保留，原始影片資料要在期限前刪除或重抓。 | 2.2 |

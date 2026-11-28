@@ -1,6 +1,6 @@
-# Q6 六渠道公開貼文樣本：收集紀錄
+# ARGUS｜文字雲斷詞：六渠道公開貼文樣本：收集紀錄
 
-給 Q6 斷詞 pipeline 測試用的公開貼文，6 個渠道：論壇（PTT）、Threads、YouTube、媒體，加上 Facebook、Instagram（含 Reels）。Facebook、Instagram 在本機上抓（資料中心 IP 會被 Meta 擋），見文末一節。
+給 文字雲斷詞 pipeline 測試用的公開貼文，6 個渠道：論壇（PTT）、Threads、YouTube、媒體，加上 Facebook、Instagram（含 Reels）。Facebook、Instagram 在本機上抓（資料中心 IP 會被 Meta 擋），見文末一節。
 
 - 抓取時間：2026-10-31 01:31–01:41（+08:00），全部未登入，使用桌面 Chrome UA。
 - 不存 cookie、token、cursor。Threads 只留抽出的欄位，不存 HTML。
@@ -76,7 +76,7 @@
 | `post_id` | `code` |
 | `url` | `https://www.threads.com/@<帳號>/post/<code>` |
 
-- 請求帶 `Sec-Fetch-Mode` 和 `Sec-Fetch-Dest` 導覽標頭。Q4 實測沒帶這兩個會拿到空殼頁。
+- 請求帶 `Sec-Fetch-Mode` 和 `Sec-Fetch-Dest` 導覽標頭。Threads 爬蟲模組實測沒帶這兩個會拿到空殼頁。
 - 未登入時個人頁只內嵌 5～8 篇，所以再開其中有回覆的 11 個貼文頁。只有 11 篇本人主貼文的 `direct_reply_count` > 0。
 
 **分類規則**

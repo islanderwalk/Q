@@ -23,13 +23,13 @@
   + q4-threads-mobile-wall | 看到「Log in to see more from nasa.」；帶貼文的 GraphQL 回應 2 個
   + q4-threads-post-url | https://www.threads.com/@nasa/post/DfFP4pEET5Y
   + q5-threads-repost-visible | 讚 148、回覆 —、轉發 16、分享 1；5.5K views
-== gaps (2026-10-30 補證據：Q2 FB 貼文、Q5 IG JSON 對照、Q6 PTT 雜訊) ==
+== gaps (2026-10-30 補證據：FB 貼文搜尋 FB 貼文、新指標上線 IG JSON 對照、文字雲斷詞 PTT 雜訊) ==
   + q2-fb-post | 粉專名稱有；發文時間 5h；心情統計有；粉專數字 ID 未見（網址使用者名稱 NASA）；有登入視窗，照實截下
   + q5-ig-reels-json-vs-grid | 縮圖 8 支皆有 play_count；前 6 支無條件捨去後與縮圖文字一致
   + q5-ig-reel-fields-json | Reels 分頁 12 筆；單支 Reel 頁內嵌 JSON 42 段、觀看數 0 筆、XHR 0 筆
   + q6-ptt-noise-01..04 | 4 張：短網址＋地名、地名、地名＋電話、電話（同篇聚焦電話）
   loads（含探測腳本）: fb 9、ig 9、ptt 30（已達 30 上限，不再載入）；單一腳本內每站兩次導覽間隔 ≥2 秒
-  Q3 chart PNG: node q3/tools/capture.js charts 重產 10 張（來源說明已更新）
+  PTT 全文搜尋 chart PNG: node q3/tools/capture.js charts 重產 10 張（來源說明已更新）
 == round2 (2026-10-30)：Linux 容器 capture_round2_cloud.js ＋ 本機 capture_round2_residential.py ==
 -- Linux 容器（含重拍；最後採用的版本見 capture_manifest.json 的 round2 條目）
 == round2 cloud 2026-10-30T15:30:04+08:00 ==

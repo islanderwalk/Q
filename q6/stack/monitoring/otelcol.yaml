@@ -11,9 +11,9 @@ receivers:
   postgresql:
     endpoint: pg:5432
     transport: tcp
-    username: qsearch
-    password: qsearch
-    databases: [qsearch]
+    username: argus
+    password: argus
+    databases: [argus]
     collection_interval: 15s
     tls: { insecure: true }
 processors:

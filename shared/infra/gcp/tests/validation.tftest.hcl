@@ -8,19 +8,19 @@ mock_provider "google" {}
 mock_provider "google-beta" {}
 
 variables {
-  project_id     = "qsearch-test"
+  project_id     = "argus-test"
   project_number = "123456789012"
 
   # 不用預設的 hello 示範映像，否則 checks.tf 的 no_placeholder_images 會讓每個 run 失敗。
-  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
-  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
-  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
-  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
+  image_api           = "asia-east1-docker.pkg.dev/argus-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/argus-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/argus-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/argus-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/argus-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/argus-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-collector:test"
 }
 
 run "project_number_rejects_letters" {
@@ -39,7 +39,7 @@ run "project_number_rejects_project_id" {
   command = plan
 
   variables {
-    project_number = "qsearch-test"
+    project_number = "argus-test"
   }
 
   expect_failures = [

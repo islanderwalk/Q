@@ -1,19 +1,31 @@
-# QSearch 筆試第 2 題：估算與選型（Postgres 貼文表解剖）
+# ARGUS｜FB 貼文搜尋：100 萬則貼文的容量估算與選型
 
-> **題目：** 有 100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言，另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。
-> 這是一個內部工具：約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。由你一個人維運，每月基礎設施預算 3,000 元。
-> 1. 請估算：(a) 原始資料總量；(b) 粉絲頁 ID 索引；(c) 貼文中文全文索引。寫出算式與你假設的每一個參數，數量級對即可。
-> 2. 承上，你選哪一套方案？請說明是估算結果的哪一個數字決定了你的選擇。
-> 3. 你選的中文斷詞策略是什麼？它會漏掉哪一類查詢？
-> 4. 資料量或查詢量成長到多少，你會換掉現在的選擇？換成什麼？
-> 5. 題目中缺了哪一個數字，會讓你的估算差距最大？
-> *上限 600 字（不含算式）。*
+> 一句話：這個模組估算 100 萬則 Facebook 粉絲頁貼文放進 Postgres 16 要占多少空間，並決定中文全文索引的做法；最後選 Cloud SQL PostgreSQL 加 pg_bigm，數字已用 Postgres 16 實測驗證。
 
----
+## 情境與限制
 
-## 正式答案 — [`answer/answer_600.txt`](answer/answer_600.txt)
+- 資料量：100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言；另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。
+- 使用情境：這是一個內部工具，約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。
+- 維運與預算：由我一個人維運，基礎設施預算每月 3,000 元。
+- 交付形式：寫出算式與每個假設的參數，數量級對即可。需求裡沒有的數字（貼文 ID 長度、粉專數）我自己先假設，並寫在算式裡。
 
-交卷用的正式答案，596 字（上限 600 字，不含算式；python len，空白與換行都算），算式附在同一檔的「【算式】」段。字數由 `code/tests/test_q2_answer_length.py` 檢查。六題合併版見 [`shared/docs/submission.md`](../shared/docs/submission.md)。
+## 遇到的瓶頸
+
+1. **100 萬則、每月 3,000 元，到底塞不塞得下？** 我把原始資料、粉絲頁 ID 索引、中文全文索引三項分開算，每個參數都寫出來，要的是數量級。
+2. **選哪一套？** 決定性的是中文全文索引的體積，不是表本身。
+3. **中文斷詞會漏掉什麼？** 我不用詞典，每兩字切一詞，LIKE 比對原文，但會漏字面不同的查詢。
+4. **什麼時候這套會撐不住？** 資料量或查詢量成長到多少就該換，換成什麼。
+5. **哪個參數最不確定、影響最大？** 「平均 250 字」這個假設。
+
+## 我怎麼解
+
+- **瓶頸 1**：(a)、(b)、(c) 分開算。(a) 原始資料總量約 1 GB：一則 918 B，一頁放 8 則，每則占 1,024 B，實測相同；真實中文 0.9 GB。(b) 粉專 ID 索引約 7 MB：假設 5,000 個粉專，btree 去重，實測 6.9 MB。(c) 中文全文索引約 1 GB，與表同大：每則 249 個兩字詞；真實中文（PTT、維基，非粉專）實測 0.95 到 1.17 GB；重複造資料的 0.41 GB 只是下限。
+- **瓶頸 2**：我選 Cloud SQL PostgreSQL 加 pg_bigm。決定的是 (c) 約 1 GB：表加索引約 2 GB，小機器記憶體應放得下，每天 500 次查詢不需要搜尋叢集。pg_bigm 比 pg_trgm 小 30%，非高頻 2 字詞快 3.7 到 4.9 倍。db-custom-1-3840 整套月費估約 NT$2,000；Cloud SQL 上未實測。
+- **瓶頸 3**：不用詞典，每兩字切一詞，LIKE 比對原文，新詞照查。會漏字面不同的查詢：異體字（台／臺）、同義詞、簡繁、錯字、中間多字。
+- **瓶頸 4**：約 1 年後（204 萬則）資料超過記憶體，變慢就升規格（超預算）或只留近期資料；到約 1,000 萬則、尖峰每秒逾 1 次或需要相關度排序時換 Elasticsearch（高頻詞全表掃描推估逾 6 秒）。
+- **瓶頸 5**：「平均 250 字」最不確定。現估 (a)＋(c) 約 2.0 GB，減半約 1.1 GB，加倍約 3.9 GB。
+
+一頁摘要與完整算式見 [design/summary.txt](design/summary.txt)；六個模組合併的設計摘要見 [shared/docs/design-summary.md](../shared/docs/design-summary.md)。
 
 ---
 
@@ -23,8 +35,8 @@
 
 | 檔案 | 內容 |
 |---|---|
-| [`fb_q2_posts_table.html`](answer/fb_q2_posts_table.html) | Q2 線上版的原始 HTML（下載後用瀏覽器開啟） |
-| [`build_tip_images.py`](answer/build_tip_images.py) | 把 `evidence/` 的截圖裁成小圖嵌進上面的頁面：總覽圖滑過 page_id、creation_time、7 種心情、page_name 時顯示 NASA 這則貼文的畫面與 F12 截圖 |
+| [`fb_q2_posts_table.html`](design/fb_q2_posts_table.html) | 互動頁的原始 HTML（下載後用瀏覽器開啟） |
+| [`build_tip_images.py`](design/build_tip_images.py) | 把 `evidence/` 的截圖裁成小圖嵌進上面的頁面：總覽圖滑過 page_id、creation_time、7 種心情、page_name 時顯示 NASA 這則貼文的畫面與 F12 截圖 |
 
 ## Playwright 實抓證據 — [`q2/evidence/playwright/`](evidence/playwright)
 
@@ -63,6 +75,6 @@
 | [`generic_plan_check.py`](code/generic_plan_check.py) | 查第一輪 pg_trgm 2 字詞 9.2 到 10 秒的原因：psycopg 自動 prepare 之後 PostgreSQL 改用 generic plan，計時與 EXPLAIN 看到的計畫不同 |
 | [`sql/`](code/sql) | 建表、造資料、建索引、量測、查詢的 SQL；`06_pg_bigm.sql` 是 pg_bigm 擴充套件的索引 |
 | [`row_layout.py`](code/row_layout.py) | 讀第 0 頁第 1 則的原始 bytes，逐欄列出起點、長度、對齊補了幾個 byte（補的都是 00），對照 `pg_column_size`；輸出 [`q2_row_layout_page0.json`](data/q2_row_layout_page0.json)：列標頭 24 B、貼文 ID 32、粉專 ID 8、粉專名稱 14、補 2、發文時間 8、內文 754、補 6、9 個數字欄 72，合計 920 B |
-| [`q2_model.py`](code/q2_model.py) | 估算模型（題目 (a)(b)(c) 的算式），與頁面 `const D` 的實測數字對照 |
+| [`q2_model.py`](code/q2_model.py) | 估算模型（瓶頸 1 的 (a)(b)(c) 算式），與互動頁 `const D` 的實測數字對照 |
 | [`tests/`](code/tests) | pytest 24 項（離線） |
-| [`RESULTS.md`](code/RESULTS.md) | 實測結論：Linux 100 萬列與原頁一致（simple 0%）；Windows 的 +43% 已重現到位元組；PTT 與維基語料的兩字詞索引 947 MB 到 1,165 MB，是原頁 406 MB 的 2.3 到 2.9 倍；2 字詞查詢 pg_trgm 退回全表掃描 |
+| [`RESULTS.md`](code/RESULTS.md) | 實測結論：Linux 100 萬列與互動頁一致（simple 0%）；Windows 的 +43% 已重現到位元組；PTT 與維基語料的兩字詞索引 947 MB 到 1,165 MB，是互動頁 406 MB 的 2.3 到 2.9 倍；2 字詞查詢 pg_trgm 退回全表掃描 |

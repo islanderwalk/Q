@@ -20,7 +20,7 @@ from fastavro.validation import validate
 HERE = Path(__file__).resolve().parent
 PARSER_DIR = HERE.parent
 GCP_DIR = HERE.parents[2]
-AVSC = GCP_DIR / "schemas" / "qsearch-crawl-event-v1.avsc"
+AVSC = GCP_DIR / "schemas" / "argus-crawl-event-v1.avsc"
 BQ_TF = GCP_DIR / "bq.tf"
 FIXTURES = PARSER_DIR / "tests" / "fixtures"
 

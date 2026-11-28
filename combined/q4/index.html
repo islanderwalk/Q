@@ -1,11 +1,12 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Threads 爬蟲 Q4</title>
+<!doctype html><html lang="zh-Hant"><head>
+<meta name="color-scheme" content="dark"><style id="force-dark">:root{color-scheme:dark}</style><script>(function(){var r=document.documentElement;function f(){if(r.getAttribute("data-theme")!=="dark")r.setAttribute("data-theme","dark")}f();new MutationObserver(f).observe(r,{attributes:true,attributeFilter:["data-theme"]})})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Threads 爬蟲</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* Layout: 單欄閱讀寬度 + 黏頂分段導覽；每段「交卷原文」在上、可操作的實驗在下，像網路檢查器的面板 */
+/* Layout: 單欄閱讀寬度 + 黏頂分段導覽；每段「設計摘要」在上、可操作的實驗在下，像網路檢查器的面板 */
 :root{
   --bg:#f3f5f8; --surface:#ffffff; --fg:#17202b; --muted:#5a6676; --line:#dbe2ea;
   --accent:#2b55c8; --accent-soft:#e5ebfb; --code-bg:#eef1f6;
@@ -193,28 +194,28 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 </style>
 
 <nav class="tabs" aria-label="段落"><div class="in">
-  <a href="#q">題目</a><a href="#a">(a) 請求量</a><a href="#b">(b) 防封</a><a href="#c">(c) 成本</a>
+  <a href="#q">情境與限制</a><a href="#a">瓶頸一 請求量</a><a href="#b">瓶頸二 防封</a><a href="#c">瓶頸三 成本</a>
 </div></nav>
 
 <div class="wrap">
 
 <section id="q">
-  <div class="sec-head"><span class="tag">Q4</span><h2>題目</h2></div>
+  <div class="sec-head"><h2>情境與限制</h2></div>
   <div class="question">
-    <p>我們需要建置一套 Threads 貼文爬蟲系統，目標涵蓋 40 萬個帳號，擷取欄位須包含貼文 URL、內文與發文時間。該頁面為公開頁面，無需登入即可存取。每個帳號每次至少擷取 10 篇貼文，每日執行 4 輪抓取。</p>
+    <p>我想在 ARGUS 做一套 Threads 爬蟲，目標 40 萬個公開帳號，每篇要有貼文 URL、內文與發文時間，不登入，每個帳號每輪至少 10 篇，每天 4 輪。以下三個瓶頸是我卡住的地方。</p>
     <ol>
-      <li><b>(a)</b><span>根據你的評估，此系統每日需發送多少次 HTTP requests？請說明估算邏輯。以及對於 Threads 網站上頭實質的 requests 呼叫狀況掌握多少？</span></li>
-      <li><b>(b)</b><span>若使用單一 IP 發送請求，將面臨反爬蟲機制的封鎖風險。此外，由於大量開發者已在主流雲端平台上部署類似服務，其對外 IP 段多半已遭 Threads 列入黑名單。請問你會採用什麼策略突破封鎖？如何選擇代理（Proxy）方案？</span></li>
-      <li><b>(c)</b><span>請估算上述方案每月的代理成本，並檢附計算方式，與牌價。</span></li>
+      <li><b>瓶頸一</b><span>未登入的個人頁只內嵌 4 串，每日會送出多少次請求、網站上實際的請求長什麼樣，我得自己量。</span></li>
+      <li><b>瓶頸二</b><span>單一 IP 會被反爬蟲機制封鎖，而雲端平台的 IP 段多半已被 Threads 列入黑名單。要怎麼換 IP、選哪一種代理？</span></li>
+      <li><b>瓶頸三</b><span>代理按流量計費，要把請求數換算成每月的 TB 數，再對照代理牌價，算出每月成本。</span></li>
     </ol>
-    <span class="limit">上限 600 字 · 交卷答案 <span id="cnt-all">600</span> 字（連空白與換行），不含空白 <span id="cnt-nows">523</span> 字</span>
+    <span class="limit" style="display:none"><span id="cnt-all">600</span> 字（連空白與換行），不含空白 <span id="cnt-nows">523</span> 字</span>
   </div>
 </section>
 
 <!-- (a) -->
 <section id="a">
-  <div class="sec-head"><span class="tag">(a)</span><h2>每日請求量，與實際請求長什麼樣</h2></div>
-  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="a"></span></div>
+  <div class="sec-head"><span class="tag">瓶頸一</span><h2>每日請求量，與實際請求長什麼樣</h2></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">設計摘要</span><span class="small muted mono" data-cnt="a"></span></div>
     <p data-ans="a"></p></div>
 
   <div class="panel">
@@ -297,8 +298,8 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 
 <!-- (b) -->
 <section id="b">
-  <div class="sec-head"><span class="tag">(b)</span><h2>封鎖與代理選擇</h2></div>
-  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="b"></span></div>
+  <div class="sec-head"><span class="tag">瓶頸二</span><h2>封鎖與代理選擇</h2></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">設計摘要</span><span class="small muted mono" data-cnt="b"></span></div>
     <p data-ans="b"></p></div>
 
   <div class="panel">
@@ -344,24 +345,24 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
         <div>User-agent: *</div><div>Disallow: /</div>
       </div>
       <p class="small">對所有爬蟲整站禁止，並註明未經 Threads 書面許可不得以自動化方式蒐集資料。GPTBot 等 14 組點名的爬蟲也是整站禁止；Googlebot 等 22 組只擋部分路徑。</p>
-      <p class="small muted">robots.txt 是君子協定，沒有技術上的強制力；它的作用是留下「網站已明示拒絕」的紀錄。答案 (b) 最後一句就是在講這個法遵風險。</p>
+      <p class="small muted">robots.txt 是君子協定，沒有技術上的強制力；它的作用是留下「網站已明示拒絕」的紀錄。瓶頸二 摘要的最後一句就是在講這個法遵風險。</p>
     </div>
   </div>
 </section>
 
 <!-- (c) -->
 <section id="c">
-  <div class="sec-head"><span class="tag">(c)</span><h2>每月代理成本</h2></div>
-  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="c"></span></div>
+  <div class="sec-head"><span class="tag">瓶頸三</span><h2>每月代理成本</h2></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">設計摘要</span><span class="small muted mono" data-cnt="c"></span></div>
     <p data-ans="c"></p></div>
 
   <div class="panel">
-    <div class="panel-h"><h3>流量試算</h3><span class="small muted">每月請求數取自 (a)</span></div>
+    <div class="panel-h"><h3>流量試算</h3><span class="small muted">每月請求數取自瓶頸一</span></div>
     <div class="panel-b grid2">
       <div style="display:flex;flex-direction:column;gap:12px">
         <div class="field"><label for="in-resp">回應大小（壓縮後，KB）· 10-29 平均 27.8／11-15 重測 26.4</label><div class="row"><input id="in-resp" type="range" min="10" max="80" step="0.1" value="27.8"><output id="o-resp">27.8</output></div></div>
         <div class="field"><label for="in-up">上傳大小（KB）· 10-29 4.08／11-15 4.6</label><div class="row"><input id="in-up" type="range" min="1" max="10" step="0.1" value="4.1"><output id="o-up">4.1</output></div></div>
-        <div class="btnrow" role="group" aria-label="套用實測值"><button class="b" id="pre-old" aria-pressed="true">套用 10-29（答案用的）</button><button class="b" id="pre-new" aria-pressed="false">套用 11-15 重測</button></div>
+        <div class="btnrow" role="group" aria-label="套用實測值"><button class="b" id="pre-old" aria-pressed="true">套用 10-29（摘要用的）</button><button class="b" id="pre-new" aria-pressed="false">套用 11-15 重測</button></div>
         <div class="field"><label for="in-tls">TLS 握手等額外流量（估計，%）</label><div class="row"><input id="in-tls" type="range" min="0" max="50" step="1" value="18"><output id="o-tls">18%</output></div></div>
       </div>
       <dl class="kv">
@@ -387,11 +388,11 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
       <div class="tw"><table class="t">
         <thead><tr><th>量測</th><th>每次</th><th>每月（含 TLS）</th><th>IPRoyal $1.84</th><th>Oxylabs $2.5</th></tr></thead>
         <tbody>
-          <tr><td>10-29（答案用的）</td><td>27.8＋4.08＝31.9 KB</td><td>1.53（1.81）TB</td><td>$2,816–3,322</td><td>$3,826–4,514</td></tr>
+          <tr><td>10-29（摘要用的）</td><td>27.8＋4.08＝31.9 KB</td><td>1.53（1.81）TB</td><td>$2,816–3,322</td><td>$3,826–4,514</td></tr>
           <tr><td>11-15 重測</td><td>26.4＋4.6＝31.0 KB</td><td>1.49（1.76）TB</td><td>$2,739–3,232</td><td>$3,721–4,391</td></tr>
         </tbody>
       </table></div>
-      <p class="small"><b>結論：</b>每次請求少約 3%，答案 (c) 的 1.5 TB／1.8 TB 與 US$2.8–3.3k、US$3.8–4.5k 在四捨五入內仍成立，不必改答案。<span class="muted">金額區間下緣不含 TLS、上緣含 TLS 18%（估計）。單一帳號差到 10 倍，樣本又偏大帳號，40 萬個一般帳號的平均可能更小。</span></p>
+      <p class="small"><b>結論：</b>每次請求少約 3%，瓶頸三 的 1.5 TB／1.8 TB 與 US$2.8–3.3k、US$3.8–4.5k 在四捨五入內仍成立，不必改摘要。<span class="muted">金額區間下緣不含 TLS、上緣含 TLS 18%（估計）。單一帳號差到 10 倍，樣本又偏大帳號，40 萬個一般帳號的平均可能更小。</span></p>
     </div>
   </div>
 
@@ -403,7 +404,7 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
   </div>
 
   <div class="panel">
-    <div class="panel-h"><h3>其他家牌價（2026-10-28 查，未放進答案）</h3></div>
+    <div class="panel-h"><h3>其他家牌價（2026-10-28 查，未放進摘要）</h3></div>
     <div class="tw"><table class="t">
       <thead><tr><th>供應商</th><th>方案</th><th>價格</th></tr></thead>
       <tbody>
@@ -422,9 +423,9 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 <script>
 (function(){
   var ANS = {
-    a:"(a) 請求量：未登入時 profile HTML 只內嵌 4 串，但分頁 GraphQL query 帶 userID、after=null、first=10 即回最新 10 串，含 code（組 URL）、全文、taken_at，不必抓 HTML。每帳號每輪 1 次：40 萬×4＝每日 160 萬次（≈18.5 req/s）。userID 快取一次；csrftoken/lsd 由無頭瀏覽器定期取得、跨帳號共用，免登入與 cookie。",
-    b:"(b) 防封：須帶瀏覽器 Sec-Fetch 標頭與 4 個 x-header，缺一即無貼文。實測單一 IP 以 5 req/s 打約 80–100 次，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）。故採住宅輪替代理、每請求換 IP；遇 401 剔除該 IP、退避，監控成功率與每次串數，異常即降速。另 robots.txt 禁止未經書面許可自動蒐集。",
-    c:"(c) 成本：實測每次回應 27.8 KB、上傳 4.1 KB，每月 4,800 萬次約 1.5 TB，含 TLS 1.8 TB。IPRoyal $1.84/GB（10 TB 起購、不過期）約 US$2.8–3.3k/月；Oxylabs $2.5/GB 約 US$3.8–4.5k/月。ISP 固定 IP 因單 IP 可持續速率未知且封鎖久，不作主力。"
+    a:"瓶頸一（請求量）：未登入的個人頁 HTML 只內嵌 4 串，不夠 10 串。改打分頁 GraphQL query，帶 userID、after=null、first=10，就能拿到最新 10 串，含 code（組 URL）、全文、taken_at，不必抓 HTML。每帳號每輪 1 次：40 萬×4＝每日 160 萬次（≈18.5 req/s）。userID 我快取一次；csrftoken／lsd 由無頭瀏覽器定期取得、跨帳號共用，免登入、不帶 cookie。",
+    b:"瓶頸二（防封與代理）：缺瀏覽器 Sec-Fetch 標頭或 4 個 x-header 任一，GraphQL 就沒有貼文。實測單一 IP 以 5 req/s 打約 80–100 次後，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）。所以我選住宅輪替代理、每請求換 IP；遇 401 就剔除該 IP 並退避，監控成功率與每次串數，異常即降速。robots.txt 禁止未經書面許可自動蒐集，這一點我保留在範圍裡。",
+    c:"瓶頸三（月費）：實測每次回應 27.8 KB、上傳 4.1 KB，每月 4,800 萬次約 1.5 TB，含 TLS 1.8 TB。IPRoyal $1.84/GB（10 TB 起購、不過期）約 US$2.8–3.3k/月；Oxylabs $2.5/GB 約 US$3.8–4.5k/月。ISP 固定 IP 因單 IP 可持續速率未測得、封鎖又久，我不作主力。"
   };
   var $ = function(id){return document.getElementById(id)};
   var fmt = function(n){return Math.round(n).toLocaleString("en-US")};
@@ -441,10 +442,10 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 
   // answer phrases -> hover shows real F12 / terminal screenshots (red boxes)
   var HV = [
-    {ans:"b", phrase:"須帶瀏覽器 Sec-Fetch 標頭與 4 個 x-header，缺一即無貼文", href:"shots/f5.webp",
+    {ans:"b", phrase:"缺瀏覽器 Sec-Fetch 標頭或 4 個 x-header 任一，GraphQL 就沒有貼文", href:"shots/f5.webp",
      imgs:[{src:"shots/f5.webp", alt:"DevTools 的 Request Headers：紅框為必要標頭，灰色為可省略"}],
      cap:"網頁自己送分頁 query 的 Request Headers（F12 實拍）：紅＝必要（x-csrftoken、x-fb-lsd、x-ig-app-id、x-logged-out-threads-migrated-request、Sec-Fetch-*），灰＝可省略（cookie、x-asbd-id、x-bloks-version-id、x-root-field-name、x-web-session-id、x-fb-friendly-name）。點連結開原尺寸。"}
-    ,{ans:"b", phrase:"單一 IP 以 5 req/s 打約 80–100 次，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）", href:"shots/g0.webp",
+    ,{ans:"b", phrase:"實測單一 IP 以 5 req/s 打約 80–100 次後，GraphQL 即按 IP 封鎖（401，換 token 無效，5 分鐘未解；HTML 照常）", href:"shots/g0.webp",
      imgs:[{src:"shots/g0.webp", alt:"DevTools Network：頁面 200、GraphQL query 401；cmd ipconfig 與 ipify 顯示同一個對外 IP"}],
      cap:"實拍（Playwright 開頁＋F12 Network 實拍，未遮蔽）：被封時 threads.com/@zuck 的 HTML 文件仍 200，網頁自己送的分頁 query 為 401。下方是測試主機的 cmd ipconfig /all（iPhone 熱點 172.20.10.3）與 api.ipify.org 回應，對外 IP 同為 39.10.64.xxx。11/16 換出口 IP（熱點開關飛航）後同一台機器立刻回 200，所以封鎖綁的是 IP。11/16 重測：1 req/s 連發，前 50 次 200、第 51 次起 401；封鎖後休息 30、60、120、300 秒再以 2 req/s 試，皆 0 次成功。點連結開原尺寸。"}
     ,{ans:"c", phrase:"實測每次回應 27.8 KB、上傳 4.1 KB", href:"shots/g1.webp",
@@ -452,7 +453,7 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
      cap:"實拍（Playwright 開頁＋F12 Network 實拍，未遮蔽，11/16 換 IP 後）：7 個大帳號第 1 頁 query 全 200，Size 欄（傳輸量）7.7～41.1 kB，合計 174 kB、平均約 24.8 kB；請求標頭 Content-Length 4637 B。回應為 zstd 壓縮，展開後 JSON 約 547 KB（zuck 第 1 頁）。27.8 KB 是 10/29 的平均、11/15 重測 12 帳號為 26.4 KB，三次都落在 25～28 KB。點連結開原尺寸。"}
     ,{ans:"c", phrase:"含 TLS 1.8 TB", href:"shots/g2.webp",
      imgs:[{src:"shots/g2.webp", alt:"Wireshark：同一條新連線的 ClientHello 517 B、伺服器首包 3530 B、Finished 64 B"}],
-     cap:"實拍（Wireshark 抓 threads.com 的 TLS 1.3 新連線，未遮蔽）：每條新連線要先傳 ClientHello 517 B、伺服器首包 2784＋746＝3530 B、Finished 64 B，握手約 4.1 KB，加 session ticket 與關閉通知約 4.2～4.3 KB。每個請求約 30～33 KB，握手約佔 13～14%。誠實說明：答案的 1.8 TB 用的是估計 18%（約 5.6 KB），實測偏低，以 13.5% 重算約 1.7 TB；只有「每次請求都換 IP＝每次新連線」才會每次付握手，代理商按哪一層計費、CONNECT 那一段未量。"}
+     cap:"實拍（Wireshark 抓 threads.com 的 TLS 1.3 新連線，未遮蔽）：每條新連線要先傳 ClientHello 517 B、伺服器首包 2784＋746＝3530 B、Finished 64 B，握手約 4.1 KB，加 session ticket 與關閉通知約 4.2～4.3 KB。每個請求約 30～33 KB，握手約佔 13～14%。誠實說明：摘要的 1.8 TB 用的是估計 18%（約 5.6 KB），實測偏低，以 13.5% 重算約 1.7 TB；只有「每次請求都換 IP＝每次新連線」才會每次付握手，代理商按哪一層計費、CONNECT 那一段未量。"}
   ];
   var hvAll = [];
   var hvTouch = matchMedia("(hover: none)");
@@ -563,7 +564,7 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
     {k:"x-fb-lsd", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"列為必要。個別拿掉的狀態碼沒有紀錄；只用 HTML 裡的 LSD 自己組標頭是 403。"}},
     {k:"x-ig-app-id", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"列為必要。個別拿掉的狀態碼沒有紀錄。"}},
     {k:"x-logged-out-threads-migrated-request", need:true, fail:{code:"200", cls:"warn", t:"空回應", d:"實測：拿掉後仍是 200，但只回 289 bytes，沒有貼文。"}},
-    {k:"Sec-Fetch-*（瀏覽器標頭）", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"答案寫須帶瀏覽器 Sec-Fetch 標頭；GraphQL 上個別拿掉的結果沒有紀錄。"}},
+    {k:"Sec-Fetch-*（瀏覽器標頭）", need:true, fail:{code:"—", cls:"bad", t:"無貼文", d:"摘要寫須帶瀏覽器 Sec-Fetch 標頭；GraphQL 上個別拿掉的結果沒有紀錄。"}},
     {k:"cookie", need:false},
     {k:"x-asbd-id", need:false},
     {k:"x-bloks-version-id", need:false},

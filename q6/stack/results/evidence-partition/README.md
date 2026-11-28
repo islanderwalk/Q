@@ -1,6 +1,6 @@
 # 證據：回補真的照「渠道 × 月」切批，在 ES 裡怎麼切
 
-擷取時間 2026-11-14 16:02（台北）。來源是 WSL Ubuntu 上 docker compose 專案 qsearch-q6 的 Elasticsearch 9.5.5（localhost:9200）和 PostgreSQL 回補帳本（127.0.0.1:55433）。每張圖都是當下發出請求、把原始回應排版後截圖，產生腳本是同目錄的 `capture.js`。
+擷取時間 2026-11-14 16:02（台北）。來源是 WSL Ubuntu 上 docker compose 專案 argus-q6 的 Elasticsearch 9.5.5（localhost:9200）和 PostgreSQL 回補帳本（127.0.0.1:55433）。每張圖都是當下發出請求、把原始回應排版後截圖，產生腳本是同目錄的 `capture.js`。
 
 | 圖 | 證明什麼 |
 |---|---|
@@ -35,7 +35,7 @@
 - **seg_ver 總數比 5 批多：** ES 裡 seg_ver_v2 = 22026111201 的文件共 95,268 篇，比 5 批合計的 65,789 多。多出來的是串流斷詞服務寫的；用 channel＋month 篩時，逐批數字完全相同。
 - **只跑完 5 個分區：** 177 個分區只跑完 5 個（狀態 awaiting_pm，等 PM 首月抽查），其餘 172 個是 pending。
 
-## Kibana 截圖（只用題目的 ES，不經 PG）
+## Kibana 截圖（只用 ES，不經 PG）
 
 2026-11-14 用 Kibana 9.5.5 Discover 的 ES|QL 直接查 posts 索引，腳本 `capture_kibana.js`。
 

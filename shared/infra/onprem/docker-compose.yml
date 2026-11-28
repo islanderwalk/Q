@@ -1,16 +1,16 @@
-# QSearch 地端 stack（可實際啟動；驗證紀錄見 VERIFY.md）。
+# ARGUS 地端 stack（可實際啟動；驗證紀錄見 VERIFY.md）。
 # 與 docker-compose.example.yml（示意、未啟動）不同，本檔的每個映像都固定 tag@digest，並且跑過端到端測試。
 #
-#   docker compose -p qsearch-onprem --env-file .env.example up -d --build --wait
-#   docker compose -p qsearch-onprem --env-file .env.example run --rm smoke
-#   docker compose -p qsearch-onprem --env-file .env.example down -v
+#   docker compose -p argus-onprem --env-file .env.example up -d --build --wait
+#   docker compose -p argus-onprem --env-file .env.example run --rm smoke
+#   docker compose -p argus-onprem --env-file .env.example down -v
 #
 # 六段對照：排=scheduler、派=rabbitmq、抓=worker、存=minio、解=parser+postgres(pg_bigm)、用=clickhouse/opensearch/redis
 # 主機埠只綁 127.0.0.1:18100–18199（本機開發用；不可直接對外）。
 # 映像來源：Docker Hub 匿名拉取會 429，所以用 mirror.gcr.io（Docker Hub 的公開快取）。MinIO 官方已不再發佈
 # Docker 映像（docker.io/minio/minio、quay.io/minio/minio 皆拉不到），改用 bitnamilegacy/minio。
 
-name: qsearch-onprem
+name: argus-onprem
 
 x-app-env: &app-env
   AMQP_URL: amqp://${RABBITMQ_USER:?set in .env}:${RABBITMQ_PASSWORD:?set in .env}@rabbitmq:5672/%2F
@@ -20,20 +20,20 @@ x-app-env: &app-env
   S3_ENDPOINT: minio:9000
   S3_ACCESS_KEY: ${MINIO_ROOT_USER:?set in .env}
   S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set in .env}
-  RAW_BUCKET: qsearch-raw-scraped
+  RAW_BUCKET: argus-raw-scraped
   PG_DSN: postgresql://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/crawler
   CLICKHOUSE_HOST: clickhouse
   CLICKHOUSE_USER: ${CLICKHOUSE_USER:?set in .env}
   CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set in .env}
-  CLICKHOUSE_DB: qsearch
+  CLICKHOUSE_DB: argus
   OPENSEARCH_URL: http://opensearch:9200
   OPENSEARCH_INDEX: ptt-posts
   REDIS_URL: redis://redis:6379/0
   FIXTURE_ROOT: /fixtures
-  SCHEMA_PATH: /schemas/qsearch-crawl-event-v1.avsc
+  SCHEMA_PATH: /schemas/argus-crawl-event-v1.avsc
   CRAWL_SOURCES: ptt
   CRAWL_MAX_ATTEMPTS: "5"        # = Cloud Tasks retry_config.max_attempts
-  PARSER_MAX_ATTEMPTS: "5"       # = Pub/Sub qsearch-parser-sub max_delivery_attempts
+  PARSER_MAX_ATTEMPTS: "5"       # = Pub/Sub argus-parser-sub max_delivery_attempts
   CRAWL_RATE_PER_SECOND: "5"     # = Cloud Tasks max_dispatches_per_second
   RETRY_BACKOFF_SECONDS: "0.5"
 
@@ -42,7 +42,7 @@ x-build-common: &build-common
   secrets: [build_ca]
 
 x-app: &app
-  image: qsearch-onprem/app:0.1.0
+  image: argus-onprem/app:0.1.0
   build:
     <<: *build-common
     context: ./app
@@ -53,7 +53,7 @@ x-app: &app
     - ../../../q6/data/ptt_titles_7d.jsonl:/fixtures/q6/ptt_titles_7d.jsonl:ro
     # 事件格式與 GCP 共用同一份 Avro schema。
     - ../gcp/schemas:/schemas:ro
-  networks: [qsearch]
+  networks: [argus]
 
 services:
   # ---------------- 派：RabbitMQ（Cloud Tasks + Pub/Sub 的替代）----------------
@@ -74,7 +74,7 @@ services:
       timeout: 20s
       retries: 30
       start_period: 10s
-    networks: [qsearch]
+    networks: [argus]
 
   # ---------------- 存：MinIO（GCS raw-scraped 的替代，S3 相容）----------------
   minio:
@@ -92,11 +92,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-    networks: [qsearch]
+    networks: [argus]
 
   # ---------------- 解：PostgreSQL 15 + pg_bigm（Cloud SQL POSTGRES_15 的替代）----------------
   postgres:
-    image: qsearch-onprem/postgres-bigm:15.19-pgbigm1.2-20250903
+    image: argus-onprem/postgres-bigm:15.19-pgbigm1.2-20250903
     build:
       <<: *build-common
       context: ./postgres-bigm
@@ -113,7 +113,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-    networks: [qsearch]
+    networks: [argus]
 
   # ---------------- 用：ClickHouse（BigQuery ingest_events 的替代）----------------
   clickhouse:
@@ -121,7 +121,7 @@ services:
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:?set in .env}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set in .env}
-      CLICKHOUSE_DB: qsearch
+      CLICKHOUSE_DB: argus
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
     # 官方建議 ulimits nofile=262144；本次驗證的 sandbox 不允許提高 rlimit（runc: operation not permitted），所以不設定。
     # 正式機請加上：ulimits: {nofile: {soft: 262144, hard: 262144}}
@@ -134,7 +134,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-    networks: [qsearch]
+    networks: [argus]
 
   # ---------------- 用：OpenSearch（Elasticsearch 的替代；單節點、關閉 security，僅本機）----------------
   opensearch:
@@ -159,7 +159,7 @@ services:
       timeout: 10s
       retries: 30
       start_period: 20s
-    networks: [qsearch]
+    networks: [argus]
 
   # ---------------- 用：Redis（Firestore session 池的替代；AOF 持久化）----------------
   redis:
@@ -174,12 +174,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-    networks: [qsearch]
+    networks: [argus]
 
   # ---------------- 一次性初始化（對應 Terraform 建 bucket/topic/subscription/table）----------------
   bootstrap:
     <<: *app
-    command: ["python", "-m", "qsearch_onprem.bootstrap"]
+    command: ["python", "-m", "argus_onprem.bootstrap"]
     restart: "no"
     depends_on:
       rabbitmq: {condition: service_healthy}
@@ -192,7 +192,7 @@ services:
   # ---------------- 排：scheduler（Cloud Scheduler crawl-tick 每 15 分鐘）----------------
   scheduler:
     <<: *app
-    command: ["python", "-m", "qsearch_onprem.scheduler", "loop"]
+    command: ["python", "-m", "argus_onprem.scheduler", "loop"]
     environment:
       <<: *app-env
       TICK_INTERVAL_SECONDS: "900"
@@ -204,7 +204,7 @@ services:
   # ---------------- 抓＋存：crawler worker ----------------
   worker:
     <<: *app
-    command: ["python", "-m", "qsearch_onprem.worker"]
+    command: ["python", "-m", "argus_onprem.worker"]
     restart: unless-stopped
     depends_on:
       bootstrap: {condition: service_completed_successfully}
@@ -212,7 +212,7 @@ services:
   # ---------------- 解：parser（RabbitMQ consumer）----------------
   parser:
     <<: *app
-    command: ["python", "-m", "qsearch_onprem.parser"]
+    command: ["python", "-m", "argus_onprem.parser"]
     restart: unless-stopped
     depends_on:
       bootstrap: {condition: service_completed_successfully}
@@ -230,7 +230,7 @@ services:
       parser: {condition: service_started}
 
 networks:
-  qsearch:
+  argus:
     driver: bridge
 
 volumes:

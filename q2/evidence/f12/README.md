@@ -1,4 +1,4 @@
-# Q2 FB 貼文欄位 — 畫面與 F12 對照證據
+# FB 貼文搜尋：貼文欄位 — 畫面與 F12 對照證據
 
 目標貼文：NASA 粉專〈Welcome to the Artemis Accords, Vietnam〉
 <https://www.facebook.com/NASA/posts/pfbid02i7hXRsxkXQbb9mvtxBb5jCBdb4pk8xitpnP3cCZF6C56PXk5SNU8sfuwEobZzV5zl>

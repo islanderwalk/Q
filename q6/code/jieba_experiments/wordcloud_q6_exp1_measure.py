@@ -1,4 +1,4 @@
-"""Q6 實驗：jieba 吞吐、症狀重現、加詞的影響範圍（不變量）。
+"""文字雲斷詞實驗：jieba 吞吐、症狀重現、加詞的影響範圍（不變量）。
 
 用法: python -I wordcloud_q6_exp1_measure.py <dict.txt.big> <Gossiping-QA-Dataset.txt> <out_dir>
 """

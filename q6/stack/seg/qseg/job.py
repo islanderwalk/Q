@@ -9,7 +9,7 @@
 - 多 task：每個 task 從 ES 帳本用條件更新（if_seq_no／if_primary_term）搶整個分區，task 之間不會重疊，也不用事先切 slice
 - 閘門：G1 筆數守恆（比不重複 post_id，重抓的重複行不算）、G2 洩漏比例 ≤ 0.1%（網址殘片、電話、硬停用詞、必不可拆的詞；提案值，
   原本是 = 0）、G3 無寫入拒絕且線上正在用的欄位（CANARY_FIELD，預設 terms_v1）探針 p95 不惡化、G4 各渠道首月 PM 抽查
-- 計畫書修正：認領加 attempts < 3（超過轉 failed，不再反覆重領）；心跳改背景執行緒每 20 秒（原本跟著每 500 篇的 bulk 走，
+- 規劃書修正：認領加 attempts < 3（超過轉 failed，不再反覆重領）；心跳改背景執行緒每 20 秒（原本跟著每 500 篇的 bulk 走，
   一批慢了就被當成死掉）；G3 過了而且沒被降速就把全域限速回升 25%，最多回到 backfill_control.ceiling_docs_per_sec（原本只降不升）
 """
 import argparse

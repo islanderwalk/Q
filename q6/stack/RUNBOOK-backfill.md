@@ -5,9 +5,9 @@
 ## 0. 適用範圍（先看）
 
 - **只適用本機整套系統（`q6/stack`）。** 每一條都已逐條對照程式查證過（行號以 2026-11-11 為準），但第 2、5、6、7 節的指令**沒有實際執行過**，第一次用之前先在本機整套系統試一次。
-- **正式環境（GCP）目前沒有可執行的人工回補指令**：`shared/infra/gcp` 從來沒有 apply；Terraform 裡的 Cloud Run Job `qsearch-backfill` 的容器只設了映像，加上設了 `q6_raw_bq_table` 時才有的三個原文來源變數（`RAW_SOURCE`／`RAW_BQ_TABLE`／`RAW_BQ_PROJECT`），其他環境變數、參數與 secret 都沒有（`shared/infra/gcp/run.tf:122-160`，容器見 142-156），映像預設還是範例映像（`variables.tf:67-70`）。缺什麼列在第 8 節。
+- **正式環境（GCP）目前沒有可執行的人工回補指令**：`shared/infra/gcp` 從來沒有 apply；Terraform 裡的 Cloud Run Job `argus-backfill` 的容器只設了映像，加上設了 `q6_raw_bq_table` 時才有的三個原文來源變數（`RAW_SOURCE`／`RAW_BQ_TABLE`／`RAW_BQ_PROJECT`），其他環境變數、參數與 secret 都沒有（`shared/infra/gcp/run.tf:122-160`，容器見 142-156），映像預設還是範例映像（`variables.tf:67-70`）。缺什麼列在第 8 節。
 - 指令都在 `q6/stack` 目錄下、用 **Git Bash 或 WSL** 跑（和 `run.sh` 同一環境）；`V=…; … $V` 是 bash 寫法，PowerShell 不能直接貼。
-- `V` 是這一輪回補的字典版本，`run.sh` 預設 `qsearch-q6-2026.10.30.3`（`run.sh:52、65`）。注意 compose 裡 `seg-job` 自己的預設是 `.2`（`docker-compose.yml:93`），所以指令一定要帶 `-e DICT_VERSION=$V`。
+- `V` 是這一輪回補的字典版本，`run.sh` 預設 `argus-q6-2026.10.30.3`（`run.sh:52、65`）。注意 compose 裡 `seg-job` 自己的預設是 `.2`（`docker-compose.yml:93`），所以指令一定要帶 `-e DICT_VERSION=$V`。
 - 執行前 `es`、`pg`、`dictsrv` 要已經在跑（`./run.sh up`）。下面的 `docker compose run` 都帶 `--no-deps`，不會替你啟動它們；字典服務連不上時 Job 一開始就結束（`job.py:393`）。
 
 ## 1. 先看狀態紀錄
@@ -67,11 +67,11 @@ curl -s "http://localhost:9200/backfill_ledger/_doc/ptt%2F2026-10" | python3 -c 
 接著跑：
 
 ```bash
-V=qsearch-q6-2026.10.30.3; docker compose --profile job run --rm -T --no-deps -e DICT_VERSION=$V seg-job job --partition ptt/2026-10
+V=argus-q6-2026.10.30.3; docker compose --profile job run --rm -T --no-deps -e DICT_VERSION=$V seg-job job --partition ptt/2026-10
 ```
 
 ```bash
-V=qsearch-q6-2026.10.30.3; docker compose --profile job run --rm -T --no-deps -e DICT_VERSION=$V seg-job job --partition ptt/2026-10 --force
+V=argus-q6-2026.10.30.3; docker compose --profile job run --rm -T --no-deps -e DICT_VERSION=$V seg-job job --partition ptt/2026-10 --force
 ```
 
 - **閘門沒過的分區一定要加 `--force`**：不加時從 `checkpoint_line` 接著跑，G2 的「必不可拆詞／網址殘片」只算這次處理到的行（`job.py:246`）。分區已經跑到尾端時一行都不會重算，這兩項變成 0，G2 會「通過」但沒有意義。
@@ -167,7 +167,7 @@ docker rm job-0 job-1 job-2
 先查告警那一版的串流服務實際載入的字典版本：
 
 ```bash
-docker compose exec -T pg psql -U qsearch -d qsearch -c "SELECT service, pipeline, dict_version FROM service_state ORDER BY service"
+docker compose exec -T pg psql -U argus -d argus -c "SELECT service, pipeline, dict_version FROM service_state ORDER BY service"
 ```
 
 再用同一個映像跑一次性容器補（`P`＝告警標的那一版，`D`＝上面查到的該版 `dict_version`）：
@@ -176,7 +176,7 @@ docker compose exec -T pg psql -U qsearch -d qsearch -c "SELECT service, pipelin
 P=v2; D=<查到的版本>; docker compose --profile job run --rm -T --no-deps -e PIPELINE=$P -e DICT_VERSION=$D seg-job fill --channel ptt --max-docs 1000
 ```
 
-- **`DICT_VERSION` 一定要帶。** 不帶時是 `current`（`config.py:6`），也就是 v2 的字典：拿去補 v0 會失敗或失真，補 v1 會把 v2 的詞寫進 v1 欄位、污染 A/B 比對。v0 只能用 legacy 版（`qsearch-q6-legacy-2019.12.31.1`），v1 固定 `qsearch-q6-2026.10.30.1`（`docker-compose.yml:79、85`）。v2 的實際版本取決於最後跑了 `run.sh` 的哪一步，以查詢結果為準。
+- **`DICT_VERSION` 一定要帶。** 不帶時是 `current`（`config.py:6`），也就是 v2 的字典：拿去補 v0 會失敗或失真，補 v1 會把 v2 的詞寫進 v1 欄位、污染 A/B 比對。v0 只能用 legacy 版（`argus-q6-legacy-2019.12.31.1`），v1 固定 `argus-q6-2026.10.30.1`（`docker-compose.yml:79、85`）。v2 的實際版本取決於最後跑了 `run.sh` 的哪一步，以查詢結果為準。
 - 映像的 ENTRYPOINT 已經是 `python -m qseg`（`seg/Dockerfile:19`），所以只接子命令 `fill`。不帶 `--channel`、`--max-docs` 就補全部。
 - 它直接讀 ES 裡的原文重算，候選是「這一版還沒有斷詞欄位、未刪除、抓到超過 15 分鐘」的文章，所以中斷後再跑一次會接著補（`seg/qseg/fill.py`）。
 - 和回補共用 `backfill_control` 的限速，每次分到全域上限 ÷（正在跑的分區數＋1）。PG 連不上時只印 `fill_pg_unavailable` 警告，然後**不限速**照跑；`--no-limit` 也會關掉限速（`fill.py:35-39、89`、`rerun.py:23-33`）。
@@ -190,9 +190,9 @@ P=v2; D=<查到的版本>; docker compose --profile job run --rm -T --no-deps -e
 1. `terraform apply` 沒做過；也沒有把 `q6/stack/seg/Dockerfile` 建置並推到 Artifact Registry 的流程。
 2. Cloud Run Job 沒有設 `DICT_VERSION`、`DICT_BASE_URL`、`PG_DSN`、`ES_URL` 等環境變數（只有原文來源那三個，見第 5 項），也沒有掛 ES 金鑰。回補的服務帳號沒有讀字典 bucket 的權限（只有斷詞服務帳號有，`shared/infra/gcp/q6.tf:138-142`）。
 3. Elasticsearch VM 不在 Terraform 裡（`shared/infra/gcp/README.md:238`），`ES_URL` 沒有目標。
-4. 帳本（批次清單）要先建：`gcloud run jobs execute qsearch-backfill --region=<region> --tasks=1 --args=job,--plan`。`--plan` 從 BigQuery 原文表撈出每個「渠道 × 月」，各寫一列 `pending`，`dict_version` 用這次載到的字典（`job.py` 的 `plan()`、`rawsrc.py` 的 `list_partitions()`）；已在帳本的列不動，可以重跑。建完再用 `--tasks=N` 跑 `job` 開始回補。這兩個 `gcloud` 指令沒在 GCP 上跑過；單一分區用 `--args=job,--partition,<渠道>/<月>`，也沒試過。
-5. 讀 BigQuery 原文的程式已經有（`seg/qseg/rawsrc.py`，`RAW_SOURCE=bigquery`），Terraform 設了 `q6_raw_bq_table` 就會給回補服務帳號那張表的唯讀與本專案的 `bigquery.jobUser`、並設好 Job 的三個變數（`shared/infra/gcp/q6.tf:200-220`、`run.tf:145-155`）。但**正式的原文表還不存在**：欄位、`month` 的算法、`CLUSTER BY` 都只是 `rawsrc.py` 開頭寫的假設，要資料團隊照這個建表。2026-11-14 照這個假設在本專案建了實測表 `q6_raw.posts`（asia-east1，`CLUSTER BY channel, month`），灌進本機 `runtime/raw` 的 659,751 篇，從 Windows 用擁有者帳號的 ADC 連BigQuery 跑：`list_partitions()` 回 177 個「渠道 × 月」，跟本機檔案一模一樣，順序是月份新到舊、同月依渠道（約 10 秒）；`open_partition()` 抽兩個分區（facebook 2026-09 有 1,840 篇、youtube 2025-02 有 43 篇），`raw_count` 和逐篇讀出的篇數都跟本機去重後一致；`plan()` 用這份清單產生 177 列 `pending`。BigQuery 主控台跑同一句切批查詢的畫面：`results/bigquery-partitions-2026-11-14.jpg`。同日再補三項實測：① PostgreSQL（本機 pg 另開資料庫 `q6bq`）：`job --plan` 寫入 177 列 `pending`。② 整個分區從 BigQuery 讀、斷詞、寫 ES（另開索引 `posts_bq`，不碰正式 `posts`）：facebook 2026-09 1,840 篇、約 180 篇/秒，G1（1,840 = 1,840）、G2、G3 過，首月停在 `awaiting_pm`，PM 簽核後 `passed`；ptt 2026-09 32,652 篇、約 313 篇/秒，G1（32,652 = 32,652）到 G3 過，停在 `awaiting_pm`；facebook 2026-08 1,923 篇 G1 過、G2 不過（`url_fragment` 2/1,923 = 0.104%，門檻 0.1%，兩篇的 `https` 漏成詞），閘門照設計擋下，留 `failed` 給人看。③ Cloud Run Job 用 `qsearch-backfill` 服務帳號（只有那張表的 `dataViewer` 和本專案的 `jobUser`）跑同一個映像：`list_partitions()` 177 個、facebook 2026-09 `raw_count` 1,840、逐篇讀出 1,840，exit 0。雲端還沒跑完整的 `job`：Terraform 沒 apply，沒有 Cloud SQL 和 ES，Cloud Run 連不到本機的帳本和 ES。假物件測試在 `q6/code/tests/test_p0_raw_source.py`。對帳（`recon.py`）、`seed`、`impact` 還是讀本機 `RAW_ROOT`，沒有改。
-6. Cloud SQL 上的表（`backfill_control`、`backfill_batches`）不是 Terraform 建的；帳本在 ES 索引 `backfill_ledger`，由 ES 端點與權限管。`PG_DSN` 預設是本機帳密與 `qsearch` 庫（`config.py:11`），正式環境要改成私有 IP、IAM 使用者（回補服務帳號）、TLS（`sql.tf:21-24、36-40、58-61`）。
+4. 帳本（批次清單）要先建：`gcloud run jobs execute argus-backfill --region=<region> --tasks=1 --args=job,--plan`。`--plan` 從 BigQuery 原文表撈出每個「渠道 × 月」，各寫一列 `pending`，`dict_version` 用這次載到的字典（`job.py` 的 `plan()`、`rawsrc.py` 的 `list_partitions()`）；已在帳本的列不動，可以重跑。建完再用 `--tasks=N` 跑 `job` 開始回補。這兩個 `gcloud` 指令沒在 GCP 上跑過；單一分區用 `--args=job,--partition,<渠道>/<月>`，也沒試過。
+5. 讀 BigQuery 原文的程式已經有（`seg/qseg/rawsrc.py`，`RAW_SOURCE=bigquery`），Terraform 設了 `q6_raw_bq_table` 就會給回補服務帳號那張表的唯讀與本專案的 `bigquery.jobUser`、並設好 Job 的三個變數（`shared/infra/gcp/q6.tf:200-220`、`run.tf:145-155`）。但**正式的原文表還不存在**：欄位、`month` 的算法、`CLUSTER BY` 都只是 `rawsrc.py` 開頭寫的假設，要資料團隊照這個建表。2026-11-14 照這個假設在本專案建了實測表 `q6_raw.posts`（asia-east1，`CLUSTER BY channel, month`），灌進本機 `runtime/raw` 的 659,751 篇，從 Windows 用擁有者帳號的 ADC 連BigQuery 跑：`list_partitions()` 回 177 個「渠道 × 月」，跟本機檔案一模一樣，順序是月份新到舊、同月依渠道（約 10 秒）；`open_partition()` 抽兩個分區（facebook 2026-09 有 1,840 篇、youtube 2025-02 有 43 篇），`raw_count` 和逐篇讀出的篇數都跟本機去重後一致；`plan()` 用這份清單產生 177 列 `pending`。BigQuery 主控台跑同一句切批查詢的畫面：`results/bigquery-partitions-2026-11-14.jpg`。同日再補三項實測：① PostgreSQL（本機 pg 另開資料庫 `q6bq`）：`job --plan` 寫入 177 列 `pending`。② 整個分區從 BigQuery 讀、斷詞、寫 ES（另開索引 `posts_bq`，不碰正式 `posts`）：facebook 2026-09 1,840 篇、約 180 篇/秒，G1（1,840 = 1,840）、G2、G3 過，首月停在 `awaiting_pm`，PM 簽核後 `passed`；ptt 2026-09 32,652 篇、約 313 篇/秒，G1（32,652 = 32,652）到 G3 過，停在 `awaiting_pm`；facebook 2026-08 1,923 篇 G1 過、G2 不過（`url_fragment` 2/1,923 = 0.104%，門檻 0.1%，兩篇的 `https` 漏成詞），閘門照設計擋下，留 `failed` 給人看。③ Cloud Run Job 用 `argus-backfill` 服務帳號（只有那張表的 `dataViewer` 和本專案的 `jobUser`）跑同一個映像：`list_partitions()` 177 個、facebook 2026-09 `raw_count` 1,840、逐篇讀出 1,840，exit 0。雲端還沒跑完整的 `job`：Terraform 沒 apply，沒有 Cloud SQL 和 ES，Cloud Run 連不到本機的帳本和 ES。假物件測試在 `q6/code/tests/test_p0_raw_source.py`。對帳（`recon.py`）、`seed`、`impact` 還是讀本機 `RAW_ROOT`，沒有改。
+6. Cloud SQL 上的表（`backfill_control`、`backfill_batches`）不是 Terraform 建的；帳本在 ES 索引 `backfill_ledger`，由 ES 端點與權限管。`PG_DSN` 預設是本機帳密與 `argus` 庫（`config.py:11`），正式環境要改成私有 IP、IAM 使用者（回補服務帳號）、TLS（`sql.tf:21-24、36-40、58-61`）。
 7. task 數預設 1（`variables.tf:122-132`），本機是 3 個；Job timeout 3600 秒、重試 2 次（`run.tf:132-133`），超過一小時的分區會被砍，每次被重領都多耗一次 `attempts`。
 8. PM 頁與 `/api/ops/*` 在正式環境的網址與存取方式沒有定義；簽核、豁免、限速的 API 只有一個自由填寫的 `by`，沒有身分驗證。
 

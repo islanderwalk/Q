@@ -1,6 +1,6 @@
 """parser 測試共用的常數與小工具（conftest 與各測試檔都從這裡匯入）。
 
-不用 `from conftest import ...`：repo 其他題目若也放 conftest.py，一起收集時 `conftest` 這個模組名會指到別人的檔案。
+不用 `from conftest import ...`：repo 其他需求若也放 conftest.py，一起收集時 `conftest` 這個模組名會指到別人的檔案。
 """
 import base64
 import json
@@ -9,14 +9,14 @@ from pathlib import Path
 
 PARSER_DIR = Path(__file__).resolve().parents[1]   # shared/infra/gcp/services/parser
 GCP_DIR = PARSER_DIR.parents[1]                     # shared/infra/gcp
-AVSC_PATH = GCP_DIR / "schemas" / "qsearch-crawl-event-v1.avsc"
+AVSC_PATH = GCP_DIR / "schemas" / "argus-crawl-event-v1.avsc"
 AVSC = json.loads(AVSC_PATH.read_text(encoding="utf-8"))
 
 PATH = "/events/crawl-fetched"
 # Pub/Sub push 只把這些狀態碼當 ack，其他都是 nack（docs.cloud.google.com/pubsub/docs/push，2026-10-30 查閱）。
 ACK = frozenset({102, 200, 201, 202, 204})
 
-# 對應 qsearch-crawl-event-v1.avsc 的一筆合法事件。
+# 對應 argus-crawl-event-v1.avsc 的一筆合法事件。
 VALID_EVENT = {
     "event_id": "evt-0001",
     "schema_version": 1,

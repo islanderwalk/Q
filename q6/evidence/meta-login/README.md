@@ -4,7 +4,7 @@
 
 - 截圖已遮掉帳號頭像、通知數與分頁標題（紅框處）；cookie 與 token 在紀錄檔裡一律只留 sha256 前 10 碼與長度，所有輸出檔掃過沒有任何原值。
 - 每頁固定捲動 25 次、頁與頁之間間隔 5 秒以上、只讀不寫；免登入那一側沿用原爬蟲的結果，沒有改動。
-- 對應題目：Q2（Facebook 貼文欄位）、Q4（Threads）、Q5（Instagram Reels）、Q6（六渠道歷史回補的可行性）。
+- 對應模組：FB 貼文搜尋（Facebook 貼文欄位）、Threads 爬蟲、新指標上線（Instagram Reels）、文字雲斷詞（六渠道歷史回補的可行性）。
 
 ## 一眼看完
 
@@ -476,4 +476,4 @@ cookie 只列名稱、網域、httpOnly 與長度；sha256 前 10 碼留在紀�
 
 - 已入庫：程式 [`q6/code/meta-login/`](../../code/meta-login)；三個平台的落地資料 [`q6/data/meta-login/`](../../data/meta-login)（facebook、threads，以及清洗後的 instagram_clean）；證據鏈圖與比較 [`chain/`](chain)；Instagram 混入推薦貼文的判定 [`chain/instagram_contamination.json`](chain/instagram_contamination.json)。
 - 沒入庫：未遮罩的原始截圖（有登入帳號的頭像）、遮罩後的請求帳本（8.6 MB JSON）、session 紀錄、清洗前的 instagram.jsonl（混入非目標作者），以及證據鏈的 HTML 原始檔（內含 cookie 雜湊）。本頁數字都從那些檔案算出。
-- 免登入那一側的原始截圖與欄位證據在各題的 `evidence/playwright/`，見 [`shared/docs/evidence.md`](../../../shared/docs/evidence.md)。
+- 免登入那一側的原始截圖與欄位證據在各模組的 `evidence/playwright/`，見 [`shared/docs/evidence.md`](../../../shared/docs/evidence.md)。

@@ -2,17 +2,17 @@
 <html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
 <body><script>
 renderDiagram({
-  eyebrow: 'QSearch 筆試 · 第 6 題 · (b) 字典維護',
+  eyebrow: 'ARGUS · 文字雲斷詞 · (b) 字典維護',
   title: '(b) 字典維護流程：字典當程式碼管，每週發一版',
   sub: '候選詞要附證據才進審核；CI 擋掉會讓症狀復發的改動；發版產物帶固定的 total 與影響篇數，三個消費端各自決定何時生效。',
   height: 560,
   nodes: [
     { id: 's1', x: 0, y: 10, w: 250, cls: 'small', title: '搜尋熱詞', sub: '每週前 1,000 名中，不在字典或會被切開的' },
-    { id: 's2', x: 0, y: 98, w: 250, cls: 'small', title: '客戶監測關鍵字', sub: '客戶專案設定的品牌與產品詞' },
+    { id: 's2', x: 0, y: 98, w: 250, cls: 'small', title: '自訂監測關鍵字', sub: '使用者自己設定的品牌與產品詞' },
     { id: 's3', x: 0, y: 186, w: 250, cls: 'small', title: '地名庫', sub: '行政區、商圈、夜市、捷運站；含臺／台變體' },
     { id: 's4', x: 0, y: 274, w: 250, cls: 'small', title: '新詞發現', sub: 'n-gram 頻率＋凝固度（PMI）＋左右鄰字熵' },
     { id: 's5', x: 0, y: 362, w: 250, cls: 'small', title: 'CKIP 差集', sub: 'CKIP 斷成一個詞、jieba 卻切開的' },
-    { id: 's6', x: 0, y: 450, w: 250, cls: 'small', title: 'PM／客戶回報', sub: '在文字雲上看到的錯切' },
+    { id: 's6', x: 0, y: 450, w: 250, cls: 'small', title: 'PM／使用者回報', sub: '在文字雲上看到的錯切' },
 
     { id: 'queue', x: 320, y: 196, w: 230, tag: '候選佇列', title: '附證據', sub: '出現次數、例句、預估影響篇數' },
     { id: 'review', x: 600, y: 196, w: 220, tag: '人工・每週', title: '審核', sub: '分析師或 PM 核可；不自動上線' },

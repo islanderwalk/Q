@@ -1,4 +1,4 @@
-# Cloud Scheduler（每 15 分鐘敲 scheduler 服務；每小時跑 Q3 的 ptt-crawl Job）與 Cloud Tasks（每來源一條佇列）。
+# Cloud Scheduler（每 15 分鐘敲 scheduler 服務；每小時跑 PTT 全文搜尋的 ptt-crawl Job）與 Cloud Tasks（每來源一條佇列）。
 
 resource "google_cloud_scheduler_job" "crawl_tick" {
   name      = "crawl-tick"
@@ -38,12 +38,12 @@ resource "google_cloud_tasks_queue" "crawl" {
   depends_on = [google_project_service.required]
 }
 
-# 每個目標站一條有速率上限的佇列（Q3：PTT 過度請求會被擋；Q4：單 IP 約 5 req/s 就被擋，走住宅代理）。
+# 每個目標站一條有速率上限的佇列（PTT 全文搜尋：PTT 過度請求會被擋；Threads 爬蟲：單 IP 約 5 req/s 就被擋，走住宅代理）。
 # crawl-sub（Pub/Sub push）沒有每站速率上限，只留給 PoC；正式抓取經這兩條佇列。
 resource "google_cloud_tasks_queue" "crawl_site" {
   for_each = {
-    crawl-ptt     = { rps = 1, concurrent = 1 }   # Q3：PTT 禮貌速率
-    crawl-threads = { rps = 20, concurrent = 50 } # Q4：每天 160 萬次 ≈ 18.5 req/s，經住宅代理
+    crawl-ptt     = { rps = 1, concurrent = 1 }   # PTT 全文搜尋：PTT 禮貌速率
+    crawl-threads = { rps = 20, concurrent = 50 } # Threads 爬蟲：每天 160 萬次 ≈ 18.5 req/s，經住宅代理
   }
   name     = each.key
   location = var.region
@@ -97,7 +97,7 @@ resource "google_cloud_run_v2_service_iam_member" "worker_tasks_invoker" {
   member   = "serviceAccount:${google_service_account.tasks_invoker.email}"
 }
 
-# --- Q3 答案的形狀：Cloud Scheduler 每小時直接執行 Cloud Run Job「ptt-crawl」---
+# --- PTT 全文搜尋 解法的形狀：Cloud Scheduler 每小時直接執行 Cloud Run Job「ptt-crawl」---
 # 文件確認：Scheduler 以 OAuth token 呼叫 run.googleapis.com/v2/.../jobs/JOB:run，SA 需要該 Job 的 run.invoker。
 resource "google_cloud_run_v2_job_iam_member" "ptt_crawl_scheduler" {
   project  = var.project_id

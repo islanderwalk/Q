@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PTT 文章 → Q2 粉絲頁貼文表：重灌、量測，並和 q2/answer/fb_q2_posts_table.html 的估算公式對照。
+"""PTT 文章 → FB 貼文搜尋的粉絲頁貼文表：重灌、量測，並和 q2/design/fb_q2_posts_table.html 的估算公式對照。
 
 【使用者驗證步驟】
 前置：PTT 爬蟲可以一直在跑（它只寫 q2_ptt.ptt_articles）。本腳本會整張重灌 fb_posts，
@@ -42,7 +42,7 @@ LOAD_SQL = HERE / "sql" / "ptt_q2_load.sql"
 OUT_JSON = HERE.parent / "data" / "q2_ptt_real_verify.json"
 TZ8 = timezone(timedelta(hours=8))
 
-# 頁面公式的常數（q2/answer/fb_q2_posts_table.html 的 JS 與 fa-* 區塊）
+# 頁面公式的常數（q2/design/fb_q2_posts_table.html 的 JS 與 fa-* 區塊）
 OTHER = 164              # 內文以外的列內容（含列標頭與對齊）
 PAGE_USABLE = 8168       # 8192 − 24 B 頁標頭
 BLOCK = 8192
@@ -377,7 +377,7 @@ def build_caveats(result: dict) -> list:
 
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
-    ap = argparse.ArgumentParser(description="PTT 文章 → Q2 fb_posts 重灌與量測")
+    ap = argparse.ArgumentParser(description="PTT 文章 → fb_posts 重灌與量測")
     ap.add_argument("--host", default="/var/run/postgresql",
                     help="Postgres 主機或 unix socket 目錄（預設 socket，WSL 內以 root 執行即可）")
     ap.add_argument("--port", type=int, default=5432)

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""QSearch 第二輪補證據（本機、住宅 IP、Playwright，未登入）。雲端出口 IP 開 FB／IG 會被導去登入頁，所以這兩站在本機跑。
+"""ARGUS 第二輪補證據（本機、住宅 IP、Playwright，未登入）。雲端出口 IP 開 FB／IG 會被導去登入頁，所以這兩站在本機跑。
 
-  fb   Q2：NASA 粉專 → 一則公開貼文。畫面只有相對時間（如 5h），頁面內嵌資料有發文的 unix 秒數；
+  fb   FB 貼文搜尋：NASA 粉專 → 一則公開貼文。畫面只有相對時間（如 5h），頁面內嵌資料有發文的 unix 秒數；
            粉專數字 ID 出現在哪些欄位；粉專透明度頁有沒有寫「粉專編號」
-  ig   Q5：@nasa Reels 分頁的 play_count，和 10/30 11:05 那一次（q5/evidence/playwright/ig_reel_fields.json）逐支對照
+  ig   新指標上線：@nasa Reels 分頁的 play_count，和 10/30 11:05 那一次（q5/evidence/playwright/ig_reel_fields.json）逐支對照
 
 用法：python capture_round2_residential.py fb,ig [輸出資料夾，預設 ./out]
 規則（沿用 shared/capture/README.md）：只開未登入公開頁；同站兩次導覽間隔 ≥2 秒；每站載入 ≤30 次；
@@ -136,7 +136,7 @@ def overlay(page, items, card=None, masks=None):
         return []
 
 
-# ----------------------------------------------------------------- Q2 Facebook
+# ----------------------------------------------------------------- FB 貼文搜尋 Facebook
 COMMENT_MASKS = [
     "[role=article][aria-label*='Comment' i]", "[role=article][aria-label*='留言']",
     "a[href*='comment_id'] img", "a[href*='comment_id']", "[role=article] svg image",
@@ -213,7 +213,7 @@ def run_fb(browser):
             card={"title": "FB 單則貼文：發文時間與粉專 ID 從哪裡來", "width": 520, "lines": lines}, masks=COMMENT_MASKS)
     rel = shot(page, "q2/evidence/playwright/fb_post_time_and_ids.png")
     add(q="2", id="q2-fb-post-time-ids", node="parser", title="FB 貼文：畫面相對時間 vs 內嵌 creation_time；數字 ID 欄位",
-        claim="Q2 的「發文時間」可以存成絕對時間（內嵌資料的 unix 秒數），不必解析畫面上的「5h」；粉專數字 ID 在頁面資料欄位裡，網址只有使用者名稱",
+        claim="FB 貼文搜尋的「發文時間」可以存成絕對時間（內嵌資料的 unix 秒數），不必解析畫面上的「5h」；粉專數字 ID 在頁面資料欄位裡，網址只有使用者名稱",
         result=f"畫面 {d['rel'] or '—'}；creation_time {ct or '—'}" + (f"（{tw(ct)}，距今 {age_h:.1f} 小時）" if ct else "") +
                f"；{'一致' if agree else '不一致或缺值'}；ID 欄位 " + ("；".join(id_lines) if id_lines else "未見"),
         image=rel, fields={"rel_time": d["rel"], "creation_time": ct, "creation_time_candidates": d["ctimes"], "ids": ids, "app_link_meta": metas},
@@ -240,14 +240,14 @@ def run_fb(browser):
                 "登入視窗照實截下" if t["dialog"] else "沒有登入視窗"]})
     rel = shot(page, "q2/evidence/playwright/fb_page_transparency_id.png")
     add(q="2", id="q2-fb-page-transparency", node="platforms", title="FB 粉專透明度頁：粉專數字 ID",
-        claim="粉專數字 ID（Q2 的「粉絲頁 ID」欄位與 B-tree 索引的鍵）要從頁面資料或透明度頁取得，網址只有使用者名稱",
+        claim="粉專數字 ID（FB 貼文搜尋的「粉絲頁 ID」欄位與 B-tree 索引的鍵）要從頁面資料或透明度頁取得，網址只有使用者名稱",
         result=f"Page ID 字樣 {'有' if t['hasLabel'] else '無'}；數字 {t['pageIdText'] or '未見'}；登入視窗 {'有' if t['dialog'] else '無'}",
         image=rel, fields={"page_id_text": t["pageIdText"], "has_label": t["hasLabel"]},
         source="Playwright 實抓（未登入、住宅 IP）https://www.facebook.com/NASA/about_profile_transparency；標註為截圖時加上")
     ctx.close()
 
 
-# ----------------------------------------------------------------- Q5 Instagram
+# ----------------------------------------------------------------- 新指標上線 Instagram
 # 10/30 11:05:03（台北）那一次的 play_count（q5/evidence/playwright/ig_reel_fields.json）
 PREV_AT = "2026-10-30T11:05:03+08:00"
 PREV = {"DfF3eqGSKKc": 1104795, "De7XCa_TJ4h": 4298087, "De2t82PPyx9": 2929414, "Dez3pRXgW1d": 2400913,
@@ -310,7 +310,7 @@ def run_ig(browser):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     add(q="5", id="q5-ig-reels-play-count-drift", node="platforms", title="IG Reels：同一批 Reels 的 play_count 隔幾小時再抓",
-        claim="Reels 觀看數在發佈數天後仍持續增加；Q5 的 1 小時 SLA 只保證第一筆可查，之後要排程重抓，ES 存值附抓取時間，回補要標「抓到當下」",
+        claim="Reels 觀看數在發佈數天後仍持續增加；新指標上線的 1 小時 SLA 只保證第一筆可查，之後要排程重抓，ES 存值附抓取時間，回補要標「抓到當下」",
         result=f"對上 {len(rows)} 支；" + "；".join(f"{r['code']} +{r['delta']:,}（{r['pct']:+.2f}%）" for r in rows[:4]),
         image=rel, data="q5/evidence/playwright/ig_reels_play_count_drift.json",
         source="Playwright 實抓（未登入、住宅 IP）https://www.instagram.com/nasa/reels/；與 10/30 11:05 的 ig_reel_fields.json 對照；標註為截圖時加上")

@@ -1,15 +1,15 @@
-# Q6 整套系統（Docker）：官方映像為主，GCP 託管服務在本機以官方模擬器或同介面的對應元件代替（對照表見 README.md）。
+# ARGUS｜文字雲斷詞整套系統（Docker）：官方映像為主，GCP 託管服務在本機以官方模擬器或同介面的對應元件代替（對照表見 README.md）。
 # 啟動：./run.sh up（先建字典 artifact、外掛、映像）；所有資料放 runtime/（不進 git）。
-name: qsearch-q6
+name: argus-q6
 x-seg: &seg
-  image: qsearch-seg:local
+  image: argus-seg:local
   build: { context: .., dockerfile: stack/seg/Dockerfile, network: host, args: { SEG_BUILD: "${SEG_BUILD:-unknown}" } }   # 用 ./run.sh image 建，會自動帶 git commit 編號
   environment: &segenv
     ES_URL: http://es:9200
     DICT_BASE_URL: http://dictsrv
     PUBSUB_EMULATOR_HOST: pubsub:8085
-    PUBSUB_PROJECT: qsearch-local
-    PG_DSN: postgresql://qsearch:qsearch@pg:5432/qsearch
+    PUBSUB_PROJECT: argus-local
+    PG_DSN: postgresql://argus:argus@pg:5432/argus
     RAW_ROOT: /data/raw
   depends_on: { es: { condition: service_healthy }, dictsrv: { condition: service_started } }
   volumes: [ "./runtime/raw:/data/raw:ro" ]
@@ -22,10 +22,10 @@ services:
     ports: [ "8081:80" ]
 
   es:                 # 官方 Elasticsearch 9.5.5 ＋ smartcn、ICU、IK（GCP 設計：Compute Engine VM，上面裝 Ops Agent）
-    image: qsearch-es:9.5.5
+    image: argus-es:9.5.5
     build: { context: ./es, network: host }
     environment:
-      - cluster.name=qsearch-q6
+      - cluster.name=argus-q6
       - node.name=es-1
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -53,18 +53,18 @@ services:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
     # 模擬器只把主題與訂閱存在記憶體，容器一重啟就全沒了。所以容器每次啟動（compose up 或 docker restart 都算）
     # 先起模擬器、再跑 scripts/pubsub_init.py 重建（冪等），建好才回報 healthy；seg／api／collector 等 healthy 才啟動
-    entrypoint: [ "bash", "-c", "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=qsearch-local & PUBSUB=http://localhost:8085 python3 /pubsub_init.py --wait 120 || exit 1; wait" ]
+    entrypoint: [ "bash", "-c", "gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=argus-local & PUBSUB=http://localhost:8085 python3 /pubsub_init.py --wait 120 || exit 1; wait" ]
     volumes: [ "./scripts/pubsub_init.py:/pubsub_init.py:ro" ]
     ports: [ "8085:8085" ]
     restart: on-failure:5
-    healthcheck: { test: ["CMD-SHELL", "curl -fs http://localhost:8085/v1/projects/qsearch-local/subscriptions/dict-releases-seg-v2 >/dev/null"], interval: 5s, retries: 30, start_period: 20s }
+    healthcheck: { test: ["CMD-SHELL", "curl -fs http://localhost:8085/v1/projects/argus-local/subscriptions/dict-releases-seg-v2 >/dev/null"], interval: 5s, retries: 30, start_period: 20s }
 
   pg:                 # 官方 PostgreSQL 16：回補帳本／checkpoint、字典發版、影子比對；另放一份詞表做 ES 對照
     image: mirror.gcr.io/library/postgres:16
-    environment: [ "POSTGRES_USER=qsearch", "POSTGRES_PASSWORD=qsearch", "POSTGRES_DB=qsearch" ]
+    environment: [ "POSTGRES_USER=argus", "POSTGRES_PASSWORD=argus", "POSTGRES_DB=argus" ]
     volumes: [ "./pg/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro", "./pg/live.sql:/docker-entrypoint-initdb.d/02-live.sql:ro", "pgdata:/var/lib/postgresql/data" ]
     ports: [ "55433:5432" ]
-    healthcheck: { test: ["CMD-SHELL", "pg_isready -U qsearch"], interval: 5s, retries: 30 }
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U argus"], interval: 5s, retries: 30 }
 
   seg-v2:             # 串流斷詞服務 v2（Cloud Run 服務）：訂閱 parsed-posts-seg-v2；另訂閱 dict-releases（PM 頁發版 → 熱換字典 → 定向重跑）
     <<: *seg
@@ -76,13 +76,13 @@ services:
   seg-v1:             # 串流斷詞服務 v1（舊流程並行，A/B 期間各寫各的欄位）
     <<: *seg
     command: [ "service" ]
-    environment: { <<: *segenv, PIPELINE: v1, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v1, DICT_VERSION: qsearch-q6-2026.10.30.1, METRICS_PORT: "9108" }
+    environment: { <<: *segenv, PIPELINE: v1, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v1, DICT_VERSION: argus-q6-2026.10.30.1, METRICS_PORT: "9108" }
     depends_on: { es: { condition: service_healthy }, dictsrv: { condition: service_started }, pubsub: { condition: service_healthy } }
 
   seg-v0:             # 串流斷詞服務 v0（舊流程重現版：凍結 2019 字典＋逆向最長匹配，重現維護多年的舊文字雲）
     <<: *seg
     command: [ "service" ]
-    environment: { <<: *segenv, PIPELINE: v0, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v0, DICT_VERSION: "${DICT_VERSION_V0:-qsearch-q6-legacy-2019.12.31.1}", METRICS_PORT: "9108" }
+    environment: { <<: *segenv, PIPELINE: v0, PUBSUB_SUBSCRIPTION: parsed-posts-seg-v0, DICT_VERSION: "${DICT_VERSION_V0:-argus-q6-legacy-2019.12.31.1}", METRICS_PORT: "9108" }
     depends_on: { es: { condition: service_healthy }, dictsrv: { condition: service_started }, pubsub: { condition: service_healthy } }
 
   seg-job:            # 回補 Job（Cloud Run Jobs）：與串流服務同一個映像，只是啟動參數不同
@@ -90,7 +90,7 @@ services:
     profiles: [ "job" ]
     command: [ "job" ]
     restart: "no"
-    environment: { <<: *segenv, PIPELINE: v2, DICT_VERSION: "${DICT_VERSION_V2:-qsearch-q6-2026.10.30.2}" }
+    environment: { <<: *segenv, PIPELINE: v2, DICT_VERSION: "${DICT_VERSION_V2:-argus-q6-2026.10.30.2}" }
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
 
   seg-coverage:       # ES 覆蓋與缺值檢查（P0-2）：定時 _search 算未斷詞、published_at 缺值、A/B 覆蓋；/metrics 在 9110
@@ -98,34 +98,34 @@ services:
     command: [ "coverage" ]
     environment: { <<: *segenv, COVERAGE_PORT: "9110" }
 
-  seg-recon:          # 完整性四層對帳＋回補燃盡（計畫書 P0 第 2、8 項）：每小時寫 recon_daily、/metrics 在 9112（GCP 上為排程 Job 推自訂指標）
+  seg-recon:          # 完整性四層對帳＋回補燃盡（規劃書 P0 第 2、8 項）：每小時寫 recon_daily、/metrics 在 9112（GCP 上為排程 Job 推自訂指標）
     <<: *seg
     command: [ "recon", "--interval", "${RECON_INTERVAL:-3600}" ]
     environment: { <<: *segenv, RECON_PORT: "9112" }
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
 
-  seg-quality:        # 文字雲品質日報（計畫書 P0 第 9 項）：每天寫 quality_daily（洩漏率、地名拆分、整詞召回、金標＋McNemar、新詞暴增、RBO/JS）、/metrics 在 9113
+  seg-quality:        # 文字雲品質日報（規劃書 P0 第 9 項）：每天寫 quality_daily（洩漏率、地名拆分、整詞召回、金標＋McNemar、新詞暴增、RBO/JS）、/metrics 在 9113
     <<: *seg
     command: [ "quality", "--interval", "${QUALITY_INTERVAL:-86400}" ]
     environment: { <<: *segenv, QUALITY_PORT: "9113", QUALITY_WINDOW: "${QUALITY_WINDOW:-1d}", QUALITY_SAMPLE: "${QUALITY_SAMPLE:-300}" }
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy } }
 
   api:                # 文字雲 API ＋ PM A/B 前端（Cloud Run 服務）＋ 資料工程端操作：發版（寫字典 artifact、切 current、發控制訊息）、簽核、重播、限速
-    image: qsearch-wordcloud-api:local
+    image: argus-wordcloud-api:local
     build: { context: ., dockerfile: api/Dockerfile, network: host }
     environment: &apienv
       ES_URL: http://es:9200
       DICT_BASE_URL: http://dictsrv
       DICT_ROOT: /dict                               # 與 dictsrv 同一個目錄（GCS bucket 的本機對應元件），API 直接寫新版、切 current
       PUBSUB_EMULATOR_HOST: pubsub:8085
-      PUBSUB_PROJECT: qsearch-local
-      PG_DSN: postgresql://qsearch:qsearch@pg:5432/qsearch
+      PUBSUB_PROJECT: argus-local
+      PG_DSN: postgresql://argus:argus@pg:5432/argus
     volumes: [ "./runtime/dictsrv:/dict" ]
     ports: [ "8080:8080" ]
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_healthy }, dictsrv: { condition: service_started } }
 
   collector:          # 公開 feed 採集器：PTT 看板 Atom、YouTube 頻道（Data API；RSS 只限 POC）、中央社／公視 RSS → ES 本體 ＋ Pub/Sub parsed-posts（api/collector.py）
-    image: qsearch-wordcloud-api:local
+    image: argus-wordcloud-api:local
     command: [ "python", "collector.py" ]
     environment: { <<: *apienv, COLLECT_SKIP: "${COLLECT_SKIP:-}", COLLECT_GAP_SEC: "2.5", COLLECTOR_METRICS_PORT: "9111",
                    YOUTUBE_API_KEY_FILE: "${YOUTUBE_API_KEY_FILE:+/run/secrets/youtube_api_key}", YOUTUBE_FEED_POC: "${YOUTUBE_FEED_POC:-}" }
@@ -135,13 +135,13 @@ services:
 
   crawl-bridge:       # 歷史爬蟲 → 文字雲（api/crawl_bridge.py）：唯讀掛爬蟲輸出目錄，新追加的行接著送進 ES 本體 ＋ parsed-posts；CRAWL_DIR 指宿主機的爬蟲輸出
     profiles: [ "bridge" ]
-    image: qsearch-wordcloud-api:local
+    image: argus-wordcloud-api:local
     command: [ "python", "crawl_bridge.py" ]
     environment: { <<: *apienv, BRIDGE_SINCE: "${BRIDGE_SINCE:-}", BRIDGE_POLL_SEC: "${BRIDGE_POLL_SEC:-60}" }
     volumes: [ "./api/crawl_bridge.py:/app/crawl_bridge.py:ro", "${CRAWL_DIR:-./runtime/crawl}:/crawl:ro" ]
     depends_on: { es: { condition: service_healthy }, pg: { condition: service_healthy }, pubsub: { condition: service_started } }
 
-  es-exporter:        # elasticsearch_exporter（計畫書 P0 第 10 項）：叢集狀態、磁碟水位、breaker、thread pool 拒絕、SLM 快照成功／失敗
+  es-exporter:        # elasticsearch_exporter（規劃書 P0 第 10 項）：叢集狀態、磁碟水位、breaker、thread pool 拒絕、SLM 快照成功／失敗
     image: quay.io/prometheuscommunity/elasticsearch-exporter:v1.9.0
     command: [ "--es.uri=http://es:9200", "--es.all", "--es.indices", "--es.shards", "--collector.clustersettings", "--collector.slm", "--collector.snapshots", "--es.timeout=30s" ]   # v1.9.0 的旗標是 --collector.*（舊的 --es.cluster_settings／--es.slm 已移除，容器會直接退出）
     ports: [ "9114:9114" ]

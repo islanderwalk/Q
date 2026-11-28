@@ -74,12 +74,12 @@ def main():
     res["after_reindex"] = {"phrase_hits_ik": count(phrase), "docs_containing_word_bigram": count(truth)}
 
     # 同義詞：搜尋端用 synonyms set（updateable），改規則不用重建索引
-    syn = es("GET", "/_synonyms/qsearch-search")
+    syn = es("GET", "/_synonyms/argus-search")
     rules = [{"id": r["id"], "synonyms": r["synonyms"]} for r in syn["synonyms_set"]]
     alias = "阿宅"
     q_alias = {"match_phrase": {"content": alias}}
     before = count(q_alias)
-    es("PUT", "/_synonyms/qsearch-search", {"synonyms_set": rules + [{"id": "q6-fatnerd", "synonyms": f"{word}, {alias}"}]})
+    es("PUT", "/_synonyms/argus-search", {"synonyms_set": rules + [{"id": "q6-fatnerd", "synonyms": f"{word}, {alias}"}]})
     t2 = time.time()
     res["synonyms"] = {"rule": f"{word}, {alias}", "hits_for_alias_before": before,
                        "hits_for_alias_after": count(q_alias), "seconds_after_put": round(time.time() - t2, 2),

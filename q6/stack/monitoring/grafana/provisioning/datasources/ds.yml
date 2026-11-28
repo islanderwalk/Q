@@ -7,6 +7,6 @@ datasources:
     uid: pg
     type: grafana-postgresql-datasource
     url: pg:5432
-    user: qsearch
-    jsonData: { database: qsearch, sslmode: disable, postgresVersion: 1600 }
-    secureJsonData: { password: qsearch }
+    user: argus
+    jsonData: { database: argus, sslmode: disable, postgresVersion: 1600 }
+    secureJsonData: { password: argus }
