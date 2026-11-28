@@ -1,11 +1,11 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Threads 爬蟲 Q4</title>
+<title>Threads 爬蟲</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* Layout: 單欄閱讀寬度 + 黏頂分段導覽；每段「交卷原文」在上、可操作的實驗在下，像網路檢查器的面板 */
+/* Layout: 單欄閱讀寬度 + 黏頂分段導覽；每段「設計摘要」在上、可操作的實驗在下，像網路檢查器的面板 */
 :root{
   --bg:#f3f5f8; --surface:#ffffff; --fg:#17202b; --muted:#5a6676; --line:#dbe2ea;
   --accent:#2b55c8; --accent-soft:#e5ebfb; --code-bg:#eef1f6;
@@ -193,13 +193,13 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 </style>
 
 <nav class="tabs" aria-label="段落"><div class="in">
-  <a href="#q">題目</a><a href="#a">(a) 請求量</a><a href="#b">(b) 防封</a><a href="#c">(c) 成本</a>
+  <a href="#q">情境</a><a href="#a">(a) 請求量</a><a href="#b">(b) 防封</a><a href="#c">(c) 成本</a>
 </div></nav>
 
 <div class="wrap">
 
 <section id="q">
-  <div class="sec-head"><span class="tag">Q4</span><h2>題目</h2></div>
+  <div class="sec-head"><h2>情境</h2></div>
   <div class="question">
     <p>我們需要建置一套 Threads 貼文爬蟲系統，目標涵蓋 40 萬個帳號，擷取欄位須包含貼文 URL、內文與發文時間。該頁面為公開頁面，無需登入即可存取。每個帳號每次至少擷取 10 篇貼文，每日執行 4 輪抓取。</p>
     <ol>
@@ -207,14 +207,14 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
       <li><b>(b)</b><span>若使用單一 IP 發送請求，將面臨反爬蟲機制的封鎖風險。此外，由於大量開發者已在主流雲端平台上部署類似服務，其對外 IP 段多半已遭 Threads 列入黑名單。請問你會採用什麼策略突破封鎖？如何選擇代理（Proxy）方案？</span></li>
       <li><b>(c)</b><span>請估算上述方案每月的代理成本，並檢附計算方式，與牌價。</span></li>
     </ol>
-    <span class="limit">上限 600 字 · 交卷答案 <span id="cnt-all">600</span> 字（連空白與換行），不含空白 <span id="cnt-nows">523</span> 字</span>
+    <span class="limit" style="display:none"><span id="cnt-all">600</span> 字（連空白與換行），不含空白 <span id="cnt-nows">523</span> 字</span>
   </div>
 </section>
 
 <!-- (a) -->
 <section id="a">
   <div class="sec-head"><span class="tag">(a)</span><h2>每日請求量，與實際請求長什麼樣</h2></div>
-  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="a"></span></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">設計摘要</span><span class="small muted mono" data-cnt="a"></span></div>
     <p data-ans="a"></p></div>
 
   <div class="panel">
@@ -298,7 +298,7 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 <!-- (b) -->
 <section id="b">
   <div class="sec-head"><span class="tag">(b)</span><h2>封鎖與代理選擇</h2></div>
-  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="b"></span></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">設計摘要</span><span class="small muted mono" data-cnt="b"></span></div>
     <p data-ans="b"></p></div>
 
   <div class="panel">
@@ -352,7 +352,7 @@ table.t td:nth-child(-n+2),table.t th:nth-child(-n+2){white-space:nowrap}
 <!-- (c) -->
 <section id="c">
   <div class="sec-head"><span class="tag">(c)</span><h2>每月代理成本</h2></div>
-  <div class="answer"><div class="lbl"><span class="eyebrow">交卷原文</span><span class="small muted mono" data-cnt="c"></span></div>
+  <div class="answer"><div class="lbl"><span class="eyebrow">設計摘要</span><span class="small muted mono" data-cnt="c"></span></div>
     <p data-ans="c"></p></div>
 
   <div class="panel">

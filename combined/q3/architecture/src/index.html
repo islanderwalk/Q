@@ -123,8 +123,8 @@
 </style>
 </head>
 <body>
-<section class="question" aria-label="Q3 題目">
-  <h2>Q3 [設計] PTT 全文搜尋系統</h2>
+<section class="question" aria-label="情境">
+  <h2>[設計] PTT 全文搜尋系統</h2>
   <p>我們要做一個 PTT 八卦板全文搜尋系統：使用者輸入關鍵字，查找過去 7 天內所有包含該關鍵字的貼文，以及文章下的留言。請設計滿足此需求的 ETL Pipeline。</p>
   <p><b>資料規格：</b></p>
   <ul>
@@ -146,12 +146,10 @@
     <li><a class="ev" data-ev="u" href="../../evidence/playwright/not_monitored_2_404.png" target="_blank" rel="noopener">你決定不監控哪三件事？各自的風險為何可以接受？</a></li>
     <li><a class="ev" data-ev="s" href="../../evidence/playwright/f12_1_requests.png" target="_blank" rel="noopener">若你認為某項規格不合理或定義不清，可以提出修改，但必須說明代價。</a></li>
   </ol>
-  <p>另：交卷時可附一個（只能一個）動工前想問的問題。</p>
-  <p>上限 800 字（不含架構圖與算式）。</p>
-</section>
+  </section>
 <div id="diagram">
   <div class="title">
-    <div class="tag">第 3 題・第 2 小題｜架構圖</div>
+    <div class="tag">架構圖</div>
     <h1>PTT 八卦板全文搜尋 ETL（GCP + Python）</h1>
     <p>依實測規模設計：每天約 890 篇新文章｜7 天約 6,200 篇、23 萬則留言、23 MB 純文字｜每天約 6,300 次請求（0.073 次/秒）</p>
   </div>

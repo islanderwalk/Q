@@ -139,7 +139,7 @@ header { display: grid; gap: 18px; }
 .fx-k:disabled { cursor: default; border-bottom-color: transparent; }
 .fx-k:disabled::after { content: none; }
 .fx-k:not(:disabled):hover, .fx-k:focus-visible, .fx-k[aria-expanded="true"] { border-bottom-color: var(--idx); color: var(--idx); outline: none; }
-/* 3.80 B 展開視窗：先用題目估（上限／合理／下限），再用實測驗證；拖拉或點選，數字和方塊跟著動 */
+/* 3.80 B 展開視窗：先用情境估（上限／合理／下限），再用實測驗證；拖拉或點選，數字和方塊跟著動 */
 #bpa-pop, #fcw-pop { position: fixed; z-index: 60; width: min(640px, calc(100vw - 24px)); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); color: var(--fg);
            border: 1.5px solid var(--idx); border-radius: 8px; box-shadow: 0 12px 36px rgb(0 0 0 / .24); padding: 12px 16px 14px; display: grid; gap: 10px; font-size: 13px; line-height: 1.45; }
 #bpa-pop[hidden], #fcw-pop[hidden] { display: none; }
@@ -623,8 +623,8 @@ footer { font-size: 13px; color: var(--muted); }
     <button type="button" role="tab" data-tab="utf8" aria-selected="false">字元換算台</button>
     <button type="button" role="tab" data-tab="pg" aria-selected="false">PostgreSQL 底層長啥樣子</button>
   </nav>
-  <section class="exam" aria-label="題目">
-    <div class="src"><b>第二題　[估算與選型]</b><span>QSearch 資料工程師筆試題目 v2026.07</span></div>
+  <section class="exam" aria-label="情境">
+    <div class="src"><b>[估算與選型]</b></div>
     <p>有 100 萬則 Facebook 粉絲頁貼文，平均 250 字中文，不含留言，另含心情互動統計、發文時間、粉絲頁名稱、粉絲頁 ID 等欄位。</p>
     <p>這是一個內部工具：約 10 位同事使用，每天查詢量約 500 次，資料每日增量約 3,000 則。由你一個人維運，每月基礎設施預算 3,000 元。</p>
     <div class="facts">
@@ -642,10 +642,9 @@ footer { font-size: 13px; color: var(--muted); }
       <li>承上，你選哪一套方案？請說明是估算結果的哪一個數字決定了你的選擇。</li>
       <li>你選的中文斷詞策略是什麼？它會漏掉哪一類查詢？</li>
       <li>資料量或查詢量成長到多少，你會換掉現在的選擇？換成什麼？</li>
-      <li>題目中缺了哪一個數字，會讓你的估算差距最大？</li>
+      <li>情境中缺了哪一個數字，會讓你的估算差距最大？</li>
     </ol>
-    <p class="limit">上限 600 字（不含算式）。</p>
-  </section>
+      </section>
 
   <section id="derive">
     <div class="figure">
@@ -713,7 +712,7 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <header>
-    <button type="button" class="q-toggle" id="q1-toggle" aria-expanded="true" aria-controls="q1-body" data-sum="q1-sum"><span class="q-no">第 1 題</span><span class="q-title">估算三個大小</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q1-toggle" aria-expanded="true" aria-controls="q1-body" data-sum="q1-sum"><span class="q-no">問題 1</span><span class="q-title">估算三個大小</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum" id="q1-sum" hidden>
       <div><span>(a) 原始資料總量</span><b id="q1-sa" style="color:var(--heap)">977 MB</b></div>
       <div><span>(b) 粉絲頁 ID 索引</span><b id="q1-sb" style="color:var(--pid)">6.6 MB</b></div>
@@ -807,7 +806,7 @@ footer { font-size: 13px; color: var(--muted); }
           <span class="fx-op">＝</span>
           <b id="fx-out" class="fx-out">6.6 MB</b>
         </div>
-        <label class="fx-slide"><span>改貼文數（題目給 100 萬）：直接輸入，或拖拉</span><input type="range" id="fx-range" min="100000" max="10000000" step="100000" value="1000000"></label>
+        <label class="fx-slide"><span>改貼文數（情境給 100 萬）：直接輸入，或拖拉</span><input type="range" id="fx-range" min="100000" max="10000000" step="100000" value="1000000"></label>
         <div class="fx-bar" aria-hidden="true"><i id="fx-bar-tid"></i><i id="fx-bar-ovh"></i></div>
         <div class="fx-legend">
           <span><i class="tid"></i>6 B × 貼文數　<b id="fx-tid"></b>（<span id="fx-tid-share"></span>）</span>
@@ -909,7 +908,7 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q2">
-    <button type="button" class="q-toggle" id="q2-toggle" aria-expanded="true" aria-controls="q2-body" data-sum="q2-sum"><span class="q-no">第 2 題</span><span class="q-title">選哪一套方案</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q2-toggle" aria-expanded="true" aria-controls="q2-body" data-sum="q2-sum"><span class="q-no">問題 2</span><span class="q-title">選哪一套方案</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q2-sum" hidden>
       <div><span>方案</span><b>PostgreSQL＋pg_bigm</b></div>
       <div><span>決定的數字</span><b>(c) 903 MB</b></div>
@@ -1035,7 +1034,7 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q3">
-    <button type="button" class="q-toggle" id="q3-toggle" aria-expanded="true" aria-controls="q3-body" data-sum="q3-sum"><span class="q-no">第 3 題</span><span class="q-title">中文斷詞策略</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q3-toggle" aria-expanded="true" aria-controls="q3-body" data-sum="q3-sum"><span class="q-no">問題 3</span><span class="q-title">中文斷詞策略</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q3-sum" hidden>
       <div><span>策略</span><b>每兩字切一詞</b></div>
       <div><span>詞典</span><b>不用</b></div>
@@ -1061,7 +1060,7 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q4">
-    <button type="button" class="q-toggle" id="q4-toggle" aria-expanded="true" aria-controls="q4-body" data-sum="q4-sum"><span class="q-no">第 4 題</span><span class="q-title">什麼時候換掉</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q4-toggle" aria-expanded="true" aria-controls="q4-body" data-sum="q4-sum"><span class="q-no">問題 4</span><span class="q-title">什麼時候換掉</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q4-sum" hidden>
       <div><span>記憶體放不下</span><b>約 204 萬則（約 1 年）</b></div>
       <div><span>換 Elasticsearch</span><b>約 1,000 萬則</b></div>
@@ -1088,21 +1087,21 @@ footer { font-size: 13px; color: var(--muted); }
   </section>
 
   <section class="qsec" id="q5">
-    <button type="button" class="q-toggle" id="q5-toggle" aria-expanded="true" aria-controls="q5-body" data-sum="q5-sum"><span class="q-no">第 5 題</span><span class="q-title">缺的那個數字</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="q-toggle" id="q5-toggle" aria-expanded="true" aria-controls="q5-body" data-sum="q5-sum"><span class="q-no">問題 5</span><span class="q-title">缺的那個數字</span><svg class="q-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="q-sum txt" id="q5-sum" hidden>
       <div><span>缺了</span><b>平均 250 字</b></div>
       <div><span>現估 (a)＋(c)</span><b>約 2.0 GB</b></div>
       <div><span>減半／加倍</span><b>約 1.1 GB／3.9 GB</b></div>
     </div>
     <div class="figure qa" id="q5-body">
-      <p class="ask">題目中缺了哪一個數字，會讓你的估算差距最大？</p>
-      <p class="lead">題目給的數字裡，缺了「平均 250 字」差最多：10 人、500 次、3,000 則、3,000 元都不進 (a)(b)(c)，只有字數同時決定表 (a) 與全文索引 (c)。</p>
+      <p class="ask">情境中缺了哪一個數字，會讓你的估算差距最大？</p>
+      <p class="lead">情境給的數字裡，缺了「平均 250 字」差最多：10 人、500 次、3,000 則、3,000 元都不進 (a)(b)(c)，只有字數同時決定表 (a) 與全文索引 (c)。</p>
       <h3>同樣 100 萬則，只改平均字數</h3>
       <table>
         <thead><tr><th>平均字數</th><th class="r">(a) 表</th><th class="r">(c) 全文索引</th><th class="r">(a)＋(c)</th></tr></thead>
         <tbody>
           <tr><td>125 字（減半）</td><td class="r">0.59 GB</td><td class="r">0.47 GB</td><td class="r"><b>1.06 GB</b></td></tr>
-          <tr><td>250 字（題目）</td><td class="r">1.02 GB</td><td class="r">0.95 GB</td><td class="r"><b>1.97 GB</b></td></tr>
+          <tr><td>250 字（情境）</td><td class="r">1.02 GB</td><td class="r">0.95 GB</td><td class="r"><b>1.97 GB</b></td></tr>
           <tr><td>500 字（加倍）</td><td class="r">2.05 GB</td><td class="r">1.90 GB</td><td class="r"><b>3.94 GB</b></td></tr>
         </tbody>
       </table>
@@ -1152,7 +1151,7 @@ footer { font-size: 13px; color: var(--muted); }
 </div>
 <div id="ev-tip" hidden></div>
 <div id="bpa-pop" role="dialog" aria-label="每個位址幾 B" hidden>
-  <div class="bpa-hd"><b>每個位址幾 B？</b><span>先用題目給的條件估一個範圍，再用實測對答案。點一列或拖拉看看。</span><button type="button" class="bpa-x" id="bpa-x" aria-label="關閉">✕</button></div>
+  <div class="bpa-hd"><b>每個位址幾 B？</b><span>先用情境給的條件估一個範圍，再用實測對答案。點一列或拖拉看看。</span><button type="button" class="bpa-x" id="bpa-x" aria-label="關閉">✕</button></div>
   <div class="bpa-rows">
     <div class="bpa-th" aria-hidden="true"><span>情況</span><span>每個位址</span><span>全文索引大小</span><span>依據</span></div>
     <button type="button" class="bpa-r" data-b="6"><span class="c">完全不壓縮（上限）</span><span class="b">6 B</span><span class="s"></span><span class="w">位址就是「第幾頁 4 B＋頁內第幾格 2 B」</span></button>
@@ -1242,7 +1241,7 @@ footer { font-size: 13px; color: var(--muted); }
       <div class="knob">
         <span class="knob-l">每粉專則數</span>
         <input type="range" id="d-r" min="1" max="1000" step="1" value="200" aria-label="每粉專則數">
-        <div class="presets" id="d-pre"><button type="button" data-per="50">50</button><button type="button" data-per="132">132（剛好 1 組）</button><button type="button" data-per="133">133（分 2 組）</button><button type="button" data-per="200">200（題目）</button><button type="button" data-per="1000">1,000</button></div>
+        <div class="presets" id="d-pre"><button type="button" data-per="50">50</button><button type="button" data-per="132">132（剛好 1 組）</button><button type="button" data-per="133">133（分 2 組）</button><button type="button" data-per="200">200（情境）</button><button type="button" data-per="1000">1,000</button></div>
       </div>
       <div class="lf">
         <div class="fig-h"><b>fb_posts_page_id_btree 的一個葉頁（leaf page）</b><small>8,192 B，放 <em id="lf-n"></em></small></div>
@@ -1395,7 +1394,7 @@ ${evImg("react_f12", 560, "F12 搜尋 7 種心情的 reaction_count")}
   pname: ["heap", `<div class="h">page_name 61 B 存什麼</div>
 <table>
 <tr><th>這則的值</th><td class="v">NASA - National Aeronautics and Space Administration</td></tr>
-<tr><th>大小</th><td>52 個半形字元，每個 1 B，加 1 B 長度 ＝ 53 B<br>圖上的 61 B 是題目假設的 20 個中文字：20 × 3 B ＋ 1 B</td></tr>
+<tr><th>大小</th><td>52 個半形字元，每個 1 B，加 1 B 長度 ＝ 53 B<br>圖上的 61 B 是情境假設的 20 個中文字：20 × 3 B ＋ 1 B</td></tr>
 <tr><th>頁面資料位置</th><td><code>node_v2.feedback.owning_profile.name</code></td></tr>
 </table>
 <div class="st"><b>① 畫面</b>貼文標頭的粉專名稱（2026-11-04 23:52）</div>
@@ -1687,7 +1686,7 @@ const big = D.idx.bigram;
     return { kt, vt };
   };
   defLine("6 B：", "PostgreSQL TID，儲存位置，這是結構事實。");
-  defLine("100 萬：", "題目給的貼文數。");
+  defLine("100 萬：", "情境給的貼文數。");
   const defP = defLine("5,000：", "自行假設的不同粉專數。");
   const defOver = defLine("", "");
   defLine("0.9：", "B-tree 預設建索引填充率。");
@@ -2791,7 +2790,7 @@ $("sq-idx-l").textContent = `${fmt(big.pages)} 頁 · ${mb(big.bytes)}`;
     h("div", { class: "eq" }, box, `${fmt(w)} 字 × ${r} B × ${fmt(rows)} 則 =`);
     const b = h("div", { class: "big" }, box, fmt(Math.round(tot)) + " B");
     h("small", { class: "muted", style: "font:400 13px var(--body);margin-left:8px" }, b, "≈ " + size(tot));
-    h("div", { class: "sub" }, box, "題目假設全中文、每字 3 B：250 字 × 3 B × 1,000,000 則 = 750,000,000 B（≈ 715 MB）。這只是內文一欄，整列還有其他欄位：");
+    h("div", { class: "sub" }, box, "情境假設全中文、每字 3 B：250 字 × 3 B × 1,000,000 則 = 750,000,000 B（≈ 715 MB）。這只是內文一欄，整列還有其他欄位：");
     const wrap = h("div", { class: "scroll" }, box), t = h("table", { class: "rowsz" }, wrap);
     const hr = h("tr", null, t); ["一則貼文存了什麼", "怎麼算", "B"].forEach((x, i) => h("th", i === 2 ? { class: "r" } : null, hr, x));
     ROW.forEach(([k, how, n], i) => {

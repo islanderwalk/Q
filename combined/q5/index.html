@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
-<title>新指標上線 Q5</title>
+<title>新指標上線</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -192,12 +192,12 @@ dl.terms dd{margin:0;color:var(--muted)}
 </head>
 <body>
 <nav class="top"><div class="in">
-  <a href="#q">題目</a><a href="#a">(a) 資料流</a><a href="#b">(b) 工時</a><a href="#c">(c) 回補</a><a href="#d">(d) SLA</a><a href="#terms">名詞</a>
+  <a href="#q">情境</a><a href="#a">(a) 資料流</a><a href="#b">(b) 工時</a><a href="#c">(c) 回補</a><a href="#d">(d) SLA</a><a href="#terms">名詞</a>
 </div></nav>
 <div class="wrap">
 
 <section id="q">
-  <h2><span class="tag">Q5</span>題目</h2>
+  <h2>情境</h2>
   <div class="qbox">
     <p><b>新指標上線的全鏈路時間估算。</b>客戶希望在平台上看到 Instagram Reels 的觀看數（<code>video_view_count</code>）和 Threads 貼文的轉發數（<code>repost_count</code>）。調查發現：</p>
     <ul>
@@ -212,7 +212,7 @@ dl.terms dd{margin:0;color:var(--muted)}
       <li><b>(c)</b>Threads 轉發數與分享數過去已爬取但未寫入 ES，回補（backfill）流程怎麼設計？風險有哪些（欄位名不一致、原始資料缺漏、回補期間寫入負載影響線上查詢）？</li>
       <li><b>(d)</b>「指標延遲不超過 1 小時」的瓶頸最可能在哪個環節？怎麼監控 SLA 是否達標？</li>
     </ol>
-    <div class="limit">上限 600 字 · 交卷全文 <span id="totalcnt" class="mono">—</span> 字</div>
+    <div class="limit" style="display:none"><span id="totalcnt" class="mono">—</span> 字</div>
   </div>
 </section>
 
@@ -238,7 +238,7 @@ dl.terms dd{margin:0;color:var(--muted)}
 <!-- (b) -->
 <section id="b">
   <h2><span class="tag">(b)</span>工時與關鍵路徑</h2>
-  <div class="answer"><div class="lab"><span>交卷原文</span><span data-cnt="b"></span></div><p class="txt" data-ans="b"></p></div>
+  <div class="answer"><div class="lab"><span>設計摘要</span><span data-cnt="b"></span></div><p class="txt" data-ans="b"></p></div>
 
   <div class="panel">
     <div class="panel-h"><h3>排程甘特圖</h3><span class="sub">每角色一人、做完才接下一件（finish-to-start）；可改工時</span></div>
@@ -257,13 +257,13 @@ dl.terms dd{margin:0;color:var(--muted)}
 <!-- (c) -->
 <section id="c">
   <h2><span class="tag">(c)</span>回補：逐欄時間戳，舊值蓋不掉新值</h2>
-  <div class="answer"><div class="lab"><span>交卷原文</span><span data-cnt="c"></span></div><p class="txt" data-ans="c"></p></div>
+  <div class="answer"><div class="lab"><span>設計摘要</span><span data-cnt="c"></span></div><p class="txt" data-ans="c"></p></div>
 
   <div class="panel">
     <div class="panel-h"><h3>時間戳保護模擬</h3><span class="sub">同一篇：線上已有 T2，回補帶 T1、T3 兩次抓取（T1 &lt; T2 &lt; T3）</span></div>
     <div class="panel-b">
       <div class="ctrl">
-        <div class="seg" id="g-mode"><button data-v="post">整篇一個時間戳（上一版）</button><button data-v="field" class="on">每欄一個時間戳（交卷版）</button></div>
+        <div class="seg" id="g-mode"><button data-v="post">整篇一個時間戳（上一版）</button><button data-v="field" class="on">每欄一個時間戳（採用版）</button></div>
         <button class="btn pri" id="g-send">送出回補</button><button class="btn" id="g-reset">重設</button>
       </div>
       <div class="docs">
@@ -308,7 +308,7 @@ dl.terms dd{margin:0;color:var(--muted)}
   </div>
 
   <div class="panel">
-    <div class="panel-h"><h3>題目點名的三個風險</h3></div>
+    <div class="panel-h"><h3>需求點名的三個風險</h3></div>
     <div class="panel-b tblwrap">
       <table>
         <thead><tr><th style="width:32%">風險</th><th>對策</th></tr></thead>
@@ -328,7 +328,7 @@ dl.terms dd{margin:0;color:var(--muted)}
 <!-- (d) -->
 <section id="d">
   <h2><span class="tag">(d)</span>SLA：瓶頸在抓取頻率，不在寫入</h2>
-  <div class="answer"><div class="lab"><span>交卷原文</span><span data-cnt="d"></span></div><p class="txt" data-ans="d"></p></div>
+  <div class="answer"><div class="lab"><span>設計摘要</span><span data-cnt="d"></span></div><p class="txt" data-ans="d"></p></div>
 
   <div class="panel">
     <div class="panel-h"><h3>首次可見延遲模擬</h3><span class="sub">貼文在兩次輪詢間隨機發布 → 等下一次抓取 ＋ 寫入鏈路</span></div>
@@ -379,18 +379,18 @@ dl.terms dd{margin:0;color:var(--muted)}
       <dt>painless／noop</dt><dd>painless 是 ES 內建的腳本語言；腳本判斷不用寫時回 noop，文件完全不動。</dd>
       <dt>refresh_interval</dt><dd>ES 多久把新寫入變成可查詢。大量匯入時常調大或關掉，但在線上 index 這樣做，新貼文就查不到。</dd>
       <dt>alias</dt><dd>指向某個 index 的別名；建新 index 後切 alias，查詢端不用改名。</dd>
-      <dt>play_count／video_view_count</dt><dd>題目寫 video_view_count，實抓 IG Reels 只看到 play_count；兩者是否同一定義要和 PM 確認。</dd>
+      <dt>play_count／video_view_count</dt><dd>需求寫 video_view_count，實抓 IG Reels 只看到 play_count；兩者是否同一定義要和 PM 確認。</dd>
       <dt>quote_count</dt><dd>Threads 的引用數。畫面上的「轉發」＝轉發（repost）＋引用（quote）。</dd>
       <dt>金絲雀帳號</dt><dd>固定幾個會定期發文的帳號，用來端到端驗證新貼文是否準時出現。</dd>
     </dl>
   </div></div>
-  <p class="note">資料來源：交卷原文 q5/answer/answer_600.txt；工時與排程 q5/code/schedule/schedule.py（本頁用 JS 重算同一套規則，預設值與 schedule.log 一致）；回補驗證 q5/code/RESULTS.md；Threads 與 IG 實抓 q5/evidence/。T1／T2／T3 範例取自 RESULTS 的 demo_checks 指令 #20、#21。</p>
+  <p class="note">資料來源：q5/answer/answer_600.txt；工時與排程 q5/code/schedule/schedule.py（本頁用 JS 重算同一套規則，預設值與 schedule.log 一致）；回補驗證 q5/code/RESULTS.md；Threads 與 IG 實抓 q5/evidence/。T1／T2／T3 範例取自 RESULTS 的 demo_checks 指令 #20、#21。</p>
 </section>
 </div>
 
 <script>
 const ANS={
-a:"見 architecture/ 資料流圖：題目六層（爬蟲寫入到前端顯示）都要改，另加回補 Job 與 SLA 監控。",
+a:"見 architecture/ 資料流圖：需求列的六層（爬蟲寫入到前端顯示）都要改，另加回補 Job 與 SLA 監控。",
 b:"工時（小時）：mapping 6、爬蟲寫入 12、回補 16、Data Layer 8、Analytics 10、Export 6、前端 10、整合監控 8、驗收 4。關鍵路徑是 DE 一人依序做 mapping、爬蟲、回補、整合，再接全員驗收，共 46 小時；BE、FE 先定 API 契約再平行，浮時至少 16 小時。46÷8＝5.75 天，加 30% 審查取 8 天，加 1 天緩衝共 9 工作天，週一開工約 11 個日曆天。",
 c:"先盤點 GCS 各期 key 建別名表。依平台×週切批；同篇多次抓取，每欄取有值的最新一次，缺 key 不算、null 不補 0。對線上 index 做 bulk 部分更新，每欄附抓取時間，腳本只在較新時寫入，舊值蓋不掉新值，重跑全是 noop；爬蟲寫入也附同一時間戳。壞行超過 1%、整檔壞掉、任一分區某欄讀不到超過 20%（多半是改名）就停。限速、離峰、不改 refresh，只重送被拒的筆。",
 d:"瓶頸在爬蟲抓取頻率：輪詢間隔 60 分鐘時最壞會超標，寫入只要秒到分鐘。監控首次可見延遲 P95（超過 45 分鐘警告）、1 小時內抓到的比例、Pub/Sub 積壓、refresh 設定，並用金絲雀帳號每小時驗證。"
