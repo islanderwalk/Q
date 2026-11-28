@@ -12,7 +12,7 @@ output "pubsub_topics" {
   value = {
     crawler_tasks     = google_pubsub_topic.crawler_tasks.id
     crawler_tasks_dlq = google_pubsub_topic.crawler_tasks_dlq.id
-    qsearch_fetched   = google_pubsub_topic.qsearch_fetched.id
+    argus_fetched   = google_pubsub_topic.argus_fetched.id
     parser_dlq        = google_pubsub_topic.parser_dlq.id
   }
 }
@@ -21,8 +21,8 @@ output "pubsub_subscriptions" {
   value = {
     crawl_sub      = google_pubsub_subscription.crawl_sub.id
     audit_sub      = google_pubsub_subscription.audit_sub.id
-    qsearch_parser = google_pubsub_subscription.qsearch_parser_sub.id
-    qsearch_to_bq  = google_pubsub_subscription.qsearch_to_bq.id
+    argus_parser = google_pubsub_subscription.argus_parser_sub.id
+    argus_to_bq  = google_pubsub_subscription.argus_to_bq.id
   }
 }
 
@@ -53,7 +53,7 @@ output "egress_static_ips" {
 }
 
 output "q6" {
-  description = "Q6 文字雲：Cloud Run 服務 URL、Pub/Sub 主題／訂閱、字典 bucket。"
+  description = "文字雲斷詞 文字雲：Cloud Run 服務 URL、Pub/Sub 主題／訂閱、字典 bucket。"
   value = {
     seg_urls          = { for k, s in google_cloud_run_v2_service.seg : k => s.uri }
     wordcloud_api_url = google_cloud_run_v2_service.wordcloud_api.uri

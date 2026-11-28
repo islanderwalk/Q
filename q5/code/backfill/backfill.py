@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Q5 (c)：Threads 轉發／引用／分享數與 IG Reels 觀看數的歷史回補原型。
+"""ARGUS｜新指標上線 瓶頸三（回補）：Threads 轉發／引用／分享數與 IG Reels 觀看數的歷史回補原型。
 
 流程：
   1. 讀原始資料（GCS 以本機目錄模擬）：*.json 每檔是 {"records": [...]}，*.jsonl 每行一筆 record。
@@ -467,7 +467,7 @@ SEND_FAILURES = ("failed", "failed_retry_gave_up", "item_count_mismatch", "files
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Q5 (c) Threads 計數／IG 觀看數回補原型")
+    ap = argparse.ArgumentParser(description="ARGUS｜新指標上線：Threads 計數／IG 觀看數回補原型")
     ap.add_argument("--src", required=True, type=Path, help="原始 JSON／JSONL 目錄（GCS 模擬）")
     ap.add_argument("--out", required=True, type=Path, help="輸出目錄（NDJSON、manifest、quality、rejects）")
     ap.add_argument("--index", default=None, help="寫入的 index 或 alias（預設 threads-posts／ig-posts）")

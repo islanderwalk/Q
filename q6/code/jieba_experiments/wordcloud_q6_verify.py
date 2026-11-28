@@ -1,4 +1,4 @@
-"""Q6 佐證用的快速重跑：環境、吞吐、大字典收錄、加詞影響範圍（total 預設累加 vs 固定）。
+"""文字雲斷詞佐證用的快速重跑：環境、吞吐、大字典收錄、加詞影響範圍（total 預設累加 vs 固定）。
 
 用法: python -I wordcloud_q6_verify.py <dict.txt.big> <Gossiping-QA-Dataset.txt>
 語料: https://github.com/zake7749/Gossiping-Chinese-Corpus （data/Gossiping-QA-Dataset.txt）

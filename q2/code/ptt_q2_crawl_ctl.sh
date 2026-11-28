@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PTT Q2 文章內文爬蟲的控制腳本（WSL 用，以 root 身分執行）。
+# PTT 文章內文爬蟲（FB 貼文搜尋模組用）的控制腳本（WSL 用，以 root 身分執行）。
 #   用法：wsl -u root -- bash <本腳本的 WSL 路徑> {start|stop|status}
 #   start   以 systemd transient service（ptt-q2-shard<i>）啟動 $SHARDS 個 shard；已在跑的不重複啟動。
 #           log 寫到 /root/q2ptt-logs/shard<i>.log。crash 後 60 秒自動重啟（Restart=on-failure）。
@@ -52,7 +52,7 @@ start() {
       continue
     fi
     systemctl reset-failed "$u" 2>/dev/null
-    if systemd-run --unit="$u" --description="PTT Q2 crawl shard $i/$SHARDS" --collect \
+    if systemd-run --unit="$u" --description="PTT crawl shard $i/$SHARDS" --collect \
         --property=Restart=on-failure --property=RestartSec=60 \
         --property=StandardOutput="append:$LOG_DIR/shard$i.log" \
         --property=StandardError="append:$LOG_DIR/shard$i.log" \
@@ -122,7 +122,7 @@ lists_start() {
       continue
     fi
     systemctl reset-failed "$u" 2>/dev/null
-    if systemd-run --unit="$u" --description="PTT Q2 list collector $b" --collect \
+    if systemd-run --unit="$u" --description="PTT list collector $b" --collect \
         --property=Restart=on-failure --property=RestartSec=60 \
         --property=StandardOutput="append:$LOG_DIR/lists-$b.log" \
         --property=StandardError="append:$LOG_DIR/lists-$b.log" \

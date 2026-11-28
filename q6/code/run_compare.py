@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""QSearch 第 6 題：用 PTT 文本跑新舊斷詞前後對照。
+"""ARGUS｜文字雲斷詞：用 PTT 標題跑新舊斷詞前後對照。
 
 語料：q3/data/ptt_q3_out/index_entries.csv 的 7 天內 6,685 列標題（2026/10/26 實抓，繁體文字；其中 425 列為已刪除文章，沒有 aid）。
-注意：q3/data/ptt_q3_census_out/articles.jsonl 只有時間與計數，沒有內文，所以本題改用標題。
+注意：q3/data/ptt_q3_census_out/articles.jsonl 只有時間與計數，沒有內文，所以這裡改用標題。
 
 主字典：預設 jieba 內建字典（--tag default）；--base-dict 可換成繁體 dict.txt.big 等，新舊兩邊同時換。
 
@@ -32,7 +32,7 @@ REPO = HERE.parents[1]
 DATA = HERE.parent / "data"
 DEFAULT_INDEX = REPO / "q3" / "data" / "ptt_q3_out" / "index_entries.csv"
 RESULTS_PATH = HERE / "RESULTS.md"
-LEGACY_FRAGMENTS = ("高", "雄", "市")  # 題目點名的「高雄市」被拆散
+LEGACY_FRAGMENTS = ("高", "雄", "市")  # 舊流程的症狀：「高雄市」被拆散
 PLACE = "高雄"                          # 標題裡多半只寫「高雄」，不帶「市」
 PLACE_WHOLE = {"高雄", "高雄市"}
 TRACE_N = 3
@@ -207,7 +207,7 @@ def main(argv=None):
     except ValueError:
         index_path = args.index.name
     body = render_block(tag, seg, docs, checks, top_old, top_new, cnt_old, cnt_new, traces, index_path)
-    md = args.results.read_text(encoding="utf-8") if args.results.exists() else "# Q6 斷詞前後對照\n"
+    md = args.results.read_text(encoding="utf-8") if args.results.exists() else "# ARGUS｜文字雲斷詞：前後對照\n"
     args.results.write_text(upsert_block(md, tag, body), encoding="utf-8")
     print(json.dumps(checks, ensure_ascii=False, indent=1))
     print(f"wrote {args.results} (block {tag}), {seg_out}")

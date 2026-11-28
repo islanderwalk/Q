@@ -109,19 +109,19 @@ variable "sql_tier" {
 
 variable "image_ptt_crawl" {
   type        = string
-  description = "Q3 PTT 抓取 Job 的映像（預設 Cloud Run job 範例映像，讓 plan 在還沒 build 前成立）。"
+  description = "PTT 全文搜尋 PTT 抓取 Job 的映像（預設 Cloud Run job 範例映像，讓 plan 在還沒 build 前成立）。"
   default     = "us-docker.pkg.dev/cloudrun/container/job"
 }
 
 variable "ptt_crawl_cron" {
   type        = string
-  description = "Q3 PTT 抓取 Job 的排程。每小時一次可滿足「新文章 6 小時內可搜」與「留言每天至少更新一次」。"
+  description = "PTT 全文搜尋 PTT 抓取 Job 的排程。每小時一次可滿足「新文章 6 小時內可搜」與「留言每天至少更新一次」。"
   default     = "5 * * * *"
 }
 
 variable "backfill_task_count" {
   type        = number
-  description = "回補 Job 的 task 數（Q6 依渠道 × 月約 270 批；上限 10,000）。"
+  description = "回補 Job 的 task 數（文字雲斷詞 依渠道 × 月約 270 批；上限 10,000）。"
   default     = 1
 }
 
@@ -149,22 +149,22 @@ variable "cloudbuild_service_account_id" {
   default     = ""
 }
 
-# --- Q6 文字雲（q6.tf）---
+# --- 文字雲斷詞 文字雲（q6.tf）---
 variable "image_seg" {
   type        = string
-  description = "Q6 斷詞服務映像（q6/stack/seg/Dockerfile；v0／v1／v2 同一個映像，PIPELINE 環境變數不同）。預設 hello 映像讓 plan 成立。"
+  description = "文字雲斷詞 斷詞服務映像（q6/stack/seg/Dockerfile；v0／v1／v2 同一個映像，PIPELINE 環境變數不同）。預設 hello 映像讓 plan 成立。"
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 
 variable "image_wordcloud_api" {
   type        = string
-  description = "Q6 文字雲 API ＋ PM A/B 頁映像（q6/stack/api/Dockerfile）。"
+  description = "文字雲斷詞 文字雲 API ＋ PM A/B 頁映像（q6/stack/api/Dockerfile）。"
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 
 variable "image_collector" {
   type        = string
-  description = "Q6 公開 feed 採集器映像（與文字雲 API 同一個映像，command 不同）。"
+  description = "文字雲斷詞 公開 feed 採集器映像（與文字雲 API 同一個映像，command 不同）。"
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 
@@ -180,10 +180,10 @@ variable "elasticsearch_url" {
 
 variable "q6_raw_bq_table" {
   type        = string
-  description = "Q6 斷詞回補 Job 讀原文的 BigQuery 表（專案.資料集.表；表由資料團隊建立，不在這個模組）。空字串＝不接 BigQuery，Job 不設 RAW_SOURCE（維持 file）。"
+  description = "文字雲斷詞 斷詞回補 Job 讀原文的 BigQuery 表（專案.資料集.表；表由資料團隊建立，不在這個模組）。空字串＝不接 BigQuery，Job 不設 RAW_SOURCE（維持 file）。"
   default     = ""
   validation {
     condition     = var.q6_raw_bq_table == "" || can(regex("^[a-z][a-z0-9-]{4,61}[a-z0-9]\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_-]+$", var.q6_raw_bq_table))
-    error_message = "q6_raw_bq_table 要是 專案.資料集.表（例如 qsearch-prod.raw.posts），或留空。"
+    error_message = "q6_raw_bq_table 要是 專案.資料集.表（例如 argus-prod.raw.posts），或留空。"
   }
 }

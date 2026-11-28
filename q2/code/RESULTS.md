@@ -1,14 +1,14 @@
-# Q2 實測結果：Postgres 16 貼文表與中文全文索引
+# FB 貼文搜尋實測結果：Postgres 16 貼文表與中文全文索引
 
 ## 結論
 
-1. **原頁數字在 Linux 完全重現。** 與原頁同版本（PostgreSQL 16.15、Ubuntu）的 Linux 容器實跑 100 萬列：表 1,024,000,000 B、`to_tsvector('simple')` 3,268,608 B 都與原頁一模一樣；兩字詞 GIN −0.03%、pg_trgm +0.13%。
+1. **互動頁數字在 Linux 完全重現。** 與互動頁同版本（PostgreSQL 16.15、Ubuntu）的 Linux 容器實跑 100 萬列：表 1,024,000,000 B、`to_tsvector('simple')` 3,268,608 B 都與互動頁一模一樣；兩字詞 GIN −0.03%、pg_trgm +0.13%。
 2. **Windows 上 simple 索引多 43% 的原因已查明，而且重現到位元組。** Windows 版 PostgreSQL 把 U+9FC4 到 U+9FFF 這 60 個較新的 CJK 字當成「非字母」，`to_tsvector` 與 pg_trgm 會在這些字斷開。在 Linux 先把這 60 個字換成空白再建索引，simple 得到 4,677,632 B、pg_trgm 得到 409,526,272 B，和 Windows 實測完全相同；換成相鄰的範圍（多 8 字或少 8 字）就對不上。
-3. **原頁的 406 MB 只是下限，PTT 與維基語料約大 2.3 到 2.9 倍。** 用中文語料（PTT、維基）100 萬則（每則 250 字）實測：兩字詞 GIN 是 947 MB（PTT 八卦板問答）到 1,165 MB（中文維基），約是表的 1.0 到 1.3 倍，不是原頁的 40%；pg_trgm 更大，1.37 到 1.55 GB。
+3. **互動頁的 406 MB 只是下限，PTT 與維基語料約大 2.3 到 2.9 倍。** 用中文語料（PTT、維基）100 萬則（每則 250 字）實測：兩字詞 GIN 是 947 MB（PTT 八卦板問答）到 1,165 MB（中文維基），約是表的 1.0 到 1.3 倍，不是互動頁的 40%；pg_trgm 更大，1.37 到 1.55 GB。
 4. **2 字詞查詢是 pg_trgm 的弱點。** 2 字中文詞湊不出完整的三字詞，pg_trgm 的 LIKE 查詢在 100 萬則上全部退回全表掃描（0.46 到 0.68 秒）；兩字詞索引都走索引（9 到 278 毫秒，唯一例外見下文）。3、4 字詞兩者差不多。兩種索引在 14 組查詢的結果數全部一致。第一輪表上 9.2 到 10 秒的 4 格不是全表掃描：psycopg 自動 prepare 之後，PostgreSQL 改用不看參數的 generic plan，走了 pg_trgm 索引卻抽不出三字詞。這已在 PTT 100 萬則上重現（9.7、10.6 秒），程式也已修正（第四節）。
-5. **pg_bigm 擴充套件（Docker 編譯的 1.2 版）也量了，和陣列模擬只差 0.8%。** 在 Docker 裡用官方 PostgreSQL 16.15 映像編 pg_bigm 1.2。原頁方式 100 萬列：pg_bigm GIN 409,567,232 B，比原頁 406,396,928 B 多 0.78%、比模擬多 0.81%；多出來的是 pg_bigm 在每個詞頭尾各補一個空白產生的兩字詞（每則 251 個，模擬是 249 個）。PTT 語料 100 萬則：pg_bigm 953,729,024 B，比模擬（946,946,048 B）多 0.72%，所以「中文語料約 1 GB」不變。2 字詞查詢 pg_bigm 走索引（119 到 147 毫秒），pg_trgm 全表掃描（0.54 到 0.66 秒）；「台灣」出現在 54% 的列，規劃器對 pg_bigm 也選全表掃描（0.61 秒），沒有模擬版 42.6 秒的問題。7 組查詢的結果數與 pg_trgm 全部相同。
+5. **pg_bigm 擴充套件（Docker 編譯的 1.2 版）也量了，和陣列模擬只差 0.8%。** 在 Docker 裡用官方 PostgreSQL 16.15 映像編 pg_bigm 1.2。互動頁方式 100 萬列：pg_bigm GIN 409,567,232 B，比互動頁 406,396,928 B 多 0.78%、比模擬多 0.81%；多出來的是 pg_bigm 在每個詞頭尾各補一個空白產生的兩字詞（每則 251 個，模擬是 249 個）。PTT 語料 100 萬則：pg_bigm 953,729,024 B，比模擬（946,946,048 B）多 0.72%，所以「中文語料約 1 GB」不變。2 字詞查詢 pg_bigm 走索引（119 到 147 毫秒），pg_trgm 全表掃描（0.54 到 0.66 秒）；「台灣」出現在 54% 的列，規劃器對 pg_bigm 也選全表掃描（0.61 秒），沒有模擬版 42.6 秒的問題。7 組查詢的結果數與 pg_trgm 全部相同。
 
-對 Q2 答案的影響：(c) 中文全文索引的估算應改為「約與原始資料同大（1.0 到 1.3 倍），100 萬則約 1 GB」，表加索引約 2 GB；選兩字詞（pg_bigm）而不選 pg_trgm 的理由多了兩個實測數字：體積小 25% 到 31%，而且 2 字詞查詢走得到索引。這兩點都用 pg_bigm 擴充套件在 PTT 資料上確認過（體積比 pg_trgm 小 30%；高雄、颱風、政府三個 2 字詞查詢快 3.7 到 4.9 倍，台灣兩邊都全表掃描）。另外，服務若用 prepared statement，pg_trgm 的 2 字詞 LIKE 會被 generic plan 拖到約 10 秒（實測 9.6 到 10.6 秒），這類查詢要設 `plan_cache_mode = force_custom_plan` 或不 prepare。
+對 (c) 中文全文索引估算的影響：應改為「約與原始資料同大（1.0 到 1.3 倍），100 萬則約 1 GB」，表加索引約 2 GB；選兩字詞（pg_bigm）而不選 pg_trgm 的理由多了兩個實測數字：體積小 25% 到 31%，而且 2 字詞查詢走得到索引。這兩點都用 pg_bigm 擴充套件在 PTT 資料上確認過（體積比 pg_trgm 小 30%；高雄、颱風、政府三個 2 字詞查詢快 3.7 到 4.9 倍，台灣兩邊都全表掃描）。另外，服務若用 prepared statement，pg_trgm 的 2 字詞 LIKE 會被 generic plan 拖到約 10 秒（實測 9.6 到 10.6 秒），這類查詢要設 `plan_cache_mode = force_custom_plan` 或不 prepare。
 
 ## 環境
 
@@ -43,8 +43,8 @@
 | `python q2/code/query_bench.py --db q2_ptt --terms 台灣 高雄 颱風 政府 捷運站 柯文哲 中華民國 --out q2/data/q2_query_bench_ptt.json` | 0 | [`q2_query_bench_ptt.json`](../data/q2_query_bench_ptt.json) |
 | `python q2/code/query_bench.py --db q2_wiki --terms （同上） --out q2/data/q2_query_bench_wiki.json` | 0 | [`q2_query_bench_wiki.json`](../data/q2_query_bench_wiki.json) |
 | `python3 -I shared/infra/onprem/postgres-bigm/fetch_pg_bigm.py <build>/vendor` | 0 | `pg_bigm-1.2-20250903.tar.gz`，36,292 B，sha256 與檔內固定值相同 |
-| `docker build --network host --build-arg PG_BASE=mirror.gcr.io/library/postgres:16.15-bookworm@sha256:e8a07d25…bd938 --secret id=build_ca,… -t qsearch-q2-pg16-bigm:local <build>`（Dockerfile 是 repo 的 `shared/infra/onprem/postgres-bigm/Dockerfile`） | 0 | builder 階段裝 `postgresql-server-dev-16=16.15-1.pgdg12+2` 編出 `pg_bigm.so`，33 秒 |
-| `docker run -d --name q2bigm --shm-size=1g -p 127.0.0.1:55433:5432 -e POSTGRES_HOST_AUTH_METHOD=trust qsearch-q2-pg16-bigm:local` | 0 | PostgreSQL 16.15（Debian `16.15-1.pgdg12+2`），pg_bigm 1.2、pg_trgm 1.6、pageinspect 1.12 |
+| `docker build --network host --build-arg PG_BASE=mirror.gcr.io/library/postgres:16.15-bookworm@sha256:e8a07d25…bd938 --secret id=build_ca,… -t argus-q2-pg16-bigm:local <build>`（Dockerfile 是 repo 的 `shared/infra/onprem/postgres-bigm/Dockerfile`） | 0 | builder 階段裝 `postgresql-server-dev-16=16.15-1.pgdg12+2` 編出 `pg_bigm.so`，33 秒 |
+| `docker run -d --name q2bigm --shm-size=1g -p 127.0.0.1:55433:5432 -e POSTGRES_HOST_AUTH_METHOD=trust argus-q2-pg16-bigm:local` | 0 | PostgreSQL 16.15（Debian `16.15-1.pgdg12+2`），pg_bigm 1.2、pg_trgm 1.6、pageinspect 1.12 |
 | `python q2/code/run_q2.py --rows 1000000 --mode repeat --port 55433 --skip-bigram --pg-bigm --out …` | 0 | [`q2_run_1000000_repeat_pg_bigm_linux.json`](../data/q2_run_1000000_repeat_pg_bigm_linux.json) |
 | `python q2/code/run_q2.py --rows 1000000 --mode corpus --corpus ptt_recombine_250.txt --port 55433 --db q2_ptt_bigm --skip-bigram --pg-bigm --out …` | 0 | [`q2_run_1000000_corpus-ptt_recombine_250_pg_bigm.json`](../data/q2_run_1000000_corpus-ptt_recombine_250_pg_bigm.json) |
 | `python q2/code/query_bench.py --port 55433 --db q2_ptt_bigm --queries trgm_like pg_bigm_like --terms （同上） --out …`（`prepare=False` 修正後重跑） | 0 | [`q2_query_bench_ptt_pg_bigm.json`](../data/q2_query_bench_ptt_pg_bigm.json) |
@@ -56,7 +56,7 @@
 
 | 語料 | 來源 | sha256 |
 |---|---|---|
-| PTT 八卦板問答 `Gossiping-QA-Dataset.txt`（34,079,536 B） | https://github.com/zake7749/Gossiping-Chinese-Corpus （raw.githubusercontent.com） | `cf5ef0a931a8a14444a9854aa13cf6e7516b3ec4922b7cde5d45d13ed825ae79`（與 Q6 `verify.log` 的前 16 碼相同） |
+| PTT 八卦板問答 `Gossiping-QA-Dataset.txt`（34,079,536 B） | https://github.com/zake7749/Gossiping-Chinese-Corpus （raw.githubusercontent.com） | `cf5ef0a931a8a14444a9854aa13cf6e7516b3ec4922b7cde5d45d13ed825ae79`（與文字雲斷詞模組（`q6/`）的 verify.log 前 16 碼相同） |
 | 中文維基 `wikimedia/wikipedia` 20231101.zh，第 1 到 4 個 parquet | https://huggingface.co/datasets/wikimedia/wikipedia | `038b08e5…5f703`、`ec8f6c0d…1338f`、`4884e493…4cbb1`、`415a5cd2…150cd` |
 | 產生的 `ptt_recombine_250.txt` | `prepare_corpus.py`，seed 2026 | `8ae10854…05056` |
 | 產生的 `wiki_250.txt` | 同上 | `41d37843…abdd23` |
@@ -65,11 +65,11 @@
 
 | 指令 | 結果 | 退出碼 |
 |---|---|---|
-| `PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider q2/code/tests` | 24 passed（原 9 項＋語料模式、探針 12 項＋pg_bigm 2 項＋查詢不讓 psycopg 自動 prepare 1 項）；10/31 加 `test_q2_answer_length.py` 1 項後 25 passed | 0 |
+| `PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider q2/code/tests` | 24 passed（原 9 項＋語料模式、探針 12 項＋pg_bigm 2 項＋查詢不讓 psycopg 自動 prepare 1 項）；10/31 加 `test_q2_summary_length.py` 1 項後 25 passed | 0 |
 
-## 一、原頁、Linux、Windows 三方對照（100 萬列，repeat 模式＝原頁的造資料方式）
+## 一、互動頁、Linux、Windows 三方對照（100 萬列，repeat 模式＝互動頁的造資料方式）
 
-| 項目 | 原頁 `const D` | Linux 實測 | Windows 實測 |
+| 項目 | 互動頁 `const D` | Linux 實測 | Windows 實測 |
 |---|---|---|---|
 | (a) 表大小 | 1,024,000,000 B／125,000 頁 | 1,024,000,000 B／125,000 頁（0%） | 同左（0%） |
 | 每頁列數／`lp_len` | 8／918 B | 8／920 B | 8／920 B |
@@ -79,16 +79,16 @@
 | (c) pg_trgm GIN | 409,247,744 B | 409,788,416 B（+0.13%） | 409,526,272 B（+0.07%） |
 | (c) simple GIN | 3,268,608 B／399 頁 | **3,268,608 B／399 頁（0%）** | 4,677,632 B（+43%，原因見下節） |
 | (c) pg_bigm GIN | 未列 | 409,567,232 B（+0.78%；比模擬 +0.81%） | 沒有 pg_bigm |
-| pg_bigm entry 數／每則兩字詞 | 248,925／249（原頁的兩字詞索引） | 250,885／251 | — |
+| pg_bigm entry 數／每則兩字詞 | 248,925／249（互動頁的兩字詞索引） | 250,885／251 | — |
 | 建索引：兩字詞 | 7 分 39 秒 | 387 秒 | 540 秒 |
 | 建索引：pg_trgm | 1 分 17 秒 | 114 秒 | 183 秒 |
 | 建索引：simple | 5.5 秒 | 7.2 秒 | 48.7 秒 |
 | 建索引：pg_bigm | — | 132 秒（容器） | — |
 | 造資料 | 未列 | 24 秒 | 295 秒 |
 
-兩個平台的造資料結果相同（`setseed` 後的亂數序列一致，兩字詞索引在兩邊都是 406,257,664 B、entry 數相同）。原頁的資料是另一次產生的（entry 數差 1、pg_trgm 差 0.13%），所以原頁與本次只比到「同級」。查詢核對：4 字詞在兩字詞索引與 pg_trgm 都回 1,000 列，simple 回 0 列（整段 250 字是一個詞），與原頁說明一致。
+兩個平台的造資料結果相同（`setseed` 後的亂數序列一致，兩字詞索引在兩邊都是 406,257,664 B、entry 數相同）。互動頁的資料是另一次產生的（entry 數差 1、pg_trgm 差 0.13%），所以互動頁與本次只比到「同級」。查詢核對：4 字詞在兩字詞索引與 pg_trgm 都回 1,000 列，simple 回 0 列（整段 250 字是一個詞），與互動頁說明一致。
 
-**pg_bigm 擴充套件。** pg_bigm 先依空白切詞，每個詞頭尾各補一個空白再切兩字詞（原始碼 `bigm_op.c` 的 `generate_bigm`，`LPADDING`、`RPADDING` 各 1），所以每則比模擬多「空白＋首字」「尾字＋空白」兩個；1,000 段內文的首字、尾字去重後，entry 多 1,959 個，體積多 0.81%。原頁每則算 249 個兩字詞（`D.postings1m` 是 249,000,000），entry 數 248,925 也和模擬（248,926）幾乎相同；用 pg_bigm 的話 entry 應該多約 2,000 個，所以原頁量的大概也是陣列做法，不是 pg_bigm 本身（推論，原頁沒寫用哪一種）。同一份資料在容器（Debian 套件）與 Ubuntu 套件上，表、simple、pg_trgm 的體積逐位元組相同。查詢詞 4 字：pg_bigm 與 pg_trgm 都回 1,000 列，計畫分別走自己的索引（1.0 毫秒、1.3 毫秒）。
+**pg_bigm 擴充套件。** pg_bigm 先依空白切詞，每個詞頭尾各補一個空白再切兩字詞（原始碼 `bigm_op.c` 的 `generate_bigm`，`LPADDING`、`RPADDING` 各 1），所以每則比模擬多「空白＋首字」「尾字＋空白」兩個；1,000 段內文的首字、尾字去重後，entry 多 1,959 個，體積多 0.81%。互動頁每則算 249 個兩字詞（`D.postings1m` 是 249,000,000），entry 數 248,925 也和模擬（248,926）幾乎相同；用 pg_bigm 的話 entry 應該多約 2,000 個，所以互動頁量的大概也是陣列做法，不是 pg_bigm 本身（推論，互動頁沒寫用哪一種）。同一份資料在容器（Debian 套件）與 Ubuntu 套件上，表、simple、pg_trgm 的體積逐位元組相同。查詢詞 4 字：pg_bigm 與 pg_trgm 都回 1,000 列，計畫分別走自己的索引（1.0 毫秒、1.3 毫秒）。
 
 ## 二、simple 索引在 Windows 多 43% 的原因
 
@@ -110,7 +110,7 @@ Linux 上每則內文只有 1 個 lexeme（`lexemes_per_row = 1.0`），1,000 �
 
 ## 三、中文語料（PTT、維基）的體積（100 萬則，每則 250 字）
 
-| 100 萬則 | 原頁方式（repeat） | PTT 八卦板問答（重組） | 中文維基 | 隨機不重複（100k，參考上限） |
+| 100 萬則 | 互動頁方式（repeat） | PTT 八卦板問答（重組） | 中文維基 | 隨機不重複（100k，參考上限） |
 |---|---|---|---|---|
 | 表 | 1,024,000,000 B（8 列/頁） | 910,172,160 B（9 列/頁） | 902,643,712 B（9 列/頁） | 102,400,000 B |
 | 內文平均 bytes | 754 | 680 | 684 | 754 |
@@ -126,9 +126,9 @@ Linux 上每則內文只有 1 個 lexeme（`lexemes_per_row = 1.0`），1,000 �
 | 建索引：兩字詞／pg_trgm／simple | 387／114／7 秒 | 890／574／133 秒 | 1,044／755／235 秒 | — |
 | 建索引：pg_bigm（容器） | 132 秒 | 570 秒 | — | — |
 
-pg_bigm 那一欄是另一次執行（Docker 容器，同一份語料、同樣 seed）：表、pg_trgm、simple 與上一欄逐位元組相同，pg_bigm 比模擬多 0.72%（entry 多 772 個，是空白補位產生的兩字詞）。PTT 那次建 pg_bigm 的 570 秒裡，有約 5 分鐘同一台機器也在跑 Q5 的 Elasticsearch 示範，時間只供參考。
+pg_bigm 那一欄是另一次執行（Docker 容器，同一份語料、同樣 seed）：表、pg_trgm、simple 與上一欄逐位元組相同，pg_bigm 比模擬多 0.72%（entry 多 772 個，是空白補位產生的兩字詞）。PTT 那次建 pg_bigm 的 570 秒裡，有約 5 分鐘同一台機器也在跑新指標上線模組的 Elasticsearch 示範，時間只供參考。
 
-PTT 與維基語料含標點、空白與英數字，內文 bytes 比全 CJK 少，所以表反而小一點（每頁 9 列）。兩字詞 GIN 落在原頁下限與隨機上限之間，偏下限那一側，符合齊夫分布的預期。
+PTT 與維基語料含標點、空白與英數字，內文 bytes 比全 CJK 少，所以表反而小一點（每頁 9 列）。兩字詞 GIN 落在互動頁下限與隨機上限之間，偏下限那一側，符合齊夫分布的預期。
 
 PTT 語料只有約 1,260 萬字，切 250 字只湊得出 50,446 則，所以 100 萬則是「隨機抽句子重組」。在 50,446 則上比較兩種做法，量出重組造成的低估：
 
@@ -187,7 +187,7 @@ Windows 那一輪的修正：int4 溢位改 bigint；純量子查詢被當成 In
 
 1. `run_q2.py` 原本把 `LC_CTYPE` 寫死成 Windows 才有的 `zh-TW.UTF-8`，Linux 建庫會失敗，改成 `--ctype`（依平台給預設）。
 2. 想記錄 `SHOW lc_ctype`，但 PostgreSQL 16 已移除這個參數，第一次執行因此退出碼 1；改讀 `pg_database.datctype` 後重跑，退出碼 0。
-3. 第二次執行時，暫存目錄的權限被環境重設，PostgreSQL checkpointer 寫不了 `pg_control` 而 PANIC（伺服器 log：`could not open file ".../global/pg_control": Permission denied`）；資料目錄移到 `/var/lib/qsearch-pg` 後整次重跑。
+3. 第二次執行時，暫存目錄的權限被環境重設，PostgreSQL checkpointer 寫不了 `pg_control` 而 PANIC（伺服器 log：`could not open file ".../global/pg_control": Permission denied`）；資料目錄移到 `/var/lib/argus-pg` 後整次重跑。
 4. `prepare_corpus.py` 的重組函式第一版少算一個空白，部分貼文只有 249 字；測試抓到後修正，重組語料重新產生（每則都是 250 字，已逐行檢查）。
 5. 加 `--pg-bigm` 時讀程式發現：`--skip-bigram` 會跳過建兩字詞索引，量測步驟卻仍查它的 metapage，索引不存在就會失敗。改成一起跳過。
 6. pg_trgm 與 pg_bigm 的索引都能處理 LIKE。第一次 100 萬列執行時，pg_bigm 查詢的計畫走的是 pg_trgm 的索引（JSON 的 `plan_uses`），量到的不是 pg_bigm。改成量其中一個時在交易內先拿掉另一個索引、量完 rollback（`run_queries_isolated`，`query_bench.py` 也用它），整次重跑；體積與第一次逐位元組相同。
@@ -204,14 +204,14 @@ Windows 那一輪的修正：int4 溢位改 bigint；純量子查詢被當成 In
 | `query_bench.py` | 指定 2 到 4 字詞比較兩字詞索引、pg_trgm 與 pg_bigm 擴充套件（`--queries`） |
 | `run_pg_bigm.sh` | 建 pg_bigm 映像、起容器、跑 `run_q2.py --pg-bigm`、刪容器 |
 | `generic_plan_check.py` | 重現第一輪 pg_trgm 2 字詞的 9.2 到 10 秒：psycopg 自動 prepare 後改用 generic plan |
-| `q2_model.py` | 原頁常數與 8 KB page 換算 |
+| `q2_model.py` | 互動頁常數與 8 KB page 換算 |
 | `sql/` | `01_schema`、`02_generate_{repeat,distinct,corpus}`、`03_indexes`、`04_measure`、`05_queries`、`06_pg_bigm` |
 | `tests/` | `test_q2_model.py` 12 項、`test_corpus.py` 12 項，皆離線 |
 | `../data/` | 每次實跑的 JSON（含參數、伺服器設定、每步秒數、索引 metapage、查詢計畫） |
 
 ## 未完成與限制
 
-- pg_bigm 擴充套件量了原頁方式與 PTT 兩種資料，中文維基沒有用 pg_bigm 重跑（模擬是 1,165 MB；原頁方式 +0.81%、PTT +0.72%，維基預期也差不到 1%，但沒有量）。pg_bigm 跑在 Docker 容器裡（同版本 PostgreSQL 的 Debian 套件），不是原生安裝。
+- pg_bigm 擴充套件量了互動頁方式與 PTT 兩種資料，中文維基沒有用 pg_bigm 重跑（模擬是 1,165 MB；互動頁方式 +0.81%、PTT +0.72%，維基預期也差不到 1%，但沒有量）。pg_bigm 跑在 Docker 容器裡（同版本 PostgreSQL 的 Debian 套件），不是原生安裝。
 - PTT 與維基語料不是粉專貼文：PTT 問答偏口語、維基偏書面，粉專貼文大概落在兩者之間。PTT 100 萬則是重組的，已量出約 8% 低估。
 - 查詢時間只有 3 次中位數、單機、無並發，只用來比較同級差異，不是服務水準。
 - 第四節第一輪表上維基的「颱風」「政府」兩格 pg_trgm 時間是 generic plan 量到的，那個資料庫已刪，沒有用修正後的程式重量。

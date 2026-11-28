@@ -1,4 +1,4 @@
-"""文字雲品質日報（計畫書 P0 第 9 項）：每天跑一次，寫 PostgreSQL quality_daily、/metrics 在 QUALITY_PORT。
+"""文字雲品質日報（規劃書 P0 第 9 項）：每天跑一次，寫 PostgreSQL quality_daily、/metrics 在 QUALITY_PORT。
 「更乾淨」不等於「更好」：精確看洩漏，召回看金標與整詞，再做配對檢定；全部用 ES 裡的文章與目前載入的字典。
 
 每個渠道（抽樣最近 QUALITY_WINDOW 內、有 terms_v2 的 QUALITY_SAMPLE 篇）：
@@ -11,7 +11,7 @@
   金標裡的使用者字典詞、QUALITY_PROBES。口徑與 must_keep_split 一致：片語有、terms_v2 沒有的「漏網」文章每詞隨機抽 QUALITY_MISS_SAMPLE 篇
   用目前字典重斷，只有 split 算漏，交集型歧義（台北／市長）、在更長的詞裡（台北市立）、詞表過期都不算（估計方法見 whole_word）。
   原始口徑（Σ整詞 ÷ Σ片語）留在 whole_word_worst 每個詞的 recall_raw 與日誌 quality_daily 的 whole_word_recall_raw
-- 150 題金標召回（seg/quality/gold_150.json，與 q6/code/recall_eval.py 同一份）：v0／v1／v2 各算，v1→v2、v0→v2 做 McNemar 精確檢定
+- 150 筆金標召回（seg/quality/gold_150.json，與 q6/code/recall_eval.py 同一份）：v0／v1／v2 各算，v1→v2、v0→v2 做 McNemar 精確檢定
 - 新詞暴增：今天 terms_v2 前 300 名對前 7 天平均 z > 3 且今天 ≥ QUALITY_SURGE_MIN 篇；整詞率 < 50% 的標成 fragment（新詞被切碎，該進字典）
 
 用法：python -m qseg quality [--once] [--interval 86400]。門檻都是提案值，寫在 monitoring/rules/quality.yml。

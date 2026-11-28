@@ -50,7 +50,7 @@ def test_load_words_one_per_line_filters_singles_and_nonzh(tmp_path):
 def test_build_legacy_merges_layers_and_leaves_current(tmp_path):
     moe = tmp_path / "moe.txt"; moe.write_text("高雄市\n台北\n&8ff0.gif;\n高雄市\n", encoding="utf-8")
     jb = tmp_path / "jieba.txt"; jb.write_text("沈伯洋 5 nr\n高雄 100 ns\nA咖 3 n\n的 999 uj\n", encoding="utf-8")
-    out = build_legacy.build(tmp_path / "art", "qsearch-q6-legacy-2019.12.31.1", {"moe": str(moe), "jieba_tw": str(jb)})
+    out = build_legacy.build(tmp_path / "art", "argus-q6-legacy-2019.12.31.1", {"moe": str(moe), "jieba_tw": str(jb)})
     man = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
     words = set((out / "legacy.dict").read_text(encoding="utf-8").split())
     assert {"沈伯洋", "高雄", "高雄市", "台北"} <= words      # jieba 取第一欄、moe 一行一詞、repo 層整行
@@ -64,7 +64,7 @@ def test_build_legacy_merges_layers_and_leaves_current(tmp_path):
 def test_build_legacy_dict_is_sorted_and_unique(tmp_path):
     moe = tmp_path / "moe.txt"; moe.write_text("乙\n甲\n甲\n", encoding="utf-8")
     jb = tmp_path / "jieba.txt"; jb.write_text("丙 1 n\n", encoding="utf-8")
-    out = build_legacy.build(tmp_path / "art", "qsearch-q6-legacy-2019.12.31.1", {"moe": str(moe), "jieba_tw": str(jb)})
+    out = build_legacy.build(tmp_path / "art", "argus-q6-legacy-2019.12.31.1", {"moe": str(moe), "jieba_tw": str(jb)})
     lines = (out / "legacy.dict").read_text(encoding="utf-8").split()
     assert lines == sorted(set(lines))
 
@@ -88,6 +88,6 @@ def test_extract_moe_reads_header_column_cjk_only(tmp_path, capsys):
 
 # ---------- v0 的 seg_ver：凍結日就是版本日，且比 v1／v2 小 ----------
 def test_v0_seg_ver_from_frozen_date_and_ordering():
-    assert ops.seg_ver("v0", "qsearch-q6-legacy-2019.12.31.1") == 2019123101
-    assert ops.seg_ver("v0", "qsearch-q6-legacy-2019.12.31.1") < ops.seg_ver("v1", "qsearch-q6-2026.10.30.1")
-    assert ops.seg_ver("v1", "qsearch-q6-2026.10.30.1") < ops.seg_ver("v2", "qsearch-q6-2026.10.30.1")
+    assert ops.seg_ver("v0", "argus-q6-legacy-2019.12.31.1") == 2019123101
+    assert ops.seg_ver("v0", "argus-q6-legacy-2019.12.31.1") < ops.seg_ver("v1", "argus-q6-2026.10.30.1")
+    assert ops.seg_ver("v1", "argus-q6-2026.10.30.1") < ops.seg_ver("v2", "argus-q6-2026.10.30.1")

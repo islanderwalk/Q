@@ -21,9 +21,9 @@ from qseg import rawsrc  # noqa: E402  只 import config，不需要斷詞套件
 from qseg.ledger import Ledger  # noqa: E402
 ES = os.environ.get("ES", "http://localhost:9200")
 PUBSUB = os.environ.get("PUBSUB", "http://localhost:8085")
-PROJECT = "qsearch-local"
-PG = os.environ.get("PG", "postgresql://qsearch:qsearch@localhost:55433/qsearch")
-SEG_V2_TARGET = 22026103002     # v2 + qsearch-q6-2026.10.30.2
+PROJECT = "argus-local"
+PG = os.environ.get("PG", "postgresql://argus:argus@localhost:55433/argus")
+SEG_V2_TARGET = 22026103002     # v2 + argus-q6-2026.10.30.2
 
 
 def es(method, path, body=None, ok=(200, 201)):
@@ -41,7 +41,7 @@ def main():
         requests.delete(f"{ES}/posts", timeout=60)
     # 搜尋端同義詞集（synonyms API：更新後含 updateable 同義詞的 search analyzer 會自動重載，不必重啟或重建索引）
     syn = [l.strip() for l in (ROOT / "runtime/dictsrv/current/synonyms.txt").read_text(encoding="utf-8").splitlines() if l.strip()]
-    es("PUT", "/_synonyms/qsearch-search", {"synonyms_set": [{"id": f"s{i}", "synonyms": s} for i, s in enumerate(syn)]})
+    es("PUT", "/_synonyms/argus-search", {"synonyms_set": [{"id": f"s{i}", "synonyms": s} for i, s in enumerate(syn)]})
     if requests.head(f"{ES}/posts", timeout=30).status_code == 404:
         es("PUT", "/posts", json.loads((ROOT / "es/index/posts.json").read_text(encoding="utf-8")))
     else:
@@ -69,7 +69,7 @@ def main():
     led = Ledger(ES, qcfg.LEDGER_INDEX)
     led.ensure_index()
     docs = [{"partition_id": f"{ch}/{month}", "channel": ch, "month": month, "target_seg_ver": SEG_V2_TARGET,
-             "dict_version": "qsearch-q6-2026.10.30.2", "status": "pending", "attempts": 0, "checkpoint_line": 0,
+             "dict_version": "argus-q6-2026.10.30.2", "status": "pending", "attempts": 0, "checkpoint_line": 0,
              "written": 0, "noop": 0, "errors": 0} for ch, month in rawsrc.list_partitions()]
     print("ledger partitions", len(docs), led.create_many(docs) if docs else {"created": 0, "exists": 0})
     print(json.dumps(es("GET", "/posts/_settings"), ensure_ascii=False)[:300])

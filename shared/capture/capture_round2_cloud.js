@@ -1,8 +1,8 @@
-// QSearch 第二輪補證據（Linux 容器，Playwright 無頭 Chromium，未登入）。
+// ARGUS 第二輪補證據（Linux 容器，Playwright 無頭 Chromium，未登入）。
 //
-//   node capture_round2_cloud.js cloud    Q4(b)/Q2/Q5：同一個雲端出口 IP 依序開 Threads、Facebook、Instagram，記錄狀態碼與最終網址
-//                                          ＋ Q5(d)：同一則 Threads 貼文與 10/30 01:56 的互動數對照（指標會一直變）
-//   node capture_round2_cloud.js ptt      Q6：PTT 省錢板（Lifeismoney，不需 18 歲確認）多種短網址／電話雜訊
+//   node capture_round2_cloud.js cloud    Threads 爬蟲(b)/FB 貼文搜尋/新指標上線：同一個雲端出口 IP 依序開 Threads、Facebook、Instagram，記錄狀態碼與最終網址
+//                                          ＋ 新指標上線(d)：同一則 Threads 貼文與 10/30 01:56 的互動數對照（指標會一直變）
+//   node capture_round2_cloud.js ptt      文字雲斷詞：PTT 省錢板（Lifeismoney，不需 18 歲確認）多種短網址／電話雜訊
 //
 // 規則（沿用 shared/capture/README.md）：只開未登入公開頁；同站兩次導覽間隔 ≥2 秒；每站載入 ≤30 次；
 // 不存 cookie、token、cursor；FB／IG／Threads 不存整頁 HTML；不點登入、不關登入牆、不用代理輪替、不偽裝指紋。
@@ -177,7 +177,7 @@ async function runCloud(browser) {
   let acts = null, js = null, r, rel;
 
   if (ONLY.includes('threads')) {
-  // 1) Threads 貼文頁：同一個雲端 IP 拿得到內容；順便拍 Q5 的互動數變化
+  // 1) Threads 貼文頁：同一個雲端 IP 拿得到內容；順便拍 新指標上線的互動數變化
   r = await goto(page, 'threads', THREADS_POST, 7000);
   acts = await page.evaluate(THREADS_ACTIONS);
   js = (await threadsJson(page)).find(p => p.code === 'DfFP4pEET5Y') || null;
@@ -203,7 +203,7 @@ async function runCloud(browser) {
   ].filter(Boolean) }, { masks: THREADS_MASKS });
   rel = await shot(page, 'q5/evidence/playwright/threads_post_repost_drift.png');
   add({ q: '5', id: 'q5-threads-repost-drift', node: 'platforms', title: '同一則 Threads 貼文，互動數隨時間變化',
-        claim: 'repost_count 等互動數在發文後持續變動；Q5 的 1 小時 SLA 只保證第一筆，之後要排程重抓、每筆值附抓取時間，回補也要記「抓到當下」的時間',
+        claim: 'repost_count 等互動數在發文後持續變動；新指標上線的 1 小時 SLA 只保證第一筆，之後要排程重抓、每筆值附抓取時間，回補也要記「抓到當下」的時間',
         result: `第 1 次 ${EARLIER.at}：讚 ${EARLIER.like}、轉發 ${EARLIER.repost}、分享 ${EARLIER.share}、${EARLIER.views}；第 2 次 ${SECOND.at}：讚 ${SECOND.like}、轉發 ${SECOND.repost}（${SECOND.repost_count}＋${SECOND.quote_count}）、${SECOND.views}；第 3 次：讚 ${acts.like || '—'}、轉發 ${acts.repost || '—'}、分享 ${acts.share || '—'}、${acts.views || '—'}` + (js ? `；JSON repost_count ${js.repost_count}、quote_count ${js.quote_count}、reshare_count ${js.reshare_count}` : ''),
         image: rel, compare_with: EARLIER.image, json: js,
         source: `Playwright 實抓（未登入、Linux 容器）${THREADS_POST}；標註為截圖時加上` });
@@ -225,7 +225,7 @@ async function runCloud(browser) {
   rel = await shot(page, 'q2/evidence/playwright/fb_cloud_ip_login_redirect.png');
   wall.fb.image = rel;
   add({ q: '2', id: 'q2-fb-cloud-ip-login', node: 'crawl', title: '雲端 IP 開 FB 粉專頁直接被導到登入頁',
-        claim: '從雲端機房 IP 未登入開粉專頁，拿不到任何貼文欄位；Q2 的 100 萬則貼文不能靠雲端爬網頁，要走 Graph API 或有授權的資料來源',
+        claim: '從雲端機房 IP 未登入開粉專頁，拿不到任何貼文欄位；FB 貼文搜尋的 100 萬則貼文不能靠雲端爬網頁，要走 Graph API 或有授權的資料來源',
         result: `${r.hops.map(h => h.status).join(' → ')}；最後網址 ${r.final.split('?')[0]}；登入表單 ${wall.fb.login ? '有' : '無'}`,
         image: rel, compare_with: 'q2/evidence/playwright/fb_page_nasa.png',
         source: 'Playwright 實抓（未登入、Linux 容器）https://www.facebook.com/NASA；標註為截圖時加上' });
@@ -249,7 +249,7 @@ async function runCloud(browser) {
   rel = await shot(page, 'q5/evidence/playwright/ig_reels_cloud_ip_login_redirect.png');
   wall.ig.image = rel;
   add({ q: '5', id: 'q5-ig-cloud-ip-login', node: 'crawl', title: '雲端 IP 開 IG Reels 分頁直接被導到登入頁',
-        claim: 'IG Reels 的 play_count 只有住宅 IP 未登入看得到；雲端機房 IP 會被導去登入頁，所以 Reels 爬蟲要走住宅代理（同 Q4 的代理池），不能直接跑在 Cloud Run 出口',
+        claim: 'IG Reels 的 play_count 只有住宅 IP 未登入看得到；雲端機房 IP 會被導去登入頁，所以 Reels 爬蟲要走住宅代理（同 Threads 爬蟲的代理池），不能直接跑在 Cloud Run 出口',
         result: `${r.hops.map(h => h.status).join(' → ')}；最後網址 ${r.final.split('?')[0]}；登入表單 ${wall.ig.login ? '有' : '無'}`,
         image: rel, compare_with: 'q5/evidence/playwright/ig_reels_grid.png',
         source: 'Playwright 實抓（未登入、Linux 容器）https://www.instagram.com/nasa/reels/；標註為截圖時加上' });
@@ -260,7 +260,7 @@ async function runCloud(browser) {
   fs.writeFileSync(path.join(OUT, `cloud_wall_${ONLY.join('_')}.json`), JSON.stringify({ captured_at: nowTW(), wall, threads_actions: acts, threads_json: js }, null, 1));
 }
 
-// ------------------------------------------------------------------ mode: ptt（Q6）
+// ------------------------------------------------------------------ mode: ptt（文字雲斷詞）
 const SHORT_RE = /(?:https?:\/\/)?(?:bit\.ly|reurl\.cc|ppt\.cc|lihi\d?\.(?:com|cc|me)|pse\.is|tinyurl\.com|goo\.gl|t\.co|shope\.ee|s\.shopee\.tw|momo\.dm|forms\.gle|maps\.app\.goo\.gl|youtu\.be|amzn\.to|t\.ly|is\.gd|cutt\.ly|rb\.gy|0rz\.tw)\/[A-Za-z0-9_\-\/]+/g;
 const PHONE_RE = /(?<!\d)(?:0800[-\s]?\d{3}[-\s]?\d{3}|09\d{2}[-\s]?\d{3}[-\s]?\d{3}|0\d{1,2}[-\s]\d{3,4}[-\s]?\d{4}|\(0\d{1,2}\)\s?\d{3,4}[-\s]?\d{4})(?!\d)/g;
 
@@ -376,7 +376,7 @@ async function runPtt(browser) {
 }
 
 
-// ------------------------------------------------------------------ mode: q3fix（重拍 Q3 留言列截圖，補隱私遮罩）
+// ------------------------------------------------------------------ mode: q3fix（重拍 PTT 全文搜尋 留言列截圖，補隱私遮罩）
 // 原圖 q3/evidence/playwright/ptt_article_comments.png 露出一般使用者帳號與 IP。同一篇文章重拍：
 // 帳號、IP 用黑框遮住，時間與推噓保留；捲到第一則「噓」讓推／噓／→ 三種都在畫面裡。
 const Q3_URL = 'https://www.ptt.cc/bbs/Gossiping/M.1793282644.A.B5B.html';

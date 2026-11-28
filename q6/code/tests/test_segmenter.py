@@ -1,4 +1,4 @@
-"""Q6 斷詞 pipeline 離線煙霧測試（不連網；字典為 repo 內的 dict/）。"""
+"""文字雲斷詞 pipeline 離線煙霧測試（不連網；字典為 repo 內的 dict/）。"""
 import sys
 from pathlib import Path
 
@@ -75,7 +75,7 @@ def test_affected_docs_only_contain_the_character_sequence():
 
 
 def test_dict_version_header_present():
-    assert sg.read_dict_version().startswith("qsearch-q6-")
+    assert sg.read_dict_version().startswith("argus-q6-")
 
 
 # ---- 主字典選項（--base-dict）：用極小的內嵌字典，不需要 dict.txt.big ----------------
@@ -177,7 +177,7 @@ def test_run_compare_main_with_base_dict_writes_tagged_outputs(tmp_path, tiny_ba
     assert md.startswith("# 手寫") and "<!-- AUTO:compare:tiny BEGIN -->" in md and "tiny_dict.txt" in md
 
 
-# ---- 2026-10-31 審查：重要詞召回、版本指紋 ----
+# ---- 2026-10-31 自我檢查：重要詞召回、版本指紋 ----
 
 def test_wen_examples_keep_important_terms(seg):
     # 颱風假、癌、[高雄市]今天下雨：舊規則會誤刪，新規則要留住

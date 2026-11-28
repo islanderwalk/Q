@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Threads（Q4、Q5）第二版截圖。
+"""Threads（Threads 爬蟲、新指標上線）第二版截圖。
 
 10/30 實測：手機視窗未登入捲到底會出現「Log in to see more」，不再載入下一頁；
 桌面個人頁載入時，網頁自己會送 BarcelonaProfileThreadsTabRefetchableDirectQuery。
@@ -148,7 +148,7 @@ def run(browser):
           image=rel, source=f"Playwright 實抓（未登入、手機視窗 390×844）{murl}；標註為截圖時加上")
     mctx.close()
 
-    # 貼文頁：Q4 看網址，Q5 看互動數
+    # 貼文頁：Threads 爬蟲 看網址，新指標上線 看互動數
     if nasa_posts:
         code = nasa_posts[0]["code"]
         url = f"https://www.threads.com/@nasa/post/{code}"
@@ -159,12 +159,12 @@ def run(browser):
                   card={"title": "貼文頁網址就是 URL 欄位", "lines": [url, "格式：/@帳號/post/{code}，code 來自回應"]})
         rel = c.shot(page, 4, "threads_post_url")
         c.add(q="4", id="q4-threads-post-url", node="parser", title="貼文網址＝/@帳號/post/{code}",
-              claim="題目要的 URL 欄位可以直接用回應裡的 code 組出來，不必再抓一次貼文頁",
+              claim="需求要的 URL 欄位可以直接用回應裡的 code 組出來，不必再抓一次貼文頁",
               result=url, image=rel, source=f"Playwright 實抓（未登入）{url}；標註為截圖時加上")
         counts = page.evaluate(ACTIONS)
         views = page.evaluate(MARK_TEXT, " views")
         c.overlay(page, [
-            {"sel": "[data-ev-act='Repost']", "label": "轉發數（Q5 的 repost_count）"},
+            {"sel": "[data-ev-act='Repost']", "label": "轉發數（新指標上線的 repost_count）"},
             {"sel": "[data-ev-act='Like']", "label": "讚"},
             {"sel": "[data-ev-act='Reply']", "label": "回覆"},
             {"sel": "[data-ev-act='Share']", "label": "分享"},
@@ -174,7 +174,7 @@ def run(browser):
                            f"瀏覽：{views or '—'}"]})
         rel = c.shot(page, 5, "threads_post_repost")
         c.add(q="5", id="q5-threads-repost-visible", node="platforms", title="Threads 貼文頁看得到轉發數",
-              claim="repost_count 在公開貼文頁就有，爬蟲端拿得到；Q5 缺的是寫進 ES 這一段",
+              claim="repost_count 在公開貼文頁就有，爬蟲端拿得到；新指標上線 缺的是寫進 ES 這一段",
               result=f"讚 {counts.get('Like') or '—'}、回覆 {counts.get('Reply') or '—'}、轉發 {counts.get('Repost') or '—'}、分享 {counts.get('Share') or '—'}；{views or ''}",
               image=rel, source=f"Playwright 實抓（未登入）{url}；標註為截圖時加上")
     ctx.close()

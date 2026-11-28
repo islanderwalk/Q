@@ -1,5 +1,5 @@
 #!/bin/bash
-# Q5 回補命令列示範：產生樣本、跑文件上的指令、重跑比對、壞資料與分區關卡，並和舊版對照。
+# ARGUS｜新指標上線 回補命令列示範：產生樣本、跑文件上的指令、重跑比對、壞資料與分區關卡，並和舊版對照。
 # 用法：PY=<python> bash q5/code/backfill/demo_cli.sh <scratch 目錄>
 #   輸出全部寫在 scratch 目錄（不能在 repo 裡）；舊版程式用 git show 取到 scratch（唯讀，不動工作樹）：
 #   V0＝fc0b075 之前的原型（只讀 *.json），V1＝fc0b075（上一輪：整篇一個時間戳、沒有分區關卡）。

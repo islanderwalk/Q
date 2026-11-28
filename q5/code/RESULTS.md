@@ -1,4 +1,4 @@
-# Q5 回補原型與工時重算：驗證結果
+# 新指標上線：回補原型與工時重算的驗證結果
 
 驗證日期 2026-10-30，Linux 容器。本檔涵蓋 `q5/code/backfill/` 與 `q5/code/schedule/`，原本放在 `q5/code/backfill/RESULTS.md`，依 repo 版面移到 `q5/code/RESULTS.md`，log 移到 `q5/code/logs/`。
 
@@ -8,11 +8,11 @@
 
 - **測試**：`q5/code/backfill/tests` 34 項、`q5/code/schedule/tests` 5 項，共 39 passed，退出碼 0。
 - **欄位改名會停下來了**：把 2026-05-11 一週的計數欄位改成別名表沒有的名稱（652 筆抓取），上一輪退出碼 0、`gate_failures` 是空的，117 篇默默沒有寫入（未改名時是 21 篇）。本輪退出碼 3，指出 `threads/2026-05-11` 三個欄位 652/652 都不知道，不產生 bulk 檔；`quality.json` 的分區 key 清單直接看得到新名稱 `text_post_app_info.reposts` 等。
-- **較舊的值不會再蓋掉較新的值**：線上 T2 已有轉發數 20，回補輸入只有 T1（三欄）與 T3（缺轉發 key）。上一輪整篇只有一個時間戳，T3 讓 T1 的舊值 10 蓋掉了 20；本輪每欄各有時間戳 `counts_at.<欄位>`，轉發數保留 20，另兩欄寫入 T3 的值。前提是爬蟲寫入也帶同一個時間戳，已寫進 b-c-d.md (b) 第 1、2 項與風險表。
+- **較舊的值不會再蓋掉較新的值**：線上 T2 已有轉發數 20，回補輸入只有 T1（三欄）與 T3（缺轉發 key）。上一輪整篇只有一個時間戳，T3 讓 T1 的舊值 10 蓋掉了 20；本輪每欄各有時間戳 `counts_at.<欄位>`，轉發數保留 20，另兩欄寫入 T3 的值。前提是爬蟲寫入也帶同一個時間戳，已寫進 b-c-d.md 瓶頸二工時表第 1、2 項與風險表。
 - **IG 兩個 key 值不同時不寫入**：`play_count` 與 `video_view_count` 同時出現且值不同，當成不知道並記 `alias_conflict`，不再默默寫入 `play_count`。
 - **端到端結果不變**：2,000 篇、3,521 筆抓取的合成資料，寫入 1,979 篇、略過 21 篇；重跑兩次 7 個輸出檔 sha256 相同；與獨立算出的正確答案 0 筆不符。送出端 5 個情境（本機假 ES）中，有比對內容的 S1、S3、S5 都是 0 筆不符（S2 沒送請求、S4 是中斷），包括 20 篇「爬蟲只寫過轉發數」的文件。
 - **painless 腳本在官方 Elasticsearch 映像上跑過**：本機 Docker 的 8.19.23 與 9.5.5（單節點），`demo_real_es.sh` 的 21 項檢查兩個版本都通過。舊 mapping（`dynamic: strict`）時回補被擋（400 `strict_dynamic_mapping_exception`）；用 update mapping API 加新欄位（不 reindex）後首次送出 ok 1,940、noop 20、not_in_index 19，`_mget` 讀回的計數值與正確答案 0 筆不符，每欄的 `counts_at` 與 bulk 檔送出的時間戳（爬蟲較新的欄位則是爬蟲的時間戳）0 筆不符；整批重送 1,960 筆全部 noop。時間戳寫成 ISO 字串時，寫入就被 `epoch_millis` mapping 擋下（400）；寫成數字字串時寫得進去，但腳本丟錯（400 `illegal_argument_exception` ← `script_exception`），退出碼 4，文件沒有被改動。IG 寫入 193 篇，0 筆不符。HTTP 429、500 與單筆 429 仍只在假 ES 上模擬。
-- **交卷用的 600 字答案**：`q5/answer/answer_600.txt`，Python `len()` 為 599 字元（含換行），去掉空白 530 字元。
+- **一頁摘要**：`q5/design/summary.txt`，Python `len()` 為 643 字元（含換行），去掉空白 571 字元。
 - **工時不變**：關鍵路徑 46 小時，9 工作天，週一開工約 11 個日曆天。
 - **示範可以從 repo 重跑**：`demo_cli.sh` 與 `demo_checks.py` 進 repo，`logs/demo_cli.log` 是它的完整輸出。
 
@@ -171,16 +171,16 @@ Linux 容器的磁碟回報為 252 GB 用了 96%（容器實際可寫的空間�
 | Threads 轉發 | `text_post_app_info.repost_count` | `q5/evidence/a-dataflow/threads-evidence-panel.png` 的 JSON 片段；`q5/evidence/src/threads_verify.js` 讀的 key | 實抓 |
 | Threads 引用 | `text_post_app_info.quote_count` | 同上（畫面轉發數＝repost＋quote，18 篇） | 實抓 |
 | Threads 分享 | `text_post_app_info.reshare_count` | 同上；`threads-reshare-null-not-zero.png`（沒有數字時是 null） | 實抓 |
-| IG 觀看數 | `play_count`，ES 欄位名 `video_view_count` | `q5/evidence/playwright/ig_reel_fields.json` 12 筆、`ig_reels_grid_json_check.png` | 實抓；與題目 `video_view_count` 的定義是否相同未查證，兩個 key 值不同時不寫入 |
+| IG 觀看數 | `play_count`，ES 欄位名 `video_view_count` | `q5/evidence/playwright/ig_reel_fields.json` 12 筆、`ig_reels_grid_json_check.png` | 實抓；與需求寫的 `video_view_count` 的定義是否相同未查證，兩個 key 值不同時不寫入 |
 | 舊名 | `textPostAppInfo`、`repostCount`、`repost_cnt`、`quoteCount`、`quote_cnt`、`reshareCount`、`reshare_cnt`、IG `video_view_count` | 無 | 假設，要用 GCS 原始檔核對；`quality.json` 的分區 key 清單是盤點的工具 |
 
 `shared/capture/fixtures/threads_graphql_sample.json` 只有 `code`、`username`、`taken_at`、`text`，沒有任何計數欄位，不能拿來核對欄位名（有測試鎖住這點）。`capture_gaps.py` 只記錄「值是數字」的 key，所以 IG 頁面上有沒有值為 null 的 `video_view_count`，這份證據看不出來。
 
 ## Elasticsearch 文件查證
 
-全部是 elastic.co 官方文件，上一輪 2026-10-30 下載（每頁存在 `<tmp>/work/q5/dl2/<名稱>/page.html`，不進 repo），本輪沒有重新下載。8.19 指南頁標示「This documentation is no longer updated」，所以 bulk 的大小說法另外對照了現行 API 文件；QSearch 實際用的 ES 版本題目沒有寫。
+全部是 elastic.co 官方文件，上一輪 2026-10-30 下載（每頁存在 `<tmp>/work/q5/dl2/<名稱>/page.html`，不進 repo），本輪沒有重新下載。8.19 指南頁標示「This documentation is no longer updated」，所以 bulk 的大小說法另外對照了現行 API 文件；實際用的 ES 版本需求裡沒有寫。
 
-| 主張（答案或程式依賴的） | 文件原文重點 | 網址 | sha256 |
+| 主張（設計或程式依賴的） | 文件原文重點 | 網址 | sha256 |
 |---|---|---|---|
 | bulk 沒有固定的最佳筆數，單一 HTTP 請求預設上限 100 MB | "There is no "correct" number of actions to perform in a single bulk request" … "limits the maximum size of a HTTP request to 100mb by default" | https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-bulk.html | `7276221bb4233b937f1fdb7b59cbd236d7e737484719bb3663bad631dbca627f` |
 | 同上（現行版），bulk 的 update 動作可帶 `retry_on_conflict` | 同上兩句；"use `retry_on_conflict` as a field in the action itself" | https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-bulk | `988b31f6bf07f267163f75997d71c4e9d246b169d42e27645dfd9a175cf41095` |
@@ -196,10 +196,10 @@ Linux 容器的磁碟回報為 252 GB 用了 96%（容器實際可寫的空間�
 | 腳本可設 `ctx.op = 'noop'`；update 仍會整份重新索引；`retry_on_conflict` 預設 0 | `ctx.op = 'noop'` 範例；"The document must still be reindexed"；"retry_on_conflict … Default: 0" | https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html | `ace6cbbbf33bca05c7c614e058af6a3e9164ccd20087d17b7088b74c6a8801ff` |
 | external version 小於或等於現有版本時失敗（409） | "If the value provided is less than or equal to the stored document’s version number, a version conflict will occur" | https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-index_.html | `005a0d6f08320c65722c93149d916d1e0809b0255add0ea83dd68729d6a27e74` |
 
-這些文件對答案的影響：
+這些文件對設計的影響：
 
 - `_update_by_query` 只能用 ES 裡已有的資料改文件，回補的數字在 GCS，所以不適用；但它的限速單位是「每秒文件數」，本程式的 `--rate-per-sec` 是「每秒 bulk 請求數」，換算是請求數 × 每批篇數（2 × 500 = 每秒約 1,000 篇）。
-- 「調大 refresh、副本設 0」是給大量初次載入新 index 用的。回補走線上 index 的部分更新時不能這樣做，否則爬蟲新寫入的文件查不到，直接違反 1 小時 SLA；b-c-d.md 已寫明，並把 refresh 設定加進 (d) 的監控。
+- 「調大 refresh、副本設 0」是給大量初次載入新 index 用的。回補走線上 index 的部分更新時不能這樣做，否則爬蟲新寫入的文件查不到，直接違反 1 小時 SLA；b-c-d.md 已寫明，並把 refresh 設定加進瓶頸四的監控。
 - update 會整份重新索引文件，所以部分更新對線上 index 不是零成本，限速與離峰仍然必要。
 - update 寫法每篇約 952 B（大部分是重複的腳本原文），500 篇一檔約 0.48 MB，`--max-bytes 5MB` 在這種寫法下不會先觸發；批次大小應依文件建議用 100、200、400 倍增實測。
 - 逐欄時間戳的腳本（`GUARD_SCRIPT`）只用到上表的 `ctx.op = 'noop'` 與一般的 Map 存取；painless 的 `instanceof`、`throw` 與 for 迴圈沒有另外查文件，但已在 ES 8.19.23 與 9.5.5 上實際執行過（見「送出端（官方 Elasticsearch 映像，本機 Docker）」）。
@@ -222,11 +222,11 @@ Linux 容器的磁碟回報為 252 GB 用了 96%（容器實際可寫的空間�
 
 | 原本的說法（位置） | 現在 | 依據 |
 |---|---|---|
-| 「回補不會蓋掉爬蟲較新的寫入」（b-c-d.md (c) 第 5 點；q5/README.md「以 `counts_crawled_at` 防止舊資料蓋掉新資料」） | 上一輪整篇只有一個時間戳，三欄來自不同次抓取時不成立：20 被蓋成 10。本輪改成逐欄時間戳，說法加上前提「爬蟲寫入也帶 `counts_at`」 | 指令表 #20、#21；`test_guard_is_per_field_so_older_value_never_overwrites_newer` |
+| 「回補不會蓋掉爬蟲較新的寫入」（b-c-d.md 瓶頸三第 5 點；q5/README.md「以 `counts_crawled_at` 防止舊資料蓋掉新資料」） | 上一輪整篇只有一個時間戳，三欄來自不同次抓取時不成立：20 被蓋成 10。本輪改成逐欄時間戳，說法加上前提「爬蟲寫入也帶 `counts_at`」 | 指令表 #20、#21；`test_guard_is_per_field_so_older_value_never_overwrites_newer` |
 | 上一輪的限制寫「整篇一個時間戳只會讓某一欄留空」 | 也會讓較舊的值蓋掉較新的值（上一列）。兩種情況本輪都解決 | `test_guard_older_run_sent_later_fills_only_fields_still_missing` |
-| 欄位名的風險只靠 `alias_used` 統計（b-c-d.md (c) 第 7 點與風險表）；原型的答案寫「數量異常就停」，但程式從來沒有看欄位名的關卡 | 加了分區關卡：任一分區任一欄不知道的比例超過 20% 就退出碼 3，quality.json 列出分區 key 清單 | 指令表 #15–#17；`test_cli_gate_stops_partition_with_unrecognized_field_names` |
+| 欄位名的風險只靠 `alias_used` 統計（b-c-d.md 瓶頸三第 7 點與風險表）；原型的設計寫「數量異常就停」，但程式從來沒有看欄位名的關卡 | 加了分區關卡：任一分區任一欄不知道的比例超過 20% 就退出碼 3，quality.json 列出分區 key 清單 | 指令表 #15–#17；`test_cli_gate_stops_partition_with_unrecognized_field_names` |
 | 「舊版程式只讀 `*.json`、2,000 篇只處理到 745 篇」被當成舊版的問題（上一輪本檔） | 原型寫明的輸入就是 `src/**/*.json`，`.jsonl` 分區是上一輪自己做的樣本格式；這是把輸入擴大到 `.jsonl`，不是原型的缺陷。GCS 實際格式要在盤點時確認 | 指令表 #3、#12；原型 docstring |
-| 「b-c-d.md 現在約 10,700 字元（原本約 6,800）」（上一輪本檔） | 那是位元組數（`wc -c` 10,896／6,776）。Python `len()` 的字元數是 5,927（原本 3,947）；本輪後 7,038 字元（13,259 B）。題目上限 600 字，交卷用 `answer_600.txt`（599 字元） | Python `len()` |
+| 「b-c-d.md 現在約 10,700 字元（原本約 6,800）」（上一輪本檔） | 那是位元組數（`wc -c` 10,896／6,776）。Python `len()` 的字元數是 5,927（原本 3,947）；本輪後 7,038 字元（13,259 B）。一頁摘要 `summary.txt`（現為 643 字元，改寫前 599 字元） | Python `len()` |
 | IG 兩個 key 都有且值不同時，寫入 `play_count`、只記旗標（上一輪 normalize.py） | 當成不知道、不寫入，記 `alias_conflict` | `test_ig_conflicting_keys_are_unknown_until_pm_decides` |
 | 示範 log 由 scratch 裡的腳本產生；指令表的單筆 429 那一列沒有進 repo 的 log（上一輪 #17） | `demo_cli.sh`、`demo_checks.py` 進 repo，單筆 429 是 log 的 L 段 | `logs/demo_cli.log` |
 | update 寫法每篇約 647 B、每檔約 0.3 MB | 腳本變長，每篇約 952 B、每檔約 0.46–0.48 MB；5 MB 上限仍不會先觸發 | `run1/manifest.json` |
@@ -239,35 +239,35 @@ Linux 容器的磁碟回報為 252 GB 用了 96%（容器實際可寫的空間�
 | 示範指令「未留 log，退出碼未核對」（python.md 五） | 退出碼 0，log 在 `logs/demo_cli.log` C 段 | 指令表 #4 |
 | DE 關鍵路徑 42 h，約 8 工作天 ≈ 10 日曆天（b-c-d.md、python.md） | 關鍵路徑 46 h，9 工作天，週一開工約 11 日曆天 | 工時重算表、`schedule.py` |
 | BE、FE 工時未核對（python.md 五） | BE 24 h、FE 10 h，與表格一致 | `test_role_hours_match_table` |
-| 回補寫進新 index（`index`＋external version）再切 alias（原型的 b-c-d.md (c)） | 預設改為線上 index 部分更新；新 index 要先 reindex 才能用 | 回補資料只有計數與少數欄位，整份 `index` 會把 ES 文件的其他欄位蓋掉；put mapping 文件說加新欄位不需 reindex |
+| 回補寫進新 index（`index`＋external version）再切 alias（原型的 b-c-d.md 瓶頸三） | 預設改為線上 index 部分更新；新 index 要先 reindex 才能用 | 回補資料只有計數與少數欄位，整份 `index` 會把 ES 文件的其他欄位蓋掉；put mapping 文件說加新欄位不需 reindex |
 | 同一篇只留 crawled_at 最大的一筆（原型的 `dedupe_latest`） | 每個計數欄位取「有值」的最新一次；JSON null 算有值 | 最新一次缺 key 時，原型會把較舊的有效值丟掉；樣本中 reshare 有 58 篇屬於這種 |
-| 429 時「退避重送同一檔」（原型的 b-c-d.md (c)） | 只重送被拒的那幾筆；單筆 429 也會重送；送出失敗時退出碼 4 | 指令表 #18、#19 |
+| 429 時「退避重送同一檔」（原型的 b-c-d.md 瓶頸三） | 只重送被拒的那幾筆；單筆 429 也會重送；送出失敗時退出碼 4 | 指令表 #18、#19 |
 | `video_view_count` 印在 Reels 縮圖上（q5/README.md） | 縮圖的數字對應 JSON 的 `play_count` | `shared/capture/capture_manifest.json` 10/30 更正 |
 | 測試資料「畫面 60（35＋25，reshare=null）」（原型的 test_backfill.py） | 35＋25 那篇分享是 15；reshare 為 null 的是 4＋0 那篇 | `threads-evidence-panel.png` ①② |
 | 先前的說明提到「GraphQL fixture 裡的 repost_count／reshare_count／quote_count」 | fixture 沒有任何計數欄位 | `test_fixture_has_no_count_fields` |
-| ES 寫入錯誤率「排除 409」（原型的 b-c-d.md (d)） | noop 與 index 寫法的 409 不算失敗；update 寫法的 409 會重送 | 程式 `send_bulk_files` |
+| ES 寫入錯誤率「排除 409」（原型的 b-c-d.md 瓶頸四） | noop 與 index 寫法的 409 不算失敗；update 寫法的 409 會重送 | 程式 `send_bulk_files` |
 
-不在本資料夾、當時沒有改的（行號是 2026-10-30 當時的）。2026-10-31 整理時逐項確認都已改好：根目錄 README、`shared/docs/python.md` 都寫 9 工作天、關鍵路徑 46 小時、Q5 39 項；`build_arch.py` 已由 `shared/architecture/build/build_arch_v2.py` 取代；`capture_manifest.json` 已寫 12 筆。下表留作紀錄：
+不在本資料夾、當時沒有改的（行號是 2026-10-30 當時的）。2026-10-31 整理時逐項確認都已改好：根目錄 README、`shared/docs/python.md` 都寫 9 工作天、關鍵路徑 46 小時、新指標上線 39 項；`build_arch.py` 已由 `shared/architecture/build/build_arch_v2.py` 取代；`capture_manifest.json` 已寫 12 筆。下表留作紀錄：
 
 | 檔案與行號 | 現在寫的 | 應改成 |
 |---|---|---|
-| `README.md` 第 59 行（Q1–Q6 索引；審查時在第 48 行） | 約 8 工作天（約 10 日曆天） | 9 工作天（週一開工約 11 日曆天） |
-| `README.md` 第 799 行（審查時在第 58 行） | 35 項全過：…Q5 11… | Q5 39（backfill 34＋schedule 5），合計依各題最新數字重算 |
+| `README.md` 第 59 行（模組索引；複查時在第 48 行） | 約 8 工作天（約 10 日曆天） | 9 工作天（週一開工約 11 日曆天） |
+| `README.md` 第 799 行（複查時在第 58 行） | 35 項全過：…新指標上線 11… | 新指標上線 39（backfill 34＋schedule 5），合計依各模組最新數字重算 |
 | `README.md` 第 735、739、767 行 | 資料工程師合計 42 小時就是關鍵路徑；42 ÷ 8＝5.25，約 8 工作天、約 10 日曆天；測試共 11 項 | 關鍵路徑 46 小時（DE 42＋全員驗收 4），9 工作天，週一開工約 11 日曆天；測試 39 項 |
-| `README.md` 第 720 行 | (c) 先寫新 index，以 `crawled_at` 當 external version，再用 alias 切換 | 預設對線上 index 部分更新，逐欄時間戳 `counts_at`；新 index 是替代做法 |
+| `README.md` 第 720 行 | 瓶頸三先寫新 index，以 `crawled_at` 當 external version，再用 alias 切換 | 預設對線上 index 部分更新，逐欄時間戳 `counts_at`；新 index 是替代做法 |
 | `shared/docs/python.md` 第 15、57–59、83 行 | 11 passed；42 h；8 工作天 ≈ 10 日曆天 | 39 passed（34＋5）；46 h；9 工作天、約 11 日曆天 |
 | `shared/architecture/build_arch.py` 第 39 行 | crawled_at 當 external version；約 8 工作天、10 個日曆天 | 逐欄時間戳部分更新；9 工作天、約 11 個日曆天 |
 | `shared/capture/capture_manifest.json` 第 239 行 | Reels 分頁 8 支的 play_count | `ig_reel_fields.json` 有 12 筆（畫面看得到 8 支，JSON 有 12 個 edge） |
 
 ## 未完成與限制
 
-- painless 腳本（`GUARD_SCRIPT`）只在本機 Docker 的單節點 ES 8.19.23 與 9.5.5、用合成樣本跑過。QSearch 正式的 ES 版本、index 的實際 mapping（是否 `strict`、計數欄位現在的型別）都不知道，上線前仍要在 staging 對正式 mapping 跑一次 `demo_real_es.py` 的情境。HTTP 429／500、單筆 429 與連線逾時只在假 ES 上測過；吞吐沒有量。
-- 逐欄保護要靠爬蟲配合：爬蟲每次寫計數也寫 `counts_at.<欄位>`（epoch 毫秒），最好走同一支腳本。爬蟲端的程式不在 q5，本輪只寫進答案的 (b) 第 1、2 項與風險表。
+- painless 腳本（`GUARD_SCRIPT`）只在本機 Docker 的單節點 ES 8.19.23 與 9.5.5、用合成樣本跑過。正式環境的 ES 版本、index 的實際 mapping（是否 `strict`、計數欄位現在的型別）都不知道，上線前仍要在 staging 對正式 mapping 跑一次 `demo_real_es.py` 的情境。HTTP 429／500、單筆 429 與連線逾時只在假 ES 上測過；吞吐沒有量。
+- 逐欄保護要靠爬蟲配合：爬蟲每次寫計數也寫 `counts_at.<欄位>`（epoch 毫秒），最好走同一支腳本。爬蟲端的程式不在 q5，本輪只寫進 b-c-d.md 瓶頸二工時表第 1、2 項與風險表。
 - 分區關卡的門檻 20% 是依合成資料訂的；實際資料的缺 key 比例要盤點後才知道。key 清單只列 post 物件兩層內的名稱，第三層以下改名看不到名稱，但仍會被不知道的比例擋下。
 - 舊欄位名全部是假設；沒有 GCS 原始檔可以盤點。GCS 檔案格式（`.json` 或 `.jsonl`）也待確認。
-- IG `play_count` 與題目的 `video_view_count` 是否同一個定義（例如播放次數與觀看次數的算法）沒有查證；兩個 key 值不同的那一筆目前不寫入。
+- IG `play_count` 與需求寫的 `video_view_count` 是否同一個定義（例如播放次數與觀看次數的算法）沒有查證；兩個 key 值不同的那一筆目前不寫入。
 - 送出時的連線錯誤（逾時、連線中斷）沒有攔截，程式會中止；帳本會讓重跑只送沒送完的檔。
 - 合併在記憶體內做，每次跑的量要靠「平台 × 週」切批控制。
 - 工時本身是估計，只核對了算術、依賴與日曆天，沒有驗證每項工時是否合理。
-- b-c-d.md 是完整版（7,038 字元），遠超過題目上限 600 字；交卷用 `answer_600.txt`。
-- ES 文件引用的是 8.19 指南（已停止更新）與現行 API 文件；QSearch 實際的 ES 版本未知。
+- b-c-d.md 是完整版（7,021 字元）；一頁摘要 `summary.txt` 為 643 字元。
+- ES 文件引用的是 8.19 指南（已停止更新）與現行 API 文件；正式環境的 ES 版本未知。

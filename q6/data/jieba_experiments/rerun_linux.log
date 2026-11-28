@@ -1,4 +1,4 @@
-# Q6 jieba 實驗 Linux 重跑（2026-10-30，Ubuntu 24.04.5 容器，Python 3.13.17，jieba 0.42.1）
+# ARGUS｜文字雲斷詞 jieba 實驗 Linux 重跑（2026-10-30，Ubuntu 24.04.5 容器，Python 3.13.17，jieba 0.42.1）
 # 下載：dict.txt.big sha256=b16011275c42955ccd81fc1adecc93a59dbb7926af69d93fc95d4943d40f6aad
 #       Gossiping-QA-Dataset.txt sha256=cf5ef0a931a8a14444a9854aa13cf6e7516b3ec4922b7cde5d45d13ed825ae79
 # 輸出寫在 scratch，不進 repo；這裡只留 verify 輸出、退出碼與比對結果

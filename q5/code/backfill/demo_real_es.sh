@@ -1,5 +1,5 @@
 #!/bin/bash
-# Q5 回補對官方 Elasticsearch：用官方映像在本機起單節點 ES，跑 make_sample.py 與 demo_real_es.py，最後刪掉容器。
+# ARGUS｜新指標上線 回補對官方 Elasticsearch：用官方映像在本機起單節點 ES，跑 make_sample.py 與 demo_real_es.py，最後刪掉容器。
 # 用法：PY=<python> bash q5/code/backfill/demo_real_es.sh <scratch 目錄> [ES 映像，預設 elasticsearch:8.19.23] [本機埠，預設 19200]
 #   需要 Docker；ES 只綁 127.0.0.1，關掉安全性與 ML（本機示範用）。
 #   disk.threshold_enabled=false：Linux 容器的磁碟回報為 252 GB 用了 96%（實際可寫的是另外配給的固定額度），

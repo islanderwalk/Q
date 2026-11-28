@@ -15,19 +15,19 @@ mock_provider "google" {}
 mock_provider "google-beta" {}
 
 variables {
-  project_id     = "qsearch-test"
+  project_id     = "argus-test"
   project_number = "123456789012"
 
   # 不用預設的 hello 示範映像，否則 checks.tf 的 no_placeholder_images 會讓每個 run 失敗。
-  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
-  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
-  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
-  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
+  image_api           = "asia-east1-docker.pkg.dev/argus-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/argus-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/argus-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/argus-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/argus-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/argus-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-collector:test"
 }
 
 # 斷言會引用這些 computed 屬性；每個值都不同，指錯資源就會失敗。
@@ -35,8 +35,8 @@ override_resource {
   target          = google_service_account.worker
   override_during = plan
   values = {
-    email = "crawler-worker@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-worker@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-worker@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-worker@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -44,8 +44,8 @@ override_resource {
   target          = google_service_account.parser
   override_during = plan
   values = {
-    email = "qsearch-parser@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-parser@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-parser@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-parser@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -53,8 +53,8 @@ override_resource {
   target          = google_service_account.scheduler
   override_during = plan
   values = {
-    email = "crawler-scheduler-invoker@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-scheduler-invoker@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-scheduler-invoker@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-scheduler-invoker@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -62,8 +62,8 @@ override_resource {
   target          = google_service_account.scheduler_app
   override_during = plan
   values = {
-    email = "crawler-scheduler-app@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-scheduler-app@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-scheduler-app@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-scheduler-app@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -71,8 +71,8 @@ override_resource {
   target          = google_service_account.backfill
   override_during = plan
   values = {
-    email = "qsearch-backfill@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-backfill@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-backfill@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-backfill@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -80,8 +80,8 @@ override_resource {
   target          = google_service_account.tasks_invoker
   override_during = plan
   values = {
-    email = "crawler-tasks-invoker@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/crawler-tasks-invoker@qsearch-test.iam.gserviceaccount.com"
+    email = "crawler-tasks-invoker@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/crawler-tasks-invoker@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -90,8 +90,8 @@ override_resource {
   target          = google_service_account.seg
   override_during = plan
   values = {
-    email = "qsearch-seg@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-seg@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-seg@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-seg@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -100,8 +100,8 @@ override_resource {
   target          = google_service_account.wordcloud_api
   override_during = plan
   values = {
-    email = "qsearch-wordcloud-api@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-wordcloud-api@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-wordcloud-api@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-wordcloud-api@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -110,8 +110,8 @@ override_resource {
   target          = google_service_account.collector
   override_during = plan
   values = {
-    email = "qsearch-collector@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-collector@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-collector@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-collector@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -119,7 +119,7 @@ override_resource {
   target          = google_secret_manager_secret.proxy_credentials
   override_during = plan
   values = {
-    id = "projects/qsearch-test/secrets/residential-proxy-credentials"
+    id = "projects/argus-test/secrets/residential-proxy-credentials"
   }
 }
 
@@ -127,7 +127,7 @@ override_resource {
   target          = google_secret_manager_secret.es_api_key
   override_during = plan
   values = {
-    id = "projects/qsearch-test/secrets/elasticsearch-api-key"
+    id = "projects/argus-test/secrets/elasticsearch-api-key"
   }
 }
 
@@ -230,7 +230,7 @@ run "cloud_sql_hardening" {
     condition = (
       toset(keys(google_sql_user.iam_sa)) == toset(["worker", "parser", "scheduler_app", "backfill", "seg", "wordcloud_api", "collector"]) &&
       alltrue([for u in google_sql_user.iam_sa : u.type == "CLOUD_IAM_SERVICE_ACCOUNT" && !endswith(u.name, ".gserviceaccount.com")]) &&
-      google_sql_user.iam_sa["backfill"].name == "qsearch-backfill@qsearch-test.iam"
+      google_sql_user.iam_sa["backfill"].name == "argus-backfill@argus-test.iam"
     )
     error_message = "每個連資料庫的 runtime SA 都要有 IAM 使用者，PostgreSQL 使用者名稱要去掉 .gserviceaccount.com。"
   }
@@ -297,9 +297,9 @@ run "backfill_job_partitioned" {
 
   assert {
     condition = (
-      google_cloud_run_v2_job.qsearch_backfill.template[0].task_count == 270 &&
-      google_cloud_run_v2_job.qsearch_backfill.template[0].parallelism == 20 &&
-      google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].service_account == google_service_account.backfill.email
+      google_cloud_run_v2_job.argus_backfill.template[0].task_count == 270 &&
+      google_cloud_run_v2_job.argus_backfill.template[0].parallelism == 20 &&
+      google_cloud_run_v2_job.argus_backfill.template[0].template[0].service_account == google_service_account.backfill.email
     )
     error_message = "回補 Job 要用獨立 SA，task 數與平行度跟隨變數（Q6：渠道 × 月約 270 批，平行 20 保護 ES）。"
   }
@@ -328,7 +328,7 @@ run "q3_ptt_crawl_job_hourly" {
   assert {
     condition = (
       google_cloud_scheduler_job.ptt_crawl_hourly.schedule == "5 * * * *" &&
-      google_cloud_scheduler_job.ptt_crawl_hourly.http_target[0].uri == "https://run.googleapis.com/v2/projects/qsearch-test/locations/asia-east1/jobs/ptt-crawl:run" &&
+      google_cloud_scheduler_job.ptt_crawl_hourly.http_target[0].uri == "https://run.googleapis.com/v2/projects/argus-test/locations/asia-east1/jobs/ptt-crawl:run" &&
       google_cloud_scheduler_job.ptt_crawl_hourly.http_target[0].oauth_token[0].service_account_email == google_service_account.scheduler.email &&
       google_cloud_run_v2_job_iam_member.ptt_crawl_scheduler.role == "roles/run.invoker" &&
       google_cloud_run_v2_job_iam_member.ptt_crawl_scheduler.member == "serviceAccount:${google_service_account.scheduler.email}"

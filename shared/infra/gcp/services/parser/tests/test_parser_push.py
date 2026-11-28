@@ -36,7 +36,7 @@ def test_full_wrapped_envelope_is_acked(client, valid_event):
             "publishTime": "2026-10-30T07:00:00.000Z",
             "publish_time": "2026-10-30T07:00:00.000Z",
         },
-        "subscription": "projects/demo/subscriptions/qsearch-parser-sub",
+        "subscription": "projects/demo/subscriptions/argus-parser-sub",
         "deliveryAttempt": 3,
     }
     assert client.post(PATH, json=body).status_code == 204
@@ -144,7 +144,7 @@ def test_duplicate_delivery_is_acked_each_time(client, envelope, valid_event, pa
 def test_poison_message_is_nacked_on_every_attempt(client, envelope, valid_event, tf_block):
     """永久錯誤（schema_version=2）每次都回 422。Pub/Sub 共投遞約 max_delivery_attempts 次（首次加重送 4 次，best effort）
     後轉 parser DLQ；投遞次數的定義是 1 + nack 次數 + ack 逾時次數（REST reference DeadLetterPolicy.maxDeliveryAttempts）。"""
-    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "qsearch_parser_sub")
+    sub = tf_block("pubsub.tf", "google_pubsub_subscription", "argus_parser_sub")
     attempts = int(re.search(r"max_delivery_attempts\s*=\s*(\d+)", sub).group(1))
     body = envelope({**valid_event, "schema_version": 2})
     codes = [client.post(PATH, json=body).status_code for _ in range(attempts)]

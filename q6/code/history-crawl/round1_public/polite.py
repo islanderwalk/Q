@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 import requests
 
-UA = "QSearchResearchBot/0.1 (exam-research; low-rate; no-login)"
+UA = "ArgusResearchBot/0.1 (research; low-rate; no-login)"
 MIN_GAP = 5.0
 JITTER = 2.0
 _last_request = {}

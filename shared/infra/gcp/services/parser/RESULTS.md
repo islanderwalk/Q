@@ -3,7 +3,7 @@
 ## 結論
 
 - 修正前的 `main.py` 對兩類事件回 204（ack），性質不同：
-  - 少了 `schema_version` 或 `event_type`，或 `schema_version` 是 `"1"`、`1.0`、`true`：這些 Avro 不收。`qsearch-crawl-fetched` 主題綁了這份 Avro schema（JSON 編碼），官方文件寫「不符合 schema 的訊息不會被發佈」，所以照目前的部署，它們在發佈端就被擋，到不了 parser（依文件推論，沒有在 GCP 實測）。修正前的 204 只會影響繞過 schema 的訊息；這次修正是讓 parser 與 `.avsc` 契約一致，多一道防線，不是線上正在發生的 ack 漏洞。
+  - 少了 `schema_version` 或 `event_type`，或 `schema_version` 是 `"1"`、`1.0`、`true`：這些 Avro 不收。`argus-crawl-fetched` 主題綁了這份 Avro schema（JSON 編碼），官方文件寫「不符合 schema 的訊息不會被發佈」，所以照目前的部署，它們在發佈端就被擋，到不了 parser（依文件推論，沒有在 GCP 實測）。修正前的 204 只會影響繞過 schema 的訊息；這次修正是讓 parser 與 `.avsc` 契約一致，多一道防線，不是線上正在發生的 ack 漏洞。
   - `raw_data_uri` 是 `gs://bucket`、`gs://`、`gs://bucket/`、`gs:///obj` 這類缺 bucket 或 object 的 URI：這些是合法的 Avro 字串，發佈得出去、也會推到 parser。修正前會被 ack 掉，是實際的 bug；修正後回 422。
   - 修正方式：`Event` 改成全部必填、`strict=True`，並檢查 URI 必須是 `gs://<bucket>/<object>`。
 - `Dockerfile` 的 CMD 原本沒有 `exec`：容器內 PID 1 是 `sh`（映像的 `/bin/sh` 是 dash），SIGTERM 被 sh 忽略、不會轉給 uvicorn，`docker stop -t 10` 要等到被 SIGKILL（三次實測 10.28 到 10.79 秒，退出碼 137）。加上 `exec` 後 PID 1 是 uvicorn，0.45 到 0.51 秒正常關機（退出碼 0）。
@@ -26,9 +26,9 @@
 | 合併後重驗 | 退出碼 | 結果 | log（`<tmp>/work/parser/`） |
 |---|---|---|---|
 | pytest：共用 venv／`venv-req`／`venv-min` | 0／0／0 | 各 119 passed | 終端輸出（未另存） |
-| `docker build --network host --build-arg HTTPS_PROXY=… -t qsearch-parser:merged shared/infra/gcp/services/parser` | 0 | 14.4 秒；映像 215 MB（合併前 294 MB，少了 pubsub 與它的 grpcio 等依賴） | `docker_build_merged.log`、`docker_images_merged.log` |
-| `tests/smoke.sh qsearch-parser:merged 18095` | 0 | 12 項比對全部相符；PID 1 是 uvicorn，`docker stop` 0.457 秒，退出碼 0 | `smoke_merged.log` |
-| `docker run --rm --network none --entrypoint sh qsearch-parser:merged -c 'id; …'` | 0 | `uid=10001(app)`；映像內沒有 `google.cloud.pubsub` | `image_merged_user.log` |
+| `docker build --network host --build-arg HTTPS_PROXY=… -t argus-parser:merged shared/infra/gcp/services/parser` | 0 | 14.4 秒；映像 215 MB（合併前 294 MB，少了 pubsub 與它的 grpcio 等依賴） | `docker_build_merged.log`、`docker_images_merged.log` |
+| `tests/smoke.sh argus-parser:merged 18095` | 0 | 12 項比對全部相符；PID 1 是 uvicorn，`docker stop` 0.457 秒，退出碼 0 | `smoke_merged.log` |
+| `docker run --rm --network none --entrypoint sh argus-parser:merged -c 'id; …'` | 0 | `uid=10001(app)`；映像內沒有 `google.cloud.pubsub` | `image_merged_user.log` |
 
 後來在 Terraform 端另外處理了本檔記錄的兩個問題：`checks.tf` 的 `no_placeholder_images` 在任何 `image_*` 還是 Cloud Run 示範映像時於 plan 階段警告；push 訂閱的 `oidc_token` 明寫 `audience = 服務 URI`（不帶路徑），所以下方「OIDC audience」一列的預設值問題在合併後的 Terraform 不再適用。parser 映像的建置路徑仍未補（整理時 寫進 `shared/infra/gcp/README.md` 的「未覆蓋」）。下方各節是合併前的紀錄，數字以合併前的檔案為準。
 
@@ -54,12 +54,12 @@
 | 2 | `dockerd --data-root <tmp>/work/parser/docker-data`（背景執行兩次：12:51 到 12:56、17:25 到 17:27 UTC，都以 SIGTERM 停止） | 0／0 | 兩次都是 `Daemon shutdown complete` | `dockerd3.log`、`dockerd4.log` |
 | 3 | `docker pull mirror.gcr.io/library/python:3.12-slim@sha256:aa943ce4…` | 0 | `Image is up to date`（第一次拉取見 `docker_pull_mirror.log`） | `docker_pull_mirror_rerun.log` |
 | 4 | `docker build -t python:3.12-slim <tmp>/work/parser/base-ca`（mirror 映像加 sandbox proxy 的 CA 與 `PIP_CERT`，在本機標成 `python:3.12-slim`） | 0 | 本機標籤 `python:3.12-slim` 指向這個包裝映像（第一次建置見 `docker_build_baseca.log`） | `docker_build_baseca_rerun.log` |
-| 5 | `docker build --no-cache --network host --build-arg HTTPS_PROXY=… -t qsearch-parser:current shared/infra/gcp/services/parser` | 0 | 48.06 秒（pip 那層 43.2 秒）。這份 log 沒有記 `exit=`，0 是依 BuildKit 的輸出判斷：每一步都 DONE、沒有 ERROR，最後一步有 `naming to docker.io/library/qsearch-parser:current done` 並以 `#10 DONE 4.2s` 結束。有記退出碼的建置見 #6 | `docker_build_current_nocache.log` |
+| 5 | `docker build --no-cache --network host --build-arg HTTPS_PROXY=… -t argus-parser:current shared/infra/gcp/services/parser` | 0 | 48.06 秒（pip 那層 43.2 秒）。這份 log 沒有記 `exit=`，0 是依 BuildKit 的輸出判斷：每一步都 DONE、沒有 ERROR，最後一步有 `naming to docker.io/library/argus-parser:current done` 並以 `#10 DONE 4.2s` 結束。有記退出碼的建置見 #6 | `docker_build_current_nocache.log` |
 | 6 | 同上但沒有 `--no-cache`（#4 重建了基底，所以 pip 那層重跑） | 0 | 約 35 秒（pip 那層 27.4 秒），產生映像 `201066844cfc`；映像內 `pip freeze` 34 個套件。映像內 `/app/main.py`、`/app/requirements.txt` 與工作目錄相同：當時的 `diff -q` 沒有留 log，17:26 UTC 對同一個映像重做並記錄（#22） | `docker_build_rerun.log`、`image_current_freeze.txt` |
-| 7 | `docker images` | 0 | `qsearch-parser:current` 294 MB（content 70.3 MB） | `docker_images.log`、`docker_images_after_rebuild.log` |
-| 8 | `tests/smoke.sh qsearch-parser:current 18091`（12:54、17:26 UTC 各跑一次） | 0／0 | 兩次都是 12 項比對全部相符（`result: all ok`），停機 0.484 秒、0.505 秒 | `smoke_rerun.log`、`smoke_rev2.log` |
-| 9 | `tests/smoke.sh qsearch-parser:orig 18092`（用 修正前的 `main.py` 與 `Dockerfile` 建的映像，見 #22） | 1／1 | 兩次都是同樣 6 項不符：PID 1、三個事件回 204、停機超過 5 秒（10.290 秒、10.279 秒）、退出碼 137 | `smoke_rerun.log`、`smoke_rev2.log` |
-| 10 | `docker run -e PORT=9090 -p 127.0.0.1:18083:9090 qsearch-parser:current`，再 `curl /health` | 0 | PID 1 是 `uvicorn … --port 9090`，`/health` 200 | `hello_and_port.log` |
+| 7 | `docker images` | 0 | `argus-parser:current` 294 MB（content 70.3 MB） | `docker_images.log`、`docker_images_after_rebuild.log` |
+| 8 | `tests/smoke.sh argus-parser:current 18091`（12:54、17:26 UTC 各跑一次） | 0／0 | 兩次都是 12 項比對全部相符（`result: all ok`），停機 0.484 秒、0.505 秒 | `smoke_rerun.log`、`smoke_rev2.log` |
+| 9 | `tests/smoke.sh argus-parser:orig 18092`（用 修正前的 `main.py` 與 `Dockerfile` 建的映像，見 #22） | 1／1 | 兩次都是同樣 6 項不符：PID 1、三個事件回 204、停機超過 5 秒（10.290 秒、10.279 秒）、退出碼 137 | `smoke_rerun.log`、`smoke_rev2.log` |
+| 10 | `docker run -e PORT=9090 -p 127.0.0.1:18083:9090 argus-parser:current`，再 `curl /health` | 0 | PID 1 是 `uvicorn … --port 9090`，`/health` 200 | `hello_and_port.log` |
 | 11 | `docker pull us-docker.pkg.dev/cloudrun/container/hello` | 0 | digest `sha256:d5dbac4a…` | `docker_pull_hello.log` |
 | 12 | 以 digest 啟動 hello，再 POST 缺欄位的事件、亂碼 body、空 body 到 `/events/crawl-fetched` | 0 | 三個都回 200 | `hello_and_port.log` |
 | 13 | `python3.12 -m venv venv-req && venv-req/bin/python -m pip install -r requirements.txt` | 0／0 | 34 個套件 | `pip_req2.log`、`venv_req_freeze.txt` |
@@ -75,7 +75,7 @@
 | 23 | `curl -sS -L` 下載 Pub/Sub 的 push 文件與 push 驗證文件，各一次（17:26、17:27 UTC） | 0／0 | 都是 HTTP 200，各轉址 1 次到 docs.cloud.google.com；sha256 見下方文件來源表 | `docs-dl-push/push.html`、`docs-dl-auth/auth_push.html` |
 | 24 | 共用 venv 與 `venv-min` 各跑一段 `python -I -c`（17:33 UTC）：用 修正前的 `Event` 寫法（`schema_version: int = 1`，非 strict）解 `"1"`、`1.0`、`true` 與缺欄位 | 0／0 | pydantic 2.14.2 與 2.1.1 都把四種輸入解成 int 1 | `pydantic_lax.log` |
 
-關於 `smoke.sh` 的退出碼：更早的 scratch 腳本（`scripts/smoke.sh`）沒有任何比對，退出碼只是最後一個 `docker rm` 的結果，所以審查前草稿記的「0」只代表腳本跑完，結果要看印出的狀態碼。現在的 `tests/smoke.sh` 會逐項和修正後的預期比對，有不符就退出 1，所以 #8 的 0 與 #9 的 1 都是比對結果。
+關於 `smoke.sh` 的退出碼：更早的 scratch 腳本（`scripts/smoke.sh`）沒有任何比對，退出碼只是最後一個 `docker rm` 的結果，所以自我檢查前草稿記的「0」只代表腳本跑完，結果要看印出的狀態碼。現在的 `tests/smoke.sh` 會逐項和修正後的預期比對，有不符就退出 1，所以 #8 的 0 與 #9 的 1 都是比對結果。
 
 #20 的 17 項失敗：`Event` 結構 1 項、Avro 不收的事件 10 項（contract 5、push 5）、缺 bucket 或 object 的 URI 4 項、CMD 沒有 exec 2 項。
 
@@ -180,7 +180,7 @@ repo 裡既有的說法與程式（含本檔較早的版本）：
 | 本檔較早版本與 `tests/parser_cases.py`：ack 狀態碼引用「push 文件，2026-10-30 查閱」（沒有存檔） | 內容不變，存了頁面並記 sha256 | 指令 #23，文件來源表 |
 | 本檔較早版本：Cloud Run 是否接受帶路徑的 audience「未實測」 | 仍未實測；補上 push 驗證文件的說法：Cloud Run 只需要 IAM 角色 | `docs-dl-auth/auth_push.html` |
 
-審查前的草稿與原有的測試（都沒有進 git，列出來是交代審查意見怎麼處理）：
+自我檢查前的草稿與原有的測試（都沒有進 git，列出來是交代自我檢查意見怎麼處理）：
 
 | 原本的說法 | 現在 | 依據 |
 |---|---|---|
@@ -191,7 +191,7 @@ repo 裡既有的說法與程式（含本檔較早的版本）：
 | 草稿 smoke 列的退出碼 0 | 舊腳本沒有比對，0 只代表腳本跑完；現在 `tests/smoke.sh` 有比對，current 0、orig 1 | `smoke_rerun.log`、`smoke_rev2.log` |
 | 草稿的測試鎖住了要修的缺點：FROM 只接受 `python:3.12-slim`、requirements 一定要有 google-cloud-pubsub | FROM 也接受 `@sha256:<64 位 hex>`；不再要求 google-cloud-pubsub，只檢查 main.py 沒有匯入 `google` | `test_from_pattern_allows_digest_pin`、`test_requirements_cover_imports` |
 | 原有的 `test_push_is_wrapped_and_authenticated` 直接找字串 `allUsers` | 改為只比對 `member = "..."`，因為 run.tf 的註解寫了「不開 allUsers」 | 指令 #1 |
-| 原有的 `test_parser_contract.py` 用 `from conftest import …` | 改成獨立的 `tests/parser_cases.py`，避免其他題目也有 `conftest.py` 時抓錯模組 | — |
+| 原有的 `test_parser_contract.py` 用 `from conftest import …` | 改成獨立的 `tests/parser_cases.py`，避免其他需求也有 `conftest.py` 時抓錯模組 | — |
 
 ## 版本範圍的問題
 

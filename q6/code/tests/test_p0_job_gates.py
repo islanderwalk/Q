@@ -1,4 +1,4 @@
-"""回補 Job 的計畫書修正：G1 比不重複 post_id、G2 比例門檻、認領 attempts < 3、心跳背景執行緒、G3 限速回升。
+"""回補 Job 的規劃書修正：G1 比不重複 post_id、G2 比例門檻、認領 attempts < 3、心跳背景執行緒、G3 限速回升。
 只測純函式與假帳本（FakeLedger）；不連 ES／PG。"""
 import json
 import sys

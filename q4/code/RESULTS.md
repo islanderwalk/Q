@@ -1,4 +1,4 @@
-# Q4 Threads 量測程式：Linux 重測結果（2026-10-30）
+# Threads 爬蟲量測程式：Linux 重測結果（2026-10-30）
 
 ## 結論
 
@@ -7,7 +7,7 @@
 - 網頁自己送分頁 query（`BarcelonaProfileThreadsTabRefetchableDirectQuery`）時有時無。量測程式這天桌面 15 次載入都沒有送，其中只有最後 3 次確定把內層主欄捲到底；手機 3 次載入有 1 次（natgeo）。README 原本說「個人頁載入時網頁自己送」，依據的那張截圖在載入後還捲了 1 次 1,600 px 的滾輪，不是單純載入；幾分鐘前的第一版截圖腳本（手機視窗）捲了 5 次也沒收到帶貼文的 GraphQL 回應（`shared/capture/capture_log.txt` 第 11 行；第一版只記有貼文的回應，沒記 query 名稱）。合計截圖腳本兩次執行只有第二次看到（桌面 1/1、手機 1/2），量測程式桌面 0/15、手機 1/3。README 這句已改寫。
 - natgeo 那次分頁 query 的 doc_id 是 `39825889313693314`、`first: 11`，回 11 串、17 篇。這個 doc_id 和 10-29 的 `39551525044493602`、10-30 凌晨的 `28880431481598345` 都不同，再次證實 doc_id 會換，不能寫死。存下的 HTML 裡只有這個 query 的模組名稱，沒有 doc_id 數字；doc_id 實際要怎麼取得，這次沒有驗證。
 - 「5 req/s 約 80–100 次後 GraphQL 回 401」這次沒有重測。
-- 第 4 題 600 字答案裡的數字，今天的證據沒有推翻任何一個，所以不改。答案以外的舊說明已更正（見「與既有說法的差異」）。2026-10-31 經確認，答案 (b) 末尾補一句「另 robots.txt 禁止未經書面許可自動蒐集」，見本檔最後一節。
+- 設計摘要裡的數字（連空白與換行，10-31 時為 600 字，11-15 補 IPRoyal 起購條件後為 641 字），今天的證據沒有推翻任何一個，所以不改。摘要以外的舊說明已更正（見「與既有說法的差異」）。2026-10-31 經確認，摘要的瓶頸二末尾補一句「另 robots.txt 禁止未經書面許可自動蒐集」，見本檔最後一節。
 - 對 threads.com 的瀏覽器開頁（`goto`）合計 21 次，沒有超過每站 30 次的上限。但手機視窗每次開頁，網站會自己再導覽一次；若把主框架文件都算進去，合計約 33 份（其中 9 份是推估），超過 30。
 
 ## 環境
@@ -44,15 +44,15 @@ cd <repo> && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python q4/code/threads_q4_
 | 6 | 12:37:17–12:37:19 | `curl -sS -o <tmp>/work/q4/dl_robots_final/robots.txt -w "status=%{http_code} bytes=%{size_download}\n" https://www.threads.com/robots.txt` | 0 | `status=200 bytes=8506` |
 | 7 | 12:39:10–12:39:12 | 見下方程式碼區塊 | 0 | 預設 `chromium.launch()` 失敗：`Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell`；指定 `/opt/pw-browsers/chromium` 成功（153.0.8010.12） |
 | 8 | 12:43:59–12:44:09 | pytest（當時 11 個測試） | 0 | 11 passed |
-| 9 | 22:33:51–22:34:14 | pytest（審查修正後，指令見「pytest 結果」） | 0 | 16 passed |
+| 9 | 22:33:51–22:34:14 | pytest（自我檢查修正後，指令見「pytest 結果」） | 0 | 16 passed |
 | 10 | 22:34:22–22:34:23 | `PYTHONDONTWRITEBYTECODE=1 PLAYWRIGHT_BROWSERS_PATH=<tmp>/work/q4/fix2/empty_pw <tmp>/venv/bin/python -m pytest -q -rs -p no:cacheprovider q4/code/tests` | 0 | 13 passed、3 skipped（找不到 Chromium 時的行為） |
 | 11 | 22:34:23 | `PYTHONDONTWRITEBYTECODE=1 HTTPS_PROXY=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 <tmp>/venv/bin/python q4/code/threads_q4_measure.py --mode http --delay 0 --out q4/data/threads_q4_out` | 2 | `results.json 已經存在，不覆蓋`；stdout 是空的，沒有開新目錄，舊檔 sha256 不變（`5926a514…`） |
 | 12 | 22:26:45 | `cd <tmp>/work/q4/fix2 && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -I replay_dump.py > replay_dump.log 2>&1` | 0 | 重放結果與 commit 進 repo 的 12:43:57 版逐位元組相同；12:32:37 與 12:43:57 兩版只差 1 行註解 |
 | 13 | 22:23（結束於 22:23:46） | `cd /tmp && PYTHONDONTWRITEBYTECODE=1 timeout 120 <tmp>/venv/bin/python -I <tmp>/work/q4/fix2/navs_probe.py /opt/pw-browsers/chromium > <tmp>/work/q4/fix2/navs_probe.log 2>&1` | 0 | 本機假站：單純一頁 `navigations` 1 筆、文件 1 份；載入後 `history.replaceState` 一次是 2 筆、1 份；JS 轉址加 302 是 2 筆、3 份 |
-| 14 | 2026-10-31 04:03:38–04:03:59 | `PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=<tmp>/work/q4ans/pt14 q4/code/tests > <tmp>/work/q4ans/q4_pytest_1031.log 2>&1`（補答案字數測試 `test_q4_answer_length.py` 後） | 0 | 17 passed |
+| 14 | 2026-10-31 04:03:38–04:03:59 | `PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=<tmp>/work/q4ans/pt14 q4/code/tests > <tmp>/work/q4ans/q4_pytest_1031.log 2>&1`（補摘要字數測試 `test_q4_summary_length.py` 後） | 0 | 17 passed |
 | 15 | 2026-10-31 04:24:05–04:24:29 | 同 #14，`--basetemp=<tmp>/work/q4ans/pt15`，log 是 `q4_pytest_1031b.log`（字數測試只改說明之後） | 0 | 17 passed |
 
-#9–#15 都在指令後接 `echo "exit=$?"`，把退出碼寫進同名 log 的最後一行（#14、#15 的 log 在 `<tmp>/work/q4ans/`）；#9–#11、#14、#15 從 `<repo>` 執行，#11 把代理指到關著的本機埠，就算程式沒擋住也連不出去。#9–#11 在 22:28 也跑過一次（註解改用「DOM」用詞之前），結果相同，log 被 22:33 那次的同名檔覆蓋；審查修正中斷前（17:39–17:51 UTC）也各跑過，結果相同（pytest 3 次都是 16 passed），log 在 `<tmp>/work/q4/fix/`。
+#9–#15 都在指令後接 `echo "exit=$?"`，把退出碼寫進同名 log 的最後一行（#14、#15 的 log 在 `<tmp>/work/q4ans/`）；#9–#11、#14、#15 從 `<repo>` 執行，#11 把代理指到關著的本機埠，就算程式沒擋住也連不出去。#9–#11 在 22:28 也跑過一次（註解改用「DOM」用詞之前），結果相同，log 被 22:33 那次的同名檔覆蓋；自我檢查修正中斷前（17:39–17:51 UTC）也各跑過，結果相同（pytest 3 次都是 16 passed），log 在 `<tmp>/work/q4/fix/`。
 
 用 `-I` 跑、又載入 `threads_q4_measure.py` 的 scratch 腳本（#13 與重算被引用貼文）會忽略 `PYTHONDONTWRITEBYTECODE`，在 `q4/code/__pycache__/` 留下 .pyc。這個目錄被根目錄 `.gitignore` 擋住，不會進 repo，已刪除；改用 `-I -B` 實測不會再寫。
 
@@ -110,8 +110,8 @@ for dev in desktop mobile desktop-1440; do sleep 4; date -Is > run_browser_$dev.
 | 12:29:03 | 第一份 HTML 改在 response 事件當下讀；加 `html_summary`、`url_shape`、捲動紀錄 | `58bc5edd58ad77b439d9bf1236b302789a5923152971aac035c141852663cb24` | #1–#3 |
 | 12:32:37 | 視窗捲不動時改捲內層捲動區；dialog 記前 60 字 | `4777578f8411b081d2bd7290528af1ecf4d6dc24e182bfe28a515ca8dfd2aedf` | #4、#5 |
 | 12:43:57 | 只改 `document_wire_bytes` 那一行註解 | `a1cdd2f4e749e3a6c429c16f8d379d2915575b32a273719dc807fa7c0cc9d0f2` | commit 進 repo 的版本；#8 |
-| 審查修正，中斷前（17:51 UTC 以前） | 見「程式修改」 | `ced4fb0d45a13d10309d16741db9f55df77a01bf1d8d111cd356bd6312b1d3e9` | 中斷前的 pytest；22:23 的 pytest 與 #13；沒有再連 Threads |
-| 審查修正，本次 | 只改註解與模組 docstring：`framenavigated` 記的是什麼；「畫面」改稱「渲染後 DOM 裡的貼文連結」 | `eeb94f64fc69e25bb0084591c0cbf8f7d89de29fb7effbef9e9d3c6a2cee3f51` | #9–#11；沒有再連 Threads |
+| 自我檢查修正，中斷前（17:51 UTC 以前） | 見「程式修改」 | `ced4fb0d45a13d10309d16741db9f55df77a01bf1d8d111cd356bd6312b1d3e9` | 中斷前的 pytest；22:23 的 pytest 與 #13；沒有再連 Threads |
+| 自我檢查修正，本次 | 只改註解與模組 docstring：`framenavigated` 記的是什麼；「畫面」改稱「渲染後 DOM 裡的貼文連結」 | `eeb94f64fc69e25bb0084591c0cbf8f7d89de29fb7effbef9e9d3c6a2cee3f51` | #9–#11；沒有再連 Threads |
 
 #1、#2 只走 HTTP；12:32:37 那次只改瀏覽器的部分，不影響它們。重放程式是 `<tmp>/work/q4/fix/replay_edits.py`，輸出在同目錄的 `replay_edits.log`；#12 用同一套重放把每一版存成文字檔再比對，12:32:37 與 12:43:57 的差異存在 `<tmp>/work/q4/fix2/diff_1232_1243.txt`。本次只改註解與 docstring：把本次最早加的兩處註解改回去，可以重建出 `ced4fb0d…` 那一版（sha256 相符，`<tmp>/work/q4/fix2/versions/ced4fb0d_reconstructed.txt`）；它和現行檔案拿掉 docstring 後的 AST 相同（`ast_check.log`），逐行差異在 `diff_ced4_final.txt`。所以本次沒有改到程式行為。
 
@@ -140,7 +140,7 @@ cd <repo> && PYTHONDONTWRITEBYTECODE=1 <tmp>/venv/bin/python -m pytest -q -p no:
 - 13 個是純離線測試：內嵌 JSON 解析、被引用貼文、GraphQL 摘要、壓縮後與解壓後大小、預排 query 與分頁資訊、`main()` 的參數與輸出目錄。
 - 3 個用本機 127.0.0.1 的假站跑 Chromium，不連外網：「302 轉址＋內層捲動＋捲到底送 GraphQL」的流程用桌面、手機兩種視窗設定各跑一次，並檢查 `navigations` 只有 2 筆（302 的中間網址不記）；另一個是沒有內層捲動區時退回 `window.scrollTo`，同一頁載入後用 `history.replaceState` 改一次網址，檢查 `navigations` 變 2 筆、文件仍是 1 份。找 Chromium 的順序是 `Q4_CHROMIUM`、Playwright 自己的預設執行檔、`PLAYWRIGHT_BROWSERS_PATH` 底下的 `chromium` 連結；都找不到就 skip。把 `PLAYWRIGHT_BROWSERS_PATH` 指到空目錄實測（#10）：13 passed、3 skipped，退出碼 0。
 
-2026-10-31 經確認在答案補 robots.txt 一句，同時加 `test_q4_answer_length.py`（1 項：答案段連空白與換行 ≤ 600 字、與標題行寫的兩個字數一致、含 robots.txt），現在共 17 個。有 log 的兩次都是 17 passed、退出碼 0（#14、#15，指令與 log 見指令表）；在 #14 之前，04:02:21–04:02:59 單跑 Q4（`--basetemp` 是 `pt_q4`，17 passed）、04:03:01–04:03:23 和 Q1 一起跑（`pt_both`，62 passed）各一次，沒有留 log；更早一次把新測試檔命名為 `test_answer_length.py`，和 Q1 的同名測試檔一起收集時衝突，因此改名；`threads_q4_measure.py` 與 `test_threads_smoke.py` 沒有改，sha256 仍是 `eeb94f64…`、`40548a4b…`。
+2026-10-31 經確認在設計摘要補 robots.txt 一句，同時加 `test_q4_summary_length.py`（1 項：摘要段連空白與換行 ≤ 600 字、與標題行寫的兩個字數一致、含 robots.txt；2026-11-15 補 IPRoyal 起購條件後上限改為 650），現在共 17 個。有 log 的兩次都是 17 passed、退出碼 0（#14、#15，指令與 log 見指令表）；在 #14 之前，04:02:21–04:02:59 單跑 Threads 模組（`--basetemp` 是 `pt_q4`，17 passed）、04:03:01–04:03:23 和反饋分診模組一起跑（`pt_both`，62 passed）各一次，沒有留 log；更早一次把新測試檔命名為 `test_summary_length.py`，和反饋分診模組的同名測試檔一起收集時衝突，因此改名；`threads_q4_measure.py` 與 `test_threads_smoke.py` 沒有改，sha256 仍是 `eeb94f64…`、`40548a4b…`。
 
 ## 量測結果
 
@@ -208,10 +208,10 @@ natgeo 手機那次分頁 query 的內容：
 | 原始 HTML、results.json、stderr log、時間與退出碼 | `<tmp>/work/q4/final/<名稱>/`、`<名稱>.log`、`.stdout`、`.exit`、`.time` | 否 |
 | 前一次嘗試的輸出 | `<tmp>/work/q4/attempt1/`、`<tmp>/work/q4/run_*` | 否 |
 | robots.txt | `<tmp>/work/q4/dl_robots_final/robots.txt`，sha256 `3230a25a1f3c2001a34d8038afe383660a22c0119f37f32bef040d44f0210e44`（07:46 抓的 `dl_robots/robots.txt` sha256 相同） | 否 |
-| 審查修正中斷前的證據：工作紀錄摘錄、程式重放、重算與 pytest 的 log | `<tmp>/work/q4/fix/`（`transcript_excerpts.txt`、`replay_edits.py`、`replay_edits.log`、`recount.log`、`preloaded.log`、`pytest_final.log`、`pytest_end.log`、`pytest_nochromium.log`、`refuse.log`） | 否 |
-| 審查修正本次的證據：#9–#13 的 log 與 `.time`、流量重算（`traffic.py`、`traffic.log`）、各版程式（`versions/`，含重建的 `ced4fb0d_reconstructed.txt`）、`diff_1232_1243.txt`、`ast_check.log`、`diff_ced4_final.txt`、用現行程式重算被引用貼文（`recount.log`，與中斷前相同）、文件改完後的 pytest（`pytest_end.log`）、`code_sha_at_pytest_final.txt`、`code_sha_at_pytest_end.txt` | `<tmp>/work/q4/fix2/` | 否 |
+| 自我檢查修正中斷前的證據：工作紀錄摘錄、程式重放、重算與 pytest 的 log | `<tmp>/work/q4/fix/`（`transcript_excerpts.txt`、`replay_edits.py`、`replay_edits.log`、`recount.log`、`preloaded.log`、`pytest_final.log`、`pytest_end.log`、`pytest_nochromium.log`、`refuse.log`） | 否 |
+| 自我檢查修正本次的證據：#9–#13 的 log 與 `.time`、流量重算（`traffic.py`、`traffic.log`）、各版程式（`versions/`，含重建的 `ced4fb0d_reconstructed.txt`）、`diff_1232_1243.txt`、`ast_check.log`、`diff_ced4_final.txt`、用現行程式重算被引用貼文（`recount.log`，與中斷前相同）、文件改完後的 pytest（`pytest_end.log`）、`code_sha_at_pytest_final.txt`、`code_sha_at_pytest_end.txt` | `<tmp>/work/q4/fix2/` | 否 |
 
-進 repo 的 4 個 JSON 共 34,197 B，只有計數、大小、狀態、query 名稱與 doc_id，不含 token、cookie、cursor 或 userID 的值。它們是審查修正前的程式產生的，所以沒有 `quoted_posts`、`redirects`，瀏覽器欄位也還是舊名。
+進 repo 的 4 個 JSON 共 34,197 B，只有計數、大小、狀態、query 名稱與 doc_id，不含 token、cookie、cursor 或 userID 的值。它們是自我檢查修正前的程式產生的，所以沒有 `quoted_posts`、`redirects`，瀏覽器欄位也還是舊名。
 
 ## 程式修改（`threads_q4_measure.py`）
 
@@ -226,7 +226,7 @@ natgeo 手機那次分頁 query 的內容：
 - `html_summary`：HTML 的分頁資訊（`has_next_page`、cursor 長度）與預排 query（`preloaded_queries`），HTTP 與瀏覽器共用。
 - 畫面量測多記 `scroll_height`、視窗高度、dialog 的前 60 個字。
 
-這次審查修正（相對上一版）：
+這次自我檢查修正（相對上一版）：
 
 - 被引用的貼文：`posts_in_json` 把嵌在 `share_info` 底下的貼文標成 `quoted`（同一篇只要在別處出現過就不算），`post_stats` 與 GraphQL 摘要多記 `quoted_posts`。帳號自己的串與回覆是 `posts − quoted_posts`。
 - 瀏覽器的 `posts_before_scroll` 等四個欄位改名為 `inline_posts_before_scroll` 等，並註明量的是內嵌 JSON，不是渲染後的貼文連結。
@@ -256,7 +256,7 @@ natgeo 手機那次分頁 query 的內容：
 | `threads_q4_result.txt` 開頭：程式與 results.json「保留為舊量測紀錄，wire 欄位實為解壓後大小」；標題「修正版，2026-10-29」 | 程式的 wire 已改記壓縮後；results.json 仍是 10-27 舊紀錄；檔案有 10-30 的加註 | 改寫該行，標題註明 10-30 加註 |
 | `threads_q4_result.txt` [A]：「手機 viewport 捲動會觸發分頁 query」 | 量測程式手機 1/3 帳號觸發 | 加註「10-30 重測只有 1/3 帳號觸發」 |
 | `threads_q4_result.txt` [B]：doc_id `39551525044493602`；上一版加註「實作要從網頁 JS 動態取得」 | 今天網頁用的是 `39825889313693314`。10-30 兩個時段存下的 36 份 HTML（含 9 份空殼）都找不到 10-29 以來看過的這三個分頁 query doc_id，有內容的 HTML 只有模組名 `BarcelonaProfileThreadsTabRefetchableDirectQuery.threads.graphql`；從 JS 取得 doc_id 沒有試過 | 標為 10-29 的值，改成「需從網頁 JS 取得，取得方式未驗證」 |
-| `q4/README.md` 第一段：答案與驗證檔在「根目錄」 | 檔案在 `q4/answer/` | 改正 |
+| `q4/README.md` 第一段：摘要與驗證檔在「根目錄」 | 檔案在 `q4/design/` | 改正 |
 | `q4/README.md`：「2026/10/30 下午（UTC）重測」「10/30 下午重測：桌面 15 次載入」 | 15 次桌面載入有 9 次在 07:52–07:57 UTC | 改成「10/30（UTC 07:50–12:37）」 |
 
 上一版 RESULTS 自己的說法，這次更正的有：
@@ -291,4 +291,4 @@ natgeo 手機那次分頁 query 的內容：
 - `q4/evidence/src/capture.py` 沒有重跑，截圖也沒有重拍。它用預設的 `chromium.launch()`，在這台機器上會因為找不到 headless shell 1248 而失敗；這次沒有改它。
 - `shared/capture/capture_manifest.json` 的 `q4-threads-mobile-wall` 標題「捲動不再載入下一頁」和同一筆的 result「帶貼文的 GraphQL 回應 2 個」互相矛盾，`shared/capture/capture_threads.py` 開頭的說明也這樣寫。同一個檔案的 `q4-threads-graphql-observed` 標題仍是「個人頁載入時網頁用 GraphQL 分頁」，但那次的觀察包含 1 次滾輪捲動。這兩個檔案不在本資料夾，沒有改。
 - 瀏覽器測試要開 Chromium，3 個合計約 20 秒。
-- robots.txt 開頭註明未經 Threads 書面許可不得自動化蒐集資料，並要求列名的授權爬蟲遵守 Meta 的 Automated Data Collection Terms。第 4 題要設計 40 萬帳號的爬蟲，原本的答案沒有提到這一點。檔內 37 組規則：`User-agent: *` 與 GPTBot、Scrapy 等 14 組列名的爬蟲是 `Disallow: /`；Googlebot、Bingbot 等 22 組列名的爬蟲只擋部分路徑（`/accounts/`、`/query/` 等），所以「對所有 user agent 都是 `Disallow: /`」的說法不精確。2026-10-31 經確認，答案 (b) 末尾補「另 robots.txt 禁止未經書面許可自動蒐集。」（連空白 26 字，不含空白 24 字）。為了連空白與換行一起算仍在 600 字內，其他句子做了 8 處不改意思的縮短，兩種算法都合計少 12 字（照原文，含標點與空白）：「first=10，即一次回」→「first=10 即回」、「一次性快取」→「快取一次」、「，可跨帳號共用」→「、跨帳號共用」、「不需登入」→「免登入」、「請求須帶」→「須帶」、「缺任一」→「缺一」、「以 IP 為單位封鎖」→「按 IP 封鎖」、「IP 並退避」→「IP、退避」。除了新加的 robots.txt，數字與英文詞都沒有變。改後連空白與換行 600 字，不含空白 521 字（原本 586、509 字）；`tests/test_q4_answer_length.py` 檢查這兩個數字與檔內標示一致、而且不超過 600。
+- robots.txt 開頭註明未經 Threads 書面許可不得自動化蒐集資料，並要求列名的授權爬蟲遵守 Meta 的 Automated Data Collection Terms。Threads 爬蟲模組要設計 40 萬帳號的爬蟲，原本的設計摘要沒有提到這一點。檔內 37 組規則：`User-agent: *` 與 GPTBot、Scrapy 等 14 組列名的爬蟲是 `Disallow: /`；Googlebot、Bingbot 等 22 組列名的爬蟲只擋部分路徑（`/accounts/`、`/query/` 等），所以「對所有 user agent 都是 `Disallow: /`」的說法不精確。2026-10-31 經確認，摘要的瓶頸二末尾補「另 robots.txt 禁止未經書面許可自動蒐集。」（連空白 26 字，不含空白 24 字）。為了連空白與換行一起算仍在 600 字內，其他句子做了 8 處不改意思的縮短，兩種算法都合計少 12 字（照原文，含標點與空白）：「first=10，即一次回」→「first=10 即回」、「一次性快取」→「快取一次」、「，可跨帳號共用」→「、跨帳號共用」、「不需登入」→「免登入」、「請求須帶」→「須帶」、「缺任一」→「缺一」、「以 IP 為單位封鎖」→「按 IP 封鎖」、「IP 並退避」→「IP、退避」。除了新加的 robots.txt，數字與英文詞都沒有變。改後連空白與換行 600 字，不含空白 521 字（原本 586、509 字）；`tests/test_q4_summary_length.py` 檢查這兩個數字與檔內標示一致、而且不超過 600。2026-11-15 補 IPRoyal 起購條件與改寫成瓶頸段落後，連空白與換行 641 字、不含空白 566 字，上限改為 650（理由寫在測試檔的 docstring）。

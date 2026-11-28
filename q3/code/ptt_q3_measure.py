@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""QSearch 筆試第 3 題：PTT 八卦板全文搜尋 ETL 的規模量測。
+"""ARGUS｜PTT 全文搜尋：八卦板全文搜尋 ETL 的規模量測。
 
-量測項目（對應題目第 1 小題「先估規模」）：
+量測項目（對應瓶頸 1「規模估算」）：
 1. 列表頁：往回爬滿 N 天，算每日／每小時發文量、刪文率、每頁篇數。
 2. 文章抽樣：依文章年齡（0–1 天、1–2 天…）分層抽樣，量
    留言數、內文與留言字數、HTML 大小、留言在發文後多久出現。
@@ -226,7 +226,7 @@ def human_bytes(n):
 def main():
     if hasattr(sys.stdout, "reconfigure"):  # 繁中 Windows 的 cp950 印不出 ≥、≈，導向檔案時會中斷
         sys.stdout.reconfigure(encoding="utf-8")
-    ap = argparse.ArgumentParser(description="QSearch 第 3 題：PTT 八卦板規模量測")
+    ap = argparse.ArgumentParser(description="ARGUS｜PTT 全文搜尋：八卦板規模量測")
     ap.add_argument("--board", default="Gossiping")
     ap.add_argument("--days", type=float, default=7, help="往回爬幾天的列表")
     ap.add_argument("--per-day", type=int, default=30, help="每個年齡層抽幾篇文章")
@@ -346,7 +346,7 @@ def measure(args, f, out_dir, started, t_start):
     o = []
     P = o.append
     P("== 結果（請整段貼回來）==")
-    P(f"題目：QSearch 第 3 題 PTT 全文搜尋｜看板：{args.board}")
+    P(f"ARGUS｜PTT 全文搜尋｜看板：{args.board}")
     P(f"量測時間：{started:%Y-%m-%d %H:%M} (UTC+8)，耗時 {elapsed / 60:.1f} 分鐘")
     P(f"參數：days={args.days} per_day={args.per_day} delay={args.delay}s")
 

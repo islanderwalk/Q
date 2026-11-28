@@ -6,9 +6,9 @@ DICT_BASE_URL = os.environ.get("DICT_BASE_URL", "http://dictsrv")
 DICT_VERSION = os.environ.get("DICT_VERSION", "current")
 PIPELINE = os.environ.get("PIPELINE", "v2")          # v1 = 舊流程（純字典、不清洗）；v2 = 新流程
 ALGO = {"v0": 0, "v1": 1, "v2": 2}
-PROJECT = os.environ.get("PUBSUB_PROJECT", "qsearch-local")
+PROJECT = os.environ.get("PUBSUB_PROJECT", "argus-local")
 SUBSCRIPTION = os.environ.get("PUBSUB_SUBSCRIPTION", "parsed-posts-seg-v2")
-PG_DSN = os.environ.get("PG_DSN", "postgresql://qsearch:qsearch@pg:5432/qsearch")
+PG_DSN = os.environ.get("PG_DSN", "postgresql://argus:argus@pg:5432/argus")
 RAW_ROOT = os.environ.get("RAW_ROOT", "/data/raw")
 # 回補 Job 的原文來源（rawsrc.py）：file＝本機對應元件，讀 RAW_ROOT；bigquery＝正式環境，讀 RAW_BQ_TABLE（專案.資料集.表）
 RAW_SOURCE = os.environ.get("RAW_SOURCE", "file")

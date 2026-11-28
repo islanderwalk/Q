@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 
 PUBSUB = os.environ.get("PUBSUB", "http://localhost:8085")
-PROJECT = os.environ.get("PUBSUB_PROJECT", "qsearch-local")
+PROJECT = os.environ.get("PUBSUB_PROJECT", "argus-local")
 
 
 def _dlq(topic):

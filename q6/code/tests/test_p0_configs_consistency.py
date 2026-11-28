@@ -118,7 +118,7 @@ def test_migrate_p0_sql_is_idempotent_and_matches_init_view():
 
 
 def test_every_alert_has_for_and_summary():
-    """計畫書：告警都要有 for、severity、summary；單次事件的 for 要比 increase 的 5 分鐘窗短。
+    """規劃書：告警都要有 for、severity、summary；單次事件的 for 要比 increase 的 5 分鐘窗短。
     Sloth 產生的燃燒率告警沒有 for：多視窗（短窗 and 長窗）本身就是持續條件，不另外加。"""
     for r in _alerts():
         assert "for" in r or "sloth_severity" in r["labels"], r["alert"]

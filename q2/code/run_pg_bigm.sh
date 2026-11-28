@@ -1,5 +1,5 @@
 #!/bin/bash
-# Q2 pg_bigm 擴充套件：用 repo 的 shared/infra/onprem/postgres-bigm/Dockerfile 在官方 PostgreSQL 16.15 映像上編 pg_bigm，
+# FB 貼文搜尋的 pg_bigm 擴充套件：用 repo 的 shared/infra/onprem/postgres-bigm/Dockerfile 在官方 PostgreSQL 16.15 映像上編 pg_bigm，
 # 起容器後跑 run_q2.py --pg-bigm（其餘參數照傳），最後刪掉容器。
 # 用法：PY=<python> bash q2/code/run_pg_bigm.sh <scratch 目錄> <run_q2.py 的參數…>
 #   例：bash q2/code/run_pg_bigm.sh /tmp/q2bigm --rows 1000000 --mode repeat --skip-bigram --out /tmp/q2bigm/repeat.json
@@ -13,7 +13,7 @@ W=${1:?usage: run_pg_bigm.sh <scratch dir> <run_q2.py args...>}
 shift
 PORT=${PORT:-55433}
 PG_BASE=${PG_BASE:-mirror.gcr.io/library/postgres:16.15-bookworm@sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938}
-IMAGE=qsearch-q2-pg16-bigm:local
+IMAGE=argus-q2-pg16-bigm:local
 NAME=q2bigm-$PORT
 CODE=$(cd "$(dirname "$0")" && pwd -P)
 REPO=$(cd "$CODE/../.." && pwd -P)

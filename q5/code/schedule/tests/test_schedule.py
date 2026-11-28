@@ -1,4 +1,4 @@
-"""q5/code/schedule/schedule.py 的測試：b-c-d.md (b) 引用的數字都要從這裡算得出來。"""
+"""q5/code/schedule/schedule.py 的測試：b-c-d.md 瓶頸二引用的數字都要從這裡算得出來。"""
 import sys
 from pathlib import Path
 

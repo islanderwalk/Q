@@ -1,4 +1,4 @@
-"""PM 頁修正（計畫書「其他落差」web/app.js、web/cloud.js 那一列＋P1 PM 頁 RUM）：
+"""PM 頁修正（規劃書「其他落差」web/app.js、web/cloud.js 那一列＋P1 PM 頁 RUM）：
 rum beacon 解析進指標、兩欄共用字級尺度、丟詞回傳、AbortController、簽核備註保留、告警橫幅、.n-symbol、web.yml。
 前端只做文字層面的檢查（沒有瀏覽器）；/api/rum 用 rum_ingest 直接打。"""
 import json

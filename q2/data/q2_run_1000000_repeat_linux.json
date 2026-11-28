@@ -12,7 +12,7 @@
     "maintenance_work_mem": "1GB",
     "bigram_timeout_min": 30.0,
     "skip_bigram": false,
-    "out": "/var/lib/qsearch-pg/out/q2_run_1000000_repeat_linux.json"
+    "out": "/var/lib/argus-pg/out/q2_run_1000000_repeat_linux.json"
   },
   "steps_seconds": {
     "generate_and_insert": 24.19

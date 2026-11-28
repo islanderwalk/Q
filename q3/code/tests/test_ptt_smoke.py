@@ -1,4 +1,4 @@
-"""Q3 PTT 量測程式的離線煙霧測試。
+"""PTT 全文搜尋量測程式的離線煙霧測試。
 
 用 shared/capture/html 內的實抓的 PTT 頁面（2026/10/30 實抓），不連網。
 斷言的數字取自 q3 README 與 ptt_live_invariants.json 記載的實測值。
@@ -423,7 +423,7 @@ def test_census_report_reproduces_committed_results(census, monkeypatch, tmp_pat
 
 
 def test_make_charts_reproduces_committed_html(monkeypatch, tmp_path):
-    spec = importlib.util.spec_from_file_location("_q3_make_charts", REPO / "q3" / "answer" / "src" / "make_charts.py")
+    spec = importlib.util.spec_from_file_location("_q3_make_charts", REPO / "q3" / "design" / "src" / "make_charts.py")
     charts = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(charts)
     monkeypatch.setattr(charts, "ANSWER", tmp_path)  # 寫到暫存資料夾，不動 repo 內的檔案
@@ -432,7 +432,7 @@ def test_make_charts_reproduces_committed_html(monkeypatch, tmp_path):
     made = sorted(p.relative_to(tmp_path) for p in tmp_path.glob("*/chart-*.html"))
     assert len(made) == 9
     for rel in made + [Path("src/ptt_targets.json")]:
-        assert (tmp_path / rel).read_bytes() == (REPO / "q3" / "answer" / rel).read_bytes(), rel
+        assert (tmp_path / rel).read_bytes() == (REPO / "q3" / "design" / rel).read_bytes(), rel
     crawl = (tmp_path / "5-not-monitored" / "chart-crawl-stats.html").read_text(encoding="utf-8")
     assert "最後仍抓不到的文章" in crawl and "0 / 6,237 篇" in crawl and "請求失敗" not in crawl
     assert "中途若有失敗也由退避重試補回" in crawl  # 有沒有失敗過只是推測，不寫成事實

@@ -9,7 +9,7 @@
     "CloudPubSubDeadLetterSourceDeliveryCount": "5",
     "CloudPubSubDeadLetterSourceSubscription": "parsed-posts-seg-v1",
     "CloudPubSubDeadLetterSourceTopicPublishTime": "2026-10-30T23:02:45.932Z",
-    "CloudPubSubDeadLetterSourceSubscriptionProject": "qsearch-local"
+    "CloudPubSubDeadLetterSourceSubscriptionProject": "argus-local"
    },
    "publishTime": "2026-10-30T23:02:50.821Z"
   },
@@ -21,7 +21,7 @@
     "CloudPubSubDeadLetterSourceDeliveryCount": "5",
     "CloudPubSubDeadLetterSourceSubscription": "parsed-posts-seg-v2",
     "CloudPubSubDeadLetterSourceTopicPublishTime": "2026-10-30T23:02:45.932Z",
-    "CloudPubSubDeadLetterSourceSubscriptionProject": "qsearch-local"
+    "CloudPubSubDeadLetterSourceSubscriptionProject": "argus-local"
    },
    "publishTime": "2026-10-30T23:02:50.993Z"
   }

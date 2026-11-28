@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Q1 原型：把答案第 3 點（三天的資料處理）串成一支可以實跑的程式。
+"""ARGUS｜反饋分診原型：把「我怎麼解」第 3 點（三天的資料處理）串成一支可以實跑的程式。
 
 第 1 天：客服信件去轉寄引文、簽名檔、罐頭回覆（email_clean）；匯出 300 則分層抽樣給人工標註（issue_tags）；
         問卷依購買期間分層（survey_weight）。
 第 2 天：規則式問題分類，算各候選問題的提及數、佔比並排序（issue_tags）。
 第 3 天：敏感度檢查：事後分層加權、排除老客戶後前三名是否改變、母體比例掃描（survey_weight）；
-        董事會報告第一頁的覆蓋範圍與排除說明（coverage_table）。
+        給決策者的報告第一頁的覆蓋範圍與排除說明（coverage_table）。
 
 輸入（--data 目錄，make_fixtures.py 產生的合成資料）：emails.jsonl、survey.csv。
   有 emails_truth.jsonl 時另外輸出「規則 vs 答案」的評估（只有合成資料有答案，正式資料要靠 300 則人工標註），
@@ -39,8 +39,8 @@ import email_clean as ec  # noqa: E402
 import issue_tags as it  # noqa: E402
 import survey_weight as sw  # noqa: E402
 
-SOCIAL_POSTS = 150000      # 題目：社群貼文約 15 萬則（本原型沒有載入）
-SOCIAL_QUAL_SAMPLE = 200   # 答案：抽樣 200 則做人工定性檢視（計畫；本原型沒有社群資料，沒有做）
+SOCIAL_POSTS = 150000      # 需求：社群貼文約 15 萬則（本原型沒有載入）
+SOCIAL_QUAL_SAMPLE = 200   # 設計：抽樣 200 則做人工定性檢視（計畫；本原型沒有社群資料，沒有做）
 EXCLUDED_STRATA = {"canned_template": "排除：罐頭回覆", "agent_signature": "排除：客服個別回覆"}
 EXCLUDED_PER_STRATUM = 20
 NAIVE_COVERAGE = 0.6
@@ -306,7 +306,7 @@ def render_report(s):
     st = em["stats"]
     kept, dropped = em["template_pairs"]["kept"], em["template_pairs"]["dropped"]
     conf_range = f"{min(p['conf'] for p in kept):.3f}～{max(p['conf'] for p in kept):.3f}" if kept else "—"
-    lines = ["# Q1 原型實跑報告（合成資料）", "",
+    lines = ["# 反饋分診原型實跑報告（合成資料）", "",
              "> 合成資料：由 `make_fixtures.py` 以固定 seed 產生，不是顧客資料。"
              "數字只用來驗證程式會動、示範每個步驟的效果，不能當成任何產品的結論。", "",
              f"- 參數：母體老客戶比例 base_old_share = {sv['base_old_share']:.0%}（假設，正式報告要換成 CRM 實際分布）；"
@@ -521,7 +521,7 @@ def run(data, out, base_old_share=0.5, sample_size=300, seed=20261030):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Q1 原型：信件清理、問題分類、問卷加權、覆蓋表")
+    ap = argparse.ArgumentParser(description="ARGUS｜反饋分診原型：信件清理、問題分類、問卷加權、覆蓋表")
     ap.add_argument("--data", type=Path, required=True)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--base-old-share", type=float, default=0.5,

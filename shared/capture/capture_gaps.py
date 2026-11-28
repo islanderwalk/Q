@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""補 Q2 / Q5 / Q6 證據不足的部分（Playwright，未登入，公開頁）。
+"""補 FB 貼文搜尋 / 新指標上線 / 文字雲斷詞 證據不足的部分（Playwright，未登入，公開頁）。
 
-  fb   Q2：NASA 粉專 → 一則公開貼文頁，截圖標出粉專名稱、發文時間、心情統計、粉專 ID
-  ig   Q5：IG Reels 分頁（同一次載入）與單支 Reel 頁，只記錄回應 JSON 的觀看數欄位名與數值
-  ptt  Q6：PTT 高雄板（不需 18 歲確認）公開文章，截取含短網址／電話／地名的雜訊字串
-用法：python capture_gaps.py [fb,ig,ptt]；另有 ptt_refresh（重拍 Q6 其中 2 篇，加頁尾 IP／編輯者遮罩，只載入這 2 篇）
+  fb   FB 貼文搜尋：NASA 粉專 → 一則公開貼文頁，截圖標出粉專名稱、發文時間、心情統計、粉專 ID
+  ig   新指標上線：IG Reels 分頁（同一次載入）與單支 Reel 頁，只記錄回應 JSON 的觀看數欄位名與數值
+  ptt  文字雲斷詞：PTT 高雄板（不需 18 歲確認）公開文章，截取含短網址／電話／地名的雜訊字串
+用法：python capture_gaps.py [fb,ig,ptt]；另有 ptt_refresh（重拍 文字雲斷詞 其中 2 篇，加頁尾 IP／編輯者遮罩，只載入這 2 篇）
 
 規則（沿用 README）：同站兩次導覽間隔 ≥2 秒；每站載入次數記錄在 LOADS；
 不存 cookie、token、cursor；不存整頁 HTML；FB/IG 只存欄位名與數值；
@@ -71,7 +71,7 @@ def shot(page, rel):
     return rel
 
 
-# ----------------------------------------------------------------- Q2 Facebook
+# ----------------------------------------------------------------- FB 貼文搜尋 Facebook
 FB_POST_JS = r"""() => {
   const hrefs = [...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href') || '');
   const post = hrefs.find(h => /\/NASA\/posts\//.test(h));
@@ -139,7 +139,7 @@ def run_fb(browser):
     rel = shot(page, "q2/evidence/playwright/fb_post_nasa.png")
     found = sum(1 for x in [info["times"], info["reactions"], info["heads"]] if x) + 1  # +1 網址使用者名稱
     add(q="2", id="q2-fb-post", node="platforms", title="FB 單則公開貼文的欄位（未登入）",
-        claim="Q2 的欄位（粉專名稱、粉專 ID、發文時間、心情統計）可以從單則貼文頁讀到；貼文網址用 pfbid，粉專 ID 要從頁面連結取",
+        claim="FB 貼文搜尋的欄位（粉專名稱、粉專 ID、發文時間、心情統計）可以從單則貼文頁讀到；貼文網址用 pfbid，粉專 ID 要從頁面連結取",
         result=f"粉專名稱 {'有' if info['heads'] else '無'}；粉專 ID：數字 ID {'有' if info['pageIds'] else '未見'}，網址使用者名稱 NASA；"
                f"發文時間 {'有' if info['times'] else '無'}；心情統計 {'有' if info['reactions'] else '無'}；"
                f"{'有' if (info['dialog'] or info['login']) else '無'}登入視窗；欄位命中 {found}/4",
@@ -147,7 +147,7 @@ def run_fb(browser):
     ctx.close()
 
 
-# ----------------------------------------------------------------- Q5 Instagram
+# ----------------------------------------------------------------- 新指標上線 Instagram
 FIELD_KEYS = {"video_view_count", "play_count", "view_count", "ig_play_count", "video_play_count"}
 IG_SHORT = "De7XCa_TJ4h"
 
@@ -310,7 +310,7 @@ def run_ig(browser):
     ctx.close()
 
 
-# ----------------------------------------------------------------- Q6 PTT 雜訊字串
+# ----------------------------------------------------------------- 文字雲斷詞 PTT 雜訊字串
 SHORT_RE = re.compile(r"reurl\.cc/[A-Za-z0-9]+|bit\.ly/[A-Za-z0-9]+|ppt\.cc/[A-Za-z0-9]+|pse\.is/[A-Za-z0-9]+|lihi\d?\.cc/[A-Za-z0-9]+|lin\.ee/[A-Za-z0-9]+|tinyurl\.com/[A-Za-z0-9]+")
 PHONE_RE = re.compile(r"09\d{2}[-\s]?\d{3}[-\s]?\d{3}|\(0\d\)\s?\d{4}[-\s]?\d{4}")
 PLACE_RE = re.compile(r"高雄市|鼓山區|左營區|苓雅區|三民區|前鎮區|小港區|鳳山區|衛武營|高雄")

@@ -67,7 +67,7 @@ def rows(lines):
         m = _SINCE_RE.match(since)
         # 月、日也要在範圍內：pipeline.seg_ver 不收 13 月、0 日，這裡放行的話要到定向重跑才會炸
         if not m or not (1 <= int(m[2]) <= 12 and 1 <= int(m[3]) <= 31):
-            raise PromoListError(f"{FILE} 第 {n} 行：第三欄要是字典版本（例 qsearch-q6-2026.11.12.1）：{since!r}")
+            raise PromoListError(f"{FILE} 第 {n} 行：第三欄要是字典版本（例 argus-q6-2026.11.12.1）：{since!r}")
         k = key(text)
         if word_chars(k) < MIN_WORD_CHARS:
             raise PromoListError(f"{FILE} 第 {n} 行：句子去掉網址後不到 {MIN_WORD_CHARS} 個字，太短會誤刪正文：{text!r}")

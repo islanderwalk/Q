@@ -2,7 +2,7 @@
 <html lang="zh-Hant"><head><meta charset="utf-8"><link rel="stylesheet" href="diagram.css"><script src="diagram.js"></script></head>
 <body><script>
 renderDiagram({
-  eyebrow: 'QSearch 筆試 · 第 6 題 · (a) 歷史資料回朔',
+  eyebrow: 'ARGUS · 文字雲斷詞 · (a) 歷史資料回補',
   title: '(a) 一批怎麼跑：讀原文、斷詞、條件寫入、過閘門',
   sub: '原文從 BigQuery 讀；寫入是冪等的條件更新，所以失敗只要重跑那一批。四道閘門全過才放行下一批。',
   height: 610,
@@ -16,7 +16,7 @@ renderDiagram({
     { id: 'gates', x: 40, y: 205, w: 1480, h: 215, cls: 'ghost', title: '每批閘門：四項全過才放行下一批' },
     { id: 'g1', x: 70, y: 250, w: 330, cls: 'gate', tag: 'G1 完整性', title: '筆數守恆', sub: '原文去重篇數 = ES 達標篇數（seg_ver 已到目標版）' },
     { id: 'g2', x: 430, y: 250, w: 340, cls: 'gate', tag: 'G2 品質', title: '洩漏 = 0、必不可拆全過', sub: 'top-200 無網址碎片、電話、停用詞；地名與搜尋熱詞 100% 完整；分佈在 POC 區間 ±20%' },
-    { id: 'g3', x: 800, y: 250, w: 330, cls: 'gate', tag: 'G3 查詢', title: '文字雲查詢 ≤ 3 分鐘', sub: '已覆蓋月份跑熱門 30 查詢的 v2 文字雲，最慢不超過 3 分鐘（題目目標）；本機實測最慢 0.4 秒' },
+    { id: 'g3', x: 800, y: 250, w: 330, cls: 'gate', tag: 'G3 查詢', title: '文字雲查詢 ≤ 3 分鐘', sub: '已覆蓋月份跑熱門 30 查詢的 v2 文字雲，最慢不超過 3 分鐘（我的目標）；本機實測最慢 0.4 秒' },
     { id: 'g4', x: 1160, y: 250, w: 340, cls: 'gate', tag: 'G4 產品', title: '各渠道首月 PM 抽查', sub: '熱門 30 個查詢 v1／v2 並排；之後月份只要 G1–G3 正常就自動放行' },
 
     { id: 'pass', x: 300, y: 480, w: 380, cls: 'accent', tag: '四項全過', title: '標記完成 → 下一批', sub: '分區清單更新狀態；同渠道往更舊的月份走' },
@@ -32,7 +32,7 @@ renderDiagram({
     { from: 'gates', to: 'fail', sides: ['bottom', 'top'], fromT: 0.696, align: 'x', color: 'bad' },
     { from: 'pass', to: 'list', sides: ['left', 'bottom'], toT: 0.065, route: 'hv', color: 'accent', dashed: true }
   ],
-  footL: '示意圖 · 3 分鐘取自題目；5,170 篇/秒與 0.4 秒為本機實測；±20% 為本研究設的門檻，POC 時校正',
+  footL: '示意圖 · 3 分鐘是我的目標；5,170 篇/秒與 0.4 秒為本機實測；±20% 為本研究設的門檻，POC 時校正',
   footR: 'q6/architecture/a-backfill/diagram-batch-flow-gates.png'
 });
 </script></body></html>

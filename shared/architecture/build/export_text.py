@@ -21,9 +21,9 @@ class Text(html.parser.HTMLParser):
 NAME = {"int": "一張圖（整合）", "seq": "請求時序", "uvicorn": "Uvicorn 背景", "notes": "推演筆記"}
 os.makedirs(out, exist_ok=True)
 for k, v in PAGES.items():
-    if k == "q2":  # the Q2 page is q2/answer/fb_q2_posts_table.html, kept as is
+    if k == "q2":  # the FB 貼文搜尋 page is q2/design/fb_q2_posts_table.html, kept as is
         continue
     t = Text(); t.feed(base64.b64decode(v).decode("utf8"))
-    head = f"# 總架構「{NAME.get(k, k)}」分頁的純文字版，由 shared/architecture/build/export_text.py 從 qsearch-architecture.html 匯出"
+    head = f"# 總架構「{NAME.get(k, k)}」分頁的純文字版，由 shared/architecture/build/export_text.py 從 argus-architecture.html 匯出"
     open(os.path.join(out, k + ".txt"), "w", encoding="utf8").write(head + "\n" + "\n".join(t.lines) + "\n")
     print(k, len(t.lines), "lines")

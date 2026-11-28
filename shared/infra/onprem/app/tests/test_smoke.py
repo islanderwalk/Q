@@ -1,7 +1,7 @@
-"""端到端 smoke test：對「正在跑的」qsearch-onprem stack 驗證 排→派→抓→存→解→用。
+"""端到端 smoke test：對「正在跑的」argus-onprem stack 驗證 排→派→抓→存→解→用。
 
 前提：全新的 stack（docker compose down -v 之後再 up）。測試依檔案順序執行，彼此有先後依賴。
-期望值（文章數、關鍵字命中數）由本檔用正規表示式從 fixture 獨立算出，不呼叫 qsearch_onprem.ptt，
+期望值（文章數、關鍵字命中數）由本檔用正規表示式從 fixture 獨立算出，不呼叫 argus_onprem.ptt，
 避免「用同一份解析程式驗證自己」。
 """
 from __future__ import annotations
@@ -19,8 +19,8 @@ import pika
 import psycopg
 import pytest
 
-from qsearch_onprem import common, replay, scheduler
-from qsearch_onprem.config import settings
+from argus_onprem import common, replay, scheduler
+from argus_onprem.config import settings
 
 S = settings()
 FIX = Path(S.fixture_root)
@@ -177,7 +177,7 @@ def test_05_published_events_match_avro_schema():
     for m in msgs:
         fastavro.validation.validate(m, schema, raise_errors=True, strict=True)
         assert set(m) == field_names  # validate() 不擋多餘欄位，另外檢查
-        assert m["raw_data_uri"].startswith("s3://qsearch-raw-scraped/")
+        assert m["raw_data_uri"].startswith("s3://argus-raw-scraped/")
         assert m["event_type"] == "crawl.fetched" and m["schema_version"] == 1
 
 
@@ -227,7 +227,7 @@ def test_08_clickhouse_rows_partitioned_by_day():
     parts = chc.query("SELECT DISTINCT partition FROM system.parts WHERE database = %(db)s "
                       "AND table = 'ingest_events' AND active", parameters={"db": S.ch_database}).result_rows
     posts = int(chc.command(f"SELECT sum(post_count) FROM {S.ch_database}.ingest_events"))
-    engine = chc.command("SELECT engine_full FROM system.tables WHERE database = 'qsearch' AND name = 'ingest_events'")
+    engine = chc.command("SELECT engine_full FROM system.tables WHERE database = 'argus' AND name = 'ingest_events'")
     STATE["clickhouse"] = {"rows": n, "partitions": [p[0] for p in parts], "sum_post_count": posts,
                            "engine_full": engine}
     assert n == EXPECTED_JOBS

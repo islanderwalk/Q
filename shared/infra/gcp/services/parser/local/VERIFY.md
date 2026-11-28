@@ -9,7 +9,7 @@
 
 | 檔案 | 用途 |
 |---|---|
-| `compose.yaml` | compose 專案 `qsearch-gcplocal`：Pub/Sub 模擬器（`127.0.0.1:18285`）、parser（`127.0.0.1:18280`）、header-echo（`127.0.0.1:18281`） |
+| `compose.yaml` | compose 專案 `argus-gcplocal`：Pub/Sub 模擬器（`127.0.0.1:18285`）、parser（`127.0.0.1:18280`）、header-echo（`127.0.0.1:18281`） |
 | `pubsub_e2e.py` | 建 topic／訂閱（名稱取自 `pubsub.tf`）、發佈 a～d 四則訊息、拉 DLQ、Seek 重播、統計 parser log |
 | `header_echo.py` | 第二條 push 訂閱的接收端，記錄模擬器實際送出的 header 與 envelope |
 | `check_schema.py` | fastavro 解析 Avro schema，並比對 Avro × Pydantic `Event` × `bq.tf` 的 `ingest_events` 欄位 |
@@ -20,7 +20,7 @@
 | 項目 | 版本 |
 |---|---|
 | Pub/Sub 模擬器 | `gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators`（Google Cloud SDK 591.0.0，pubsub-emulator 0.8.37，image id `sha256:112c21f8…`） |
-| parser 映像 | `qsearch-gcplocal-parser:local`（由本 repo 的 `../Dockerfile` 建置；容器內 Python 3.12.16、fastapi 0.162.0、pydantic 2.14.2、uvicorn 0.54.0） |
+| parser 映像 | `argus-gcplocal-parser:local`（由本 repo 的 `../Dockerfile` 建置；容器內 Python 3.12.16、fastapi 0.162.0、pydantic 2.14.2、uvicorn 0.54.0） |
 | 主機端 venv | Python 3.13.17、google-cloud-pubsub 2.43.0、fastavro 1.13.1、pytest 9.2.0、httpx 0.28.1 |
 
 ## 重現步驟
@@ -31,15 +31,15 @@
 cd shared/infra/gcp/services/parser/local
 
 # 0. 建 parser 映像（一般環境）
-docker compose -p qsearch-gcplocal -f compose.yaml build parser
+docker compose -p argus-gcplocal -f compose.yaml build parser
 #    本次容器裡 Docker Hub 匿名拉取被限流（HTTP 429），改用 GCR 的官方映像鏡像 mirror.gcr.io/library/python:3.12-slim
 #    再疊上出口代理 CA，用 --build-context 頂替 Dockerfile 的 FROM python:3.12-slim（Dockerfile 本身未改）：
 #    docker build --network host --build-arg https_proxy=http://127.0.0.1:<proxy-port> \
-#      --build-context python:3.12-slim=docker-image://qsearch-gcplocal-pybase:local \
-#      -t qsearch-gcplocal-parser:local ..
+#      --build-context python:3.12-slim=docker-image://argus-gcplocal-pybase:local \
+#      -t argus-gcplocal-parser:local ..
 
 # 1. 起服務，確認 /health
-docker compose -p qsearch-gcplocal -f compose.yaml up -d --no-build
+docker compose -p argus-gcplocal -f compose.yaml up -d --no-build
 curl -sS -i http://127.0.0.1:18280/health
 
 # 2. 建 topic、DLQ 與 push 訂閱
@@ -48,11 +48,11 @@ $VENV/bin/python pubsub_e2e.py setup
 
 # 3. 發佈 a～d，觀察 30～75 秒
 $VENV/bin/python pubsub_e2e.py publish
-docker logs qsearch-gcplocal-parser-1 2>&1 | $VENV/bin/python pubsub_e2e.py count
+docker logs argus-gcplocal-parser-1 2>&1 | $VENV/bin/python pubsub_e2e.py count
 $VENV/bin/python pubsub_e2e.py dlq          # 多跑幾次，每次可能只拉到 1 則
 
 # 4. 其他探測
-docker logs qsearch-gcplocal-header-echo-1 2>&1 | grep -o '"has_authorization": [a-z]*' | sort | uniq -c
+docker logs argus-gcplocal-header-echo-1 2>&1 | grep -o '"has_authorization": [a-z]*' | sort | uniq -c
 $VENV/bin/python pubsub_e2e.py probe-schema
 $VENV/bin/python pubsub_e2e.py seek 10
 
@@ -61,7 +61,7 @@ $VENV/bin/python check_schema.py
 cd .. && PYTHONDONTWRITEBYTECODE=1 $VENV/bin/python -m pytest -p no:cacheprovider -v -rxX tests
 
 # 6. 清理（只清本專案）
-cd local && docker compose -p qsearch-gcplocal -f compose.yaml down -v
+cd local && docker compose -p argus-gcplocal -f compose.yaml down -v
 ```
 
 ## 結果
@@ -77,11 +77,11 @@ cd local && docker compose -p qsearch-gcplocal -f compose.yaml down -v
 
 ### 2. 建 topic 與 push 訂閱（`pubsub_e2e.py setup`，結束碼 0）
 
-模擬器**全部接受**，`get_subscription` 讀回來的設定與 `pubsub.tf` 的 `qsearch_parser_sub` 一致：
+模擬器**全部接受**，`get_subscription` 讀回來的設定與 `pubsub.tf` 的 `argus_parser_sub` 一致：
 `pushEndpoint=http://parser:8080/events/crawl-fetched`、`oidcToken.serviceAccountEmail` 有存、`ackDeadlineSeconds=60`、
-`retainAckedMessages=true`、`messageRetentionDuration=604800s`、`retryPolicy 10s／600s`、`deadLetterPolicy max 5 → qsearch-parser-dlq`。
+`retainAckedMessages=true`、`messageRetentionDuration=604800s`、`retryPolicy 10s／600s`、`deadLetterPolicy max 5 → argus-parser-dlq`。
 
-`qsearch-crawl-fetched` 在這裡**刻意不綁 schema**，否則 d（非 JSON）在 publish 時就被擋，到不了 parser。schema 行為另外用探測 topic 測（見第 5 點）。
+`argus-crawl-fetched` 在這裡**刻意不綁 schema**，否則 d（非 JSON）在 publish 時就被擋，到不了 parser。schema 行為另外用探測 topic 測（見第 5 點）。
 
 ### 3. 四則訊息的投遞結果
 
@@ -117,14 +117,14 @@ parser log 片段（第一次）：
 | c | 1.0, 16.0, 16.0, 20.0 | 1.0, 13.5, 20.0, 26.0 |
 | d | 1.0, 17.0, 18.0, 22.1 | 1.0, 14.5, 18.0, 22.0 |
 
-第 5 次失敗後模擬器把 b、c、d 轉到 `qsearch-parser-dlq`。`pubsub_e2e.py dlq`（結束碼 0）兩次都拉到 3 則，每則都帶
-`CloudPubSubDeadLetterSourceDeliveryCount=5`、`CloudPubSubDeadLetterSourceSubscription=qsearch-parser-sub`，以及原本的 attribute `case`。之後 parser 不再收到這三則。
+第 5 次失敗後模擬器把 b、c、d 轉到 `argus-parser-dlq`。`pubsub_e2e.py dlq`（結束碼 0）兩次都拉到 3 則，每則都帶
+`CloudPubSubDeadLetterSourceDeliveryCount=5`、`CloudPubSubDeadLetterSourceSubscription=argus-parser-sub`，以及原本的 attribute `case`。之後 parser 不再收到這三則。
 
 **結論：** a 只投遞一次並回 204；b、c、d 每次都回 422，被重送，滿 5 次後進 DLQ。與 `main.py` 註解描述的行為一致。
 
 ### 4. OIDC（header-echo 訂閱）
 
-`qsearch-header-echo-sub` 設了 `oidc_token`，模擬器接受設定，但送出的 4 個 push request **都沒有 `Authorization` header**（`4 "has_authorization": false`，兩次相同）。
+`argus-header-echo-sub` 設了 `oidc_token`，模擬器接受設定，但送出的 4 個 push request **都沒有 `Authorization` header**（`4 "has_authorization": false`，兩次相同）。
 送出的 envelope 形狀：`{"subscription": ..., "message": {"data", "messageId", "message_id", "publishTime", "publish_time", "attributes"}}`，parser 的 `PushEnvelope` 可以正確解析（多出的欄位被忽略）。
 
 ### 5. Avro schema 在模擬器上的行為（`pubsub_e2e.py probe-schema`，結束碼 0）
@@ -141,17 +141,17 @@ parser log 片段（第一次）：
 | `schema_version` 是字串 `"1"` | REJECTED |
 | 多一個未定義欄位 | ACCEPTED |
 
-意思是：正式環境的 topic 綁了 schema，d 這類訊息在 publish 時就會被擋，不會到 parser；b、c 這類「型別正確但內容不對」的訊息仍會到 parser，而且也會被 `qsearch-fetched-to-bq` 寫進 BigQuery（BigQuery 寫入未在本機驗證）。
+意思是：正式環境的 topic 綁了 schema，d 這類訊息在 publish 時就會被擋，不會到 parser；b、c 這類「型別正確但內容不對」的訊息仍會到 parser，而且也會被 `argus-fetched-to-bq` 寫進 BigQuery（BigQuery 寫入未在本機驗證）。
 
 ### 6. Seek 重播（`pubsub_e2e.py seek 10`，結束碼 0）
 
-把 `qsearch-parser-sub` Seek 回 10 分鐘前之後，已 ACK 的 a 又送了一次，parser 第二次記錄
+把 `argus-parser-sub` Seek 回 10 分鐘前之後，已 ACK 的 a 又送了一次，parser 第二次記錄
 `Accepted event_id=evt-local-0001 ... message_id=1`（兩次都看到）。b、c、d 也重新各送 5 次後再度進 DLQ（第一次的 log：最終各 10 次，DLQ 再拉到 3 則）。
 這證實 `retain_acked_messages` 讓重播可行，同時也說明 parser **目前沒有冪等**：同一個 `event_id` 會被處理兩次。
 
 ### 7. Avro × Pydantic × BigQuery 欄位比對（`check_schema.py`，結束碼 0）
 
-- `fastavro.parse_schema` 成功（`qsearch.crawl.CrawlFetchedEvent`，6 個欄位）。
+- `fastavro.parse_schema` 成功（`argus.crawl.CrawlFetchedEvent`，6 個欄位）。
 - a、b、c 三個樣本 fastavro 驗證都是 VALID，二進位往返相等；d 不是 JSON。
 - 三處欄位**名稱集合相同**（6 個），型別對應一致（Avro `string`／`int` ↔ Pydantic `str`／`int` ↔ BQ `STRING`／`INTEGER`）。欄位順序不同（Pydantic 把 `raw_data_uri` 放在 `event_type` 前面），JSON 編碼下沒有影響。
 - 必填／可空不一致 8 項：
@@ -174,7 +174,7 @@ BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受�
 | 指令 | 結束碼 | 結果 |
 |---|---|---|
 | 主機 venv（Python 3.13.17）：`python -m pytest -p no:cacheprovider -v -rxX tests` | 0 | **10 passed, 3 xfailed** |
-| parser 映像內（Python 3.12.16）：`docker run --rm -v $PWD/tests:/app/tests:ro qsearch-gcplocal-parser:local sh -c 'pip install pytest httpx && python -m pytest -p no:cacheprovider -q -rxX tests'` | 0 | **10 passed, 3 xfailed** |
+| parser 映像內（Python 3.12.16）：`docker run --rm -v $PWD/tests:/app/tests:ro argus-gcplocal-parser:local sh -c 'pip install pytest httpx && python -m pytest -p no:cacheprovider -q -rxX tests'` | 0 | **10 passed, 3 xfailed** |
 
 10 個通過：`/health`、a～d 四個主要情境、`event_type` 錯誤、base64 錯誤、envelope 缺 `message`、envelope 沒有 `attributes`、envelope 帶 `deliveryAttempt`。
 3 個 strict xfail 是第 7 點的已知不一致（缺 `event_type`、缺 `schema_version`、`schema_version` 為字串時應回 422，目前回 204）。修好後這 3 個會變成 XPASS 而失敗，提醒移除標記。
@@ -189,7 +189,7 @@ BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受�
 
 | 項目 | 結束碼 | 結果 |
 |---|---|---|
-| `docker exec qsearch-gcplocal-parser-1 id` | 0 | `uid=10001(app)` |
+| `docker exec argus-gcplocal-parser-1 id` | 0 | `uid=10001(app)` |
 | `docker image inspect` Size | 0 | 215,028,483 bytes（原本 294,442,882） |
 | `curl -i /health` | 0 | `HTTP/1.1 200 OK` |
 | `pubsub_e2e.py setup`／`publish` | 0／0 | 同前 |
@@ -203,7 +203,7 @@ BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受�
 
 ### 9. 清理
 
-`docker compose -p qsearch-gcplocal -f compose.yaml down -v` 結束碼 0；之後 `docker ps -a --filter name=qsearch-gcplocal` 與 `docker network ls --filter name=qsearch-gcplocal` 都是 0 筆。
+`docker compose -p argus-gcplocal -f compose.yaml down -v` 結束碼 0；之後 `docker ps -a --filter name=argus-gcplocal` 與 `docker network ls --filter name=argus-gcplocal` 都是 0 筆。
 
 ## 模擬器與正式環境的差異（不能用本機結果代替的部分）
 
@@ -226,7 +226,7 @@ BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受�
    from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
    class Event(BaseModel):
-       # 與 qsearch-crawl-event-v1.avsc 一致：六個欄位皆必填、型別不做寬鬆轉換。
+       # 與 argus-crawl-event-v1.avsc 一致：六個欄位皆必填、型別不做寬鬆轉換。
        model_config = ConfigDict(strict=True)
 
        event_id: str
@@ -245,4 +245,4 @@ BigQuery 全部 NULLABLE 是放寬方向；Pub/Sub BigQuery 訂閱是否接受�
 
 4. **（低，已修正）`requirements.txt` 有用不到的 `google-cloud-pubsub`。** `main.py` 沒有 import 它。拿掉這一行後映像從 294,442,882 bytes 降到 214,985,730 bytes（`docker image inspect` 的 Size）。建議刪除 `google-cloud-pubsub>=2.20,<3`。
 
-5. **（資訊）`ingest_events` 會收到內容錯誤的事件。** `qsearch-fetched-to-bq` 直接用 topic schema 寫入，b、c 這類通過 Avro 但被 parser 拒絕的事件仍會進 BigQuery。分析時要自行過濾 `schema_version` 與 `raw_data_uri`。
+5. **（資訊）`ingest_events` 會收到內容錯誤的事件。** `argus-fetched-to-bq` 直接用 topic schema 寫入，b、c 這類通過 Avro 但被 parser 拒絕的事件仍會進 BigQuery。分析時要自行過濾 `schema_version` 與 `raw_data_uri`。

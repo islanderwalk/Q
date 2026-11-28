@@ -32,7 +32,7 @@ resource "google_compute_address" "egress" {
   region = var.region
 }
 
-# 第二個固定 IP：一個 IP 只有 64,512 個埠，採集器＋Q6 斷詞／API 的 Direct VPC 實例每台至少配 1,024 埠，一個 IP 最多 63 台；
+# 第二個固定 IP：一個 IP 只有 64,512 個埠，採集器＋文字雲斷詞 斷詞／API 的 Direct VPC 實例每台至少配 1,024 埠，一個 IP 最多 63 台；
 # 兩個 IP 也讓單一 IP 被目標站封鎖時還有退路（兩個都要給對方白名單）。
 resource "google_compute_address" "egress_2" {
   name   = "crawler-egress-ip-2"

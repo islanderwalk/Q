@@ -23,7 +23,7 @@ def envelope(data: bytes, message_id: str = "1", **message_extra) -> dict:
         "attributes": {"case": "test"},
     }
     msg.update(message_extra)
-    return {"message": msg, "subscription": "projects/qsearch-local/subscriptions/qsearch-parser-sub"}
+    return {"message": msg, "subscription": "projects/argus-local/subscriptions/argus-parser-sub"}
 
 
 def test_health(client):

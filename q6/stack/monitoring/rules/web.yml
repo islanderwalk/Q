@@ -1,4 +1,4 @@
-# PM 頁（計畫書 P1「PM 頁（Faro）」那一列，這裡用自寫的 web/rum.js → POST /api/rum；指標都在 wordcloud-api，服務掛掉由 rules/api.yml 的 WordcloudApiDown 先響）。
+# PM 頁（規劃書 P1「PM 頁（Faro）」那一列，這裡用自寫的 web/rum.js → POST /api/rum；指標都在 wordcloud-api，服務掛掉由 rules/api.yml 的 WordcloudApiDown 先響）。
 # 門檻都是提案值：LCP 2.5 秒、INP 200 ms、CLS 0.1 是 web-vitals 的「良好」上限；樣本 < 5 次不評（本機只有 PM 一個人在看）。
 groups:
   - name: q6-web

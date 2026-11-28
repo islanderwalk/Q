@@ -4,7 +4,7 @@
   "params": {
     "rows": 1000000,
     "mode": "corpus",
-    "corpus": "/var/lib/qsearch-pg/corpus/ptt_recombine_250.txt",
+    "corpus": "/var/lib/argus-pg/corpus/ptt_recombine_250.txt",
     "host": "127.0.0.1",
     "port": 55433,
     "user": "postgres",

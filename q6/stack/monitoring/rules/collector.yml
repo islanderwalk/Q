@@ -1,4 +1,4 @@
-# 採集器（計畫書 P0 第 3、4 項）：產出率與軟封鎖、首抓延遲、退避、YouTube 配額、robots 變更、服務掛掉保護。門檻都是提案值。
+# 採集器（規劃書 P0 第 3、4 項）：產出率與軟封鎖、首抓延遲、退避、YouTube 配額、robots 變更、服務掛掉保護。門檻都是提案值。
 groups:
   - name: q6-collector
     rules:
@@ -7,7 +7,7 @@ groups:
         for: 2m
         labels: { severity: page }
         annotations: { summary: "採集器抓不到 /metrics 超過 2 分鐘（服務掛了）；下面的規則這段時間都不會響" }
-      # 被轉去登入頁／checkpoint ≥ 1 次立即呼叫（計畫書：「checkpoint 或登出 ≥ 1 次立即呼叫」）
+      # 被轉去登入頁／checkpoint ≥ 1 次立即呼叫（規劃書：「checkpoint 或登出 ≥ 1 次立即呼叫」）
       - alert: CollectorLoginWall
         expr: sum by (feed) (increase(collector_requests_total{outcome="login_wall"}[10m])) >= 1
         for: 0m
@@ -38,7 +38,7 @@ groups:
         for: 5m
         labels: { severity: warn }
         annotations: { summary: "YouTube Data API 當日配額用完（{{ $labels.feed }}）：太平洋時間午夜（台灣 16:00）歸零後自動恢復；配額與歷史爬蟲共用，先看爬蟲當天用了多少" }
-      # 產出率低於 7 天前同時段的 50% 持續 30 分鐘 → page（計畫書 P0 第 3 項；分母至少 1 篇／小時才比，避免深夜 0 除）
+      # 產出率低於 7 天前同時段的 50% 持續 30 分鐘 → page（規劃書 P0 第 3 項；分母至少 1 篇／小時才比，避免深夜 0 除）
       - alert: CollectorYieldDrop
         expr: |
           sum by (channel) (rate(collector_posts_new_total[1h]))
@@ -47,7 +47,7 @@ groups:
         for: 30m
         labels: { severity: page }
         annotations: { summary: "渠道產出率低於 7 天前同時段的一半（{{ $labels.channel }}）" }
-      # 首抓延遲 p95 > 45 分鐘 warn、> 60 分鐘 page；只算發文 24 小時內的新文章（計畫書 P0 第 4 項）。
+      # 首抓延遲 p95 > 45 分鐘 warn、> 60 分鐘 page；只算發文 24 小時內的新文章（規劃書 P0 第 4 項）。
       # 看「我們這邊」collector_detect_lag_seconds（抓到 − 上一次成功檢查）：發文到抓到的總延遲 collector_first_seen_lag_seconds
       # 還包含來源晚上架，只放看板。端對端驗證：中央社經 feedburner 的條目晚 15 分鐘到將近 3 小時才出現在 RSS、一出現 5 分鐘內就抓到，
       # 拿總延遲告警，page 會為來源端的事響好幾個小時。輪詢停了的當下另有 CollectorFeedStale／CollectorFeedDead

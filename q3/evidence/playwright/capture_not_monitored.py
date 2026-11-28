@@ -1,9 +1,9 @@
-"""截「三件不監控的事」實際觸發時的畫面，畫紅框，併進架構頁第 5 題的動畫彈窗。
+"""截「三件不監控的事」實際觸發時的畫面，畫紅框，併進架構頁瓶頸 5 的動畫彈窗。
 
     python q3/evidence/playwright/capture_not_monitored.py          # 截圖＋寫 not_monitored.json
     python q3/evidence/playwright/capture_not_monitored.py --embed  # 把截圖嵌進 architecture.html
 
-三件事（對應 answer_800.txt §5「只上看板、不告警」的 (1)(2)(3)）：
+三件事（對應 summary.txt §5「只上看板、不告警」的 (1)(2)(3)）：
   1 單次請求失敗：用 Playwright 攔截一次請求、回 503（模擬，不真的去壓 PTT；畫面上會註明）
   2 事後刪文 404：PTT 上的已刪文章 M.1792887225.A.5F3，回 404
   3 截斷留言：PTT 上的截斷文章 M.1792462201.A.2BD，網頁寫「檔案過大」
@@ -212,7 +212,7 @@ def embed():
     if old_li:
         html = html.replace(old_li.group(0), new_li, 1)
     elif 'data-ev="u"' not in html:
-        raise RuntimeError("找不到第 5 題的 li")
+        raise RuntimeError("找不到瓶頸 5 的 li")
 
     HTML.write_text(html, encoding="utf-8")
     print("embedded", len(frames), "frames into", HTML)

@@ -1,12 +1,12 @@
 """產生 Grafana 儀表板 JSON（看板即程式碼：Python 產生、進版控、可以 review）。
 
 兩張看板：
-- dashboards/qsearch-q6.json      「QSearch Q6 文字雲」：依資料流分層，一層一列（客戶 SLO → PM 頁 → 完整性 → 串流 → 字典發版收斂 →
-                                   回補燃盡 → 品質日報 → Elasticsearch → PostgreSQL 與監控自身）。計畫書 P0 第 1、2、5–10 項都在這張。
-- dashboards/qsearch-q6-collect.json「QSearch Q6 採集」：計畫書 P0 第 3、4 項，六列（結果分類、產出率、首抓延遲、退避與預算、延遲分段、監控自身）。
+- dashboards/argus-q6.json      「ARGUS 文字雲斷詞」：依資料流分層，一層一列（客戶 SLO → PM 頁 → 完整性 → 串流 → 字典發版收斂 →
+                                   回補燃盡 → 品質日報 → Elasticsearch → PostgreSQL 與監控自身）。規劃書 P0 第 1、2、5–10 項都在這張。
+- dashboards/argus-q6-collect.json「ARGUS 文字雲採集」：規劃書 P0 第 3、4 項，六列（結果分類、產出率、首抓延遲、退避與預算、延遲分段、監控自身）。
 
 共同規則：
-- 顏色用 palette-classic-by-name，同一個名稱（渠道、pipeline）在每個面板同色；六渠道另外寫死（計畫書：兩個面板同一平台顏色相反的教訓）。
+- 顏色用 palette-classic-by-name，同一個名稱（渠道、pipeline）在每個面板同色；六渠道另外寫死（規劃書：兩個面板同一平台顏色相反的教訓）。
 - 變數 seg／pipeline／channel／feed；註記從 PostgreSQL live_events 讀（發版、簽核、限速、告警）疊在所有面板上。
 - 180 秒 SLA 在耗時面板畫成門檻線；每個門檻都是提案值，寫在面板說明。
 - 面板的 PromQL 指標名都在程式裡定義（q6/code/tests/test_p0_configs_consistency.py 檢查）；SQL 只讀 pg/init.sql、pg/live.sql 建的表。
@@ -72,7 +72,7 @@ class Board:
                 "templating": {"list": self.variables},
                 "annotations": {"list": [{"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": True, "hide": True,
                                           "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}] + self.annotations},
-                "links": [{"title": "QSearch Q6 文字雲", "type": "link", "url": "/d/qsearch-q6"}, {"title": "QSearch Q6 採集", "type": "link", "url": "/d/qsearch-q6-collect"},
+                "links": [{"title": "ARGUS 文字雲斷詞", "type": "link", "url": "/d/argus-q6"}, {"title": "ARGUS 文字雲採集", "type": "link", "url": "/d/argus-q6-collect"},
                           {"title": "Alertmanager", "type": "link", "url": alertmanager_url(), "targetBlank": True},
                           {"title": "PM 頁", "type": "link", "url": "http://127.0.0.1:8080", "targetBlank": True}]}
         path.write_text(json.dumps(dash, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -177,7 +177,7 @@ def text(title, md, w=24, h=3):
 
 
 # ============================================================ 主看板 ============================================================
-MAIN = Board("qsearch-q6", "QSearch Q6 文字雲：客戶 SLO → PM 頁 → 完整性 → 串流 → 發版收斂 → 回補 → 品質 → ES", ["qsearch", "q6"],
+MAIN = Board("argus-q6", "ARGUS 文字雲斷詞：客戶 SLO → PM 頁 → 完整性 → 串流 → 發版收斂 → 回補 → 品質 → ES", ["argus", "q6"],
              variables=[var("seg", "label_values(wordcloud_duration_seconds_count, seg)", "文字雲版本"),
                         var("pipeline", "label_values(qseg_messages_total, pipeline)", "斷詞流程"),
                         var("channel", "label_values(qseg_recon_docs, channel)", "渠道")],
@@ -185,7 +185,7 @@ MAIN = Board("qsearch-q6", "QSearch Q6 文字雲：客戶 SLO → PM 頁 → 完
                           annotation("告警", ["alert"], "#b91c1c")])
 B = MAIN
 
-B.row("① 客戶可見：文字雲 API 的 3 分鐘 SLO（計畫書 P0 第 1 項；SLI＝180 秒內成功 ÷ 全部查詢，含錯誤與逾時；Sloth 多窗口燃燒率）")
+B.row("① 客戶可見：文字雲 API 的 3 分鐘 SLO（規劃書 P0 第 1 項；SLI＝180 秒內成功 ÷ 全部查詢，含錯誤與逾時；Sloth 多窗口燃燒率）")
 B.add(*ts("查詢耗時 p50／p95／p99（未命中快取；錯誤與逾時也在分母）", [
     ('histogram_quantile(0.99, sum by (le, seg) (rate(wordcloud_duration_seconds_bucket{cache="miss", seg=~"$seg"}[$__rate_interval])))', "p99 {{seg}}"),
     ('histogram_quantile(0.95, sum by (le, seg) (rate(wordcloud_duration_seconds_bucket{cache="miss", seg=~"$seg"}[$__rate_interval])))', "p95 {{seg}}"),
@@ -206,7 +206,7 @@ B.add(*ts("查詢量與快取（每秒）", [('sum by (seg, result) (rate(wordcl
 B.add(*ts("各階段耗時 p95：overlay／state／ES／post", [('histogram_quantile(0.95, sum by (le, phase) (rate(wordcloud_phase_seconds_bucket{seg=~"$seg"}[$__rate_interval])))', "{{phase}}")],
           unit="s", w=8, desc="ES 以外的階段應該都在毫秒級；PG 連線池（最多 4 條，statement_timeout 10 秒）出問題會先反映在 state／overlay"))
 
-B.row("② PM 頁（計畫書 P1「PM 頁」：自寫 rum.js → /api/rum；沒有 Faro SDK，指標名相同）")
+B.row("② PM 頁（規劃書 P1「PM 頁」：自寫 rum.js → /api/rum；沒有 Faro SDK，指標名相同）")
 B.add(*ts("Web Vitals p75：LCP／INP／首次出雲（ttfc）", [
     ('histogram_quantile(0.75, sum by (le, metric) (rate(wordcloud_web_vitals_seconds_bucket[1h])))', "{{metric}}"),
     ('histogram_quantile(0.95, sum by (le, seg) (rate(wordcloud_duration_seconds_bucket{cache="miss"}[1h])))', "API p95 {{seg}}")],
@@ -218,7 +218,7 @@ B.add(*stat("JS 錯誤（1 小時）", "sum(increase(wordcloud_web_errors_total[
 B.add(*stat("排版放不下的詞（1 小時）", "sum(increase(wordcloud_web_dropped_words_total[1h]))", thr=[(1, "orange")], desc="頁面會顯示是哪些詞；WebDroppedWords（ticket）", w=2))
 B.add(*stat("雲上篇數≠抽屜（1 小時）", "sum(increase(wordcloud_web_count_mismatch_total[1h]))", thr=[(1, "orange")], desc="兩次查詢之間資料變了（快取或新文章）；WebCountMismatch（ticket）", w=2))
 
-B.row("③ 完整性：原文湖 → ES → 有 v2 → 最新版（計畫書 P0 第 2 項四層對帳 seg-recon，每小時；覆蓋與缺值 seg-coverage，每分鐘）")
+B.row("③ 完整性：原文湖 → ES → 有 v2 → 最新版（規劃書 P0 第 2 項四層對帳 seg-recon，每小時；覆蓋與缺值 seg-coverage，每分鐘）")
 B.add(*table("四層對帳（今天；渠道 × 月）", """SELECT channel AS 渠道, month AS 月, raw_docs AS "L1 原文", es_docs AS "L2 ES", es_deleted AS 已刪, es_with_v2 AS "L3 有v2", es_at_latest_v2 AS "L4 最新版",
  ledger_written + ledger_noop AS "帳本 寫入+noop", ledger_status AS 帳本狀態, round(missing_ratio * 100, 3) AS "缺 %", extra_docs AS 多出
  FROM recon_daily WHERE day = (SELECT max(day) FROM recon_daily) AND channel IN ($channel) ORDER BY missing_ratio DESC NULLS LAST, channel, month""",
@@ -235,7 +235,7 @@ B.add(*ts("ES 篇數依渠道（layer=es）與多出的篇數", [('sum by (chann
                                                   ('sum by (channel) (qseg_recon_extra_docs{channel=~"$channel"})', "多出 {{channel}}")], w=8,
           desc="多出＝ES 有、原文湖沒有（串流進來的新文章是正常的；回補範圍內多出要查重複 post_id）"))
 
-B.row("④ 串流斷詞（Pub/Sub → seg-v1／seg-v2 → ES；計畫書 P0 第 5 項積壓與 DLQ，本機用程序內積壓年齡代替 Cloud Monitoring）")
+B.row("④ 串流斷詞（Pub/Sub → seg-v1／seg-v2 → ES；規劃書 P0 第 5 項積壓與 DLQ，本機用程序內積壓年齡代替 Cloud Monitoring）")
 B.add(*ts("積壓年齡（最舊未 ack 訊息）", [('time() - min by (pipeline) (qseg_oldest_unacked_publish_ts{pipeline=~"$pipeline"})', "{{pipeline}}")], unit="s",
           thresholds=[(600, "orange"), (2700, "red")], desc="提案值：> 10 分鐘 ticket、> 45 分鐘 page（SegBacklogAgeTicket／Page）；服務掛掉由 SegServiceDown 先響", w=8))
 B.add(*ts("發佈到寫進 ES 的延遲 p95", [('histogram_quantile(0.95, sum by (le, pipeline) (rate(qseg_e2e_lag_seconds_bucket{pipeline=~"$pipeline"}[$__rate_interval])))', "{{pipeline}}")], unit="s", w=8,
@@ -251,10 +251,10 @@ B.add(*ts("刪文 tombstone／改文／bulk 429 重送", [('sum by (pipeline, re
 B.add(*ts("必不可拆的詞被切開（串流，依渠道）", [('sum by (pipeline, channel) (increase(qseg_must_keep_split_total{pipeline=~"$pipeline"}[$__rate_interval]))', "{{pipeline}} {{channel}}")], w=8,
           desc="segment_checked 看斷點位置（台北市長 → 台北／市長 允許；鳳山區 → 鳳山／區 不允許）；回補 G2 看同一件事"))
 
-B.row("⑤ 字典發版收斂（計畫書 P0 第 7 項：service_state 心跳裡有幾個不同 dict_version；rerun_runs；release_outbox）")
+B.row("⑤ 字典發版收斂（規劃書 P0 第 7 項：service_state 心跳裡有幾個不同 dict_version；rerun_runs；release_outbox）")
 B.add(*stat("v2 執行個體載入的字典版本數", 'qseg_service_dict_versions{pipeline="v2"}', thr=[(2, "orange")], desc="> 1 持續 10 分鐘 warn（DictVersionDivergence）：每台每 15 秒輪詢 current/manifest.json，正常幾十秒內收斂", w=4))
 B.add(*stat("v2 存活執行個體", 'qseg_service_instances_alive{pipeline="v2"}', thr=[(1, "green")], color_mode="value", desc="1 分鐘內有心跳；0 → SegNoAliveInstances（page）", w=4, reverse=True))
-B.add(*stat("定向重跑執行中最久", "qseg_rerun_running_age_seconds", unit="s", thr=[(1800, "orange")], desc="> 30 分鐘 warn（RerunStuck）；計畫書「超過預估 2 倍」目前沒有預估值", w=4))
+B.add(*stat("定向重跑執行中最久", "qseg_rerun_running_age_seconds", unit="s", thr=[(1800, "orange")], desc="> 30 分鐘 warn（RerunStuck）；規劃書「超過預估 2 倍」目前沒有預估值", w=4))
 B.add(*stat("發版 outbox 待送", "qseg_release_outbox_pending", thr=[(1, "orange")], desc="控制訊息發不出去（Pub/Sub 不通）：字典已切 current，背景每 10 秒重送；> 5 分鐘 warn（ReleaseOutboxStuck）", w=4))
 B.add(*ts("字典版本（各執行個體）", [('qseg_dict_info{pipeline=~"$pipeline"}', "{{pipeline}} {{dict_version}} seg_ver={{seg_ver}} {{build}}")], w=8, h=8,
           desc="熱換後舊版的 series 會被移除（原本會一直是 1）；同一時間兩條線＝沒收斂"))
@@ -265,7 +265,7 @@ B.add(*table("字典發版對帳（估計 vs 實際重跑寫入；加詞影響�
  rerun_written AS 實際寫入, round(100.0 * abs(affected_estimate - rerun_written) / NULLIF(affected_estimate, 0), 2) AS "差異 %", bigram_audit_missed AS 漏抓, released_at AS 發版時間
  FROM dict_releases ORDER BY released_at DESC LIMIT 20""", desc="差異來自 noop、errors 與併發寫入（定向重跑會處理每個候選）；漏抓 > 0 應阻擋發版（impact.py --record 才有值；未自動化）", w=24, h=7))
 
-B.row("⑥ 回補燃盡（計畫書 P0 第 8 項：帳本剩餘 ÷ 近 15 分鐘速率＝ETA；attempts ≥ 3；awaiting_pm 等多久；限速與 G3 自動降速）")
+B.row("⑥ 回補燃盡（規劃書 P0 第 8 項：帳本剩餘 ÷ 近 15 分鐘速率＝ETA；attempts ≥ 3；awaiting_pm 等多久；限速與 G3 自動降速）")
 B.add(*stat("剩餘篇數", "qseg_backfill_remaining_docs", desc="pending／running 分區的 raw_count − checkpoint_line", w=3, thr=[]))
 B.add(*stat("近 15 分鐘速率", "qseg_backfill_docs_per_sec_15m", unit="short", decimals=0, thr=[(1450, "green")], reverse=True, color_mode="value",
             desc="< 1,450 篇／秒超過一晚 warn（12 晚 × 8 小時做完 5 億篇的下限；BackfillThroughputLow）", w=3))
@@ -281,14 +281,14 @@ B.add(*table("最近完成的分區（閘門）", """SELECT partition_id AS 分�
  (gates->'G1'->>'pass') AS G1, (gates->'G2'->>'pass') AS G2, (gates->'G3'->>'pass') AS G3, (gates->'G3'->>'canary_p95_ms_after') AS "探針 p95 ms", finished_at AS 完成
  FROM backfill_ledger WHERE finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 12""", desc="G1 比不重複 post_id；G2 每類洩漏 ≤ 0.1%；G3 線上欄位（terms_v1）探針 p95 不惡化；G4 首月 PM 簽核", w=12))
 
-B.row("⑦ 文字雲品質日報（計畫書 P0 第 9 項：seg-quality 每天一次寫 quality_daily；「更乾淨」不等於「更好」）")
+B.row("⑦ 文字雲品質日報（規劃書 P0 第 9 項：seg-quality 每天一次寫 quality_daily；「更乾淨」不等於「更好」）")
 B.add(*gauge("洩漏率（抽樣篇數比例，依渠道 × 類別）", 'qseg_quality_leak_ratio{channel=~"$channel"}', legend="{{channel}} {{kind}}", thr=[(0.0001, "orange"), (0.01, "red")], max_=0.05,
              desc="url＝網址殘片（看原文）、phone、number、stopword＝硬停用詞、must_keep_split＝必不可拆詞被切開；> 0 warn（QualityLeak）", w=8, h=8))
 B.add(*gauge("地名被切開（含地名的抽樣篇數比例）", 'qseg_quality_place_split_ratio{channel=~"$channel"}', legend="{{channel}}", thr=[(0.0001, "orange")], max_=0.05,
              desc="使用者字典裡縣市區鄉鎮村里結尾的詞；> 0 warn（QualityPlaceSplit）", w=4, h=8))
 B.add(*stat("查詢詞整詞召回", "qseg_quality_whole_word_recall", unit="percentunit", decimals=2, thr=[(0.99, "green")], reverse=True, desc="片語比對篇數裡沒有確實被切開的比例（漏網文章抽樣用目前字典重斷，交集型歧義如 台北／市長 不算漏；原始口徑是 whole_word_worst 的 recall_raw）；< 99% warn（QualityWholeWordRecallLow）", w=4))
 B.add(*stat("金標詞召回 v2／v1／v0", "qseg_quality_gold_recall", unit="percentunit", decimals=3, legend="{{pipeline}}", thr=[(0.71, "green")], reverse=True, color_mode="value",
-            desc="150 題 PTT 標題、430 個金標詞（≥ 2 票）；10/31 版 75.6%（95% CI 71.3–79.8）；< 71% ticket（QualityGoldRecallDrop）", w=4))
+            desc="150 則 PTT 標題、430 個金標詞（≥ 2 票）；10/31 版 75.6%（95% CI 71.3–79.8）；< 71% ticket（QualityGoldRecallDrop）", w=4))
 B.add(*stat("McNemar p（v1→v2／v0→v2）", "qseg_quality_mcnemar_p", unit="short", decimals=6, legend="{{pair}}", thr=[], color_mode="value", desc="精確二項式雙尾；< 0.05 代表兩版留住的金標詞集合顯著不同", w=4))
 B.add(*ts("前 50 詞對昨天的 RBO 與 JS 散度（依渠道）", [('qseg_quality_rbo{pair="prev_day", channel=~"$channel"}', "RBO {{channel}}"), ('qseg_quality_js_divergence{channel=~"$channel"}', "JS {{channel}}")],
           w=8, min_=0, max_=1, thresholds=[(0.5, "orange")], desc="RBO 1＝排名一樣；< 0.5 ticket（QualityTopShift）對照註記裡的發版與回補；JS 0＝分布一樣"))
@@ -300,7 +300,7 @@ B.add(*table("品質日報（最近 7 天）", """SELECT day AS 日, channel AS 
  jsonb_array_length(coalesce(surges, '[]'::jsonb)) AS 暴增, dict_version AS 字典
  FROM quality_daily WHERE day > current_date - 7 ORDER BY day DESC, channel""", w=24, h=8, desc="channel='(all)' 那一列放整詞召回、金標、McNemar、暴增；whole_word_worst／surges／split_examples（被切開的詞與上下文）的明細在表的 jsonb 欄"))
 
-B.row("⑧ Elasticsearch 叢集健康（計畫書 P0 第 10 項：elasticsearch_exporter v1.9.0；OTel receiver 的寫入／搜尋速率仍在）")
+B.row("⑧ Elasticsearch 叢集健康（規劃書 P0 第 10 項：elasticsearch_exporter v1.9.0；OTel receiver 的寫入／搜尋速率仍在）")
 B.add(*stat("叢集狀態", 'sum(elasticsearch_cluster_health_status{color="yellow"}) + 2 * sum(elasticsearch_cluster_health_status{color="red"})',
             thr=[(1, "orange"), (2, "red")], desc="0 green／1 yellow／2 red；三個顏色是不同標籤的序列，要先 sum 掉標籤才能相加（原本直接相加，對不上標籤所以整格空白）；本機單節點 0 副本本來就是 yellow；red 立即 page（ElasticsearchClusterRed）", w=3))
 B.add(*stat("磁碟用量", "1 - (elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes)", unit="percentunit", thr=[(0.8, "orange"), (0.88, "red")],
@@ -328,10 +328,10 @@ B.add(*logs("API 與斷詞服務的 WARNING／ERROR（Loki）", '{service=~"api|
             desc="Alloy 從 docker 標籤收容器日誌，json 解析 severity／event；慢查詢 slowlog > 60 秒也進 Loki（ES 容器）"))
 
 # ============================================================ 採集看板 ============================================================
-C = Board("qsearch-q6-collect", "QSearch Q6 採集：結果分類 → 產出率 → 首抓延遲 → 退避與預算 → 延遲分段 → 監控自身", ["qsearch", "q6", "collect"],
+C = Board("argus-q6-collect", "ARGUS 文字雲採集：結果分類 → 產出率 → 首抓延遲 → 退避與預算 → 延遲分段 → 監控自身", ["argus", "q6", "collect"],
           variables=[var("channel", "label_values(collector_requests_total, channel)", "平台"), var("feed", "label_values(collector_requests_total, feed)", "來源")],
           annotations=[annotation("採集操作", ["collect_request"], "#0e7490"), annotation("告警", ["alert"], "#b91c1c")])
-C.row("1. 結果分類（計畫書 P0 第 3 項：回 200 不等於抓到；outcome＝ok／empty／not_modified／login_wall／content_unavailable／rate_limited／forbidden／quota_exceeded／server_error／network_error／parse_error／skipped）")
+C.row("1. 結果分類（規劃書 P0 第 3 項：回 200 不等於抓到；outcome＝ok／empty／not_modified／login_wall／content_unavailable／rate_limited／forbidden／quota_exceeded／server_error／network_error／parse_error／skipped）")
 C.add(*ts("每次請求的結果（每 5 分鐘，依平台 × 結果）", [('sum by (channel, outcome) (increase(collector_requests_total{channel=~"$channel", feed=~"$feed"}[5m]))', "{{channel}} {{outcome}}")], stack=True, w=12,
           desc="login_wall ≥ 1 次立即 page（CollectorLoginWall）；rate_limited／forbidden ≥ 2 次 warn（CollectorBlocked）；quota_exceeded＝YouTube 當日配額用完（warn，等歸零）；skipped＝沒有 YouTube API key 或 feed 被暫停"))
 C.add(*ts("Loki ruler 算出的同一件事（crawl:requests:rate5m；只留日誌的爬蟲用這條）", [('sum by (channel, outcome) (crawl:requests:rate5m{channel=~"$channel"})', "{{channel}} {{outcome}}")], unit="reqps", stack=True, w=6,
@@ -352,7 +352,7 @@ C.add(*table("每個來源的最後一次請求（outcome、解析篇數、轉�
  FROM collector_state ORDER BY channel, feed""",
               desc="欄位填充率（發文時間、作者、互動數）的分母是 feed 給的欄位：PTT Atom 有作者、YouTube API 有統計、RSS 沒有互動數（欄位本來就沒有，不算缺）；缺 published_at 的篇數在主看板 ③", w=24, h=7))
 
-C.row("3. 首抓延遲與逾期目標（計畫書 P0 第 4 項：發文到抓到＝抓到 − 發文時間，我們這邊＝抓到 − 上一次成功檢查；只算發文 24 小時內；桶有 2700 與 3600）")
+C.row("3. 首抓延遲與逾期目標（規劃書 P0 第 4 項：發文到抓到＝抓到 − 發文時間，我們這邊＝抓到 − 上一次成功檢查；只算發文 24 小時內；桶有 2700 與 3600）")
 C.add(*ts("首抓延遲 p95（1 小時窗）：我們這邊 vs 發文到抓到", [
     ('histogram_quantile(0.95, sum by (le, channel) (rate(collector_detect_lag_seconds_bucket{channel=~"$channel"}[1h])))', "{{channel}} 我們這邊"),
     ('histogram_quantile(0.95, sum by (le, channel) (rate(collector_first_seen_lag_seconds_bucket{channel=~"$channel"}[1h])))', "{{channel}} 發文到抓到")], unit="s",
@@ -373,7 +373,7 @@ C.add(*ts("YouTube 配額用量（單位，累計）與 robots.txt 變更", [("c
 
 C.row("5. 延遲分段（phase＝dns／connect／tls／ttfb／total；本機 requests 只量 total 與 ttfb，其餘要 curl 風格的 hook）")
 C.add(*ts("請求延遲 p95（依平台 × 階段）", [('histogram_quantile(0.95, sum by (le, channel, phase) (rate(collector_request_seconds_bucket{channel=~"$channel"}[$__rate_interval])))', "{{channel}} {{phase}}")], unit="s", w=12,
-          desc="兩個來源數字不同時以 Loki 逐筆為準（面板說明寫明，計畫書的教訓）"))
+          desc="兩個來源數字不同時以 Loki 逐筆為準（面板說明寫明，規劃書的教訓）"))
 C.add(*heatmap("總延遲分布", 'sum by (le) (increase(collector_request_seconds_bucket{phase="total", channel=~"$channel"}[5m]))', w=12))
 
 C.row("6. 監控自身（採集器心跳、Loki 寫入量、Alloy、Prometheus 目標）")

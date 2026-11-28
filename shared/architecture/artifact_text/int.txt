@@ -1,4 +1,4 @@
-# 總架構「一張圖（整合）」分頁的純文字版，由 shared/architecture/build/export_text.py 從 qsearch-architecture.html 匯出
+# 總架構「一張圖（整合）」分頁的純文字版，由 shared/architecture/build/export_text.py 從 argus-architecture.html 匯出
 1 排程
 2 派工
 3 抓取
@@ -39,9 +39,9 @@ Cloud Run Jobs
 Cloud Run
 parser · 3 個 adapter
 pg_bigm 搜尋庫
-Cloud SQL · Q2 FB 貼文
+Cloud SQL · FB 貼文搜尋 FB 貼文
 BigQuery
-Q3 PTT 7 天 · 查詢 API
+PTT 全文搜尋 PTT 7 天 · 查詢 API
 Elasticsearch
 貼文索引 · 約 5 億筆
 Data Layer API
@@ -69,7 +69,7 @@ Grafana＋Alertmanager
 2 張看板 90 面板 · 告警 66 條 → PM 頁
 沿用 PoC
 這次新增
-題目透露的 QSearch 元件
+需求裡提到的既有元件
 外部服務
 控制／狀態
 ＋

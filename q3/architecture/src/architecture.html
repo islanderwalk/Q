@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>PTT 全文搜尋 ETL 架構</title>
 <style>
-  /* 架構圖原始檔：用 q3/answer/src/capture.js charts 轉成 q3/architecture/architecture.png */
+  /* 架構圖原始檔：用 q3/design/src/capture.js charts 轉成 q3/architecture/architecture.png */
   :root {
     --ink: #e2e9ec; --ink2: #c3ced4; --muted: #94a3ac; --line: #2a3840; --surface: #141c20;
     --ext: #f08a5d;  --ext-bg: #2b1c15;   /* 外部來源 */
@@ -123,9 +123,9 @@
 </style>
 </head>
 <body>
-<section class="question" aria-label="Q3 題目">
-  <h2>Q3 [設計] PTT 全文搜尋系統</h2>
-  <p>我們要做一個 PTT 八卦板全文搜尋系統：使用者輸入關鍵字，查找過去 7 天內所有包含該關鍵字的貼文，以及文章下的留言。請設計滿足此需求的 ETL Pipeline。</p>
+<section class="question" aria-label="PTT 全文搜尋需求">
+  <h2>PTT 全文搜尋：八卦板 7 天全文搜尋 ETL</h2>
+  <p>我想做一個 PTT 八卦板全文搜尋：使用者輸入關鍵字，查出過去 7 天內所有包含該關鍵字的文章，以及文章下的留言。要設計能滿足這個需求的 ETL Pipeline。</p>
   <p><b>資料規格：</b></p>
   <ul>
     <li>文章即時性：新文章需在發布後 6 小時內納入搜尋範圍。</li>
@@ -133,25 +133,25 @@
   </ul>
   <p><b>工程約束：</b></p>
   <ul>
-    <li>你一個人維運，兩週內上線。</li>
-    <li>公司既有技術棧：GCP + Python。導入棧外的東西需要額外說明理由。</li>
-    <li>PTT 是別人的網站，你沒有 API，且過度請求會被擋。</li>
+    <li>我一個人維運，目標兩週內上線。</li>
+    <li>技術棧用 GCP + Python。導入棧外的東西需要額外說明理由。</li>
+    <li>PTT 是別人的網站，沒有 API，過度請求會被擋。</li>
   </ul>
-  <p><b>請回答：</b></p>
+  <p><b>遇到的瓶頸：</b></p>
   <ol>
-    <li>先估規模（<a class="ev" data-ev="n" href="../../data/ptt_q3_census_out/result_B.txt#L2-L5" target="_blank" rel="noopener">文章數</a>／<a class="ev" data-ev="c" href="../../data/ptt_q3_census_out/result_B.txt#L10-L11" target="_blank" rel="noopener">留言數</a>／<a class="ev" data-ev="t" href="../../data/ptt_q3_census_out/result_B.txt#L18-L19" target="_blank" rel="noopener">文字量</a>／<a class="ev" data-ev="r" href="../../data/runs/2026-10-30_recheck.json#L221-L222" target="_blank" rel="noopener">每日抓取請求數</a>），再開始設計。你的架構必須和你的估算數字一致。</li>
-    <li>架構圖 + 每個環節的 infra 選擇與理由。不需寫程式碼，pseudo code 可。</li>
-    <li><a class="ev" data-ev="g" href="../../answer/3-cost/chart-spec-cost.png" target="_blank" rel="noopener">上述兩條資料規格，哪一條主導了你的成本？ 兩者相差多少倍？</a></li>
-    <li>你如何驗證抓取的資料沒有遺漏？請給出一個可自動檢查的不變量（invariant），而不只是「比對筆數」。</li>
-    <li><a class="ev" data-ev="u" href="../../evidence/playwright/not_monitored_2_404.png" target="_blank" rel="noopener">你決定不監控哪三件事？各自的風險為何可以接受？</a></li>
-    <li><a class="ev" data-ev="s" href="../../evidence/playwright/f12_1_requests.png" target="_blank" rel="noopener">若你認為某項規格不合理或定義不清，可以提出修改，但必須說明代價。</a></li>
+    <li>每天要打 PTT 多少次？先估規模（<a class="ev" data-ev="n" href="../../data/ptt_q3_census_out/result_B.txt#L2-L5" target="_blank" rel="noopener">文章數</a>／<a class="ev" data-ev="c" href="../../data/ptt_q3_census_out/result_B.txt#L10-L11" target="_blank" rel="noopener">留言數</a>／<a class="ev" data-ev="t" href="../../data/ptt_q3_census_out/result_B.txt#L18-L19" target="_blank" rel="noopener">文字量</a>／<a class="ev" data-ev="r" href="../../data/runs/2026-10-30_recheck.json#L221-L222" target="_blank" rel="noopener">每日抓取請求數</a>），再開始設計。你的架構必須和你的估算數字一致。</li>
+    <li>每個環節用什麼 infra、理由是什麼？架構圖要寫清楚，不寫程式碼，pseudo code 就夠。</li>
+    <li><a class="ev" data-ev="g" href="../../design/3-cost/chart-spec-cost.png" target="_blank" rel="noopener">上述兩條資料規格，哪一條主導成本？ 兩者相差多少倍？</a></li>
+    <li>我怎麼確認抓到的資料沒有遺漏？需要一個可以自動檢查的不變量（invariant），而不只是「比對筆數」。</li>
+    <li><a class="ev" data-ev="u" href="../../evidence/playwright/not_monitored_2_404.png" target="_blank" rel="noopener">哪三件事不監控？各自的風險為什麼可以接受？</a></li>
+    <li><a class="ev" data-ev="s" href="../../evidence/playwright/f12_1_requests.png" target="_blank" rel="noopener">若某項規格不合理或定義不清，要不要修改？修改要說明代價。</a></li>
   </ol>
-  <p>另：交卷時可附一個（只能一個）動工前想問的問題。</p>
-  <p>上限 800 字（不含架構圖與算式）。</p>
+  <p>動工前我最想先確認的一件事：關鍵字要不要比對留言？</p>
+  <p>設計摘要見 q3/design/summary.txt（不含架構圖與算式）。</p>
 </section>
 <div id="diagram">
   <div class="title">
-    <div class="tag">第 3 題・第 2 小題｜架構圖</div>
+    <div class="tag">PTT 全文搜尋・瓶頸 2｜架構圖</div>
     <h1>PTT 八卦板全文搜尋 ETL（GCP + Python）</h1>
     <p>依實測規模設計：每天約 890 篇新文章｜7 天約 6,200 篇、23 萬則留言、23 MB 純文字｜每天約 6,300 次請求（0.073 次/秒）</p>
   </div>
@@ -230,7 +230,7 @@
 
   <!-- 驗證與告警 -->
   <div class="box ops" data-ev="v" tabindex="0" aria-describedby="pop" style="left:380px; top:800px; width:520px; height:170px;">
-    <div class="kind">資料品質（第 4 小題）</div>
+    <div class="kind">資料品質（瓶頸 4）</div>
     <h2><img class="gcp" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0ic3RhbmRhcmRfcHJvZHVjdF9pY29uIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDUxMiA1MTIiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMCBCdWlsZCAxNDIpICAtLT4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLnN0MCB7CiAgICAgICAgZmlsbDogbm9uZTsKICAgICAgfQoKICAgICAgLnN0MSB7CiAgICAgICAgZmlsbDogIzQyODVmNDsKICAgICAgfQoKICAgICAgLnN0MiB7CiAgICAgICAgZmlsbDogIzM0YTg1MzsKICAgICAgfQoKICAgICAgLnN0MyB7CiAgICAgICAgZmlsbDogI2ZiYmMwNDsKICAgICAgfQoKICAgICAgLnN0NCB7CiAgICAgICAgZmlsbDogI2VhNDMzNTsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPGcgaWQ9ImJvdW5kaW5nX2JveCI+CiAgICA8cmVjdCBjbGFzcz0ic3QwIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIvPgogIDwvZz4KICA8ZyBpZD0iYXJ0Ij4KICAgIDxwYXRoIGNsYXNzPSJzdDMiIGQ9Ik0xNDQuNCwyNzJjLTYuNCwwLTEyLjQtMy44LTE0LjktMTAuMUw1NS40LDc1LjljLTMuMy04LjIuNy0xNy41LDguOS0yMC44LDguMi0zLjMsMTcuNS43LDIwLjgsOC45bDc0LjIsMTg2YzMuMyw4LjItLjcsMTcuNS04LjksMjAuOC0xLjkuOC0zLjksMS4xLTUuOSwxLjFoLS4xWiIvPgogICAgPGcgaWQ9ImIiPgogICAgICA8cGF0aCBjbGFzcz0ic3Q0IiBkPSJNMjU2LDI3MmMtNi40LDAtMTIuNC0zLjgtMTQuOS0xMC4xbC03NC4xLTE4NmMtMi42LTYuNi0uNi0xNC4xLDUtMTguNXMxMy40LTQuNSwxOS4yLS40bDI2MC4xLDE4NmM3LjIsNS4xLDguOSwxNS4xLDMuNywyMi4zcy0xNS4xLDguOS0yMi4zLDMuN0wyMTYuOSwxMTQuN2w1NCwxMzUuM2MzLjMsOC4yLS43LDE3LjUtOC45LDIwLjgtMS45LjgtNCwxLjEtNS45LDEuMWgtLjFaIi8+CiAgICA8L2c+CiAgICA8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMTI3LjIsMjU2bC03MiwxODBjLTMuMyw4LjIuNywxNy41LDguOSwyMC44LDMuMSwxLjIsNCwxLjEsNS45LDEuMSw2LjMsMCwxMi40LTMuOCwxNC45LTEwLjFsNzQuNC0xODZjLjgtMiwxLjEtNCwxLjEtNS45aC0zMy4yWiIvPgogICAgPHBhdGggY2xhc3M9InN0MSIgZD0iTTQxNC41LDI1NmwtMTk3LjcsMTQxLjIsNTQuMS0xMzUuM2MuOC0yLDEuMS00LDEuMS01LjloLTMzLjJsLTcyLDE4MGMtMi42LDYuNi0uNiwxNC4xLDUsMTguNSwyLjksMi4zLDYuNCwzLjQsOS45LDMuNHM2LjUtMSw5LjMtM2wyNjAuNC0xODZjNC40LTMuMSw2LjctOCw2LjctMTNoLTQzLjZaIi8+CiAgPC9nPgo8L3N2Zz4=" alt="Cloud Run"> Cloud Run Job「verify」：每天一次</h2>
     <ul>
       <li>從最新頁沿「上頁」往回走，走到出現早於 7 天前的文章為止</li>
@@ -240,7 +240,7 @@
   </div>
 
   <div class="box ops" style="left:40px; top:700px; width:250px; height:270px;">
-    <div class="kind">告警（第 5 小題）</div>
+    <div class="kind">告警（瓶頸 5）</div>
     <h2><img class="gcp" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0ic3RhbmRhcmRfcHJvZHVjdF9pY29uIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDUxMiA1MTIiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMCBCdWlsZCAxNDIpICAtLT4KICA8ZyBpZD0iYm91bmRpbmdfYm94Ij4KICAgIDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSJub25lIi8+CiAgPC9nPgogIDxnIGlkPSJhcnQiPgogICAgPHBhdGggZD0iTTQyNi41LDQ1OC41SDg1LjVjLTE3LjY3MywwLTMyLTE0LjMyNy0zMi0zMlY4NS41YzAtMTcuNjczLDE0LjMyNy0zMiwzMi0zMmgzNDFjMTcuNjczLDAsMzIsMTQuMzI3LDMyLDMydjM0MWMwLDE3LjY3My0xNC4zMjcsMzItMzIsMzJaTTg1LjUsNDI2LjVoMzQxVjg1LjVIODUuNXYzNDFaIiBmaWxsPSIjNDI4NWY0Ii8+CiAgICA8cGF0aCBkPSJNMTY2LDM2NWMtOC44MzcsMC0xNi03LjE2My0xNi0xNnYtMTMxYzAtOC44MzcsNy4xNjMtMTYsMTYtMTZzMTYsNy4xNjMsMTYsMTZ2MTMxYzAsOC44MzctNy4xNjMsMTYtMTYsMTZaIiBmaWxsPSIjOWFhMGE2Ii8+CiAgICA8cGF0aCBkPSJNMzQ2LDM2NWMtOC44MzcsMC0xNi03LjE2My0xNi0xNnYtNTZjMC04LjgzNyw3LjE2My0xNiwxNi0xNnMxNiw3LjE2MywxNiwxNnY1NmMwLDguODM3LTcuMTYzLDE2LTE2LDE2WiIgZmlsbD0iIzlhYTBhNiIvPgogICAgPHBhdGggZD0iTTI1NiwzNjVjLTguODM3LDAtMTYtNy4xNjMtMTYtMTZ2LTE4N2MwLTguODM3LDcuMTYzLTE2LDE2LTE2czE2LDcuMTYzLDE2LDE2djE4N2MwLDguODM3LTcuMTYzLDE2LTE2LDE2WiIgZmlsbD0iIzQyODVmNCIvPgogICAgPHBhdGggZD0iTTQyNi41LDQ1OC41SDg1LjQ5M2MtMTcuNjczLDAtMzItMTQuMzI3LTMyLTMyaDM3My4wMDdWODUuNWgzMnYzNDFjMCwxNy42NzMtMTQuMzI3LDMyLTMyLDMyWiIgZmlsbD0iIzlhYTBhNiIvPgogIDwvZz4KPC9zdmc+" alt="Cloud Monitoring"> Cloud Monitoring</h2>
     <p>只對結果告警：</p>
     <ul>
@@ -378,7 +378,7 @@
       a: "規格 1 每天 938 次（首抓 890 ＋ 列表頁 48）；規格 2 每天 5,340 次（890 篇 × 第 1–6 天各重抓一次）。5,340 ÷ 938 ＝ 5.69 ≈ 5.7 倍。",
       imgs: [SH.spec],
       s: "圖上兩組數字是每天請求數的加總，5.7 是兩者相除。",
-      src: "q3/answer/3-cost/chart-spec-cost.png；make_charts.py", href: GH + "answer/3-cost/chart-spec-cost.png"
+      src: "q3/design/3-cost/chart-spec-cost.png；make_charts.py", href: GH + "design/3-cost/chart-spec-cost.png"
     },
     n: {
       t: "文章數", v: "7 天 6,237 篇（每日約 890 篇）",

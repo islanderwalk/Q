@@ -1,5 +1,5 @@
 == 結果（請整段貼回來）==
-題目：QSearch 第 3 題 PTT 全文搜尋｜看板：Gossiping
+ARGUS｜PTT 全文搜尋｜看板：Gossiping
 量測時間：2026-10-26 03:36 (UTC+8)，耗時 9.8 分鐘
 參數：days=7 per_day=30 delay=0.8s
 

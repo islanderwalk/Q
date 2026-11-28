@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QSearch 第 3 題：規模估算的補強驗證。
+"""PTT 全文搜尋｜瓶頸 1 規模估算的補強驗證。
 
 A：重開原本抽樣的 210 篇，逐欄量留言的實際 UTF-8 bytes（推/噓/→、帳號、內容、時間），
    取代「每則留言其他欄位 40 B」這個假設。
@@ -327,7 +327,7 @@ def _group(recs, keyf):
 def main():
     if hasattr(sys.stdout, "reconfigure"):  # 繁中 Windows 的 cp950 印不出 ≥、≈，導向檔案時會中斷
         sys.stdout.reconfigure(encoding="utf-8")
-    ap = argparse.ArgumentParser(description="QSearch 第 3 題補強驗證")
+    ap = argparse.ArgumentParser(description="PTT 全文搜尋：規模估算的補強驗證")
     ap.add_argument("--index", default=str(Path(__file__).resolve().parents[1] / "data" / "ptt_q3_out" / "index_entries.csv"))
     ap.add_argument("--sample", default=str(Path(__file__).resolve().parents[1] / "data" / "ptt_q3_out" / "article_sample.json"))
     ap.add_argument("--days", type=float, default=7)

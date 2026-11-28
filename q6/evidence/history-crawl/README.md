@@ -1,6 +1,6 @@
 # 六渠道歷史爬取：執行證據
 
-程式在 [../../code/history-crawl/](../../code/history-crawl/)。每個渠道拿到哪些欄位、卡在哪裡、對 Q6 的影響，整理在 [fields-and-painpoints.md](fields-and-painpoints.md)。
+程式在 [../../code/history-crawl/](../../code/history-crawl/)。每個渠道拿到哪些欄位、卡在哪裡、對文字雲斷詞的影響，整理在 [fields-and-painpoints.md](fields-and-painpoints.md)。
 
 ## 執行中截圖（含 DevTools）
 
@@ -33,4 +33,4 @@
 ## 數字
 
 - [telemetry_summary.json](telemetry_summary.json)：從 api_trace／metrics／events 彙總的統計（每平台請求數、狀態碼分布、失敗原因、延遲 p50／p95／p99、退避等級分布、事件種類與次數，以及各渠道進度）。逐筆原始紀錄不進版控。
-- [fields-and-painpoints.md](fields-and-painpoints.md)：進度總覽、各渠道欄位、痛點 P-1 ~ P-9 與對 Q6 的影響 C-1 ~ C-9。
+- [fields-and-painpoints.md](fields-and-painpoints.md)：進度總覽、各渠道欄位、痛點 P-1 ~ P-9 與對文字雲斷詞的影響 C-1 ~ C-9。

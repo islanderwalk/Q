@@ -11,7 +11,7 @@
 
 ## 與原本前提不同的地方
 
-1. **Pub/Sub 保留期**：subscription 的 `message_retention_duration` 預設 **7 天**，上限是 **31 天**（2678400s），下限 10 分鐘。原題「上限 7 天」不正確，7 天是預設值。topic 的上限也是 31 天。
+1. **Pub/Sub 保留期**：subscription 的 `message_retention_duration` 預設 **7 天**，上限是 **31 天**（2678400s），下限 10 分鐘。先前寫的「上限 7 天」不正確，7 天是預設值。topic 的上限也是 31 天。
 2. **Cloud Run v2 service / job**：`deletion_protection` 預設 **true**，destroy 前要先設 false 並 apply。
 3. **google_container_cluster 的 location**：工具摘要寫 Optional，我預期是 Required。未確認，snippet 仍有寫 location。
 4. **BigQuery table**：`require_partition_filter` 應寫在頂層，`time_partitioning` 區塊內那個已棄用。沒設 field 的時間分區是依 load time（即 ingestion time）。

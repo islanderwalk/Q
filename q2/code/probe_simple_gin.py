@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QSearch 第 2 題：追 `to_tsvector('simple')` GIN 體積在 Windows 比頁面大 43% 的原因。
+"""ARGUS｜FB 貼文搜尋：追 `to_tsvector('simple')` GIN 體積在 Windows 比頁面大 43% 的原因。
 
 在 run_q2.py 已建好的 fb_posts（repeat 模式）上重建 simple 索引，逐頁讀 GIN 頁（pageinspect）統計：
 頁數、entry 數、每個 entry 葉頁放幾個 entry、葉頁空間使用率。
@@ -82,7 +82,7 @@ def probe(c, mem: str, ddl: str = DDL) -> dict:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="QSearch Q2：simple GIN 體積差異追查")
+    ap = argparse.ArgumentParser(description="ARGUS｜FB 貼文搜尋：simple GIN 體積差異追查")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=55432)
     ap.add_argument("--user", default="postgres")

@@ -1,4 +1,4 @@
-"""Q3 看板、搜尋頁、告警規則截圖（Playwright 無頭 Chromium，只連本機 127.0.0.1）。
+"""PTT 全文搜尋的看板、搜尋頁、告警規則截圖（Playwright 無頭 Chromium，只連本機 127.0.0.1）。
 
     python monitoring/capture.py                       # 看板全頁＋每一格＋搜尋頁＋查詢 API＋告警規則
     python monitoring/capture.py --prefix drill- --range now-3h   # 故障演練後再拍一次，檔名加前綴

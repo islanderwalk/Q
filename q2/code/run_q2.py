@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QSearch 第 2 題：Postgres 16 實測（貼文表、粉絲頁 ID btree、三種中文全文索引）。
+"""ARGUS｜FB 貼文搜尋：Postgres 16 實測（貼文表、粉絲頁 ID btree、三種中文全文索引）。
 
 前置：PostgreSQL 16 叢集已在 127.0.0.1:55432 啟動（Windows：EDB 官方 binaries；Linux：Ubuntu postgresql-16，見 RESULTS.md）。
 
@@ -177,7 +177,7 @@ def run_queries_isolated(c, queries: dict, params: dict, repeats: int = 3) -> di
 
 
 def main():
-    ap = argparse.ArgumentParser(description="QSearch 第 2 題 Postgres 實測")
+    ap = argparse.ArgumentParser(description="ARGUS｜FB 貼文搜尋 Postgres 實測")
     ap.add_argument("--rows", type=int, required=True)
     ap.add_argument("--mode", choices=["repeat", "distinct", "corpus"], default="repeat")
     ap.add_argument("--corpus", default=None, help="--mode corpus 的語料檔（prepare_corpus.py 的輸出）")

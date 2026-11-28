@@ -1,4 +1,4 @@
-"""完整性四層對帳（計畫書 P0 第 2 項）＋回補燃盡（P0 第 8 項）：定時算、寫 recon_daily、給 Prometheus 抓。
+"""完整性四層對帳（規劃書 P0 第 2 項）＋回補燃盡（P0 第 8 項）：定時算、寫 recon_daily、給 Prometheus 抓。
 用法：python -m qseg recon [--once] [--interval 3600]；常駐時在 RECON_PORT（預設 9112）提供 /metrics。GCP 上同一段查詢改由排程 Job 推到 Cloud Monitoring。
 
 每個「渠道 × 月」四個數字要對得起來：

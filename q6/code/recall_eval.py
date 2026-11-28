@@ -1,4 +1,4 @@
-"""重要詞召回評估（2026-10-31，回應審查第 1 點）。
+"""重要詞召回評估（2026-10-31，回應自我檢查的第 1 點）。
 
 金標：150 個 PTT 八卦板標題（q6/data/ptt_titles_7d.jsonl 隨機抽樣，seed 20261031），三位標註者各自獨立列出
 「文字雲該出現的詞」，兩位以上同意的詞才算金標詞。標註者沒看過任何分詞結果。
@@ -7,7 +7,7 @@
   legacy   舊流程：原文純字典斷詞，不過濾（參考線，雜訊多）
   rule1030 10/30 版新流程：方括號 1–8 字一律去掉、單字全刪、使用者字典 10.30.1、total 不固定
   rule1031 10/31 版新流程：只去白名單標籤與英數帳號、單字保留名單、使用者字典 10.31.1、total 固定
-另外把樣本依序號奇偶拆成 A、B 兩半各算一次：保留名單與字典改動只參考審查的例子，B 半是沒看過的對照。
+另外把樣本依序號奇偶拆成 A、B 兩半各算一次：保留名單與字典改動只參考自我檢查時看到的例子，B 半是沒看過的對照。
 
 python -I q6/code/recall_eval.py --base-dict dict.txt.big --gold gold_sample_150.json \
     --annot annot_A.json annot_B.json annot_C.json --old-user-dict user_dict_1030.txt --out q6/data/recall_eval

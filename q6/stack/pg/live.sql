@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS collector_state (
   error text,
   next_poll_at timestamptz                    -- 被 429／5xx 退避時往後推
 );
--- 計畫書 P0 第 3 項：成功時間、退避等級、outcome 與延遲要留在表裡（失敗不再更新 last_ok_at；重啟後接著退避）
+-- 規劃書 P0 第 3 項：成功時間、退避等級、outcome 與延遲要留在表裡（失敗不再更新 last_ok_at；重啟後接著退避）
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS last_ok_at timestamptz;
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS backoff_level integer NOT NULL DEFAULT 0;
 ALTER TABLE collector_state ADD COLUMN IF NOT EXISTS outcome text;              -- ok／empty／not_modified／login_wall／content_unavailable／rate_limited／forbidden／quota_exceeded／server_error／network_error／parse_error／skipped

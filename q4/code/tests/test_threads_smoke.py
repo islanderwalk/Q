@@ -1,4 +1,4 @@
-"""Q4 Threads 量測程式的離線煙霧測試。
+"""Threads 爬蟲量測程式的離線煙霧測試。
 
 shared/capture/fixtures/threads_graphql_sample.json 是 @nasa 個人頁載入時的 GraphQL 回應片段
 （只留前 2 串）。這裡把它包成頁面內嵌的 data-sjs 形狀與 GraphQL 回應形狀，檢查

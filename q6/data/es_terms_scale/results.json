@@ -12940,9 +12940,9 @@
   "chars_per_sec": 212213,
   "avg_terms": 8.45,
   "distinct_terms": 228844,
-  "dict_version": "qsearch-q6-2026.10.31.1",
+  "dict_version": "argus-q6-2026.10.31.1",
   "base_dict": "dict.txt.big",
-  "seg_build": "qsearch-q6-2026.10.31.1@1a6fd35db0bdb867"
+  "seg_build": "argus-q6-2026.10.31.1@1a6fd35db0bdb867"
  },
  "finished_at": "2026-10-31T08:25:36+00:00"
 }

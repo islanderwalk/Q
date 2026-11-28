@@ -5,26 +5,26 @@ mock_provider "google" {}
 mock_provider "google-beta" {}
 
 variables {
-  project_id     = "qsearch-test"
+  project_id     = "argus-test"
   project_number = "123456789012"
 
-  image_api           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/api:test"
-  image_worker        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/worker:test"
-  image_parser        = "asia-east1-docker.pkg.dev/qsearch-test/crawler/parser:test"
-  image_scheduler     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/scheduler:test"
-  image_backfill      = "asia-east1-docker.pkg.dev/qsearch-test/crawler/backfill:test"
-  image_ptt_crawl     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/ptt-crawl:test"
-  image_seg           = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-seg:test"
-  image_wordcloud_api = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-wordcloud-api:test"
-  image_collector     = "asia-east1-docker.pkg.dev/qsearch-test/crawler/qsearch-collector:test"
+  image_api           = "asia-east1-docker.pkg.dev/argus-test/crawler/api:test"
+  image_worker        = "asia-east1-docker.pkg.dev/argus-test/crawler/worker:test"
+  image_parser        = "asia-east1-docker.pkg.dev/argus-test/crawler/parser:test"
+  image_scheduler     = "asia-east1-docker.pkg.dev/argus-test/crawler/scheduler:test"
+  image_backfill      = "asia-east1-docker.pkg.dev/argus-test/crawler/backfill:test"
+  image_ptt_crawl     = "asia-east1-docker.pkg.dev/argus-test/crawler/ptt-crawl:test"
+  image_seg           = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-seg:test"
+  image_wordcloud_api = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-wordcloud-api:test"
+  image_collector     = "asia-east1-docker.pkg.dev/argus-test/crawler/argus-collector:test"
 }
 
 override_resource {
   target          = google_compute_address.egress
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip"
+    id        = "projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip"
     address   = "203.0.113.10"
   }
 }
@@ -33,8 +33,8 @@ override_resource {
   target          = google_compute_address.egress_2
   override_during = plan
   values = {
-    id        = "projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip-2"
-    self_link = "https://www.googleapis.com/compute/v1/projects/qsearch-test/regions/asia-east1/addresses/crawler-egress-ip-2"
+    id        = "projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip-2"
+    self_link = "https://www.googleapis.com/compute/v1/projects/argus-test/regions/asia-east1/addresses/crawler-egress-ip-2"
     address   = "203.0.113.11"
   }
 }
@@ -43,7 +43,7 @@ override_resource {
   target          = google_pubsub_topic.parsed_posts
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/qsearch-parsed-posts"
+    id = "projects/argus-test/topics/argus-parsed-posts"
   }
 }
 
@@ -51,7 +51,7 @@ override_resource {
   target          = google_pubsub_topic.parsed_posts_dlq
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/qsearch-parsed-posts-dlq"
+    id = "projects/argus-test/topics/argus-parsed-posts-dlq"
   }
 }
 
@@ -59,7 +59,7 @@ override_resource {
   target          = google_pubsub_topic.dict_releases
   override_during = plan
   values = {
-    id = "projects/qsearch-test/topics/qsearch-dict-releases"
+    id = "projects/argus-test/topics/argus-dict-releases"
   }
 }
 
@@ -67,8 +67,8 @@ override_resource {
   target          = google_service_account.seg
   override_during = plan
   values = {
-    email = "qsearch-seg@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-seg@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-seg@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-seg@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -76,8 +76,8 @@ override_resource {
   target          = google_service_account.wordcloud_api
   override_during = plan
   values = {
-    email = "qsearch-wordcloud-api@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-wordcloud-api@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-wordcloud-api@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-wordcloud-api@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -85,8 +85,8 @@ override_resource {
   target          = google_service_account.collector
   override_during = plan
   values = {
-    email = "qsearch-collector@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-collector@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-collector@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-collector@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -94,8 +94,8 @@ override_resource {
   target          = google_service_account.backfill
   override_during = plan
   values = {
-    email = "qsearch-backfill@qsearch-test.iam.gserviceaccount.com"
-    name  = "projects/qsearch-test/serviceAccounts/qsearch-backfill@qsearch-test.iam.gserviceaccount.com"
+    email = "argus-backfill@argus-test.iam.gserviceaccount.com"
+    name  = "projects/argus-test/serviceAccounts/argus-backfill@argus-test.iam.gserviceaccount.com"
   }
 }
 
@@ -113,7 +113,7 @@ run "q6_pubsub_pull_subscriptions_retry_and_dlq" {
   assert {
     condition = alltrue([
       for k, s in google_pubsub_subscription.parsed_posts_seg :
-      s.name == "qsearch-parsed-posts-seg-${k}" &&
+      s.name == "argus-parsed-posts-seg-${k}" &&
       s.topic == google_pubsub_topic.parsed_posts.id &&
       length(s.push_config) == 0 &&
       s.ack_deadline_seconds == 60 &&
@@ -175,7 +175,7 @@ run "q6_cloud_run_services" {
   assert {
     condition = alltrue([
       for k, s in google_cloud_run_v2_service.seg :
-      s.name == "qsearch-seg-${k}" &&
+      s.name == "argus-seg-${k}" &&
       s.ingress == "INGRESS_TRAFFIC_INTERNAL_ONLY" &&
       s.template[0].service_account == google_service_account.seg.email &&
       s.template[0].scaling[0].min_instance_count == 1 &&
@@ -323,7 +323,7 @@ run "dict_bucket_versioned_and_private" {
 
   assert {
     condition = (
-      google_storage_bucket.dict_artifacts.name == "qsearch-test-qsearch-dict" &&
+      google_storage_bucket.dict_artifacts.name == "argus-test-argus-dict" &&
       google_storage_bucket.dict_artifacts.versioning[0].enabled == true &&
       google_storage_bucket.dict_artifacts.public_access_prevention == "enforced" &&
       google_storage_bucket.dict_artifacts.uniform_bucket_level_access == true &&
@@ -353,7 +353,7 @@ run "backfill_raw_bq_off_by_default" {
     condition = (
       length(google_bigquery_table_iam_member.backfill_read_raw_bq) == 0 &&
       length(google_project_iam_member.backfill_bq_job_user) == 0 &&
-      length(google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].containers[0].env) == 0
+      length(google_cloud_run_v2_job.argus_backfill.template[0].template[0].containers[0].env) == 0
     )
     error_message = "沒設 q6_raw_bq_table：不給 BigQuery 權限、回補 Job 不設 RAW_SOURCE。"
   }
@@ -363,17 +363,17 @@ run "backfill_raw_bq_reads_one_table" {
   command = plan
 
   variables {
-    q6_raw_bq_table = "qsearch-data.raw.posts"
+    q6_raw_bq_table = "argus-data.raw.posts"
   }
 
   assert {
     condition = (
-      google_bigquery_table_iam_member.backfill_read_raw_bq[0].project == "qsearch-data" &&
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].project == "argus-data" &&
       google_bigquery_table_iam_member.backfill_read_raw_bq[0].dataset_id == "raw" &&
       google_bigquery_table_iam_member.backfill_read_raw_bq[0].table_id == "posts" &&
       google_bigquery_table_iam_member.backfill_read_raw_bq[0].role == "roles/bigquery.dataViewer" &&
-      google_bigquery_table_iam_member.backfill_read_raw_bq[0].member == "serviceAccount:qsearch-backfill@qsearch-test.iam.gserviceaccount.com" &&
-      google_project_iam_member.backfill_bq_job_user[0].project == "qsearch-test" &&
+      google_bigquery_table_iam_member.backfill_read_raw_bq[0].member == "serviceAccount:argus-backfill@argus-test.iam.gserviceaccount.com" &&
+      google_project_iam_member.backfill_bq_job_user[0].project == "argus-test" &&
       google_project_iam_member.backfill_bq_job_user[0].role == "roles/bigquery.jobUser"
     )
     error_message = "回補 SA 只拿原文那張表的唯讀，查詢在本專案跑。"
@@ -381,8 +381,8 @@ run "backfill_raw_bq_reads_one_table" {
 
   assert {
     condition = (
-      { for e in google_cloud_run_v2_job.qsearch_backfill.template[0].template[0].containers[0].env : e.name => e.value } ==
-      { RAW_SOURCE = "bigquery", RAW_BQ_TABLE = "qsearch-data.raw.posts", RAW_BQ_PROJECT = "qsearch-test" }
+      { for e in google_cloud_run_v2_job.argus_backfill.template[0].template[0].containers[0].env : e.name => e.value } ==
+      { RAW_SOURCE = "bigquery", RAW_BQ_TABLE = "argus-data.raw.posts", RAW_BQ_PROJECT = "argus-test" }
     )
     error_message = "回補 Job 要設 RAW_SOURCE=bigquery、RAW_BQ_TABLE、RAW_BQ_PROJECT。"
   }

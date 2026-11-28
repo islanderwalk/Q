@@ -8,28 +8,28 @@
 
 | 段 | 服務（`docker-compose.yml`） | 對應的 GCP 資源（`shared/infra/gcp`） | 這裡怎麼做 |
 |---|---|---|---|
-| 排 | `scheduler`（`qsearch_onprem.scheduler loop`） | Cloud Scheduler `crawl-tick`、`ptt-crawl-hourly` → scheduler Cloud Run | 每個時間窗產生 deterministic `job_id`，`crawl_jobs` 表 `INSERT ... ON CONFLICT DO NOTHING`，同一窗重跑不會重派 |
-| 派 | `rabbitmq` 3.13.7（quorum queue `crawl.ptt`） | Cloud Tasks `crawl-ptt`（每站一條佇列）＋ Pub/Sub `crawler-tasks` | `x-delivery-limit=4`（共 5 次）→ DLX `qsearch.dlx` → `crawl.ptt.dlq`；速率用 Redis 每秒計數器（固定視窗，`CRAWL_RATE_PER_SECOND=5`） |
+| 排 | `scheduler`（`argus_onprem.scheduler loop`） | Cloud Scheduler `crawl-tick`、`ptt-crawl-hourly` → scheduler Cloud Run | 每個時間窗產生 deterministic `job_id`，`crawl_jobs` 表 `INSERT ... ON CONFLICT DO NOTHING`，同一窗重跑不會重派 |
+| 派 | `rabbitmq` 3.13.7（quorum queue `crawl.ptt`） | Cloud Tasks `crawl-ptt`（每站一條佇列）＋ Pub/Sub `crawler-tasks` | `x-delivery-limit=4`（共 5 次）→ DLX `argus.dlx` → `crawl.ptt.dlq`；速率用 Redis 每秒計數器（固定視窗，`CRAWL_RATE_PER_SECOND=5`） |
 | 抓 | `worker` | Cloud Run `crawler-worker`／Job `ptt-crawl` | 讀 fixture，寫 MinIO，`crawl_jobs.status=fetched`，再發 `crawl.fetched` 事件（同一份 Avro schema 驗證） |
 | 存 | `minio`（bitnamilegacy/minio 2025.4.22） | GCS `raw-scraped` | 物件 key `ptt/<board>/dt=YYYY-MM-DD/<job_id>.<ext>`，metadata 帶 sha256 |
-| 解 | `parser` ＋ `postgres`（15.19 ＋ pg_bigm 1.2，自行建置） | Cloud Run `parser` ＋ Pub/Sub `qsearch-parser-sub` ＋ Cloud SQL（`cloudsql.enable_pg_bigm`） | inbox 表 `UNIQUE(event_id)` 去重；upsert `ptt_posts`；title／body 有 pg_bigm GIN 索引 |
+| 解 | `parser` ＋ `postgres`（15.19 ＋ pg_bigm 1.2，自行建置） | Cloud Run `parser` ＋ Pub/Sub `argus-parser-sub` ＋ Cloud SQL（`cloudsql.enable_pg_bigm`） | inbox 表 `UNIQUE(event_id)` 去重；upsert `ptt_posts`；title／body 有 pg_bigm GIN 索引 |
 | 用 | `clickhouse` 24.8、`opensearch` 2.19.2、`redis` 7.4.6（AOF） | BigQuery `ingest_events`、Elasticsearch、Firestore／Memorystore | ClickHouse MergeTree 依日分區、TTL 90 天；OpenSearch 以 `post_id` 當 `_id`；Redis 存速率與最後抓取時間 |
 
-**Pub/Sub Seek 的替代**：RabbitMQ 已 ack 的訊息不保留，所以回放改用「`crawl_jobs` 表 ＋ MinIO 原始檔」重新產生事件（`qsearch_onprem.replay`）。
-`--mode redeliver` 重送同一批 `event_id`（下游靠 inbox 去重），`--mode reparse` 強制從 MinIO 重讀重解析（Q6 換斷詞後回朔就是這種），兩種都可以加 `--since` 對應「Seek 到時間點」。
+**Pub/Sub Seek 的替代**：RabbitMQ 已 ack 的訊息不保留，所以回放改用「`crawl_jobs` 表 ＋ MinIO 原始檔」重新產生事件（`argus_onprem.replay`）。
+`--mode redeliver` 重送同一批 `event_id`（下游靠 inbox 去重），`--mode reparse` 強制從 MinIO 重讀重解析（文字雲斷詞 換斷詞後回朔就是這種），兩種都可以加 `--since` 對應「Seek 到時間點」。
 
 ## 怎麼跑
 
 ```bash
 # 一鍵：下載 pg_bigm 原始碼 → down -v → build → up --wait → smoke → 收集 stats/佇列/日誌 → down -v
-bash shared/infra/onprem/scripts/run_e2e.sh /tmp/qsearch-onprem-verify
+bash shared/infra/onprem/scripts/run_e2e.sh /tmp/argus-onprem-verify
 
 # 或手動
 cd shared/infra/onprem
 python3 -I postgres-bigm/fetch_pg_bigm.py         # 下載並核對 sha256，放在 vendor/（不進版控）
-docker compose -p qsearch-onprem --env-file .env.example up -d --build --wait
-docker compose -p qsearch-onprem --env-file .env.example run --rm smoke
-docker compose -p qsearch-onprem --env-file .env.example down -v
+docker compose -p argus-onprem --env-file .env.example up -d --build --wait
+docker compose -p argus-onprem --env-file .env.example run --rm smoke
+docker compose -p argus-onprem --env-file .env.example down -v
 ```
 
 主機埠只綁 `127.0.0.1:18100–18199`。本次容器的出口走 TLS 攔截 proxy，所以建置時另設了 `BUILD_CA_BUNDLE`（見 `.env.example` 註解）；一般環境不需要。
@@ -61,14 +61,14 @@ docker compose -p qsearch-onprem --env-file .env.example down -v
 | 排：同一時間窗 tick 兩次 | 第一次 inserted 4／published 4，第二次 0／0 |
 | 管線排空 | tick 到 4 個 job 全部解析完 2.66 秒 |
 | 存：MinIO | 4 個物件，key 帶 `dt=2026-10-31` |
-| 事件格式 | 發出的事件通過 `qsearch-crawl-event-v1.avsc`（與 GCP 共用） |
+| 事件格式 | 發出的事件通過 `argus-crawl-event-v1.avsc`（與 GCP 共用） |
 | PostgreSQL | `ptt_posts` 6,724 列；`pg_bigm` extversion 1.2；`show_bigm('蔡康永')` = 康永、永␠、蔡康、␠蔡 |
 | pg_bigm 走索引 | `title LIKE '%蔡康永%'` 33 列，`Bitmap Index Scan on ptt_posts_title_bigm_idx`；body 查詢也走 `ptt_posts_body_bigm_idx` |
 | ClickHouse | 4 列、1 個分區、`sum(post_count)=6724`；`MergeTree PARTITION BY toDate(ingested_at) ... TTL +90 天` |
 | OpenSearch | 6,724 份文件，`match_phrase 蔡康永` 33 筆 |
 | Redis | `appendonly=yes`、`aof_last_write_status=ok` |
 | 抓取失敗進 DLQ | 不存在的 fixture：5 次後進 `crawl.ptt.dlq`，`x-death reason=delivery_limit` |
-| 解析失敗進 DLQ | 非 JSON 事件：5 次後進 `qsearch.parser.dlq` |
+| 解析失敗進 DLQ | 非 JSON 事件：5 次後進 `argus.parser.dlq` |
 | 重複發佈 | 同一 `event_id` 再送兩次：deliveries 1→3，六個儲存的筆數都不變 |
 | `replay --mode redeliver` | 4 個重送，0.62 秒，筆數不變，processed_count 不變 |
 | `replay --mode reparse` | 4 個重解析，2.74 秒，processed_count 4→8，筆數不變 |
@@ -95,10 +95,10 @@ OpenSearch 914 MiB、MinIO 230 MiB、RabbitMQ 184 MiB、ClickHouse 164 MiB、par
 
 ## 沒有證明的事
 
-- **線上抓取**：worker 只讀 fixture，不碰線上網站、代理池、出口 IP、封鎖行為（Q4 的核心問題）。
+- **線上抓取**：worker 只讀 fixture，不碰線上網站、代理池、出口 IP、封鎖行為（Threads 爬蟲的核心問題）。
 - **高可用**：每個服務都是單機單副本。RabbitMQ quorum queue 只有 1 個節點，MinIO 沒有 erasure coding，PostgreSQL 沒有 replica，沒有備份還原演練。
-- **規模**：資料只有 6,724 篇（加上 20 萬列的 pg_bigm 放大測試）。Q2 的每日量、ClickHouse 批次寫入、OpenSearch 分片都沒測。
-- **中文斷詞**：OpenSearch 用內建 `cjk` analyzer（中日韓字元 bigram，與 pg_bigm 同概念），沒有裝 IK／smartcn，Q6 的斷詞方案沒驗證。
+- **規模**：資料只有 6,724 篇（加上 20 萬列的 pg_bigm 放大測試）。FB 貼文搜尋的每日量、ClickHouse 批次寫入、OpenSearch 分片都沒測。
+- **中文斷詞**：OpenSearch 用內建 `cjk` analyzer（中日韓字元 bigram，與 pg_bigm 同概念），沒有裝 IK／smartcn，文字雲斷詞的斷詞方案沒驗證。
 - **安全**：沒有 TLS、沒有帳號分權，帳密是示範值。
 - **監控**：沒有 Prometheus／Grafana。
 

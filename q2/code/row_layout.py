@@ -1,4 +1,4 @@
-"""QSearch 第 2 題：讀出一則貼文在 PostgreSQL 頁裡的逐 byte 配置。
+"""ARGUS｜FB 貼文搜尋：讀出一則貼文在 PostgreSQL 頁裡的逐 byte 配置。
 
 從 fb_posts 第 0 頁第 1 格的原始 bytes（pageinspect 的 heap_page_items）照 PostgreSQL 的對齊規則
 逐欄走一遍，輸出每一欄的起點、長度、前面補了幾個 byte、補的 byte 是什麼，並和 pg_column_size 對照。

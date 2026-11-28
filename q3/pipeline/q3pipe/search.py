@@ -1,4 +1,4 @@
-"""查詢 API（答案：Cloud Run 上的查詢服務）。貼文和留言分開查，再依文章合併。
+"""查詢 API（設計：Cloud Run 上的查詢服務）。貼文和留言分開查，再依文章合併。
 
 GET /                 搜尋頁
 GET /api/search?q=關鍵字&days=7&limit=50

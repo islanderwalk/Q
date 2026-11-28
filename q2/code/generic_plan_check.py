@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QSearch 第 2 題：查第一輪 query_bench 裡 pg_trgm 2 字詞 9.5、10 秒的原因。
+"""ARGUS｜FB 貼文搜尋：查第一輪 query_bench 裡 pg_trgm 2 字詞 9.5、10 秒的原因。
 
 第一輪 query_bench 在同一條連線上對每個詞各跑 5 次同一句 LIKE。psycopg 預設同一句 SQL 執行第 6 次起
 改成伺服器端 prepared statement，PostgreSQL 對 prepared statement 前 5 次用 custom plan，之後若
@@ -33,7 +33,7 @@ def drop_rival(c, rival):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="QSearch Q2：psycopg 自動 prepare 與 generic plan 的影響")
+    ap = argparse.ArgumentParser(description="ARGUS｜FB 貼文搜尋：psycopg 自動 prepare 與 generic plan 的影響")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=55432)
     ap.add_argument("--user", default="postgres")

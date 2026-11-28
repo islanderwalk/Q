@@ -7,7 +7,7 @@
 兩種進入點：命令列 `python -m qseg rerun --words 肥宅`（回補 Job 的用法），
 或 control.py 收到發版訊息後在串流服務裡呼叫 run_rerun（PM 頁發版的用法），兩邊同一段程式。
 
-計畫書修正：定向重跑也讀 backfill_control（限速、暫停）與回補共用額度，結束後也量 G3 探針（線上欄位 p95 不惡化，超過就把全域限速砍半）。
+規劃書修正：定向重跑也讀 backfill_control（限速、暫停）與回補共用額度，結束後也量 G3 探針（線上欄位 p95 不惡化，超過就把全域限速砍半）。
 """
 import argparse
 import html

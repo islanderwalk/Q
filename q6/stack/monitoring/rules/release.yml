@@ -1,4 +1,4 @@
-# 字典發版收斂（計畫書 P0 第 7 項；指標由 seg/qseg/recon.py 從 service_state／rerun_runs／release_outbox 算出）。門檻都是提案值。
+# 字典發版收斂（規劃書 P0 第 7 項；指標由 seg/qseg/recon.py 從 service_state／rerun_runs／release_outbox 算出）。門檻都是提案值。
 groups:
   - name: q6-release
     rules:
@@ -8,7 +8,7 @@ groups:
         for: 10m
         labels: { severity: warn }
         annotations: { summary: "v2 斷詞服務有 {{ $value }} 個不同的字典版本在跑：部分執行個體沒換到新字典、新舊字典混寫" }
-      # 定向重跑跑超過 30 分鐘 → warn（計畫書「重跑超過預估 2 倍警告」：目前沒有預估值，先用固定門檻）
+      # 定向重跑跑超過 30 分鐘 → warn（規劃書「重跑超過預估 2 倍警告」：目前沒有預估值，先用固定門檻）
       - alert: RerunStuck
         expr: qseg_rerun_running_age_seconds > 1800
         for: 5m

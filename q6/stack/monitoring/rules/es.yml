@@ -1,4 +1,4 @@
-# Elasticsearch 叢集健康（計畫書 P0 第 10 項；指標來自 elasticsearch_exporter v1.9.0）。門檻都是提案值；
+# Elasticsearch 叢集健康（規劃書 P0 第 10 項；指標來自 elasticsearch_exporter v1.9.0）。門檻都是提案值；
 # 磁碟規則對齊 ES 自己的預設水位 85／90／95%（本機 compose 改成絕對值 4gb／2gb／1gb，正式環境還原百分比）。
 # awesome-prometheus-alerts 的 HighQueryLatency > 1 秒對文字雲不適用（改看 slowlog > 60 秒進 Loki）；HighIndexingRate 每秒 10,000 次在每秒 3,000 篇下不會觸發，不收。
 groups:

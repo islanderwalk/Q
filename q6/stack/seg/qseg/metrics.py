@@ -74,14 +74,14 @@ SERVICE_VERSIONS = Gauge("qseg_service_dict_versions", "1 分鐘內有心跳的�
 SERVICE_ALIVE = Gauge("qseg_service_instances_alive", "1 分鐘內有心跳的執行個體數", ["pipeline"])
 RERUN_RUNNING_AGE = Gauge("qseg_rerun_running_age_seconds", "最久的 loading／running 定向重跑已經跑了多久（秒；沒有＝0）")
 RERUN_RUNS = Gauge("qseg_rerun_runs", "rerun_runs 各狀態的筆數（最近 7 天）", ["status"])
-# 文字雲品質日報（quality.py，每天一次；計畫書 P0 第 9 項）
+# 文字雲品質日報（quality.py，每天一次；規劃書 P0 第 9 項）
 QUALITY_SAMPLED = Gauge("qseg_quality_docs_sampled", "品質日報抽樣篇數（最近 QUALITY_WINDOW 內、有 terms_v2）", ["channel"])
 QUALITY_LEAK = Gauge("qseg_quality_leak_ratio", "抽樣裡詞表有洩漏的篇數比例（kind=url／phone／number／stopword／must_keep_split）", ["channel", "kind"])
 QUALITY_PLACE = Gauge("qseg_quality_place_split_ratio", "原文含地名（使用者字典裡縣市區鄉鎮村里結尾的詞）的抽樣篇數中，地名被切開的比例", ["channel"])
 QUALITY_WHOLE = Gauge("qseg_quality_whole_word_recall", "查詢詞整詞召回（片語比對篇數裡沒有確實被切開的比例，micro 平均；漏網文章抽樣用目前字典重斷，"
                       "交集型歧義不算漏，與 must_keep_split 同一條規則；目標 ≥ 99%）")
 QUALITY_WHOLE_WORDS = Gauge("qseg_quality_whole_word_words", "整詞召回算了幾個詞（片語比對 ≥ QUALITY_MIN_DOCS 篇）")
-QUALITY_GOLD = Gauge("qseg_quality_gold_recall", "150 題金標詞召回（嚴格比對；q6/code/recall_eval.py 同一份金標）", ["pipeline"])
+QUALITY_GOLD = Gauge("qseg_quality_gold_recall", "150 筆金標詞召回（嚴格比對；q6/code/recall_eval.py 同一份金標）", ["pipeline"])
 QUALITY_MCNEMAR_P = Gauge("qseg_quality_mcnemar_p", "金標召回配對檢定的 p 值（精確二項式；pair=v1_v2／v0_v2）", ["pair"])
 QUALITY_SURGES = Gauge("qseg_quality_new_word_surges", "今天 terms_v2 對前 7 天 z > 3 的詞數（kind=all；fragment＝整詞率 < 50%，新詞被切碎）", ["kind"])
 QUALITY_RBO = Gauge("qseg_quality_rbo", "前 50 詞的 RBO（pair=prev_day：對昨天；v1_v2：A/B 距離）", ["channel", "pair"])
@@ -89,7 +89,7 @@ QUALITY_JS = Gauge("qseg_quality_js_divergence", "前 50 詞分布對昨天的 J
 QUALITY_OK = Gauge("qseg_quality_last_success_timestamp_seconds", "品質日報最後一次成功的 Unix 時間")
 QUALITY_ERR = Counter("qseg_quality_errors_total", "品質日報失敗次數")
 RELEASE_OUTBOX_PENDING = Gauge("qseg_release_outbox_pending", "發版 outbox 裡還沒送出去的控制訊息數（API 每 10 秒重試）")
-# 完整性四層對帳與回補燃盡（recon.py；計畫書 P0 第 2、8 項）
+# 完整性四層對帳與回補燃盡（recon.py；規劃書 P0 第 2、8 項）
 RECON_DOCS = Gauge("qseg_recon_docs", "對帳：每個渠道×月的篇數，layer=raw（原文湖不重複 post_id）／es／es_with_v2／es_at_latest_v2／es_deleted／ledger（written＋noop）", ["layer", "channel", "month"])
 RECON_MISSING = Gauge("qseg_recon_missing_ratio", "對帳：原文有、ES 沒有的比例（max(0, raw −（es − 已刪）) ÷ raw）；只有原文層存在的分區才有", ["channel", "month"])
 RECON_EXTRA = Gauge("qseg_recon_extra_docs", "對帳：ES 有、原文沒有的篇數（串流進來的、重複 post_id、復活的刪文）", ["channel", "month"])

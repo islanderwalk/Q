@@ -5,7 +5,7 @@
 - 不碰 posts／posts_bq／scale_pilot_main 任何索引，也不 reset。
 
 用法（在 q6 目錄下）：
-  ES_URL=http://localhost:9200 PG_DSN=postgresql://qsearch:qsearch@127.0.0.1:55433/qsearch \
+  ES_URL=http://localhost:9200 PG_DSN=postgresql://argus:argus@127.0.0.1:55433/argus \
     python stack/scripts/migrate_ledger_to_es.py [--index backfill_ledger] [--verify-only]
 """
 import argparse

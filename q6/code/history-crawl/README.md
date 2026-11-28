@@ -1,6 +1,6 @@
 # 六渠道歷史爬蟲（2023-01 起）
 
-Q6 需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際跑過的爬蟲程式，執行紀錄與數字在 [../../evidence/history-crawl/](../../evidence/history-crawl/)。
+這個模組需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際跑過的爬蟲程式，執行紀錄與數字在 [../../evidence/history-crawl/](../../evidence/history-crawl/)。
 
 ## 檔案
 
@@ -49,7 +49,7 @@ Q6 需要「2023-01 至今」的歷史貼文做分群。這個資料夾是實際
 | 渠道 | 狀態檔 | 重跑行為 |
 |---|---|---|
 | PTT | `ptt/state/<board>.json`（next_page、newest_page、done）、`ptt/progress.json` | 從 `next_page` 繼續往回翻；`lists/<board>.jsonl` 以 url 去重；內文跳過已在 `articles/<board>.jsonl` 的 url。 |
-| YouTube | `youtube/state.json`（每頻道 page_token、當日用量） | 從 `page_token` 續抓；配額在太平洋時間午夜重置，每頻道每天平分 8,000 units，留言用到總計 9,000 為止；剩下的 1,000 units 留給共用同一把金鑰的 Q6 即時採集器（每天約 864）。上限可用 `YOUTUBE_UPLOAD_BUDGET`／`YOUTUBE_TOTAL_BUDGET` 調整。 |
+| YouTube | `youtube/state.json`（每頻道 page_token、當日用量） | 從 `page_token` 續抓；配額在太平洋時間午夜重置，每頻道每天平分 8,000 units，留言用到總計 9,000 為止；剩下的 1,000 units 留給共用同一把金鑰的 q6/stack 即時採集器（每天約 864）。上限可用 `YOUTUBE_UPLOAD_BUDGET`／`YOUTUBE_TOTAL_BUDGET` 調整。 |
 | Meta | `deep/state/*.json`（每個目標的 cursor 與已見 post_id） | 從上次的 cursor 繼續；已見過的 post_id 不重寫。 |
 
 中斷後直接重跑同一個指令即可。YouTube 重啟時最後一頁會重抓，輸出另有去重版。

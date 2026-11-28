@@ -2,7 +2,7 @@
 # then the backfill since 2023-01 per channel, then a comment sample.
 # Key comes from env YOUTUBE_API_KEY (or a file named by YOUTUBE_API_KEY_FILE) and only ever travels as the `key` query value;
 # telemetry strips every query value, and nothing here prints it. Quota: stop uploads at 8,000 units, comments up to 9,000 in total.
-# The daily 10,000 is shared with the Q6 live collector on the same key (3 feeds every 5 min = 864 units/day), so 1,000 stays free for it.
+# The daily 10,000 is shared with the live collector in q6/stack on the same key (3 feeds every 5 min = 864 units/day), so 1,000 stays free for it.
 import json, re, sys, time, random, pathlib, collections, traceback
 from datetime import datetime
 import requests

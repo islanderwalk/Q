@@ -1,6 +1,6 @@
 """parser 服務測試的共用 fixture（離線：TestClient 直接呼叫 ASGI app，不開 port、不連網）。
 
-main.py 以獨立模組名 qsearch_parser_main 載入，避免和 repo 其他地方的 main 模組撞名。
+main.py 以獨立模組名 argus_parser_main 載入，避免和 repo 其他地方的 main 模組撞名。
 Terraform 只讀不改：tf_block 取出指定 resource 區塊的文字，供契約測試比對。
 fixture_bytes 讀 tests/fixtures/ 的事件檔（test_push_endpoint.py 用，與 local/VERIFY.md 的模擬器實測同一批）。
 """
@@ -19,7 +19,7 @@ import parser_cases as pc  # noqa: E402
 
 
 def _load_main():
-    name = "qsearch_parser_main"
+    name = "argus_parser_main"
     if name not in sys.modules:
         spec = importlib.util.spec_from_file_location(name, pc.PARSER_DIR / "main.py")
         module = importlib.util.module_from_spec(spec)
@@ -55,7 +55,7 @@ def envelope():
                 "messageId": message_id,
                 "attributes": {"platform": "ptt"} if attributes is None else attributes,
             },
-            "subscription": "projects/demo/subscriptions/qsearch-parser-sub",
+            "subscription": "projects/demo/subscriptions/argus-parser-sub",
         }
     return make
 

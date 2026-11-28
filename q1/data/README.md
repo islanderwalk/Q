@@ -1,6 +1,6 @@
-# Q1 資料：全部是合成資料
+# 反饋分診資料：全部是合成資料
 
-**這個資料夾沒有任何顧客資料。** 題目沒有附資料，repo 裡也沒有任何客服信件、問卷或社群貼文的原件。
+**這個資料夾沒有任何顧客資料。** 手上沒有實際資料，repo 裡也沒有任何客服信件、問卷或社群貼文的原件。
 以下檔案都由 [`q1/code/make_fixtures.py`](../code/make_fixtures.py) 以固定 seed（20261030）產生，公司「範例雲」、姓名、信箱（example.com）都是虛構的。
 電話不產生看起來像可撥通門號的號碼：顧客手機全部寫同一個佔位號碼 0900-000-000；客服市話 (02) 0000-xxxx 的用戶號碼以 0 開頭，不是可撥通的號碼。
 數字只用來證明程式能跑、示範每一步的效果，不能拿來當任何產品的結論。
@@ -13,7 +13,7 @@
 | `synthetic_fixtures/survey.csv` | 2,000 份合成問卷：resp_id、tenure_months（可空白）、satisfaction、issues | 80 KB |
 | `synthetic_fixtures/fixture_params.json` | 產生參數：信件組成、難例機率、問卷各層勾選機率 | 1 KB |
 | `synthetic_run_40000/report.md` | 40,000 封信＋2,000 份問卷的完整實跑報告（含罐頭判定規則的逐步對照、模板相鄰對、模擬標註） | 19 KB |
-| `synthetic_run_40000/coverage.md`、`coverage.csv` | 董事會報告第一頁的覆蓋範圍與排除說明、各數字的樣本來源 | 2 KB |
+| `synthetic_run_40000/coverage.md`、`coverage.csv` | 給決策者的報告第一頁的覆蓋範圍與排除說明、各數字的樣本來源 | 2 KB |
 | `synthetic_run_40000/email_mentions.csv` | 清理後各問題的提及封數、佔比、Wilson 95% CI | 1 KB |
 | `synthetic_run_40000/email_ablation.csv` | 未清理、只去引文與簽名、完整清理三種排序 | 1 KB |
 | `synthetic_run_40000/canned_clusters.csv` | 罐頭回覆群（大小、代表句） | 4 KB |
@@ -22,7 +22,7 @@
 | `synthetic_run_40000/summary.json` | 上述全部數字（含模板相鄰對的 df 與共同出現率） | 49 KB |
 | `logs/make_fixtures.log` | 產生合成資料、同 seed 重產的 sha256 比對、和上一版的比對 | 小 |
 | `logs/run_q1.log` | 40,000 封實跑、`--base-old-share 0.65`、`--sample-size 30`（預期失敗）三次的輸出與退出碼 | 小 |
-| `logs/pytest.log` | pytest 結果、各檔項數、答案字數 | 小 |
+| `logs/pytest.log` | pytest 結果、各檔項數、摘要字數 | 小 |
 | `logs/claim_checks.log` | RESULTS 裡沒有直接寫在輸出檔的數字：檢查指令（腳本在 `q1/code/checks/`，附 sha256）與輸出 | 小 |
 | `logs/expected_survey.log` | 產生器的問卷期望勾選比例（精確列舉，用來判斷哪些名次本來就同分） | 小 |
 | `logs/prior_attempt.log` | 先前中斷的嘗試留在暫存區的輸出（未 commit）：sha256 與計數 | 小 |

@@ -4,7 +4,7 @@
   "params": {
     "rows": 50446,
     "mode": "corpus",
-    "corpus": "/var/lib/qsearch-pg/corpus/ptt_concat_250.txt",
+    "corpus": "/var/lib/argus-pg/corpus/ptt_concat_250.txt",
     "host": "127.0.0.1",
     "port": 55432,
     "user": "postgres",
@@ -13,7 +13,7 @@
     "maintenance_work_mem": "1GB",
     "bigram_timeout_min": 30.0,
     "skip_bigram": false,
-    "out": "/var/lib/qsearch-pg/out/q2_run_50446_corpus-ptt_concat_250.json"
+    "out": "/var/lib/argus-pg/out/q2_run_50446_corpus-ptt_concat_250.json"
   },
   "steps_seconds": {
     "load_corpus": 0.41,

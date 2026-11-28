@@ -16,8 +16,8 @@ RUN --mount=type=secret,id=build_ca,mode=0444,required=false \
     pip install --no-cache-dir -r requirements.txt -c constraints.txt; \
     pip freeze > /app/pip-freeze.txt
 
-COPY qsearch_onprem /app/qsearch_onprem
+COPY argus_onprem /app/argus_onprem
 COPY tests /app/tests
-RUN useradd --system --uid 10001 --home /app qsearch
+RUN useradd --system --uid 10001 --home /app argus
 USER 10001
-CMD ["python", "-m", "qsearch_onprem.worker"]
+CMD ["python", "-m", "argus_onprem.worker"]

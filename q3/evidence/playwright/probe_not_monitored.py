@@ -1,6 +1,6 @@
 import asyncio, json, pathlib
 from playwright.async_api import async_playwright
-T = json.loads(pathlib.Path("../../answer/src/ptt_targets.json").read_text(encoding="utf-8"))
+T = json.loads(pathlib.Path("../../design/src/ptt_targets.json").read_text(encoding="utf-8"))
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()

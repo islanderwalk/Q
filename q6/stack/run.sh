@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Q6 整套系統：一步一步重跑。全部在本機 Docker，零成本。用法：./run.sh <步驟>
+# ARGUS｜文字雲斷詞：整套系統：一步一步重跑。全部在本機 Docker，零成本。用法：./run.sh <步驟>
 #   build   下載並驗證 ES 外掛、建字典 artifact r1–r6、建三個映像
 #   image   只重建斷詞映像（改了 qseg 程式之後用；回補 Job 與串流共用這個映像）
 #   up      起 ES／Kibana／PostgreSQL／Pub/Sub 模擬器／字典服務／API／監控
@@ -20,22 +20,22 @@ set -euo pipefail
 cd "$(dirname "$0")"
 DL=${DL:-/tmp/q6dl}
 PY=${PY:-python3}
-CA=${CA:-}   # 公司代理會攔 TLS 時給 CA 檔，例如 CA=/root/.ccr/ca-bundle.crt
+CA=${CA:-}   # 企業網路代理會攔 TLS 時給 CA 檔，例如 CA=/root/.ccr/ca-bundle.crt
 secret=(); [ -n "$CA" ] && secret=(--secret "id=ca,src=$CA")
-R=qsearch-q6-2026.10.30
+R=argus-q6-2026.10.30
 # 斷詞程式版本：建進映像，寫進每篇的 seg_build_<版>。在 git 裡自動用 commit 編號（有未提交的修改加 -dirty）；
 # 不在 git 裡（例如複製出去的資料夾）要自己給，例如 SEG_BUILD=c9c2430 ./run.sh image
 SEG_BUILD=${SEG_BUILD:-$(git -C .. describe --always --dirty --abbrev=7 2>/dev/null || echo nogit)}
 export SEG_BUILD
-seg_image() { (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$SEG_BUILD" -t qsearch-seg:local -f stack/seg/Dockerfile .); echo "斷詞映像 SEG_BUILD=$SEG_BUILD"; }
+seg_image() { (cd .. && docker build --network host "${secret[@]}" --build-arg SEG_BUILD="$SEG_BUILD" -t argus-seg:local -f stack/seg/Dockerfile .); echo "斷詞映像 SEG_BUILD=$SEG_BUILD"; }
 case "${1:-}" in
   build)
     es/fetch_plugins.sh
     $PY dict/build_artifact.py "$DL/dict.txt.big" runtime/dictsrv $R.1 $R.3 $R.4 $R.5 $R.6 $R.2   # 最後一個是 current
-    $PY dict/build_legacy.py runtime/dictsrv qsearch-q6-legacy-2019.12.31.1 --moe "$DL/moe_revised_words.txt" --jieba-tw "$DL/jieba_tw_dict.txt"   # v0 舊流程重現版字典
-    docker build --network host -t qsearch-es:9.5.5 es
+    $PY dict/build_legacy.py runtime/dictsrv argus-q6-legacy-2019.12.31.1 --moe "$DL/moe_revised_words.txt" --jieba-tw "$DL/jieba_tw_dict.txt"   # v0 舊流程重現版字典
+    docker build --network host -t argus-es:9.5.5 es
     seg_image
-    docker build --network host "${secret[@]}" -t qsearch-wordcloud-api:local -f api/Dockerfile .
+    docker build --network host "${secret[@]}" -t argus-wordcloud-api:local -f api/Dockerfile .
     ;;
   image)
     seg_image
@@ -55,7 +55,7 @@ case "${1:-}" in
       -e PIPELINE=v1 -e DICT_VERSION=$R.1 seg-job seed; done
     # v0 舊流程重現版：同一批原文再用凍結 2019 字典寫 terms_v0（「上線前的舊文字雲」）
     for i in 0 1 2; do docker compose --profile job run -d --no-deps --name seed-v0-$i -e CLOUD_RUN_TASK_INDEX=$i -e CLOUD_RUN_TASK_COUNT=3 \
-      -e PIPELINE=v0 -e DICT_VERSION=qsearch-q6-legacy-2019.12.31.1 seg-job seed; done
+      -e PIPELINE=v0 -e DICT_VERSION=argus-q6-legacy-2019.12.31.1 seg-job seed; done
     ;;
   backfill)
     V=${V:-$R.3}; T=$($PY -c "import sys; sys.path.insert(0, 'api'); import ops; print(ops.seg_ver('v2', '$V'))")   # seg_ver：v2 × 10^10 ＋ 日期序號

@@ -1,8 +1,8 @@
-"""產生 Q3 專用 Grafana 看板 grafana/dashboards/q3-ptt-search.json。改看板就改這支再重跑：python monitoring/build_dashboard.py
+"""產生 PTT 全文搜尋專用的 Grafana 看板 grafana/dashboards/q3-ptt-search.json。改看板就改這支再重跑：python monitoring/build_dashboard.py
 
-版面依答案的結構排：
+版面依瓶頸的結構排：
   1. 兩條資料規格與結果（會告警）  2. 資料量  3. 抓取（每秒最多 1 次、每日請求數對照估算）
-  4. 寫入與自動 rollback  5. 重抓的邊際效益（答案第 3、6 題）  6. 只記錄、不告警（答案第 5 題）  7. 不變量與查詢 API
+  4. 寫入與自動 rollback  5. 重抓的邊際效益（瓶頸 3、6）  6. 只記錄、不告警（瓶頸 5）  7. 不變量與查詢 API
 """
 import json
 from pathlib import Path
@@ -156,8 +156,8 @@ nl(4)
 
 # 2. 資料量
 row("2. 資料量（7 天內）")
-stat("可搜尋文章", [("max(q3_window_posts)", "")], 0, 4, steps=((None, BLUE),), desc="答案估算：7 天 6,237 篇（每天約 890 篇）。")
-stat("留言", [("max(q3_window_comments)", "")], 4, 4, steps=((None, BLUE),), desc="答案估算：7 天 234,577 則。")
+stat("可搜尋文章", [("max(q3_window_posts)", "")], 0, 4, steps=((None, BLUE),), desc="估算：7 天 6,237 篇（每天約 890 篇）。")
+stat("留言", [("max(q3_window_comments)", "")], 4, 4, steps=((None, BLUE),), desc="估算：7 天 234,577 則。")
 stat("已標記刪文（404）", [("max(q3_window_deleted_posts)", "")], 8, 4, steps=((None, GREY),),
      desc="首抓之後才被刪的文章：重抓拿到 404 時標記，不再出現在搜尋結果，但舊內容保留。")
 ts("待抓佇列", [("max(q3_backlog_new_posts)", "新文還沒入庫"), ("max(q3_backlog_refresh_posts)", "該重抓還沒重抓")], 12, 12, h=5,
@@ -174,8 +174,8 @@ ts("PTT 回應時間", [("histogram_quantile(0.5, sum by (le) (rate(q3_http_late
    12, 12, unit="s", desc="F12 實測單篇約 300 ms。")
 nl(8)
 stat("過去 24 小時請求數", [("sum(increase(q3_http_requests_total[24h]))", "")], 0, 6, decimals=0, steps=((None, BLUE),),
-     desc="答案估算每天 6,278 次（首抓 890＋列表 48＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。")
-text("**答案的估算**\n\n每日 **6,278** 次 ＝ 首抓 890 ＋ 列表 48 ＋ 重抓 890 × 6\n\n"
+     desc="估算每天 6,278 次（首抓 890＋列表 48＋重抓 890×6）。剛啟動的第一天含 7 天回補，會比較高。")
+text("**估算**\n\n每日 **6,278** 次 ＝ 首抓 890 ＋ 列表 48 ＋ 重抓 890 × 6\n\n"
      "尖峰小時約 **450** 次 → 以每秒 1 次約 7.5 分鐘跑完\n\n規格 2（每天重抓）主導成本：5,340 對 938，約 **5.7 倍**",
      6, 6, title="對照")
 ts("退避等待", [("max(q3_backoff_seconds)", "等待秒數")], 12, 6, unit="s",
@@ -199,27 +199,27 @@ ts("新文入庫延遲（發文到可搜尋）", [("histogram_quantile(0.5, sum 
 nl(8)
 
 # 5. 重抓的邊際效益
-row("5. 重抓的邊際效益（答案第 3、6 題）")
+row("5. 重抓的邊際效益（瓶頸 3、6）")
 bargauge("過去 24 小時新增留言：依文章發文第幾天", [
     ("sum(increase(q3_comments_new_total{fetch=\"first\"}[24h])) or vector(0)", "首抓"),
     *[(f"sum(increase(q3_comments_new_total{{fetch=\"refresh\",age_day=\"{d}\"}}[24h])) or vector(0)", f"重抓：第 {d} 天")
       for d in range(0, 8)]],
     0, 12, h=9, unit="none", instant=True,
-    desc="答案第 6 題：第 2–6 天的重抓每天 4,450 次，只多 0.76% 留言。這張圖用實際入庫的留言數驗證。")
+    desc="瓶頸 6：第 2–6 天的重抓每天 4,450 次，只多 0.76% 留言。這張圖用實際入庫的留言數驗證。")
 ts("每小時重抓篇數：依發文第幾天", [("sum by (age_day) (increase(q3_posts_refreshed_total[1h]))", "第 {{age_day}} 天")],
    12, 12, h=9, bars=True, stack=True, decimals=0, no_value="還沒有重抓：文章抓到滿 23 小時才重抓")
 nl(9)
 
 # 6. 只記錄、不告警
-row("6. 只記錄、不告警（答案第 5 題決定不監控的三件事）")
+row("6. 只記錄、不告警（瓶頸 5 決定不監控的三件事）")
 ts("① 單次請求失敗（非 200／404）", [("sum by (status) (increase(q3_http_requests_total{status!~\"200|404\"}[1h]))", "{{status}}")],
    0, 8, bars=True, decimals=0, no_value="這段時間沒有失敗的請求", desc="失敗的網址下一輪會補，單次失敗不告警，只對結果告警。真的被擋時：最新列表頁連續 90 分鐘讀不到直接告警；"
         "文章連續 3 篇抓不到這輪就先停（上一輪結果＝failed），之後由「新文 3 小時還搜不到」告警。")
 ts("② 事後刪文 404", [("sum by (when) (increase(q3_posts_deleted_total[1h]))", "{{when}}")], 8, 8, bars=True, decimals=0,
-   no_value="這段時間沒有遇到 404", desc="first＝第一次抓就 404；refresh＝重抓時才發現被刪。答案普查：0.2%（下限）。風險是已刪的文章最多晚約 24 小時下架；"
+   no_value="這段時間沒有遇到 404", desc="first＝第一次抓就 404；refresh＝重抓時才發現被刪。普查：0.2%（下限）。風險是已刪的文章最多晚約 24 小時下架；"
             "重抓的 404 隔天會再確認一次，又拿到 200 就恢復（看第 1 區「刪文又恢復」）。一批 404 超過 20% 是被擋或網站異常，寫入前就擋下並告警。")
 stat("③ 「檔案過大」被截斷的文章（7 天內）", [("max(q3_window_truncated_posts)", "")], 16, 8, h=8, steps=((None, GREY),),
-     desc="網頁版本身就拿不到被截掉的留言，要補只能走 BBS，告警了也無從處理；答案普查 6,224 篇中 2 篇。")
+     desc="網頁版本身就拿不到被截掉的留言，要補只能走 BBS，告警了也無從處理；普查 6,224 篇中 2 篇。")
 nl(8)
 
 # 7. 不變量與查詢 API
@@ -244,7 +244,7 @@ stat("過去 24 小時 BigQuery 掃描量", [("(sum(increase(q3_bigquery_bytes_p
 nl(8)
 
 dash = {
-    "uid": "q3-ptt-search", "title": "Q3 PTT 八卦板全文搜尋 ETL", "tags": ["q3", "ptt"], "timezone": "Asia/Taipei",
+    "uid": "q3-ptt-search", "title": "PTT 全文搜尋：八卦板 7 天全文搜尋 ETL", "tags": ["q3", "ptt"], "timezone": "Asia/Taipei",
     "schemaVersion": 39, "version": 1, "editable": False, "graphTooltip": 1, "refresh": "30s",
     "time": {"from": "now-6h", "to": "now"}, "fiscalYearStartMonth": 0, "liveNow": False,
     "templating": {"list": []}, "annotations": {"list": []}, "links": [

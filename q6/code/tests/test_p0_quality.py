@@ -1,4 +1,4 @@
-"""文字雲品質日報（計畫書 P0 第 9 項）：RBO／JS／McNemar 純函式、金標召回嚴格比對、洩漏旗標與渠道統計、
+"""文字雲品質日報（規劃書 P0 第 9 項）：RBO／JS／McNemar 純函式、金標召回嚴格比對、洩漏旗標與渠道統計、
 新詞暴增 z 分數、整詞召回解析、ES 查詢形狀、設定與資料表一致；整詞召回與 must_keep_split 同一條規則（漏網抽樣重斷、
 交集型歧義不算漏）、被切開的例子、唯讀診斷。ES／PG 都用測試裡的假物件，不連線；斷詞用 jieba ＋ 測試內嵌的極小字典。"""
 import json
@@ -30,7 +30,7 @@ def tiny_dic(tmp_path_factory):
     tk = jieba.Tokenizer(dictionary=str(d / "base.dict"))
     tk.tmp_dir = str(d)
     tk.initialize()
-    return dictionary.Dictionary(version="qsearch-q6-2026.10.30.2", manifest={}, tokenizer=tk, stopwords=frozenset({"的"}), soft_stopwords=frozenset(),
+    return dictionary.Dictionary(version="argus-q6-2026.10.30.2", manifest={}, tokenizer=tk, stopwords=frozenset({"的"}), soft_stopwords=frozenset(),
                                  merges={}, user_words=frozenset({"台北市", "好市多", "鳳山區", "蔣萬安"}), pipeline="v2")
 
 
@@ -57,7 +57,7 @@ def test_mcnemar_exact_binomial():
     assert quality.mcnemar(3, 3)["p"] == 1.0
     m = quality.mcnemar(56, 9)                                                         # 10/31 版對舊流程：新版才留住 56、舊版才留住 9
     assert m["n"] == 65 and m["p"] < 1e-6
-    assert quality.mcnemar(4, 0)["p"] == 0.125                                         # 10/30 → 10/31：不顯著（計畫書 p = 0.0625 是單尾）
+    assert quality.mcnemar(4, 0)["p"] == 0.125                                         # 10/30 → 10/31：不顯著（規劃書 p = 0.0625 是單尾）
 
 
 def test_gold_recall_is_strict_whole_token_match():
@@ -234,7 +234,7 @@ def test_two_dictionary_words_straddle_is_not_a_split_on_real_jieba(tmp_path):
     tk = jieba.Tokenizer(dictionary=str(tmp_path / "base.dict"))
     tk.tmp_dir = str(tmp_path)
     tk.initialize()
-    dic = dictionary.Dictionary(version="qsearch-q6-2026.10.30.2", manifest={}, tokenizer=tk, stopwords=frozenset(), soft_stopwords=frozenset(),
+    dic = dictionary.Dictionary(version="argus-q6-2026.10.30.2", manifest={}, tokenizer=tk, stopwords=frozenset(), soft_stopwords=frozenset(),
                                 merges={}, user_words=frozenset({"台北市"}), pipeline="v2")
     clean, toks, terms, bad = pipeline.segment_detail(dic, "youtube", "白天大台北市區風雨")
     assert [t for t, _, _ in toks] == ["白天", "大台北", "市區", "風雨"] and bad == []
@@ -373,7 +373,7 @@ def _live_docs(dic):
         return {"post_id": pid, "channel": ch, "content": text, "dict_version_v2": dic.version,
                 "terms_v2": segment_checked(dic, ch, text)[0] if terms is None else terms}
     return [doc("ptt-1", "ptt", "台北市長蔣萬安今天宣布"), doc("ptt-2", "ptt", "台北市政府今天宣布"), doc("ptt-3", "ptt", "台北市立美術館"),
-            dict(doc("ptt-4", "ptt", "台北市政府今天宣布", terms=["台北", "政府"]), dict_version_v2="qsearch-q6-2026.10.30.1"),   # 舊字典斷的
+            dict(doc("ptt-4", "ptt", "台北市政府今天宣布", terms=["台北", "政府"]), dict_version_v2="argus-q6-2026.10.30.1"),   # 舊字典斷的
             doc("ig-1", "instagram", "今天辦好市多會員"), doc("ig-2", "instagram", "好市多", terms=["好市多"]), doc("ig-3", "instagram", "鳳山區今天下雨")]
 
 
@@ -421,7 +421,7 @@ def test_diagnose_is_read_only_and_prints_contexts(tiny_dic, monkeypatch):
     assert "原始口徑 0.33333 → 調整後 0.83333" in text
     assert "-- 台北市　片語 4　整詞 1（原始 0.25）　漏網 3　抽 3 篇：stale 1、overlap 1、inside 1" in text
     assert "overlap  ptt-1（ptt）　台北／市長　「台北市長蔣萬安今天宣布」" in text
-    assert "qsearch-q6-2026.10.30.1 1" in text                                                            # 詞表過期那篇是舊字典斷的
+    assert "argus-q6-2026.10.30.1 1" in text                                                            # 詞表過期那篇是舊字典斷的
     assert "地名 鳳山區　鳳山／區　「鳳山區今天下雨」　ig-3" in text and "好市多　辦好／市多　「今天辦好市多會員」　ig-1" in text
     assert res["channels"]["instagram"]["split_docs"] == 3 and res["whole_word"]["recall"] == round(1 - 1 / 6, 5)
 

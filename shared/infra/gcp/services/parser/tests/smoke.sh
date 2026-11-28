@@ -1,5 +1,5 @@
 #!/bin/bash
-# 容器實測（需要 Docker 與 curl；pytest 不會跑它）。用法：smoke.sh <映像> <本機 port>，例如 smoke.sh qsearch-parser:current 18091
+# 容器實測（需要 Docker 與 curl；pytest 不會跑它）。用法：smoke.sh <映像> <本機 port>，例如 smoke.sh argus-parser:current 18091
 # 啟動容器、送幾種 push 請求、docker stop，逐項和「修正後」的預期比對；全部相符退出 0，有不符退出 1。
 # 修正前的映像跑這支會出現不符，這正是要呈現的差異。結果以印出的每一行為準。
 set -u

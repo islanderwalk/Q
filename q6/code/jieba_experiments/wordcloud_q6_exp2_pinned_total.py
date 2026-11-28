@@ -1,4 +1,4 @@
-"""Q6 實驗二：為什麼不含新詞的句子也會變？固定 total 能不能讓影響範圍可算？
+"""文字雲斷詞實驗二：為什麼不含新詞的句子也會變？固定 total 能不能讓影響範圍可算？
 以及：常駐 process 逐步 add_word vs 每次從版本化字典檔整份重載，結果一不一致？
 
 用法: python -I wordcloud_q6_exp2_pinned_total.py <dict.txt.big> <Gossiping-QA-Dataset.txt> <out_dir>

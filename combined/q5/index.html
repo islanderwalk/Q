@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
+<meta name="color-scheme" content="dark"><style id="force-dark">:root{color-scheme:dark}</style><script>(function(){var r=document.documentElement;function f(){if(r.getAttribute("data-theme")!=="dark")r.setAttribute("data-theme","dark")}f();new MutationObserver(f).observe(r,{attributes:true,attributeFilter:["data-theme"]})})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -192,25 +193,25 @@ dl.terms dd{margin:0;color:var(--muted)}
 </head>
 <body>
 <nav class="top"><div class="in">
-  <a href="#q">情境</a><a href="#a">(a) 資料流</a><a href="#b">(b) 工時</a><a href="#c">(c) 回補</a><a href="#d">(d) SLA</a><a href="#terms">名詞</a>
+  <a href="#q">情境</a><a href="#a">瓶頸一 資料流</a><a href="#b">瓶頸二 工時</a><a href="#c">瓶頸三 回補</a><a href="#d">瓶頸四 SLA</a><a href="#terms">名詞</a>
 </div></nav>
 <div class="wrap">
 
 <section id="q">
-  <h2>情境</h2>
+  <h2>情境與限制</h2>
   <div class="qbox">
-    <p><b>新指標上線的全鏈路時間估算。</b>客戶希望在平台上看到 Instagram Reels 的觀看數（<code>video_view_count</code>）和 Threads 貼文的轉發數（<code>repost_count</code>）。調查發現：</p>
+    <p><b>新指標上線：Reels 觀看數與 Threads 轉發數。</b>我想在 ARGUS 上看到 Instagram Reels 的觀看數（<code>video_view_count</code>）和 Threads 貼文的轉發數（<code>repost_count</code>）。我查過之後發現：</p>
     <ul>
       <li>爬蟲端其實已經抓到這些欄位，只是從未寫入 Elasticsearch。</li>
-      <li>要全部新增支援的層級：爬蟲寫入 → ES mapping 更新 → Data Layer API 新增欄位 → Backend Analytics API 回傳 → Export Service 匯出 → 前端顯示。</li>
-      <li>產品端期望指標延遲不超過 1 小時（文章發佈 1 小時後，數據應可被查詢）。</li>
+      <li>要在六層都加上支援：爬蟲寫入 → ES mapping 更新 → Data Layer API 新增欄位 → Backend Analytics API 回傳 → Export Service 匯出 → 前端顯示。</li>
+      <li>我給自己定的指標延遲目標：不超過 1 小時（文章發佈 1 小時後，數據應可被查詢）。</li>
       <li>歷史資料：IG <code>video_view_count</code> 起始日為 2026/5/1；Threads 的轉發數和分享數過去已有爬取但未寫入 ES。</li>
     </ul>
     <ol>
-      <li><b>(a)</b>畫出（或文字描述）從「爬蟲已有原始資料」到「使用者在前端看到數據」的完整資料流圖，標示每一個需要修改的元件。</li>
-      <li><b>(b)</b>逐層估算每個環節的開發工時。1 位資料工程師＋1 位後端＋1 位前端可平行作業，從開工到上線的 calendar days 是多少？關鍵路徑在哪？</li>
-      <li><b>(c)</b>Threads 轉發數與分享數過去已爬取但未寫入 ES，回補（backfill）流程怎麼設計？風險有哪些（欄位名不一致、原始資料缺漏、回補期間寫入負載影響線上查詢）？</li>
-      <li><b>(d)</b>「指標延遲不超過 1 小時」的瓶頸最可能在哪個環節？怎麼監控 SLA 是否達標？</li>
+      <li><b>瓶頸一　哪幾層要改？</b>從爬蟲已有的原始資料到使用者在前端看到數據，畫出完整資料流，標示每一個要修改的元件。</li>
+      <li><b>瓶頸二　工時與上線日程？</b>逐層估算每個環節的開發工時。1 位資料工程師＋1 位後端＋1 位前端可平行作業，從開工到上線的 calendar days 是多少？關鍵路徑在哪？</li>
+      <li><b>瓶頸三　回補會不會蓋掉新資料？</b>Threads 轉發數與分享數過去已爬取但未寫入 ES，回補（backfill）流程怎麼設計？風險有哪些（欄位名不一致、原始資料缺漏、回補期間寫入負載影響線上查詢）？</li>
+      <li><b>瓶頸四　1 小時 SLA 卡在哪？</b>「指標延遲不超過 1 小時」的瓶頸最可能在哪個環節？怎麼監控 SLA 是否達標？</li>
     </ol>
     <div class="limit" style="display:none"><span id="totalcnt" class="mono">—</span> 字</div>
   </div>
@@ -218,13 +219,13 @@ dl.terms dd{margin:0;color:var(--muted)}
 
 <!-- (a) -->
 <section id="a">
-  <h2><span class="tag">(a)</span>資料流：六層全改，另加兩個新元件</h2>
+  <h2><span class="tag">瓶頸一</span>哪幾層要改：六層全改，另加兩個新元件</h2>
 
   <div class="panel">
     <div class="panel-h"><h3>資料流圖</h3><span class="sub">點框看這層要改什麼</span></div>
     <div class="panel-b">
       <div class="dflow">
-        <svg id="dsvg" viewBox="0 0 520 1225" role="group" aria-label="Q5 資料流圖：從爬蟲到前端，標示要修改與新增的元件"></svg>
+        <svg id="dsvg" viewBox="0 0 520 1225" role="group" aria-label="新指標上線資料流圖：從爬蟲到前端，標示要修改與新增的元件"></svg>
         <div class="ddetail" id="ddetail" aria-live="polite"></div>
       </div>
       <div class="legend">
@@ -237,7 +238,7 @@ dl.terms dd{margin:0;color:var(--muted)}
 
 <!-- (b) -->
 <section id="b">
-  <h2><span class="tag">(b)</span>工時與關鍵路徑</h2>
+  <h2><span class="tag">瓶頸二</span>工時與關鍵路徑</h2>
   <div class="answer"><div class="lab"><span>設計摘要</span><span data-cnt="b"></span></div><p class="txt" data-ans="b"></p></div>
 
   <div class="panel">
@@ -256,7 +257,7 @@ dl.terms dd{margin:0;color:var(--muted)}
 
 <!-- (c) -->
 <section id="c">
-  <h2><span class="tag">(c)</span>回補：逐欄時間戳，舊值蓋不掉新值</h2>
+  <h2><span class="tag">瓶頸三</span>回補：逐欄時間戳，舊值蓋不掉新值</h2>
   <div class="answer"><div class="lab"><span>設計摘要</span><span data-cnt="c"></span></div><p class="txt" data-ans="c"></p></div>
 
   <div class="panel">
@@ -316,8 +317,8 @@ dl.terms dd{margin:0;color:var(--muted)}
           <tr><td>歷史欄位名不一致</td><td>盤點後補別名表、統計每個舊名用了幾次；同一筆兩個名稱值不同記 <code>alias_conflict</code> 不寫入。別名表沒有的新名稱會被分區關卡擋下（上面那張表）。</td></tr>
           <tr><td>原始資料缺漏</td><td>某次抓取少了 key 記為不知道，不蓋掉其他次的值；全部都缺就不寫，前端顯示「—」，不補 0。只接受 JSON 整數，「萬」字串當不知道。</td></tr>
           <tr><td>回補寫入負載影響線上查詢</td><td>限速、批次上限、離峰；不改 refresh 與副本數（那會讓爬蟲新寫入查不到，直接違反 SLA）；監控 ES 查詢 P95 與 429 次數。</td></tr>
-          <tr><td>回補蓋掉線上較新的值</td><td>逐欄時間戳保護（上面的模擬）；爬蟲寫入也要帶同一個 <code>counts_at</code>，列為 (b) 第 1、2 項的驗收條件。</td></tr>
-          <tr><td>「轉發數」與 IG 觀看數的定義</td><td>只存分量（repost、quote），畫面值在 Data Layer 算；IG 實抓只看到 <code>play_count</code>，上線前與 PM 確認（(b) 第 9 項）。</td></tr>
+          <tr><td>回補蓋掉線上較新的值</td><td>逐欄時間戳保護（上面的模擬）；爬蟲寫入也要帶同一個 <code>counts_at</code>，列為瓶頸二工時表第 1、2 項的驗收條件。</td></tr>
+          <tr><td>「轉發數」與 IG 觀看數的定義</td><td>只存分量（repost、quote），畫面值在 Data Layer 算；IG 實抓只看到 <code>play_count</code>，上線前與 PM 確認（瓶頸二工時表第 9 項）。</td></tr>
         </tbody>
       </table>
     </div>
@@ -327,7 +328,7 @@ dl.terms dd{margin:0;color:var(--muted)}
 
 <!-- (d) -->
 <section id="d">
-  <h2><span class="tag">(d)</span>SLA：瓶頸在抓取頻率，不在寫入</h2>
+  <h2><span class="tag">瓶頸四</span>SLA：瓶頸在抓取頻率，不在寫入</h2>
   <div class="answer"><div class="lab"><span>設計摘要</span><span data-cnt="d"></span></div><p class="txt" data-ans="d"></p></div>
 
   <div class="panel">
@@ -372,7 +373,7 @@ dl.terms dd{margin:0;color:var(--muted)}
   <h2><span class="tag">名詞</span>這頁用到的詞</h2>
   <div class="panel"><div class="panel-b">
     <dl class="terms">
-      <dt>關鍵路徑／關鍵鏈</dt><dd>從開工到上線最長的一串先後工作；上面任何一件延誤，上線就延誤。這題把「同一人手上的下一件」也算成先後關係。</dd>
+      <dt>關鍵路徑／關鍵鏈</dt><dd>從開工到上線最長的一串先後工作；上面任何一件延誤，上線就延誤。這裡把「同一人手上的下一件」也算成先後關係。</dd>
       <dt>總浮時</dt><dd>一件工作最多能晚多久完成，而不延後整個專案。</dd>
       <dt>API 契約</dt><dd>先講好 API 的欄位名與格式；FE 拿到契約就能用假資料開工，不必等 BE 做完。</dd>
       <dt>counts_at</dt><dd>每個計數欄位各自的抓取時間（epoch 毫秒）。回補腳本拿它判斷誰比較新。</dd>
@@ -384,14 +385,14 @@ dl.terms dd{margin:0;color:var(--muted)}
       <dt>金絲雀帳號</dt><dd>固定幾個會定期發文的帳號，用來端到端驗證新貼文是否準時出現。</dd>
     </dl>
   </div></div>
-  <p class="note">資料來源：q5/answer/answer_600.txt；工時與排程 q5/code/schedule/schedule.py（本頁用 JS 重算同一套規則，預設值與 schedule.log 一致）；回補驗證 q5/code/RESULTS.md；Threads 與 IG 實抓 q5/evidence/。T1／T2／T3 範例取自 RESULTS 的 demo_checks 指令 #20、#21。</p>
+  <p class="note">資料來源：q5/design/summary.txt；工時與排程 q5/code/schedule/schedule.py（本頁用 JS 重算同一套規則，預設值與 schedule.log 一致）；回補驗證 q5/code/RESULTS.md；Threads 與 IG 實抓 q5/evidence/。T1／T2／T3 範例取自 RESULTS 的 demo_checks 指令 #20、#21。</p>
 </section>
 </div>
 
 <script>
 const ANS={
-a:"見 architecture/ 資料流圖：需求列的六層（爬蟲寫入到前端顯示）都要改，另加回補 Job 與 SLA 監控。",
-b:"工時（小時）：mapping 6、爬蟲寫入 12、回補 16、Data Layer 8、Analytics 10、Export 6、前端 10、整合監控 8、驗收 4。關鍵路徑是 DE 一人依序做 mapping、爬蟲、回補、整合，再接全員驗收，共 46 小時；BE、FE 先定 API 契約再平行，浮時至少 16 小時。46÷8＝5.75 天，加 30% 審查取 8 天，加 1 天緩衝共 9 工作天，週一開工約 11 個日曆天。",
+a:"見 architecture/ 資料流圖：需求裡的六層（爬蟲寫入到前端顯示）都要改，另加回補 Job 與 SLA 監控。",
+b:"工時（小時）：mapping 6、爬蟲寫入 12、回補 16、Data Layer 8、Analytics 10、Export 6、前端 10、整合監控 8、驗收 4。關鍵路徑是 DE 一人依序做 mapping、爬蟲、回補、整合，再接全員驗收，共 46 小時；BE、FE 先定 API 契約再平行，浮時至少 16 小時。46÷8＝5.75 天，加 30% 複查取 8 天，加 1 天緩衝共 9 工作天，週一開工約 11 個日曆天。",
 c:"先盤點 GCS 各期 key 建別名表。依平台×週切批；同篇多次抓取，每欄取有值的最新一次，缺 key 不算、null 不補 0。對線上 index 做 bulk 部分更新，每欄附抓取時間，腳本只在較新時寫入，舊值蓋不掉新值，重跑全是 noop；爬蟲寫入也附同一時間戳。壞行超過 1%、整檔壞掉、任一分區某欄讀不到超過 20%（多半是改名）就停。限速、離峰、不改 refresh，只重送被拒的筆。",
 d:"瓶頸在爬蟲抓取頻率：輪詢間隔 60 分鐘時最壞會超標，寫入只要秒到分鐘。監控首次可見延遲 P95（超過 45 分鐘警告）、1 小時內抓到的比例、Pub/Sub 積壓、refresh 設定，並用金絲雀帳號每小時驗證。"
 };
@@ -429,7 +430,7 @@ function seg(id,cb){const el=document.getElementById(id);el.addEventListener('cl
 /* ---------- (a) 資料流圖（SVG，可點） ---------- */
 const NODES={
  sch:{n:'排程',k:'keep',o:'既有',d:'定時觸發爬蟲，不用改。',t:null},
- cr:{n:'爬蟲',k:'keep',o:'既有',d:'已經抓到 IG <code>play_count</code> 與 Threads 的 repost／quote／reshare，只是從沒寫進 ES。抓取本身不用改；但抓取頻率是 (d) SLA 的瓶頸。',t:null},
+ cr:{n:'爬蟲',k:'keep',o:'既有',d:'已經抓到 IG <code>play_count</code> 與 Threads 的 repost／quote／reshare，只是從沒寫進 ES。抓取本身不用改；但抓取頻率是瓶頸四（SLA）的瓶頸。',t:null},
  gcs:{n:'原始資料 GCS',k:'keep',o:'既有',d:'每次抓取的原始 JSON 都留著，是歷史回補的唯一來源。各期 key 名稱可能不同，回補前要先盤點。',t:null},
  w:{n:'爬蟲寫入',k:'mod',o:'DE',d:'讀 JSON 整數、null 保留成 null，寫進新欄位；每次寫計數同時寫該欄的 <code>counts_at</code>（抓取時間）。和回補走同一支寫入腳本，回補的時間戳保護才成立。',t:2},
  bf:{n:'回補程式',k:'new',o:'DE',d:'從 GCS 讀歷史抓取，每欄取有值的最新一次，bulk 部分更新進線上 index；只在較新時寫入，重跑全是 noop。IG 從 2026/5/1 起、Threads 從有爬取時起。',t:3},
@@ -460,9 +461,9 @@ function drawFlow(){
  let h='<defs><marker id="dar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ar" d="M0,0L10,5L0,10z"/></marker></defs>';
  GRP.forEach(g=>{h+=`<rect class="gp ${g[0]}" x="${g[1]}" y="${g[2]}" width="${g[3]}" height="${g[4]}" rx="12"/><text class="gl" x="${g[6]}" y="${g[7]}" fill="${g[8]}">${g[5]}</text>`;});
  EDG.forEach(e=>{h+=`<path class="ed${e[5]?' ds':''}" d="${e[0]}" marker-end="url(#dar)"/>`;if(e[1])h+=`<text class="el" x="${e[2]}" y="${e[3]}" text-anchor="${e[4]||'start'}">${e[1]}</text>`;});
- // 來源與客戶（不可點）
+ // 來源與使用者（不可點）
  [[40,10,180,'Instagram Reels（觀看數）'],[300,10,180,'Threads（轉發數）']].forEach(([x,y,w,t])=>{h+=`<rect class="bx" x="${x}" y="${y}" width="${w}" height="46" rx="10"/><text class="nm" x="${x+w/2}" y="${y+28}">${t}</text>`;});
- h+=`<rect class="bx" x="200" y="1160" width="120" height="46" rx="23"/><text class="nm" x="260" y="1188">客戶</text>`;
+ h+=`<rect class="bx" x="200" y="1160" width="120" height="46" rx="23"/><text class="nm" x="260" y="1188">使用者</text>`;
  Object.keys(NODES).forEach(id=>{
   const N=NODES[id],[x,y,w,ht]=POS[id];
   h+=`<g class="nd ${N.k}${id===selNode?' sel':''}" data-id="${id}" tabindex="0" role="button" aria-label="${N.n}：${tag(N)}"><rect class="bx" x="${x}" y="${y}" width="${w}" height="${ht}" rx="10"/>`+

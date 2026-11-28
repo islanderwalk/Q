@@ -1,4 +1,4 @@
-"""QSearch 第 6 題：文字雲斷詞 pipeline 原型（新舊並行輸出）。
+"""ARGUS｜文字雲斷詞：pipeline 原型（新舊並行輸出）。
 
 流程（新）：前處理 → jieba（使用者字典＋HMM）→ 停用詞／長度／純數字過濾 → 輸出 tokens
 流程（舊）：jieba 純字典（HMM 關閉，不做前處理、不過濾）→ 輸出 tokens

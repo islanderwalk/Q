@@ -4,7 +4,7 @@
  "titles_with_no_gold_term": 12,
  "min_votes": 2,
  "base_dict": "dict.txt.big",
- "seg_build_1031": "qsearch-q6-2026.10.31.1@1a6fd35db0bdb867",
+ "seg_build_1031": "argus-q6-2026.10.31.1@1a6fd35db0bdb867",
  "results": {
   "legacy": {
    "all": {

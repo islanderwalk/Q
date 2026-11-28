@@ -1,4 +1,4 @@
-"""Q5 (c) 回補原型的離線測試（不連 ES、不連網）。
+"""ARGUS｜新指標上線 瓶頸三：回補原型的離線測試（不連 ES、不連網）。
 
 資料來源：
 - shared/capture/fixtures/threads_graphql_sample.json：@nasa 兩串的 code／帳號／時間／內文（沒有計數欄位）。

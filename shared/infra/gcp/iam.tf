@@ -43,15 +43,15 @@ resource "google_service_account" "scheduler_app" {
 }
 
 resource "google_service_account" "parser" {
-  account_id   = "qsearch-parser"
-  display_name = "qsearch parser Cloud Run runtime"
+  account_id   = "argus-parser"
+  display_name = "argus parser Cloud Run runtime"
   depends_on   = [google_project_service.required]
 }
 
 # 回補 Job 的 runtime SA（不再共用 parser SA：parser 對整個 BigQuery dataset 有寫入權，回補不需要）。
 resource "google_service_account" "backfill" {
-  account_id   = "qsearch-backfill"
-  display_name = "qsearch backfill Cloud Run Job runtime"
+  account_id   = "argus-backfill"
+  display_name = "argus backfill Cloud Run Job runtime"
   depends_on   = [google_project_service.required]
 }
 
@@ -80,7 +80,7 @@ resource "google_pubsub_topic_iam_member" "api_publish_tasks" {
 
 resource "google_pubsub_topic_iam_member" "worker_publish_fetched" {
   project = var.project_id
-  topic   = google_pubsub_topic.qsearch_fetched.name
+  topic   = google_pubsub_topic.argus_fetched.name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.worker.email}"
 }

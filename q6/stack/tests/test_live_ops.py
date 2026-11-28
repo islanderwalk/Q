@@ -23,23 +23,23 @@ FILES = ("base.dict", "user.dict", "stopwords.txt", "soft_stopwords.txt", "merge
 
 # ---------- 版本 ----------
 def test_seg_ver_matches_pipeline_formula():
-    assert ops.seg_ver("v2", "qsearch-q6-2026.10.30.2") == 22026103002
-    assert ops.seg_ver("v1", "qsearch-q6-2026.10.30.1") == 12026103001
+    assert ops.seg_ver("v2", "argus-q6-2026.10.30.2") == 22026103002
+    assert ops.seg_ver("v1", "argus-q6-2026.10.30.1") == 12026103001
 
 
 def test_seg_ver_is_monotonic_across_days_and_two_digit_serials():
-    a = ops.seg_ver("v2", "qsearch-q6-2026.10.30.10")
-    b = ops.seg_ver("v2", "qsearch-q6-2026.11.01.1")
+    a = ops.seg_ver("v2", "argus-q6-2026.10.30.10")
+    b = ops.seg_ver("v2", "argus-q6-2026.11.01.1")
     assert a < b
-    assert ops.seg_ver("v2", "qsearch-q6-2026.10.30.9") < a
+    assert ops.seg_ver("v2", "argus-q6-2026.10.30.9") < a
 
 
 def test_next_version_same_day_increments_and_new_day_restarts():
-    assert ops.next_version("qsearch-q6-2026.10.30.6", today=date(2026, 10, 30)) == "qsearch-q6-2026.10.30.7"
-    assert ops.next_version("qsearch-q6-2026.10.30.6", today=date(2026, 10, 31)) == "qsearch-q6-2026.10.31.1"
-    assert ops.seg_ver("v2", ops.next_version("qsearch-q6-2026.10.30.6", today=date(2026, 10, 31))) > ops.seg_ver("v2", "qsearch-q6-2026.10.30.6")
+    assert ops.next_version("argus-q6-2026.10.30.6", today=date(2026, 10, 30)) == "argus-q6-2026.10.30.7"
+    assert ops.next_version("argus-q6-2026.10.30.6", today=date(2026, 10, 31)) == "argus-q6-2026.10.31.1"
+    assert ops.seg_ver("v2", ops.next_version("argus-q6-2026.10.30.6", today=date(2026, 10, 31))) > ops.seg_ver("v2", "argus-q6-2026.10.30.6")
     with pytest.raises(ValueError):
-        ops.next_version("qsearch-q6-2026.10.30.99", today=date(2026, 10, 30))
+        ops.next_version("argus-q6-2026.10.30.99", today=date(2026, 10, 30))
     with pytest.raises(ValueError):
         ops.next_version("not-a-version")
 
@@ -57,7 +57,7 @@ def test_validate_words_rejects(bad):
 
 
 # ---------- 字典 artifact 發版 ----------
-def make_root(tmp_path: Path, version="qsearch-q6-2026.10.30.2"):
+def make_root(tmp_path: Path, version="argus-q6-2026.10.30.2"):
     root = tmp_path / "dictsrv"
     d = root / "versions" / version
     d.mkdir(parents=True)
@@ -77,8 +77,8 @@ def test_build_release_copies_files_adds_words_with_base_freq_floor_and_switches
     words = ops.validate_words(["颱風假", {"word": "高雄市", "freq": 5, "pos": "ns"}])
     man = ops.build_release(root, words, note="測試發版", requested_by="PM")
     v = man["dict_version"]
-    assert v != "qsearch-q6-2026.10.30.2" and ops.seg_ver("v2", v) > ops.seg_ver("v2", "qsearch-q6-2026.10.30.2")
-    assert ops.current_version(root) == "qsearch-q6-2026.10.30.2", "build_release 不切 current"
+    assert v != "argus-q6-2026.10.30.2" and ops.seg_ver("v2", v) > ops.seg_ver("v2", "argus-q6-2026.10.30.2")
+    assert ops.current_version(root) == "argus-q6-2026.10.30.2", "build_release 不切 current"
     new = root / "versions" / v
     assert all((new / name).exists() for name in FILES)
     user = (new / "user.dict").read_text(encoding="utf-8")
@@ -86,14 +86,14 @@ def test_build_release_copies_files_adds_words_with_base_freq_floor_and_switches
     assert "高雄市 31 ns" in user, "使用者字典詞頻不低於主字典（5 → 31）"
     ik = (new / "ik_ext.dic").read_text(encoding="utf-8").split()
     assert set(ik) == {"必不可拆", "颱風假", "高雄市"}
-    assert man["extends"] == "qsearch-q6-2026.10.30.2" and man["total_pinned"] == 60101967 and man["requested_by"] == "PM"
+    assert man["extends"] == "argus-q6-2026.10.30.2" and man["total_pinned"] == 60101967 and man["requested_by"] == "PM"
     assert man["files"]["user.dict"] == ops.sha256_file(new / "user.dict")
     assert (root / "releases" / f"{v}.json").exists()
-    assert [x["dict_version"] for x in ops.list_versions(root)] == ["qsearch-q6-2026.10.30.2", v]
+    assert [x["dict_version"] for x in ops.list_versions(root)] == ["argus-q6-2026.10.30.2", v]
     ops.switch_current(root, v)
     assert ops.current_version(root) == v and (root / "current").is_symlink()
     with pytest.raises(FileNotFoundError):
-        ops.switch_current(root, "qsearch-q6-2099.01.01.1")
+        ops.switch_current(root, "argus-q6-2099.01.01.1")
 
 
 def test_build_release_twice_same_day_gets_consecutive_serials(tmp_path):

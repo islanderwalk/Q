@@ -1,39 +1,4 @@
 {
- "ev_00_gcp_qsearch_stack": {
-  "id": "ev_00_gcp_qsearch_stack",
-  "url": "https://cloud.google.com/customers/qsearch",
-  "crops": [
-   {
-    "file": "ev_00_gcp_qsearch_stack_1.png",
-    "find": "43.2 billion records in 8 hours",
-    "cssW": 316,
-    "cssH": 366,
-    "matches": 1,
-    "tag": "P"
-   },
-   {
-    "file": "ev_00_gcp_qsearch_stack_2.png",
-    "find": "Founded in 2014",
-    "cssW": 341,
-    "cssH": 290,
-    "matches": 1,
-    "tag": "P"
-   },
-   {
-    "file": "ev_00_gcp_qsearch_stack_3.png",
-    "find": "Cloud Pub/Sub",
-    "cssW": 826,
-    "cssH": 356,
-    "matches": 2,
-    "tag": "P"
-   }
-  ],
-  "notes": [],
-  "status": 200,
-  "title": "QSearch Case Study  |  Google Cloud",
-  "finalUrl": "https://cloud.google.com/customers/qsearch",
-  "capturedAt": "2026-10-30T01:44:26Z"
- },
  "ev_a1_es_update_reindex": {
   "id": "ev_a1_es_update_reindex",
   "url": "https://www.elastic.co/guide/en/elasticsearch/reference/8.19/docs-update.html",

@@ -1,17 +1,17 @@
-# Q3 ETL pipeline：照答案的設計寫成可以直接跑的程式
+# PTT 全文搜尋 ETL pipeline：照設計寫成可以直接跑的程式
 
-答案第 2 題架構圖上的每個環節，這裡都有對應的程式。GCP 服務換成本機容器，SQL 與流程不變，執行不花錢：
+瓶頸 2 的架構圖上的每個環節，這裡都有對應的程式。GCP 服務換成本機容器，SQL 與流程不變，執行不花錢：
 
-| 答案的環節 | 這裡的實作 | 程式 |
+| 設計的環節 | 這裡的實作 | 程式 |
 |---|---|---|
 | Cloud Scheduler `5 * * * *` | 常駐排程：每小時第 5 分跑一輪。一輪超過一小時就跑完接著跑下一輪，兩輪不重疊 | [`q3pipe/scheduler.py`](q3pipe/scheduler.py) |
 | Cloud Run Job「crawl」（discover＋refresh），單 worker，每秒最多 1 次 | 讀列表找新文、抓新文、重抓 7 天內超過 23 小時沒抓的文章。帶 over18 cookie；429／5xx 退避 5、10 秒（有 Retry-After 就照它）；連續 3 次失敗，整體暫停 5 分鐘；文章連續 3 篇（每篇最多試 3 次）都抓不到就當成被擋；單一篇一直抓不到的，下一輪排到最後、不算進這 3 篇，寫完手上這批後這輪先停（記 `failed`），不在退避裡空等好幾個小時；閒置超過 60 秒的連線不再沿用；每次失敗的種類記進 log | [`q3pipe/job.py`](q3pipe/job.py)、[`q3pipe/ptt.py`](q3pipe/ptt.py) |
-| 原始 HTML 存 GCS，備重解析 | 每次抓到的列表頁與文章頁都 gzip 存一份到 `gs://qsearch-q3-raw/<看板>/<種類>/<頁碼或文章 ID>/<抓取時間>.html.gz`，`posts.raw_uri` 指向它。用的是 fake-gcs-server | [`q3pipe/rawstore.py`](q3pipe/rawstore.py) |
+| 原始 HTML 存 GCS，備重解析 | 每次抓到的列表頁與文章頁都 gzip 存一份到 `gs://argus-q3-raw/<看板>/<種類>/<頁碼或文章 ID>/<抓取時間>.html.gz`，`posts.raw_uri` 指向它。用的是 fake-gcs-server | [`q3pipe/rawstore.py`](q3pipe/rawstore.py) |
 | MERGE 進 BigQuery，依發文日分區 | `posts` 依 `DATE(published_at)` 分區，以文章 ID 叢集；每批 50 篇先寫進暫存表，再 MERGE。用的是 BigQuery 模擬器 | [`q3pipe/bq.py`](q3pipe/bq.py) |
 | 失敗下輪補 | 見下方「自動回補」 | `job.py`、`bq.py` |
 | 查詢 API 用 Cloud Run | `/api/search?q=關鍵字&days=7`，另附一個搜尋頁。貼文與留言分開查，再依文章合併；模擬器上 7 天全量（6,230 篇、22.7 萬則留言）搜尋一次 1–3 秒，見[全量預演](#全量預演) | [`q3pipe/search.py`](q3pipe/search.py) |
 | 每日 verify 檢查不變量 | 台灣時間 04 點後的第一輪跑完後檢查，只有一條：從 PTT 列表最新頁沿著「上頁」一路往回走，走到出現早於 7 天前的文章為止；途中每一頁都要讀取成功，走完時最新頁沒有變；這次走訪看到的每一個未刪除文章 ID（爬蟲那一輪開始前發的），都必須在 `posts` 裡有一筆 status 200。走訪是 verify 自己另外讀的（八卦板約 342 次請求、6 分鐘），不靠爬蟲存的列表。手動：`python -m q3pipe verify [--until 時間]` | [`q3pipe/verify.py`](q3pipe/verify.py) |
-| Cloud Monitoring | Pushgateway＋Prometheus＋Grafana。告警只看結果（答案第 5 題）；被擋時也會響，見下面「被擋時的告警」 | [`monitoring/`](monitoring) |
+| Cloud Monitoring | Pushgateway＋Prometheus＋Grafana。告警只看結果（瓶頸 5）；被擋時也會響，見下面「被擋時的告警」 | [`monitoring/`](monitoring) |
 
 ## 資料表（dataset `ptt`）
 
@@ -71,7 +71,7 @@ docker compose up -d --build
 | 服務 | 位址（只綁 127.0.0.1） |
 |---|---|
 | 搜尋頁／查詢 API | http://127.0.0.1:8300 、 http://127.0.0.1:8300/api/search?q=颱風 |
-| Grafana（匿名唯讀，首頁就是 Q3 看板） | http://127.0.0.1:3300 |
+| Grafana（匿名唯讀，首頁就是 PTT 全文搜尋看板） | http://127.0.0.1:3300 |
 | Prometheus（含告警規則） | http://127.0.0.1:9390 |
 | Pushgateway | http://127.0.0.1:9391 |
 | BigQuery 模擬器、GCS 模擬器 | 9050、4443 |
@@ -86,7 +86,7 @@ docker compose exec crawler python -m q3pipe verify  # 立刻跑一次不變量�
 docker compose exec crawler python -m q3pipe rollback <run_id>
 ```
 
-同一時間只會有一輪在寫：常駐排程、手動的 `run`、`rollback` 都要先拿同一把鎖，另一輪還沒跑完就等它，對應答案裡 Cloud Run Job 的 parallelism 1。手動的 `run`、`verify` 不推指標，因為 Pushgateway 會整組覆蓋同名指標，和常駐程序的計數器互蓋會讓看板跳動；看板以常駐程序為準。
+同一時間只會有一輪在寫：常駐排程、手動的 `run`、`rollback` 都要先拿同一把鎖，另一輪還沒跑完就等它，對應設計裡 Cloud Run Job 的 parallelism 1。手動的 `run`、`verify` 不推指標，因為 Pushgateway 會整組覆蓋同名指標，和常駐程序的計數器互蓋會讓看板跳動；看板以常駐程序為準。
 
 **故障演練**：兩層自動 rollback 各有一個開關，在看板上看還原與下一輪補抓。
 
@@ -99,7 +99,7 @@ docker compose up -d crawler                           # 關掉演練；下一�
 
 看板上：單批還原是「每小時寫入批次」的 rolled_back 長條；整輪還原是「過去 24 小時整輪還原」加 1、「上一輪結果」變成 rolled_back，下一輪恢復成 ok。帶標籤的計數器在啟動時先建成 0，第一次還原才算得進 `increase()`。
 
-設定全部從環境變數 `Q3_<欄位名大寫>` 讀取，預設值就是答案的規格，見 [`q3pipe/config.py`](q3pipe/config.py)。例如 `Q3_REFRESH_POLICY=once24h` 會改成第 6 題建議的「發文滿 24 小時再抓一次」。`Q3_BQ_ENDPOINT` 留空就改連 GCP 上的 BigQuery；這時暫存表改用載入工作（WRITE_TRUNCATE），其餘 SQL 相同。這個分支沒有實際在 GCP 上執行過。
+設定全部從環境變數 `Q3_<欄位名大寫>` 讀取，預設值就是設計的規格，見 [`q3pipe/config.py`](q3pipe/config.py)。例如 `Q3_REFRESH_POLICY=once24h` 會改成瓶頸 6 建議的「發文滿 24 小時再抓一次」。`Q3_BQ_ENDPOINT` 留空就改連 GCP 上的 BigQuery；這時暫存表改用載入工作（WRITE_TRUNCATE），其餘 SQL 相同。這個分支沒有實際在 GCP 上執行過。
 
 ### 為了 BigQuery 模擬器做的調整
 
@@ -142,7 +142,7 @@ pytest -q tests/
 
 ### 全量預演
 
-[`tests/full_scale.py`](tests/full_scale.py) 用模擬八卦板放 8 天、每天 890 篇、每篇平均 37 則留言（答案第 1 題 POC 實測的量），照排程的順序跑一遍。抓取不限速，量到的是寫入、MERGE、還原紀錄、不變量與搜尋在模擬器上花的時間：
+[`tests/full_scale.py`](tests/full_scale.py) 用模擬八卦板放 8 天、每天 890 篇、每篇平均 37 則留言（瓶頸 1 的 POC 實測量），照排程的順序跑一遍。抓取不限速，量到的是寫入、MERGE、還原紀錄、不變量與搜尋在模擬器上花的時間：
 
 ```bash
 docker compose up -d bigquery
@@ -165,10 +165,10 @@ python tests/full_scale.py
 
 1. **兩條資料規格與結果**：新文章最久等了幾分鐘還不能搜尋（規格 1：360 分鐘；超過 180 分鐘就告警，留時間處理）、留言最久多少小時沒重抓（規格 2：24 小時）、每日不變量、上一輪結果。只有這一區會告警（[`alerts.yml`](monitoring/alerts.yml)）。
 2. **資料量**：7 天內可搜尋文章、留言、已標記刪文，以及待抓佇列。
-3. **抓取**：每分鐘請求數與每秒 1 次的上限線、PTT 回應時間、24 小時請求數對照答案估算的 6,278 次、退避等待。
+3. **抓取**：每分鐘請求數與每秒 1 次的上限線、PTT 回應時間、24 小時請求數對照設計估算的 6,278 次、退避等待。
 4. **寫入與自動 rollback**：每小時 committed／rolled_back／gate_blocked 批次數、整輪還原次數、發文到可搜尋的延遲。
-5. **重抓的邊際效益**（答案第 3、6 題）：新增留言依文章發文第幾天分開統計。
-6. **只記錄、不告警**（答案第 5 題）：單次請求失敗、事後刪文 404、「檔案過大」被截斷的文章。
+5. **重抓的邊際效益**（瓶頸 3、6）：新增留言依文章發文第幾天分開統計。
+6. **只記錄、不告警**（瓶頸 5）：單次請求失敗、事後刪文 404、「檔案過大」被截斷的文章。
 7. **每日不變量明細與查詢 API**：每項檢查的數字、推文數吻合比例、查詢延遲、BigQuery 掃描量。
 
 指標由 crawler 推到 Pushgateway。7 天內的數字在每輪開始、列表讀完、每輪結束時更新，跑的中途每 10 分鐘也重算一次（抓不到的時候也算），第一次回補跑幾個小時也看得到進度；crawler 重啟時先從 BigQuery 的 `crawl_runs`、`verify_runs` 補回上一輪與上次檢查的結果。還沒有資料的面板直接寫原因（例如「還沒有重抓：文章抓到滿 23 小時才重抓」），不顯示 No data。
